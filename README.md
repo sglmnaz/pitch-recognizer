@@ -14,13 +14,9 @@ This project is a web application written in TypeScript and bundled with Webpack
 ## Installation
 
 1. Clone the repository:
-    ```sh
-    git clone https://github.com/yourusername/note-detection.git
-    ```
+
 2. Navigate to the project directory:
-    ```sh
-    cd note-detection
-    ```
+
 3. Install dependencies:
     ```sh
     npm install
