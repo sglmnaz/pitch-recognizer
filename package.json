@@ -1,0 +1,20 @@
+{
+    "name": "gemini",
+    "version": "1.0.0",
+    "description": "",
+    "main": "index.js",
+    "scripts": {
+        "test": "echo \"Error: no test specified\" && exit 1",
+        "compile": "cd ./ts && tsc && cd .. && webpack"
+    },
+    "keywords": [],
+    "author": "",
+    "license": "ISC",
+    "dependencies": {
+        "pitchy": "^4.1.0",
+        "vexflow": "^4.2.5"
+    },
+    "devDependencies": {
+        "webpack-cli": "^6.0.1"
+    }
+}
