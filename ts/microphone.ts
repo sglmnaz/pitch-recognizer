@@ -106,8 +106,4 @@ function removeOutliers(arr) {
 	return arr.filter((num) => num >= lowerBound && num <= upperBound)
 }
 
-// Example usage:
-const numbers = [300, 310, 74, 320, 290, 350, 18]
-const cleanedNumbers = removeOutliers(numbers)
-
 export { start, stop }
