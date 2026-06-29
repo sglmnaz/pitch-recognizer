@@ -5,7 +5,13 @@
 	<meta charset="UTF-8" />
 	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 	<title>Pitch Recognizer</title>
+	<meta name="description" content="Ear-training and tuning: detect pitch from the microphone and match notes by ear." />
+	<meta name="theme-color" content="#0a0a0b" />
 	<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎵</text></svg>" />
+	<link rel="apple-touch-icon" href="/apple-touch-icon-180x180.png" />
+	<meta name="apple-mobile-web-app-capable" content="yes" />
+	<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+	<meta name="apple-mobile-web-app-title" content="Pitch" />
 	<script>
 		// Resolve the theme before first paint to avoid a flash.
 		(function () {
@@ -116,6 +122,7 @@
 				<div class="readout__sub">Press Listen to start</div>
 				<div class="meter">
 					<div class="meter__scale">
+						<div class="meter__zones"></div>
 						<div class="meter__ticks">
 							<span class="meter__tick"></span>
 							<span class="meter__tick"></span>
@@ -141,6 +148,7 @@
 				<div class="readout__sub">Play a note to begin</div>
 				<div class="meter">
 					<div class="meter__scale">
+						<div class="meter__zones"></div>
 						<div class="meter__ticks">
 							<span class="meter__tick"></span>
 							<span class="meter__tick"></span>

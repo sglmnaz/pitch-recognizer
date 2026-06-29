@@ -51,7 +51,10 @@ for genuinely floating surfaces.
 - **Readout panel**: the shared note/frequency/cents display. Gains a green border
   and green note color when locked within 5 cents.
 - **Cents meter**: horizontal scale -50..+50 with a center tick and a needle that
-  eases (80ms linear) to the deviation.
+  eases (80ms linear) to the deviation. Colored tuning zones sit on the track:
+  a soft green band in the centre (in tune, ~±5 cents) flanked by soft yellow
+  (close), fading to neutral at the edges. Zone colors are theme-token mixes so
+  they stay muted in both light and dark.
 - **Settings popover**: gear-triggered floating panel (border + `--shadow-md`,
   closes on outside-click/Escape). Holds pill **switches** (track fills with accent
   when on) and a grid of monospace **note chips** that fill solid when selected.

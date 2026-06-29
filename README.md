@@ -34,7 +34,15 @@ Open the **settings** menu (gear icon) to:
   you want (with All / None shortcuts). Settings are saved between sessions.
 
 **Tuner:** play any note. The readout shows the nearest note, frequency in Hz, and
-cents deviation, and locks green when you are within 5 cents.
+cents deviation. The meter has a green centre zone (in tune) flanked by yellow
+(close); the readout locks green when you are within 5 cents.
+
+## Install (PWA)
+
+The app is a Progressive Web App: on a deployed (HTTPS) instance you can install it
+to your home screen. On Android Chrome use the install prompt or *Add to Home
+screen*; on iOS Safari use *Share → Add to Home Screen*. Once installed it launches
+standalone and works offline.
 
 ## Getting started
 
@@ -53,6 +61,19 @@ npm run build
 # Preview the production build locally
 npm run preview
 ```
+
+## Deploy to Vercel
+
+The repo is Vercel-ready ([vercel.json](vercel.json) pins the Vite preset, build
+command, and `dist` output, and sets no-cache headers on the service worker and
+manifest so updates land immediately).
+
+- **Dashboard:** import the GitHub repo at [vercel.com/new](https://vercel.com/new);
+  the defaults are detected automatically. No environment variables are needed.
+- **CLI:** `npm i -g vercel && vercel` (then `vercel --prod`).
+
+Vercel serves over HTTPS, which the microphone and the PWA install/service worker
+require.
 
 > The microphone only works on a secure origin. `localhost` (the dev server and
 > preview) counts as secure; if you deploy the contents of `dist/`, serve them

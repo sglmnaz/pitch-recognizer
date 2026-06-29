@@ -357,7 +357,29 @@ button {
 
 .meter__scale {
 	position: relative;
-	height: 44px;
+	height: 40px;
+}
+
+/*
+ * Tuning zones along the track: green in the centre (in tune, ~±5 cents),
+ * yellow either side (close, ~±5-20 cents), fading to neutral at the extremes.
+ * The -50..+50 cents range maps linearly to 0..100%, so 1 cent == 1%.
+ */
+.meter__zones {
+	position: absolute;
+	left: 0;
+	right: 0;
+	bottom: 8px;
+	height: 6px;
+	border-radius: var(--radius-pill);
+	background: linear-gradient(
+		90deg,
+		var(--surface-2) 0 30%,
+		color-mix(in srgb, var(--warning) 55%, transparent) 30% 45%,
+		color-mix(in srgb, var(--success) 75%, transparent) 45% 55%,
+		color-mix(in srgb, var(--warning) 55%, transparent) 55% 70%,
+		var(--surface-2) 70% 100%
+	);
 }
 
 .meter__ticks {
@@ -366,28 +388,28 @@ button {
 	display: flex;
 	justify-content: space-between;
 	align-items: flex-end;
-	padding-bottom: 16px;
+	padding-bottom: 6px;
 }
 
 .meter__tick {
 	width: 1px;
 	background: var(--border-strong);
-	height: 8px;
+	height: 10px;
 }
 
 .meter__tick--center {
-	height: 16px;
+	height: 18px;
 	background: var(--fg-muted);
 }
 
 .meter__needle {
 	position: absolute;
 	left: 50%;
-	bottom: 8px;
+	bottom: 4px;
 	width: 2px;
-	height: 32px;
+	height: 28px;
 	border-radius: 2px;
-	background: var(--accent);
+	background: var(--fg);
 	transform: translateX(-50%);
 	transition: left 80ms linear, background var(--dur) var(--ease);
 }
