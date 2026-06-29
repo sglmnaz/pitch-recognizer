@@ -44,5 +44,8 @@ coverage/
 .idea/
 .DS_Store
 
-js/*
-old/*
+# Generated design-system extraction (reference only)
+design-extract-output/
+
+# Local skill packages / tooling
+.claude/

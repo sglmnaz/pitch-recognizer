@@ -1,4 +1,13 @@
-const noteFrequencies = [
+export interface NoteInfo {
+	/** Scientific pitch notation, e.g. `C4` or `C#4/Db4`. */
+	note: string
+	/** Fundamental frequency in Hz. */
+	frequency: number
+	/** Italian solfège name, e.g. `Do4` or `Do#4/Reb4`. */
+	altName: string
+}
+
+const noteFrequencies: NoteInfo[] = [
 	{ note: 'C0', frequency: 16.35, altName: 'Do0' },
 	{ note: 'C#0/Db0', frequency: 17.32, altName: 'Do#0/Reb0' },
 	{ note: 'D0', frequency: 18.35, altName: 'Re0' },
@@ -98,23 +107,51 @@ const noteFrequencies = [
 	{ note: 'C8', frequency: 4186.01, altName: 'Do8' },
 ]
 
+// Default playable range: E2 (low guitar string) up to C5.
 const possibleFrequencies = noteFrequencies.filter((note) => note.frequency >= 82.41 && note.frequency <= 523.25)
 
 const possibleFrequenciesWithoutAccidentals = possibleFrequencies.filter((note) => !note.note.includes('/'))
 
-function getNoteName(frequency: number) {
+/** Returns the table entry whose frequency is closest to the given one. */
+function getClosestNote(frequency: number): NoteInfo {
 	let closestNote = noteFrequencies[0]
 	let minDifference = Math.abs(frequency - closestNote.frequency)
 
 	for (let i = 1; i < noteFrequencies.length; i++) {
-		let difference = Math.abs(frequency - noteFrequencies[i].frequency)
+		const difference = Math.abs(frequency - noteFrequencies[i].frequency)
 		if (difference < minDifference) {
 			closestNote = noteFrequencies[i]
 			minDifference = difference
 		}
 	}
 
-	return closestNote.altName
+	return closestNote
 }
 
-export { getNoteName, noteFrequencies, possibleFrequencies, possibleFrequenciesWithoutAccidentals }
+/** Italian solfège name of the note closest to the given frequency. */
+function getNoteName(frequency: number): string {
+	return getClosestNote(frequency).altName
+}
+
+/** Octave-independent pitch class, e.g. `C4` -> `C`, `C#4/Db4` -> `C#/Db`. */
+function pitchClass(note: string): string {
+	return note.replace(/[0-9]/g, '')
+}
+
+/**
+ * Signed distance in cents between a measured frequency and a reference.
+ * Positive means sharp, negative means flat. One semitone is 100 cents.
+ */
+function centsBetween(frequency: number, reference: number): number {
+	return 1200 * Math.log2(frequency / reference)
+}
+
+export {
+	getClosestNote,
+	getNoteName,
+	centsBetween,
+	pitchClass,
+	noteFrequencies,
+	possibleFrequencies,
+	possibleFrequenciesWithoutAccidentals,
+}

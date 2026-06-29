@@ -1,41 +1,54 @@
-import * as Vex from 'vexflow'
-import { possibleFrequenciesWithoutAccidentals } from './notes'
+import { Factory } from 'vexflow'
+import type { NoteInfo } from './notes'
 
-let noteToRender: { note: any; frequency?: number; altName?: string }
+const STAFF_ELEMENT_ID = 'staff'
+const STAFF_WIDTH = 220
+const STAFF_HEIGHT = 220
 
-let vf: Vex.Factory = new Vex.Factory({
-	renderer: { elementId: 'vexFlow', width: 150, height: 200 },
-})
+function container(): HTMLElement {
+	const element = document.getElementById(STAFF_ELEMENT_ID)
+	if (!element) throw new Error(`Missing #${STAFF_ELEMENT_ID} element`)
+	return element
+}
 
 export function clear() {
-	vf.getContext().clear()
+	container().innerHTML = ''
 }
 
-export function displayNewNote() {
+export function render(note: NoteInfo) {
+	// Rebuild from scratch each round: VexFlow's Factory accumulates systems,
+	// so reusing one instance would stack every note ever drawn.
 	clear()
 
-	const score = vf.EasyScore()
-	const system = vf.System()
+	try {
+		const factory = new Factory({
+			renderer: { elementId: STAFF_ELEMENT_ID, width: STAFF_WIDTH, height: STAFF_HEIGHT },
+		})
+		const score = factory.EasyScore()
+		const system = factory.System()
 
-	noteToRender = pickRandomNote()
-	var noteModified = noteToRender.note[0] + (+noteToRender.note[1] + 1)
-	console.log(noteToRender.altName)
+		// Parse the first enharmonic spelling, e.g. "C#4/Db4" -> letter C,
+		// accidental #, octave 4. The note may or may not carry an accidental.
+		const spelling = note.note.split('/')[0]
+		const match = spelling.match(/^([A-G])([#b]?)(\d)$/)
+		if (!match) throw new Error(`Unrecognised note: ${note.note}`)
+		const [, letter, accidental, octaveDigit] = match
 
-	const stave = {
-		voices: [score.voice(score.notes(`${noteModified}/w`, { stem: 'up' }))],
+		// The playable range dips to E2; written an octave up under an 8va treble
+		// clef it stays readable without a forest of ledger lines.
+		const octave = Number(octaveDigit) + 1
+		const easyScoreNote = `${letter}${accidental}${octave}/w`
+
+		system
+			.addStave({ voices: [score.voice(score.notes(easyScoreNote, { stem: 'up' }))] })
+			.addClef('treble', undefined, '8va')
+			.addTimeSignature('4/4')
+
+		factory.draw()
+	} catch (error) {
+		// Leave a clean (empty) staff rather than a half-drawn one; the note name
+		// is still shown elsewhere, so the round stays playable.
+		console.error(`Could not render note "${note.note}":`, error)
+		clear()
 	}
-
-	system.addStave(stave).addClef('treble', undefined, '8va').addTimeSignature('4/4')
-
-	vf.draw()
-}
-
-function pickRandomNote() {
-	return possibleFrequenciesWithoutAccidentals[Math.floor(Math.random() * possibleFrequenciesWithoutAccidentals.length)]
-}
-
-export function checkIfFrequencyIsCorrect(frequency) {
-	if (!noteToRender) return false
-
-	return Math.abs(frequency - noteToRender.frequency!) < 10
 }

@@ -1,41 +1,95 @@
-# Pitch Detection Web App
+# Pitch Recognizer
 
-## Overview
+An ear-training and tuning web app: it listens through your microphone and detects
+the pitch you sing or play. It has two modes:
 
-This project is a web application written in TypeScript and bundled with Webpack. The purpose of the app is to detect sound through microphone input and play a simple guessing game. The game displays a note on the music measure, and the user has to try to match the note.
+- **Trainer** — a guessing game. A note is shown on the staff; match it by ear to
+  build your score and streak.
+- **Tuner** — a continuous chromatic tuner showing the nearest note, its frequency,
+  and how many cents sharp or flat you are.
 
-## Features
+Built with **TypeScript**, [**pitchy**](https://github.com/ianprime0509/pitchy) for
+pitch detection, [**VexFlow**](https://www.vexflow.com/) for music notation, styled
+in [**Vercel Geist**](https://vercel.com/geist) (light & dark), and bundled with
+[**Vite**](https://vitejs.dev/).
 
-- Pitch detection through microphone input
-- Interactive guessing game
-- Displays notes on a music measure
-- Real-time feedback
+## How to use
 
-## Installation
+1. Press **Listen** and allow microphone access.
+2. Switch between **Trainer** and **Tuner** with the tabs in the header. Toggle the
+   theme with the button on the right.
 
-1. Clone the repository:
+**Trainer:** a note appears on the staff (with its English and Italian solfège
+names). Sing or play it; the readout shows the note you are producing and how far
+off you are. Hold the correct note in tune for a moment to win the round and bump
+your score and streak. **Skip** passes on a note.
 
-2. Navigate to the project directory:
+Open the **settings** menu (gear icon) to:
 
-3. Install dependencies:
-    ```sh
-    npm install
-    ```
-4. Build the project:
-    ```sh
-    npm run compile
-    ```
+- **Match any octave** — accept the right note in any octave, not just the one
+  drawn (handy when the target sits outside your range).
+- **Sharps & flats** — add accidentals to the note pool.
+- **Light staff** — keep the staff on a light background even in dark mode.
+- **Target notes** — enable or disable individual notes so you only train the ones
+  you want (with All / None shortcuts). Settings are saved between sessions.
 
-## Usage
+**Tuner:** play any note. The readout shows the nearest note, frequency in Hz, and
+cents deviation, and locks green when you are within 5 cents.
 
-1. Open `index.html` in your web browser.
-2. Allow microphone access when prompted.
-3. Follow the on-screen instructions to play the guessing game.
+## Getting started
 
-## Contributing
+Requires [Node.js](https://nodejs.org/) 18+.
 
-Contributions are welcome! Please open an issue or submit a pull request.
+```sh
+# Install dependencies
+npm install
+
+# Start the dev server (opens http://localhost:5173 with hot reload)
+npm run dev
+
+# Type-check and build for production into dist/
+npm run build
+
+# Preview the production build locally
+npm run preview
+```
+
+> The microphone only works on a secure origin. `localhost` (the dev server and
+> preview) counts as secure; if you deploy the contents of `dist/`, serve them
+> over HTTPS.
+
+## Project structure
+
+```
+index.html              App shell; loads ts/index.ts as a module
+vite.config.ts          Vite configuration
+tsconfig.json           TypeScript configuration (type-check only)
+PRODUCT.md / DESIGN.md  Product and design-system context
+ts/
+  index.ts              App shell: theme, tab routing, settings popover, mic lifecycle
+  microphone.ts         Web Audio capture + pitch detection
+  game.ts               Round logic, scoring, sustain detection
+  settings.ts           Persisted settings + active note pool
+  music-renderer.ts     Renders the target note with VexFlow
+  notes.ts              Note/frequency table and helpers
+  tokens.css            Geist design tokens (light + dark)
+  style.css             Layout and component styles
+  fonts/                Self-hosted Geist Sans + Geist Mono
+  views/
+    view.ts             Shared View interface
+    trainer.ts          Trainer (guessing game) view
+    tuner.ts            Tuner view
+    settings-panel.ts   Settings popover (switches + note chips)
+```
+
+## How pitch detection works
+
+`microphone.ts` captures audio with the Web Audio API and analyses each frame with
+pitchy's autocorrelation detector. A reading is only accepted when it is both loud
+enough (RMS above a floor) and confident enough (pitchy **clarity** ≥ 0.9, which
+rejects noise and unvoiced sounds). Accepted frequencies are median-smoothed over a
+short window to absorb the occasional octave jump.
 
 ## License
 
-This project is licensed under the MIT License.
+MIT

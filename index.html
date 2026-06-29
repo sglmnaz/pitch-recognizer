@@ -1,29 +1,163 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 
 <head>
-    <title>Pitch Detector</title>
-    <style>
-        body {
-            font-family: sans-serif;
-            text-align: center;
-        }
-
-        #note {
-            font-size: 2em;
-            margin-top: 50px;
-        }
-    </style>
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title>Pitch Recognizer</title>
+	<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎵</text></svg>" />
+	<script>
+		// Resolve the theme before first paint to avoid a flash.
+		(function () {
+			var saved = localStorage.getItem('theme')
+			var dark = saved ? saved === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches
+			document.documentElement.dataset.theme = dark ? 'dark' : 'light'
+		})()
+	</script>
 </head>
 
 <body>
-    <h1>Pitch Detector</h1>
-    <p>Click "Start" to begin.</p>
-    <button id="startButton">Start</button>
-    <button id="stopButton" disabled>Stop</button>
-    <div id="note">--</div>
-    <div id="vexFlow"></div>
-    <script src="dist/bundle.js"></script>
+	<main class="app">
+		<header class="topbar">
+			<span class="brand">
+				<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+					<path d="M9 18V5l12-2v13" />
+					<circle cx="6" cy="18" r="3" />
+					<circle cx="18" cy="16" r="3" />
+				</svg>
+				Pitch Recognizer
+			</span>
+			<div class="tabs" role="tablist">
+				<button class="tab" role="tab" data-tab="trainer" aria-selected="true">Trainer</button>
+				<button class="tab" role="tab" data-tab="tuner" aria-selected="false">Tuner</button>
+			</div>
+			<button class="icon-btn" id="settingsToggle" type="button" aria-label="Settings" aria-expanded="false" aria-controls="settings">
+				<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+					<circle cx="12" cy="12" r="3" />
+					<path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+				</svg>
+			</button>
+			<button class="icon-btn" id="themeToggle" type="button" aria-label="Toggle theme"></button>
+		</header>
+
+		<div class="settings" id="settings" role="dialog" aria-label="Settings" hidden>
+			<div class="settings__section">
+				<label class="switch">
+					<span class="switch__text">
+						<span class="switch__title">Match any octave</span>
+						<span class="switch__desc">The right note in any octave counts</span>
+					</span>
+					<input type="checkbox" class="switch__input" data-setting="matchAnyOctave" />
+					<span class="switch__track"></span>
+				</label>
+				<label class="switch">
+					<span class="switch__text">
+						<span class="switch__title">Sharps &amp; flats</span>
+						<span class="switch__desc">Add accidentals to the note pool</span>
+					</span>
+					<input type="checkbox" class="switch__input" data-setting="includeAccidentals" />
+					<span class="switch__track"></span>
+				</label>
+				<label class="switch">
+					<span class="switch__text">
+						<span class="switch__title">Light staff</span>
+						<span class="switch__desc">Keep the staff light in dark mode</span>
+					</span>
+					<input type="checkbox" class="switch__input" data-setting="lightStaff" />
+					<span class="switch__track"></span>
+				</label>
+			</div>
+
+			<div class="settings__section">
+				<div class="settings__heading">
+					<span class="panel__label">Target notes</span>
+					<span class="settings__actions">
+						<button class="link-btn" type="button" data-notes="all">All</button>
+						<button class="link-btn" type="button" data-notes="none">None</button>
+					</span>
+				</div>
+				<div class="chips" id="noteChips"></div>
+			</div>
+		</div>
+
+		<div class="mic-bar">
+			<button class="btn btn--solid" id="micButton" type="button">Listen</button>
+			<span class="status" id="status"></span>
+		</div>
+
+		<!-- Trainer ------------------------------------------------------- -->
+		<section class="view" id="view-trainer" role="tabpanel">
+			<div class="panel scoreboard">
+				<div class="stat">
+					<span class="stat__value" data-stat="score">0</span>
+					<span class="stat__label">Score</span>
+				</div>
+				<div class="stat">
+					<span class="stat__value" data-stat="streak">0</span>
+					<span class="stat__label">Streak</span>
+				</div>
+				<div class="stat">
+					<span class="stat__value" data-stat="best">0</span>
+					<span class="stat__label">Best</span>
+				</div>
+			</div>
+
+			<div class="panel prompt">
+				<div id="staff" class="staff"></div>
+				<div class="prompt__meta">
+					<p class="prompt__hint">Match this note</p>
+					<div class="prompt__note">--</div>
+					<div class="prompt__alt">--</div>
+				</div>
+			</div>
+
+			<div class="panel readout">
+				<div class="readout__note readout__idle">--</div>
+				<div class="readout__sub">Press Listen to start</div>
+				<div class="meter">
+					<div class="meter__scale">
+						<div class="meter__ticks">
+							<span class="meter__tick"></span>
+							<span class="meter__tick"></span>
+							<span class="meter__tick meter__tick--center"></span>
+							<span class="meter__tick"></span>
+							<span class="meter__tick"></span>
+						</div>
+						<span class="meter__needle"></span>
+					</div>
+					<div class="meter__labels"><span>-50</span><span>0</span><span>+50</span></div>
+				</div>
+			</div>
+
+			<div class="controls">
+				<button class="btn btn--block" type="button" data-action="skip">Skip note</button>
+			</div>
+		</section>
+
+		<!-- Tuner --------------------------------------------------------- -->
+		<section class="view" id="view-tuner" role="tabpanel" hidden>
+			<div class="panel readout">
+				<div class="readout__note readout__idle">--</div>
+				<div class="readout__sub">Play a note to begin</div>
+				<div class="meter">
+					<div class="meter__scale">
+						<div class="meter__ticks">
+							<span class="meter__tick"></span>
+							<span class="meter__tick"></span>
+							<span class="meter__tick meter__tick--center"></span>
+							<span class="meter__tick"></span>
+							<span class="meter__tick"></span>
+						</div>
+						<span class="meter__needle"></span>
+					</div>
+					<div class="meter__labels"><span>-50</span><span>0</span><span>+50</span></div>
+				</div>
+			</div>
+			<p class="hint">Sing or play any note. The readout locks green when you are within 5 cents.</p>
+		</section>
+	</main>
+
+	<script type="module" src="/ts/index.ts"></script>
 </body>
 
 </html>

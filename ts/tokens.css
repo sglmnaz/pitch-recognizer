@@ -1,0 +1,104 @@
+/*
+ * Geist design tokens, extracted from vercel.com/geist and adapted for this app.
+ * Neutrals carry a whisper of the brand hue (~220) so the greys never feel dead,
+ * while staying faithful to Geist's near-monochrome look.
+ */
+
+@font-face {
+	font-family: 'Geist';
+	src: url('./fonts/Geist-Variable.woff2') format('woff2');
+	font-weight: 100 900;
+	font-display: swap;
+}
+
+@font-face {
+	font-family: 'Geist Mono';
+	src: url('./fonts/GeistMono-Variable.woff2') format('woff2');
+	font-weight: 100 900;
+	font-display: swap;
+}
+
+:root {
+	--font-sans: 'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+	--font-mono: 'Geist Mono', ui-monospace, 'SF Mono', Menlo, Monaco, 'Courier New', monospace;
+
+	--radius-sm: 4px;
+	--radius: 6px;
+	--radius-lg: 8px;
+	--radius-pill: 999px;
+
+	--ease: cubic-bezier(0.4, 0, 0.2, 1);
+	--dur: 0.15s;
+}
+
+/* Light ------------------------------------------------------------------ */
+:root,
+[data-theme='light'] {
+	color-scheme: light;
+
+	--bg: #fbfbfc;
+	--surface: #ffffff;
+	--surface-2: #f6f7f9;
+
+	--border: #ebebec;
+	--border-strong: #dcdcde;
+
+	--fg: #18181b;
+	--fg-secondary: #5f5f66;
+	--fg-muted: #8f8f96;
+
+	--accent: #0072f5;
+	--accent-hover: #0062d1;
+	--accent-contrast: #ffffff;
+
+	--success: #1a8245;
+	--success-bg: #e8f5ec;
+	--warning: #c2670a;
+
+	/* Solid near-black primary button, the Geist signature. */
+	--solid: #18181b;
+	--solid-hover: #2a2a2e;
+	--solid-fg: #ffffff;
+
+	--staff-ink: #18181b;
+	--staff-bg: #ffffff;
+
+	--shadow-border: 0 0 0 1px var(--border);
+	--shadow-sm: 0 0 0 1px var(--border), 0 1px 2px rgba(16, 16, 24, 0.04);
+	--shadow-md: 0 0 0 1px var(--border), 0 2px 4px rgba(16, 16, 24, 0.05), 0 8px 16px -8px rgba(16, 16, 24, 0.06);
+}
+
+/* Dark ------------------------------------------------------------------- */
+[data-theme='dark'] {
+	color-scheme: dark;
+
+	--bg: #0a0a0b;
+	--surface: #121214;
+	--surface-2: #1a1a1d;
+
+	--border: #2a2a2e;
+	--border-strong: #3d3d42;
+
+	--fg: #ededee;
+	--fg-secondary: #a0a0a8;
+	--fg-muted: #71717a;
+
+	--accent: #3b9eff;
+	--accent-hover: #61b0ff;
+	--accent-contrast: #04060a;
+
+	--success: #5ec27a;
+	--success-bg: rgba(94, 194, 122, 0.12);
+	--warning: #f5a623;
+
+	--solid: #ededee;
+	--solid-hover: #ffffff;
+	--solid-fg: #0a0a0b;
+
+	--staff-ink: #ededee;
+	--staff-bg: #121214;
+
+	--shadow-border: 0 0 0 1px var(--border);
+	--shadow-sm: 0 0 0 1px var(--border), 0 1px 2px rgba(0, 0, 0, 0.4);
+	--shadow-md: 0 0 0 1px var(--border), 0 2px 4px rgba(0, 0, 0, 0.4), 0 12px 24px -8px rgba(0, 0, 0, 0.6);
+}

@@ -1,0 +1,592 @@
+@import './tokens.css';
+
+* {
+	box-sizing: border-box;
+}
+
+html {
+	-webkit-text-size-adjust: 100%;
+}
+
+body {
+	margin: 0;
+	min-height: 100vh;
+	font-family: var(--font-sans);
+	font-size: 14px;
+	line-height: 1.5;
+	color: var(--fg);
+	background: var(--bg);
+	-webkit-font-smoothing: antialiased;
+	text-rendering: optimizeLegibility;
+}
+
+button {
+	font-family: inherit;
+}
+
+/* App shell -------------------------------------------------------------- */
+.app {
+	position: relative;
+	max-width: 560px;
+	margin: 0 auto;
+	padding: 20px 20px 64px;
+	display: flex;
+	flex-direction: column;
+	gap: 24px;
+}
+
+.topbar {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	padding-top: 8px;
+}
+
+.brand {
+	display: flex;
+	align-items: center;
+	gap: 9px;
+	font-weight: 600;
+	letter-spacing: -0.01em;
+	margin-right: auto;
+}
+
+.brand svg {
+	width: 20px;
+	height: 20px;
+	color: var(--fg);
+}
+
+/* Segmented tab control */
+.tabs {
+	display: inline-flex;
+	padding: 3px;
+	gap: 2px;
+	background: var(--surface-2);
+	border-radius: var(--radius);
+	box-shadow: var(--shadow-border);
+}
+
+.tab {
+	appearance: none;
+	border: none;
+	background: transparent;
+	color: var(--fg-secondary);
+	font-size: 13px;
+	font-weight: 500;
+	padding: 6px 12px;
+	border-radius: 4px;
+	cursor: pointer;
+	transition: color var(--dur) var(--ease), background var(--dur) var(--ease);
+}
+
+.tab:hover {
+	color: var(--fg);
+}
+
+.tab[aria-selected='true'] {
+	color: var(--fg);
+	background: var(--surface);
+	box-shadow: var(--shadow-sm);
+}
+
+.icon-btn {
+	display: inline-grid;
+	place-items: center;
+	width: 34px;
+	height: 34px;
+	padding: 0;
+	border: none;
+	border-radius: var(--radius);
+	background: var(--surface);
+	color: var(--fg-secondary);
+	cursor: pointer;
+	box-shadow: var(--shadow-border);
+	transition: color var(--dur) var(--ease), background var(--dur) var(--ease);
+}
+
+.icon-btn:hover {
+	color: var(--fg);
+	background: var(--surface-2);
+}
+
+.icon-btn svg {
+	width: 16px;
+	height: 16px;
+}
+
+/* Mic control + status --------------------------------------------------- */
+.mic-bar {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+}
+
+.status {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	font-size: 13px;
+	color: var(--fg-muted);
+	font-variant-numeric: tabular-nums;
+}
+
+.status__dot {
+	width: 8px;
+	height: 8px;
+	border-radius: 50%;
+	background: var(--border-strong);
+	flex: none;
+}
+
+.status--live .status__dot {
+	background: var(--success);
+	box-shadow: 0 0 0 0 var(--success);
+	animation: pulse 1.8s var(--ease) infinite;
+}
+
+@keyframes pulse {
+	0% {
+		box-shadow: 0 0 0 0 color-mix(in srgb, var(--success) 55%, transparent);
+	}
+	70% {
+		box-shadow: 0 0 0 6px transparent;
+	}
+	100% {
+		box-shadow: 0 0 0 0 transparent;
+	}
+}
+
+/* Buttons ---------------------------------------------------------------- */
+.btn {
+	appearance: none;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 6px;
+	height: 36px;
+	padding: 0 14px;
+	border: none;
+	border-radius: var(--radius);
+	font-size: 14px;
+	font-weight: 500;
+	cursor: pointer;
+	white-space: nowrap;
+	background: var(--surface);
+	color: var(--fg);
+	box-shadow: var(--shadow-border);
+	transition: background var(--dur) var(--ease), color var(--dur) var(--ease), opacity var(--dur) var(--ease);
+}
+
+.btn:hover:not(:disabled) {
+	background: var(--surface-2);
+}
+
+.btn--solid {
+	background: var(--solid);
+	color: var(--solid-fg);
+	box-shadow: none;
+}
+
+.btn--solid:hover:not(:disabled) {
+	background: var(--solid-hover);
+}
+
+.btn:disabled {
+	opacity: 0.5;
+	cursor: not-allowed;
+}
+
+.btn--block {
+	width: 100%;
+}
+
+:focus-visible {
+	outline: 2px solid var(--accent);
+	outline-offset: 2px;
+}
+
+/* Panels / views --------------------------------------------------------- */
+.view {
+	display: flex;
+	flex-direction: column;
+	gap: 20px;
+}
+
+.view[hidden] {
+	display: none;
+}
+
+.panel {
+	background: var(--surface);
+	border-radius: var(--radius-lg);
+	box-shadow: var(--shadow-sm);
+}
+
+.panel__label {
+	font-size: 11px;
+	font-weight: 500;
+	letter-spacing: 0.04em;
+	text-transform: uppercase;
+	color: var(--fg-muted);
+}
+
+/* Scoreboard ------------------------------------------------------------- */
+.scoreboard {
+	display: grid;
+	grid-template-columns: repeat(3, 1fr);
+}
+
+.stat {
+	padding: 14px 16px;
+	text-align: left;
+}
+
+.stat + .stat {
+	box-shadow: inset 1px 0 0 var(--border);
+}
+
+.stat__value {
+	display: block;
+	font-family: var(--font-mono);
+	font-size: 26px;
+	font-weight: 500;
+	letter-spacing: -0.02em;
+	line-height: 1.1;
+}
+
+.stat__label {
+	font-size: 12px;
+	color: var(--fg-muted);
+}
+
+/* Trainer: target prompt ------------------------------------------------- */
+.prompt {
+	display: flex;
+	align-items: center;
+	gap: 20px;
+	padding: 20px;
+}
+
+.staff {
+	flex: none;
+	width: 132px;
+	height: 132px;
+	display: grid;
+	place-items: center;
+	background: var(--staff-bg);
+	border-radius: var(--radius);
+	box-shadow: var(--shadow-border);
+	overflow: hidden;
+}
+
+/* Recolor VexFlow's hard-coded black so it tracks the theme. */
+.staff svg path,
+.staff svg rect {
+	fill: var(--staff-ink);
+	stroke: var(--staff-ink);
+}
+
+.prompt__meta {
+	min-width: 0;
+}
+
+.prompt__hint {
+	font-size: 13px;
+	color: var(--fg-muted);
+	margin: 0 0 6px;
+}
+
+.prompt__note {
+	font-family: var(--font-mono);
+	font-size: 44px;
+	font-weight: 500;
+	letter-spacing: -0.03em;
+	line-height: 1;
+}
+
+.prompt__alt {
+	font-size: 15px;
+	color: var(--fg-secondary);
+	margin-top: 4px;
+}
+
+/* Tuner / readout -------------------------------------------------------- */
+.readout {
+	padding: 28px 20px 24px;
+	text-align: center;
+	transition: background var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
+}
+
+.readout--locked {
+	background: var(--success-bg);
+	box-shadow: 0 0 0 1px var(--success);
+}
+
+.readout__note {
+	font-family: var(--font-mono);
+	font-weight: 500;
+	font-size: 84px;
+	line-height: 0.95;
+	letter-spacing: -0.04em;
+	transition: color var(--dur) var(--ease);
+}
+
+.readout--locked .readout__note {
+	color: var(--success);
+}
+
+.readout__idle {
+	color: var(--fg-muted);
+}
+
+.readout__sub {
+	margin-top: 6px;
+	font-family: var(--font-mono);
+	font-size: 14px;
+	color: var(--fg-muted);
+	font-variant-numeric: tabular-nums;
+	min-height: 1.2em;
+}
+
+/* Cents meter ------------------------------------------------------------ */
+.meter {
+	margin: 22px auto 0;
+	max-width: 320px;
+}
+
+.meter__scale {
+	position: relative;
+	height: 44px;
+}
+
+.meter__ticks {
+	position: absolute;
+	inset: 0;
+	display: flex;
+	justify-content: space-between;
+	align-items: flex-end;
+	padding-bottom: 16px;
+}
+
+.meter__tick {
+	width: 1px;
+	background: var(--border-strong);
+	height: 8px;
+}
+
+.meter__tick--center {
+	height: 16px;
+	background: var(--fg-muted);
+}
+
+.meter__needle {
+	position: absolute;
+	left: 50%;
+	bottom: 8px;
+	width: 2px;
+	height: 32px;
+	border-radius: 2px;
+	background: var(--accent);
+	transform: translateX(-50%);
+	transition: left 80ms linear, background var(--dur) var(--ease);
+}
+
+.readout--locked .meter__needle {
+	background: var(--success);
+}
+
+.meter__labels {
+	display: flex;
+	justify-content: space-between;
+	font-family: var(--font-mono);
+	font-size: 11px;
+	color: var(--fg-muted);
+	margin-top: 2px;
+}
+
+/* Footer controls -------------------------------------------------------- */
+.controls {
+	display: flex;
+	gap: 10px;
+}
+
+/* Settings popover ------------------------------------------------------- */
+.settings {
+	position: absolute;
+	top: 60px;
+	right: 20px;
+	z-index: 50;
+	width: 320px;
+	max-width: calc(100vw - 40px);
+	max-height: min(560px, calc(100vh - 96px));
+	overflow-y: auto;
+	padding: 6px;
+	background: var(--surface);
+	border-radius: var(--radius-lg);
+	box-shadow: var(--shadow-md);
+}
+
+.settings[hidden] {
+	display: none;
+}
+
+.settings__section {
+	padding: 8px;
+}
+
+.settings__section + .settings__section {
+	border-top: 1px solid var(--border);
+}
+
+.settings__heading {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	margin-bottom: 12px;
+}
+
+.settings__actions {
+	display: flex;
+	gap: 4px;
+}
+
+.link-btn {
+	border: none;
+	background: transparent;
+	color: var(--fg-secondary);
+	font-size: 12px;
+	font-weight: 500;
+	padding: 3px 8px;
+	border-radius: var(--radius-sm);
+	cursor: pointer;
+	transition: color var(--dur) var(--ease), background var(--dur) var(--ease);
+}
+
+.link-btn:hover {
+	color: var(--fg);
+	background: var(--surface-2);
+}
+
+/* Switch */
+.switch {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	padding: 8px;
+	border-radius: var(--radius);
+	cursor: pointer;
+}
+
+.switch:hover {
+	background: var(--surface-2);
+}
+
+.switch__text {
+	flex: 1;
+	min-width: 0;
+}
+
+.switch__title {
+	display: block;
+	font-size: 14px;
+	font-weight: 500;
+}
+
+.switch__desc {
+	display: block;
+	font-size: 12px;
+	color: var(--fg-muted);
+}
+
+.switch__input {
+	position: absolute;
+	opacity: 0;
+	pointer-events: none;
+}
+
+.switch__track {
+	flex: none;
+	position: relative;
+	width: 36px;
+	height: 20px;
+	border-radius: var(--radius-pill);
+	background: var(--border-strong);
+	transition: background var(--dur) var(--ease);
+}
+
+.switch__track::after {
+	content: '';
+	position: absolute;
+	top: 2px;
+	left: 2px;
+	width: 16px;
+	height: 16px;
+	border-radius: 50%;
+	background: var(--surface);
+	box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+	transition: transform var(--dur) var(--ease);
+}
+
+.switch__input:checked + .switch__track {
+	background: var(--accent);
+}
+
+.switch__input:checked + .switch__track::after {
+	transform: translateX(16px);
+}
+
+.switch__input:focus-visible + .switch__track {
+	outline: 2px solid var(--accent);
+	outline-offset: 2px;
+}
+
+/* Note chips */
+.chips {
+	display: grid;
+	grid-template-columns: repeat(5, 1fr);
+	gap: 6px;
+}
+
+.chip {
+	height: 34px;
+	border: none;
+	border-radius: var(--radius);
+	background: var(--surface-2);
+	color: var(--fg-muted);
+	font-family: var(--font-mono);
+	font-size: 12px;
+	font-weight: 500;
+	cursor: pointer;
+	box-shadow: var(--shadow-border);
+	transition: color var(--dur) var(--ease), background var(--dur) var(--ease);
+}
+
+.chip:hover {
+	color: var(--fg);
+}
+
+.chip[aria-pressed='true'] {
+	background: var(--solid);
+	color: var(--solid-fg);
+	box-shadow: none;
+}
+
+.hint {
+	font-size: 12px;
+	color: var(--fg-muted);
+	text-align: center;
+	margin: 0;
+}
+
+@media (max-width: 420px) {
+	.readout__note {
+		font-size: 64px;
+	}
+
+	.prompt {
+		flex-direction: column;
+		text-align: center;
+		align-items: center;
+	}
+}
