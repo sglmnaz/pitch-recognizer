@@ -28,7 +28,8 @@ the folder when done; re-download to run again.
 Studio recordings are degraded to simulate different phones and rooms (seeded,
 so every run hears the same audio): `clean`, `phone-good` (low cut 100 Hz,
 25 dB SNR, small room), `phone-mid` (150 Hz, 15 dB, medium room), `phone-cheap`
-(250 Hz, 10 dB, reverberant). See `CONDITIONS` in `scripts/audio.ts`.
+(250 Hz, 10 dB, reverberant), `unplugged` (an electric guitar without amp:
+signal −30 dB under a fixed room-noise level). See `CONDITIONS` in `scripts/audio.ts`.
 
 ## Metrics
 
@@ -54,3 +55,4 @@ references outside a level's vocabulary are left out of it):
 | clean | 99.2 % | 155 ms | 61.7 % | 50.4 % | 274 ms |
 | phone-mid | 99.0 % | 153 ms | 62.2 % | 50.9 % | 273 ms |
 | phone-cheap | 96.7 % | 152 ms | | | |
+| unplugged | 97.7 % (was 17.4 % before the gate fix) | 146 ms | | | |

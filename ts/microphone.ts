@@ -17,11 +17,16 @@ export type ErrorCallback = (error: unknown) => void
 // (the high E radiates far less energy and decays fastest) while they were
 // still clearly audible, so the gate tracks the background noise instead (see
 // learnNoise). Signal must sit NOISE_MARGIN× (~10 dB) above it, and above
-// MIN_VOLUME in any case.
+// MIN_VOLUME in any case. MIN_VOLUME (~-70 dBFS) only guards near-digital
+// silence: at the old 0.004 an electric guitar played unplugged was read in
+// 17 % of frames on the benchmark (`unplugged` condition), at 0.0003 in 98 %,
+// with room noise alone still never producing a note (scripts/pitch-check.ts).
+// Boosting the input would not help: detection is level-invariant and a boost
+// raises the room noise just as much.
 // ponytail: pitched hum (mains harmonics) is never learned as noise, so hum
 // louder than MIN_VOLUME reads as a note; learn hum that stays put for many
 // seconds if that shows up in practice.
-const MIN_VOLUME = 0.004
+const MIN_VOLUME = 0.0003
 const NOISE_MARGIN = 3
 const NOISE_FLOOR_RISE = 1.1
 
@@ -133,6 +138,8 @@ let attackUntil = 0
 let octaveJumpSince: number | null = null
 let lastReading: PitchReading | null = null
 let lastReadingAt = 0
+// Whether the latest frame cleared the silence gate (shared with the chords view).
+let sounding = false
 
 function rootMeanSquare(input: Float32Array): number {
 	let sumSquares = 0
@@ -252,6 +259,7 @@ function processFrame(input: Float32Array, sampleRate: number, now: number): Pit
 	const dt = Math.max(0, now - lastFrameAt) / 1000
 	lastFrameAt = now
 
+	sounding = volume >= Math.max(MIN_VOLUME, NOISE_MARGIN * (noiseFloor ?? 0))
 	if (volume < MIN_VOLUME) {
 		learnNoise(volume, dt)
 		resetSmoothing()
@@ -377,6 +385,7 @@ function stop() {
 	lastFrameAt = 0
 	envelope = 0
 	lastReading = null
+	sounding = false
 }
 
 /** Latest band-passed input window, or null while not listening. */
@@ -403,4 +412,9 @@ function getSpectrum(): { spectrumDb: Float32Array; binHz: number } | null {
 	return { spectrumDb: chordSpectrum, binHz: audioContext.sampleRate / CHORD_FFT_SIZE }
 }
 
-export { start, stop, processFrame, getWaveform, getSpectrum, isSuspended, resume }
+/** True while the input clears the adaptive silence gate (a note or chord is sounding). */
+function isSounding(): boolean {
+	return sounding
+}
+
+export { start, stop, processFrame, getWaveform, getSpectrum, isSounding, isSuspended, resume }

@@ -122,9 +122,12 @@ function syncMicUi() {
 
 // ~23 ms at 44.1 kHz: two periods of the low E string, many of the high ones.
 const WAVE_SAMPLES = 1024
-// Fixed gain so loudness reads honestly: noise stays a near-flat line, a
-// plucked string fills the strip.
+// The trace is normalised so its peak fills 90 % of the strip, never beyond:
+// a loud acoustic fits and a quiet source (an unplugged electric) still shows.
+// The gain is capped low (WAVE_GAIN) while only noise comes in, so silence
+// stays a near-flat line, and at MAX_WAVE_GAIN once something is sounding.
 const WAVE_GAIN = 4
+const MAX_WAVE_GAIN = 300
 
 function drawWaveform(voiced: boolean) {
 	const dpr = window.devicePixelRatio || 1
@@ -160,9 +163,12 @@ function drawWaveform(voiced: boolean) {
 				break
 			}
 		}
+		let peak = 0
+		for (let i = start; i < start + WAVE_SAMPLES; i++) peak = Math.max(peak, Math.abs(data[i]))
+		const gain = Math.min(Microphone.isSounding() ? MAX_WAVE_GAIN : WAVE_GAIN, 0.9 / peak)
 		for (let x = 0; x <= width; x++) {
 			const sample = data[start + Math.floor((x / width) * (WAVE_SAMPLES - 1))]
-			const y = height / 2 - Math.max(-1, Math.min(1, sample * WAVE_GAIN)) * (height / 2 - ctx.lineWidth)
+			const y = height / 2 - Math.max(-1, Math.min(1, sample * gain)) * (height / 2 - ctx.lineWidth)
 			if (x === 0) ctx.moveTo(x, y)
 			else ctx.lineTo(x, y)
 		}

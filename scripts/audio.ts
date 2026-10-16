@@ -105,6 +105,9 @@ export interface Condition {
 	snrDb: number
 	/** Room reverberation time (RT60), 0 = dry. */
 	reverbSeconds: number
+	/** Optional playing-level change and a fixed room-noise level (RMS), for quiet sources. */
+	gainDb?: number
+	noiseRms?: number
 }
 
 export const CONDITIONS: Condition[] = [
@@ -112,6 +115,9 @@ export const CONDITIONS: Condition[] = [
 	{ name: 'phone-good', highpassHz: 100, snrDb: 25, reverbSeconds: 0.3 },
 	{ name: 'phone-mid', highpassHz: 150, snrDb: 15, reverbSeconds: 0.5 },
 	{ name: 'phone-cheap', highpassHz: 250, snrDb: 10, reverbSeconds: 0.8 },
+	// An electric guitar played unplugged: the string alone is ~30 dB quieter
+	// than an acoustic, while the room noise stays what it is.
+	{ name: 'unplugged', highpassHz: 150, snrDb: Infinity, reverbSeconds: 0.3, gainDb: -30, noiseRms: 0.0005 },
 ]
 
 /**
@@ -143,13 +149,13 @@ function reverb(signal: Float32Array, sampleRate: number, rt60: number): Float32
 
 /** Applies a condition. Seeded noise, so every run hears exactly the same audio. */
 export function degrade(signal: Float32Array, sampleRate: number, condition: Condition, seed = 1): Float32Array {
-	let out = signal
+	let out = condition.gainDb ? signal.map((x) => x * 10 ** (condition.gainDb! / 20)) : signal
 	if (condition.reverbSeconds > 0) out = reverb(out, sampleRate, condition.reverbSeconds)
 	if (condition.highpassHz > 0) {
 		out = biquad(biquad(out, sampleRate, 'highpass', condition.highpassHz), sampleRate, 'highpass', condition.highpassHz)
 	}
-	if (Number.isFinite(condition.snrDb)) {
-		const noiseRms = rms(out) / 10 ** (condition.snrDb / 20)
+	if (Number.isFinite(condition.snrDb) || condition.noiseRms) {
+		const noiseRms = condition.noiseRms ?? rms(out) / 10 ** (condition.snrDb / 20)
 		let state = seed
 		const uniform = () => (state = (state * 16807) % 2147483647) / 2147483647
 		out = out.map((x) => {

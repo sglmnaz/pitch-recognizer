@@ -2,19 +2,9 @@ import * as Microphone from '../microphone'
 import { PITCH_CLASSES, recognizeChord } from '../chords'
 import type { View } from './view'
 
-// Below this input RMS nothing is analysed (the strum has died away).
-// ponytail: fixed gate; reuse the tuner's adaptive noise floor if quiet rooms
-// or loud ones need it.
-const MIN_VOLUME = 0.008
 // A new label (chord or "none") must win for this long before it is shown, so
 // a strum's attack and decay do not flicker through other chords.
 const CHORD_CONFIRM_MS = 250
-
-function rootMeanSquare(input: Float32Array): number {
-	let sumSquares = 0
-	for (let i = 0; i < input.length; i++) sumSquares += input[i] * input[i]
-	return Math.sqrt(sumSquares / input.length)
-}
 
 export function createChordsView(root: HTMLElement): View {
 	const name = root.querySelector<HTMLElement>('.readout__note')!
@@ -63,9 +53,10 @@ export function createChordsView(root: HTMLElement): View {
 		reset: () => idle(),
 
 		onReading() {
-			const input = Microphone.getWaveform()
 			const spectrum = Microphone.getSpectrum()
-			const loud = input !== null && rootMeanSquare(input) >= MIN_VOLUME
+			// Same adaptive silence gate as the tuner, so quiet sources (an
+			// unplugged electric) are analysed too.
+			const loud = Microphone.isSounding()
 			const analysis = loud && spectrum ? recognizeChord(spectrum.spectrumDb, spectrum.binHz) : null
 			const chord = analysis?.chord ?? null
 

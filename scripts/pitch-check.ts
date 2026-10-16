@@ -92,6 +92,20 @@ allOk = check('E4 quiet', 329.63, false, 0.04) && allOk
 // alone reads this an octave high (E3); the subharmonic check must catch it.
 allOk = check('E2 weak fund.', 82.41, false, 0.15, [0.03, 1, 0.22, 0.75, 0.14, 0.45, 0.08, 0.25]) && allOk
 
+// Room noise alone, at any level, must never produce a note: the quiet-input
+// gate leans on the adaptive noise floor and clarity, not on loudness.
+for (const level of [0.0003, 0.002, 0.02]) {
+	stop()
+	const room = new Float32Array(SAMPLE_RATE * 4)
+	for (let i = 0; i < room.length; i++) room[i] = level * Math.sqrt(-2 * Math.log(Math.random() + 1e-12)) * Math.cos(2 * Math.PI * Math.random())
+	let readings = 0
+	for (let end = FFT_SIZE; end <= room.length; end += HOP) {
+		if (processFrame(room.subarray(end - FFT_SIZE, end), SAMPLE_RATE, (end / SAMPLE_RATE) * 1000)) readings++
+	}
+	console.log(`${readings === 0 ? 'ok  ' : 'FAIL'} noise only ${level}  readings ${readings}`)
+	allOk = readings === 0 && allOk
+}
+
 // A tone already sounding when listening starts must not be learned as
 // background noise and gated out.
 {
