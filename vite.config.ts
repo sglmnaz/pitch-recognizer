@@ -16,11 +16,11 @@ export default defineConfig({
 	plugins: [
 		VitePWA({
 			registerType: 'autoUpdate',
-			includeAssets: ['apple-touch-icon-180x180.png'],
+			includeAssets: ['apple-touch-icon-180x180.png', 'favicon-64x64.png'],
 			manifest: {
-				name: 'Pitch Recognizer',
-				short_name: 'Pitch',
-				description: 'Ear-training and tuning: detect pitch from the microphone and match notes by ear.',
+				name: 'Pluck',
+				short_name: 'Pluck',
+				description: 'Guitar tuner, chord recognition and ear training from your microphone.',
 				lang: 'en',
 				theme_color: '#0a0a0b',
 				background_color: '#0a0a0b',

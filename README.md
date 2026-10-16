@@ -1,4 +1,4 @@
-# Pitch Recognizer
+# Pluck
 
 An ear-training and tuning web app: it listens through your microphone and detects
 the pitch you sing or play. It has two modes:

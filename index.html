@@ -3,15 +3,15 @@
 
 <head>
 	<meta charset="UTF-8" />
-	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-	<title>Pitch Recognizer</title>
-	<meta name="description" content="Ear-training and tuning: detect pitch from the microphone and match notes by ear." />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+	<title>Pluck</title>
+	<meta name="description" content="Guitar tuner, chord recognition and ear training from your microphone." />
 	<meta name="theme-color" content="#0a0a0b" />
-	<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎵</text></svg>" />
+	<link rel="icon" type="image/png" href="/favicon-64x64.png" />
 	<link rel="apple-touch-icon" href="/apple-touch-icon-180x180.png" />
 	<meta name="apple-mobile-web-app-capable" content="yes" />
 	<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-	<meta name="apple-mobile-web-app-title" content="Pitch" />
+	<meta name="apple-mobile-web-app-title" content="Pluck" />
 	<script>
 		// Resolve the theme before first paint to avoid a flash.
 		(function () {
@@ -25,19 +25,31 @@
 <body>
 	<main class="app">
 		<header class="topbar">
-			<span class="brand">
-				<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-					<path d="M9 18V5l12-2v13" />
-					<circle cx="6" cy="18" r="3" />
-					<circle cx="18" cy="16" r="3" />
-				</svg>
-				Pitch Recognizer
-			</span>
-			<div class="tabs" role="tablist">
-				<button class="tab" role="tab" data-tab="tuner" aria-selected="true">Tuner</button>
-				<button class="tab" role="tab" data-tab="chords" aria-selected="false">Chords</button>
-				<button class="tab" role="tab" data-tab="trainer" aria-selected="false">Trainer</button>
-			</div>
+			<!-- On phones this bar floats at the bottom, within thumb reach (style.css). -->
+			<nav class="tabs" role="tablist">
+				<button class="tab" role="tab" data-tab="tuner" aria-selected="true">
+					<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+						<path d="m12 14 4-4" />
+						<path d="M3.34 19a10 10 0 1 1 17.32 0" />
+					</svg>
+					Tuner
+				</button>
+				<button class="tab" role="tab" data-tab="chords" aria-selected="false">
+					<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+						<path d="M9 18V5l12-2v13" />
+						<circle cx="6" cy="18" r="3" />
+						<circle cx="18" cy="16" r="3" />
+					</svg>
+					Chords
+				</button>
+				<button class="tab" role="tab" data-tab="trainer" aria-selected="false">
+					<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+						<path d="M6 8.5a6.5 6.5 0 1 1 13 0c0 6-6 6-6 10a3.5 3.5 0 1 1-7 0" />
+						<path d="M15 8.5a2.5 2.5 0 0 0-5 0v1a2 2 0 1 1 0 4" />
+					</svg>
+					Trainer
+				</button>
+			</nav>
 			<button class="icon-btn" id="settingsToggle" type="button" aria-label="Settings" aria-expanded="false" aria-controls="settings">
 				<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
 					<circle cx="12" cy="12" r="3" />

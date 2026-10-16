@@ -4,7 +4,7 @@
 
 ## Product purpose
 
-Pitch Recognizer is an ear-training and tuning web app. It listens through the
+Pluck (formerly Pitch Recognizer) is an ear-training and tuning web app. It listens through the
 microphone and detects the pitch the user sings or plays. It has two modes:
 
 - **Trainer**: a guessing game. A note is shown on the staff; the user matches it

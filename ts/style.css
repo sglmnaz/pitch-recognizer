@@ -29,7 +29,8 @@ button {
 	position: relative;
 	max-width: 560px;
 	margin: 0 auto;
-	padding: 20px 20px 64px;
+	/* Safe-area insets: the PWA runs edge to edge (viewport-fit=cover). */
+	padding: calc(20px + env(safe-area-inset-top)) 20px 64px;
 	display: flex;
 	flex-direction: column;
 	gap: 24px;
@@ -38,28 +39,15 @@ button {
 .topbar {
 	display: flex;
 	align-items: center;
+	justify-content: flex-end;
 	gap: 12px;
 	padding-top: 8px;
 }
 
-.brand {
-	display: flex;
-	align-items: center;
-	gap: 9px;
-	font-weight: 600;
-	letter-spacing: -0.01em;
-	margin-right: auto;
-}
-
-.brand svg {
-	width: 20px;
-	height: 20px;
-	color: var(--fg);
-}
-
-/* Segmented tab control */
+/* Segmented tab control: fills the top bar up to the icon buttons. */
 .tabs {
-	display: inline-flex;
+	flex: 1;
+	display: flex;
 	padding: 3px;
 	gap: 2px;
 	background: var(--surface-2);
@@ -69,6 +57,11 @@ button {
 
 .tab {
 	appearance: none;
+	flex: 1;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 6px;
 	border: none;
 	background: transparent;
 	color: var(--fg-secondary);
@@ -78,6 +71,44 @@ button {
 	border-radius: 4px;
 	cursor: pointer;
 	transition: color var(--dur) var(--ease), background var(--dur) var(--ease);
+}
+
+.tab svg {
+	width: 15px;
+	height: 15px;
+	flex: none;
+}
+
+/* Phones: the tab bar floats at the bottom, within thumb reach; settings and
+   theme (rarely used) stay at the top. */
+@media (max-width: 600px) {
+	.app {
+		padding-bottom: calc(112px + env(safe-area-inset-bottom));
+	}
+
+	.tabs {
+		position: fixed;
+		left: 16px;
+		right: 16px;
+		bottom: calc(16px + env(safe-area-inset-bottom));
+		z-index: 20;
+		padding: 4px;
+		border-radius: var(--radius-lg);
+		box-shadow: var(--shadow-md);
+	}
+
+	.tab {
+		flex-direction: column;
+		gap: 3px;
+		padding: 8px 4px;
+		font-size: 11px;
+		border-radius: var(--radius);
+	}
+
+	.tab svg {
+		width: 20px;
+		height: 20px;
+	}
 }
 
 .tab:hover {
@@ -678,11 +709,6 @@ button {
 }
 
 @media (max-width: 420px) {
-	/* Three tabs + two icons fill a phone's top bar: keep only the brand icon. */
-	.brand {
-		font-size: 0;
-	}
-
 	.readout__note {
 		font-size: 64px;
 	}
