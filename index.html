@@ -34,8 +34,9 @@
 				Pitch Recognizer
 			</span>
 			<div class="tabs" role="tablist">
-				<button class="tab" role="tab" data-tab="trainer" aria-selected="true">Trainer</button>
-				<button class="tab" role="tab" data-tab="tuner" aria-selected="false">Tuner</button>
+				<button class="tab" role="tab" data-tab="tuner" aria-selected="true">Tuner</button>
+				<button class="tab" role="tab" data-tab="chords" aria-selected="false">Chords</button>
+				<button class="tab" role="tab" data-tab="trainer" aria-selected="false">Trainer</button>
 			</div>
 			<button class="icon-btn" id="settingsToggle" type="button" aria-label="Settings" aria-expanded="false" aria-controls="settings">
 				<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -86,13 +87,8 @@
 			</div>
 		</div>
 
-		<div class="mic-bar">
-			<button class="btn btn--solid" id="micButton" type="button">Listen</button>
-			<span class="status" id="status"></span>
-		</div>
-
 		<!-- Trainer ------------------------------------------------------- -->
-		<section class="view" id="view-trainer" role="tabpanel">
+		<section class="view" id="view-trainer" role="tabpanel" hidden>
 			<div class="panel scoreboard">
 				<div class="stat">
 					<span class="stat__value" data-stat="score">0</span>
@@ -142,7 +138,7 @@
 		</section>
 
 		<!-- Tuner --------------------------------------------------------- -->
-		<section class="view" id="view-tuner" role="tabpanel" hidden>
+		<section class="view" id="view-tuner" role="tabpanel">
 			<div class="panel readout">
 				<div class="readout__note readout__idle">--</div>
 				<div class="readout__sub">Play a note to begin</div>
@@ -161,8 +157,28 @@
 					<div class="meter__labels"><span>-50</span><span>0</span><span>+50</span></div>
 				</div>
 			</div>
-			<p class="hint">Sing or play any note. The readout locks green when you are within 5 cents.</p>
+			<p class="hint">Play one string at a time and mute the others. The readout locks green within 5 cents.</p>
 		</section>
+
+		<!-- Chords ------------------------------------------------------- -->
+		<section class="view" id="view-chords" role="tabpanel" hidden>
+			<div class="panel readout">
+				<div class="readout__note readout__idle">--</div>
+				<div class="readout__sub">Strum a chord</div>
+				<!-- Live pitch-class profile; chord tones highlight. Filled by ts/views/chords.ts. -->
+				<div class="chroma" aria-hidden="true"></div>
+			</div>
+			<p class="hint">Strum and let it ring. Recognizes major, minor, 7th, 9th and sus chords.</p>
+		</section>
+
+		<!-- Mic control. index.ts moves it right under the active view's readout. -->
+		<div class="mic" id="mic">
+			<div class="panel wave-panel">
+				<canvas class="wave" id="waveform" aria-hidden="true"></canvas>
+			</div>
+			<button class="btn btn--solid btn--large" id="micButton" type="button">Listen</button>
+			<span class="status" id="status"></span>
+		</div>
 	</main>
 
 	<script type="module" src="/ts/index.ts"></script>

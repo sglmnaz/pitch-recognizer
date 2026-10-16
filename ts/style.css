@@ -105,6 +105,10 @@ button {
 	transition: color var(--dur) var(--ease), background var(--dur) var(--ease);
 }
 
+.icon-btn[hidden] {
+	display: none;
+}
+
 .icon-btn:hover {
 	color: var(--fg);
 	background: var(--surface-2);
@@ -115,11 +119,34 @@ button {
 	height: 16px;
 }
 
-/* Mic control + status --------------------------------------------------- */
-.mic-bar {
+/* Mic control: waveform, big listen button, status ----------------------- */
+.mic {
 	display: flex;
+	flex-direction: column;
 	align-items: center;
 	gap: 12px;
+}
+
+.wave-panel {
+	align-self: stretch;
+	padding: 8px 12px;
+}
+
+/* Live input waveform: muted while only noise comes in, accent on a note. */
+.wave {
+	display: block;
+	width: 100%;
+	height: 56px;
+	color: var(--border-strong);
+	transition: color var(--dur) var(--ease);
+}
+
+.wave--live {
+	color: var(--fg-muted);
+}
+
+.wave--voiced {
+	color: var(--accent);
 }
 
 .status {
@@ -199,6 +226,15 @@ button {
 
 .btn--block {
 	width: 100%;
+}
+
+/* The primary listen control: full width, hard to miss. */
+.btn--large {
+	width: 100%;
+	height: 56px;
+	border-radius: var(--radius-lg);
+	font-size: 17px;
+	font-weight: 600;
 }
 
 :focus-visible {
@@ -334,6 +370,46 @@ button {
 
 .readout--locked .readout__note {
 	color: var(--success);
+}
+
+/* Chords: live pitch-class profile under the chord name. */
+.chroma {
+	display: grid;
+	grid-template-columns: repeat(12, 1fr);
+	gap: 4px;
+	margin-top: 24px;
+}
+
+.chroma__bin {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 6px;
+}
+
+.chroma__bar {
+	width: 100%;
+	max-width: 20px;
+	height: 48px;
+	border-radius: var(--radius-sm);
+	background: var(--border-strong);
+	transform: scaleY(0);
+	transform-origin: bottom;
+	transition: transform 80ms linear, background var(--dur) var(--ease);
+}
+
+.chroma__bin--tone .chroma__bar {
+	background: var(--accent);
+}
+
+.chroma__label {
+	font-family: var(--font-mono);
+	font-size: 10px;
+	color: var(--fg-muted);
+}
+
+.chroma__bin--tone .chroma__label {
+	color: var(--fg);
 }
 
 .readout__idle {
@@ -602,6 +678,11 @@ button {
 }
 
 @media (max-width: 420px) {
+	/* Three tabs + two icons fill a phone's top bar: keep only the brand icon. */
+	.brand {
+		font-size: 0;
+	}
+
 	.readout__note {
 		font-size: 64px;
 	}

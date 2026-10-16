@@ -6,7 +6,9 @@
 	"scripts": {
 		"dev": "vite",
 		"build": "tsc --noEmit && vite build",
-		"preview": "vite preview"
+		"preview": "vite preview",
+		"check:pitch": "node scripts/pitch-check.ts",
+		"check:chords": "node scripts/chord-check.ts"
 	},
 	"keywords": [
 		"pitch",
