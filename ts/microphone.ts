@@ -75,7 +75,12 @@ const MAX_FREQUENCY = 1400
 // drift only lower it); if it is clearly higher, the waveform only repeats
 // every 2τ and the note is an octave below. Applied repeatedly, down to
 // MIN_FREQUENCY.
-const SUBHARMONIC_MARGIN = 0.02
+// Margin tuned on the benchmark: 0.02 also pushed acoustic notes an octave
+// down (G3 read as G2 in 13 % of frames on GuitarSet, where body resonance and
+// still-ringing notes lift the 2τ peak); 0.05 gave the best acoustic RPA
+// (88.6 % vs 86.4 % at 0.02, 87.6 % with no check) and left electric
+// (IDMT, even behind a 250 Hz phone roll-off) unchanged.
+const SUBHARMONIC_MARGIN = 0.05
 
 // Pick attacks. Most octave errors happen at note onset, while the balance of
 // harmonics is still settling (McLeod, "Fast, Accurate Pitch Detection Tools

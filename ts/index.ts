@@ -122,12 +122,22 @@ function syncMicUi() {
 
 // ~23 ms at 44.1 kHz: two periods of the low E string, many of the high ones.
 const WAVE_SAMPLES = 1024
-// The trace is normalised so its peak fills 90 % of the strip, never beyond:
-// a loud acoustic fits and a quiet source (an unplugged electric) still shows.
-// The gain is capped low (WAVE_GAIN) while only noise comes in, so silence
-// stays a near-flat line, and at MAX_WAVE_GAIN once something is sounding.
-const WAVE_GAIN = 4
-const MAX_WAVE_GAIN = 300
+// Display-only automatic gain, like a scope's auto-range: the trace aims for
+// WAVE_TARGET of the half-height, so a loud acoustic and an unplugged electric
+// look alike, with headroom. The remembered peak jumps up at once (never
+// clips) and decays slowly (WAVE_RELEASE per frame, ~0.4 s half-life) so the
+// trace does not pump. The gain is capped by how tall room noise would be
+// drawn: WAVE_NOISE_SILENT while nothing is sounding (silence stays almost
+// flat), WAVE_NOISE_SOUNDING once the gate hears a note, so a quiet source
+// (an unplugged electric) still fills the strip. The noise level is the
+// average trace peak while nothing is sounding, so it calibrates itself.
+const WAVE_TARGET = 0.6
+const WAVE_RELEASE = 0.97
+const WAVE_NOISE_SILENT = 0.04
+const WAVE_NOISE_SOUNDING = 0.3
+const WAVE_GAIN_BEFORE_NOISE = 4 // until some silence has been heard
+let wavePeak = 0
+let noisePeak = 0
 
 function drawWaveform(voiced: boolean) {
 	const dpr = window.devicePixelRatio || 1
@@ -165,7 +175,11 @@ function drawWaveform(voiced: boolean) {
 		}
 		let peak = 0
 		for (let i = start; i < start + WAVE_SAMPLES; i++) peak = Math.max(peak, Math.abs(data[i]))
-		const gain = Math.min(Microphone.isSounding() ? MAX_WAVE_GAIN : WAVE_GAIN, 0.9 / peak)
+		wavePeak = Math.max(peak, wavePeak * WAVE_RELEASE)
+		const sounding = Microphone.isSounding()
+		if (!sounding) noisePeak = noisePeak ? 0.95 * noisePeak + 0.05 * peak : peak
+		const noiseCap = noisePeak ? (sounding ? WAVE_NOISE_SOUNDING : WAVE_NOISE_SILENT) / noisePeak : WAVE_GAIN_BEFORE_NOISE
+		const gain = Math.min(noiseCap, WAVE_TARGET / Math.max(wavePeak, 1e-9))
 		for (let x = 0; x <= width; x++) {
 			const sample = data[start + Math.floor((x / width) * (WAVE_SAMPLES - 1))]
 			const y = height / 2 - Math.max(-1, Math.min(1, sample * gain)) * (height / 2 - ctx.lineWidth)

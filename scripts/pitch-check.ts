@@ -88,9 +88,17 @@ for (const [name, f0] of strings.slice(0, 3)) allOk = check(`${name} glitch`, f0
 // A quiet high E decaying close to the noise must keep reading (a fixed RMS
 // gate used to cut the thin string while it was still clearly audible).
 allOk = check('E4 quiet', 329.63, false, 0.04) && allOk
-// Low E through a phone mic: fundamental ~30 dB down, odd partials weak. MPM
-// alone reads this an octave high (E3); the subharmonic check must catch it.
-allOk = check('E2 weak fund.', 82.41, false, 0.15, [0.03, 1, 0.22, 0.75, 0.14, 0.45, 0.08, 0.25]) && allOk
+// Low E through a cheap phone mic: a real pluck spectrum (|sin(nπ/7)|/n)
+// behind a 24 dB/octave roll-off at 250 Hz, i.e. the fundamental ~38 dB down
+// (the benchmark's phone-cheap condition). It must still read E2, not E3.
+// (An earlier version also suppressed the odd partials; real recordings never
+// look like that, and tuning for it caused octave-down errors on acoustics.)
+const phoneCheap = Array.from({ length: 8 }, (_, k) => {
+	const n = k + 1
+	const rolloff = ((n * 82.41) / 250) ** 4
+	return ((Math.abs(Math.sin((n * Math.PI) / 7)) / n) * rolloff) / Math.sqrt(1 + rolloff * rolloff)
+})
+allOk = check('E2 phone-cheap', 82.41, false, 0.4, phoneCheap) && allOk
 
 // Room noise alone, at any level, must never produce a note: the quiet-input
 // gate leans on the adaptive noise floor and clarity, not on loudness.

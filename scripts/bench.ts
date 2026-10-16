@@ -6,6 +6,7 @@
 //   npm run bench -- --full           # every item
 //   npm run bench -- --task notes     # or chords
 //   npm run bench -- --limit 20 --conditions clean,phone-mid   # quick iteration
+//   npm run bench -- --task notes --source guitarset --by-note   # acoustic notes, per note
 //   npm run bench -- --json out.json  # save results to diff two versions
 //
 // Sources (any that are present): bench/audio (your own labelled files, see
@@ -126,6 +127,29 @@ function ownItems<T>(kind: 'note' | 'chord', parse: (label: string) => T | null 
 	return items
 }
 
+/**
+ * GuitarSet solo excerpts (acoustic guitar through a microphone): notes that
+ * last at least 0.45 s and overlap no other note, from the per-string MIDI
+ * annotations.
+ */
+function guitarSetNotes(): Item<number>[] {
+	const dir = 'bench/data/guitarset'
+	if (!existsSync(join(dir, 'audio_mono-mic'))) return []
+	const items: Item<number>[] = []
+	for (const file of readdirSync(join(dir, 'annotation')).filter((f) => f.endsWith('_solo.jams')).sort()) {
+		const jams = JSON.parse(readFileSync(join(dir, 'annotation', file), 'utf8'))
+		const notes: Segment<number>[] = jams.annotations
+			.filter((a: { namespace: string }) => a.namespace === 'note_midi')
+			.flatMap((a: { data: { time: number; duration: number; value: number }[] }) =>
+				a.data.map((d) => ({ start: d.time, end: d.time + d.duration, value: Math.round(d.value) })),
+			)
+		const segments = notes.filter((n) => n.end - n.start >= 0.45 && !notes.some((o) => o !== n && o.start < n.end && n.start < o.end))
+		const base = file.replace('.jams', '')
+		if (segments.length) items.push({ id: `guitarset/${base}`, load: () => decode(join(dir, 'audio_mono-mic', `${base}_mic.wav`), SAMPLE_RATE), segments })
+	}
+	return items
+}
+
 /** GuitarSet comping excerpts with their instructed chords. */
 function guitarSetChords(): Item<Chord>[] {
 	const dir = 'bench/data/guitarset'
@@ -214,6 +238,8 @@ function idmtChords(): Item<Chord>[] {
 // --- evaluation -------------------------------------------------------------
 
 interface NoteScore {
+	/** Per MIDI note: scored frames, right pitch, right pitch class. */
+	byNote: Map<number, { frames: number; pitchHits: number; chromaHits: number }>
 	frames: number
 	pitchHits: number
 	chromaHits: number
@@ -235,12 +261,19 @@ function evaluateNotes(item: Item<number>, signal: Float32Array, score: NoteScor
 		const cents = reading ? 1200 * Math.log2(reading.frequency / (440 * 2 ** ((segment.value - 69) / 12))) : NaN
 		if (Math.abs(cents) < 50 && !firstSeen.has(segment)) firstSeen.set(segment, t - segment.start)
 		if (t < segment.start + SETTLE_S) continue
+		const note = score.byNote.get(segment.value) ?? { frames: 0, pitchHits: 0, chromaHits: 0 }
+		score.byNote.set(segment.value, note)
 		score.frames++
+		note.frames++
 		if (!reading) continue
 		score.voiced++
-		if (Math.abs(cents - 1200 * Math.round(cents / 1200)) < 50) score.chromaHits++
+		if (Math.abs(cents - 1200 * Math.round(cents / 1200)) < 50) {
+			score.chromaHits++
+			note.chromaHits++
+		}
 		if (Math.abs(cents) < 50) {
 			score.pitchHits++
+			note.pitchHits++
 			score.offsets.push(cents)
 		}
 	}
@@ -293,18 +326,30 @@ const quantile = (xs: number[], p: number) => (xs.length ? [...xs].sort((a, b) =
 const results: Record<string, unknown> = { date: new Date().toISOString(), limit }
 
 if (task !== 'chords') {
-	const items = [...ownItems('note', parseNote), ...spread(idmtNotes(), limit)]
+	const sources = option('--source')
+	const items = [
+		...ownItems('note', parseNote),
+		...(sources && !sources.includes('idmt') ? [] : spread(idmtNotes(), limit)),
+		...(sources && !sources.includes('guitarset') ? [] : spread(guitarSetNotes(), limit)),
+	]
 	console.log(`\nNOTES — ${items.length} items (RPA right note; RCA octave ignored; RCA−RPA = octave errors)`)
 	console.log('condition        RPA     RCA  voiced  IQR¢  first-ok')
 	for (const condition of activeConditions) {
-		const score: NoteScore = { frames: 0, pitchHits: 0, chromaHits: 0, voiced: 0, offsets: [], firstCorrect: [] }
+		const score: NoteScore = { byNote: new Map(), frames: 0, pitchHits: 0, chromaHits: 0, voiced: 0, offsets: [], firstCorrect: [] }
 		items.forEach((item, i) => evaluateNotes(item, degrade(item.load(), SAMPLE_RATE, condition, i + 1), score))
 		const iqr = quantile(score.offsets, 0.75) - quantile(score.offsets, 0.25)
 		const firstOk = quantile(score.firstCorrect, 0.5)
 		console.log(
 			`${condition.name.padEnd(13)} ${pct(score.pitchHits, score.frames)}  ${pct(score.chromaHits, score.frames)}  ${pct(score.voiced, score.frames)}  ${iqr.toFixed(1).padStart(4)}  ${firstOk.toFixed(0).padStart(5)}ms`,
 		)
-		const { offsets, firstCorrect, ...counts } = score
+		if (args.includes('--by-note')) {
+			const names = ['C', 'C#', 'D', 'Eb', 'E', 'F', 'F#', 'G', 'Ab', 'A', 'Bb', 'B']
+			const rows = [...score.byNote.entries()].sort((a, b) => a[0] - b[0]).filter(([, n]) => n.frames >= 20)
+			console.log(
+				'   ' + rows.map(([midi, n]) => `${names[midi % 12]}${Math.floor(midi / 12) - 1} ${pct(n.pitchHits, n.frames).trim()}${n.chromaHits > n.pitchHits ? ` (oct ${pct(n.chromaHits - n.pitchHits, n.frames).trim()})` : ''}`).join(' · '),
+			)
+		}
+		const { offsets, firstCorrect, byNote, ...counts } = score
 		results[`notes/${condition.name}`] = { ...counts, iqr, firstOk }
 	}
 }

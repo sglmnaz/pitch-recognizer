@@ -20,7 +20,7 @@ the folder when done; re-download to run again.
 | Source | Folder | Used for |
 |---|---|---|
 | [IDMT-SMT-Guitar](https://zenodo.org/records/7544110) (CC BY-NC-ND 4.0) | `bench/data/idmt/IDMT-SMT-GUITAR_V2/` | notes: dataset2, plain plucked single notes; chords: dataset4 `acoustic_mic` |
-| [GuitarSet](https://zenodo.org/records/3371780) (CC BY 4.0) | `bench/data/guitarset/{annotation,audio_mono-mic}/` | chords: comping excerpts, instructed chord labels |
+| [GuitarSet](https://zenodo.org/records/3371780) (CC BY 4.0) | `bench/data/guitarset/{annotation,audio_mono-mic}/` | acoustic guitar via microphone. Notes: solo excerpts, isolated notes ≥ 0.45 s; chords: comping excerpts, instructed labels |
 | own recordings (optional) | `bench/audio/` | `note-E2-….m4a`, `chord-Am-….m4a`, one sound per file |
 
 ## Phone conditions
@@ -29,7 +29,8 @@ Studio recordings are degraded to simulate different phones and rooms (seeded,
 so every run hears the same audio): `clean`, `phone-good` (low cut 100 Hz,
 25 dB SNR, small room), `phone-mid` (150 Hz, 15 dB, medium room), `phone-cheap`
 (250 Hz, 10 dB, reverberant), `unplugged` (an electric guitar without amp:
-signal −30 dB under a fixed room-noise level). See `CONDITIONS` in `scripts/audio.ts`.
+no body, so the strings radiate as dipoles — ~12 dB/octave lost below 300 Hz —
+36 dB quieter, over pink room noise). See `CONDITIONS` in `scripts/audio.ts`.
 
 ## Metrics
 
@@ -55,4 +56,15 @@ references outside a level's vocabulary are left out of it):
 | clean | 99.2 % | 155 ms | 61.7 % | 50.4 % | 274 ms |
 | phone-mid | 99.0 % | 153 ms | 62.2 % | 50.9 % | 273 ms |
 | phone-cheap | 96.7 % | 152 ms | | | |
-| unplugged | 97.7 % (was 17.4 % before the gate fix) | 146 ms | | | |
+| unplugged | ~25 % (low strings 0 %: below the room noise) | 131 ms | | | |
+
+Notes above are IDMT (electric). On GuitarSet's acoustic notes (`--source guitarset
+--by-note`) RPA is 88.6 % clean: the octave-up check's margin was raised from
+0.02 to 0.05 after it was found pushing acoustic notes an octave down (G3 read
+as G2 in 13 % of frames).
+
+`unplugged` is a known physical limit: the low strings reach the mic below the
+room noise. Tried and rejected (no gain or worse): pre-emphasis before MPM,
+a looser noise margin (25 → 28 %, but more gate openings on noise), an 8192
+window (worse, +35 ms). The fix is placement: the phone ~10 cm from the strings
+instead of ~50 cm is ~+14 dB.

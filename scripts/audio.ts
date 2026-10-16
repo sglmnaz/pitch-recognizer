@@ -108,6 +108,10 @@ export interface Condition {
 	/** Optional playing-level change and a fixed room-noise level (RMS), for quiet sources. */
 	gainDb?: number
 	noiseRms?: number
+	/** Low-end roll-off of the source itself (12 dB/octave), before any noise is added. */
+	sourceHighpassHz?: number
+	/** Pink (1/f) room noise instead of white: more rumble in the low end, like a real room. */
+	pinkNoise?: boolean
 }
 
 export const CONDITIONS: Condition[] = [
@@ -115,9 +119,11 @@ export const CONDITIONS: Condition[] = [
 	{ name: 'phone-good', highpassHz: 100, snrDb: 25, reverbSeconds: 0.3 },
 	{ name: 'phone-mid', highpassHz: 150, snrDb: 15, reverbSeconds: 0.5 },
 	{ name: 'phone-cheap', highpassHz: 250, snrDb: 10, reverbSeconds: 0.8 },
-	// An electric guitar played unplugged: the string alone is ~30 dB quieter
-	// than an acoustic, while the room noise stays what it is.
-	{ name: 'unplugged', highpassHz: 150, snrDb: Infinity, reverbSeconds: 0.3, gainDb: -30, noiseRms: 0.0005 },
+	// An electric guitar played unplugged: no body, so only the strings radiate
+	// (a thin vibrating string radiates as a dipole, losing ~12 dB per octave
+	// downwards: the low strings almost vanish), ~36 dB quieter than an
+	// acoustic, over pink room noise that is strongest in the low end.
+	{ name: 'unplugged', highpassHz: 100, snrDb: Infinity, reverbSeconds: 0.3, gainDb: -36, noiseRms: 0.0008, sourceHighpassHz: 300, pinkNoise: true },
 ]
 
 /**
@@ -150,6 +156,7 @@ function reverb(signal: Float32Array, sampleRate: number, rt60: number): Float32
 /** Applies a condition. Seeded noise, so every run hears exactly the same audio. */
 export function degrade(signal: Float32Array, sampleRate: number, condition: Condition, seed = 1): Float32Array {
 	let out = condition.gainDb ? signal.map((x) => x * 10 ** (condition.gainDb! / 20)) : signal
+	if (condition.sourceHighpassHz) out = biquad(out, sampleRate, 'highpass', condition.sourceHighpassHz)
 	if (condition.reverbSeconds > 0) out = reverb(out, sampleRate, condition.reverbSeconds)
 	if (condition.highpassHz > 0) {
 		out = biquad(biquad(out, sampleRate, 'highpass', condition.highpassHz), sampleRate, 'highpass', condition.highpassHz)
@@ -158,11 +165,27 @@ export function degrade(signal: Float32Array, sampleRate: number, condition: Con
 		const noiseRms = condition.noiseRms ?? rms(out) / 10 ** (condition.snrDb / 20)
 		let state = seed
 		const uniform = () => (state = (state * 16807) % 2147483647) / 2147483647
-		out = out.map((x) => {
-			// Box-Muller: Gaussian white noise.
-			const gaussian = Math.sqrt(-2 * Math.log(uniform() + 1e-12)) * Math.cos(2 * Math.PI * uniform())
-			return x + noiseRms * gaussian
-		})
+		// Box-Muller Gaussian white noise, optionally pinked (Paul Kellet's filter).
+		const white = () => Math.sqrt(-2 * Math.log(uniform() + 1e-12)) * Math.cos(2 * Math.PI * uniform())
+		const noise = new Float32Array(out.length)
+		let [b0, b1, b2, b3, b4, b5, b6] = [0, 0, 0, 0, 0, 0, 0]
+		for (let i = 0; i < noise.length; i++) {
+			const w = white()
+			if (!condition.pinkNoise) {
+				noise[i] = w
+				continue
+			}
+			b0 = 0.99886 * b0 + w * 0.0555179
+			b1 = 0.99332 * b1 + w * 0.0750759
+			b2 = 0.969 * b2 + w * 0.153852
+			b3 = 0.8665 * b3 + w * 0.3104856
+			b4 = 0.55 * b4 + w * 0.5329522
+			b5 = -0.7616 * b5 - w * 0.016898
+			noise[i] = b0 + b1 + b2 + b3 + b4 + b5 + b6 + w * 0.5362
+			b6 = w * 0.115926
+		}
+		const scale = noiseRms / Math.max(rms(noise), 1e-12)
+		out = out.map((x, i) => x + scale * noise[i])
 	}
 	return out
 }
