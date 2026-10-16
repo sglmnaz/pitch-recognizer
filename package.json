@@ -8,7 +8,8 @@
 		"build": "tsc --noEmit && vite build",
 		"preview": "vite preview",
 		"check:pitch": "node scripts/pitch-check.ts",
-		"check:chords": "node scripts/chord-check.ts"
+		"check:chords": "node scripts/chord-check.ts",
+		"bench": "node scripts/bench.ts"
 	},
 	"keywords": [
 		"pitch",

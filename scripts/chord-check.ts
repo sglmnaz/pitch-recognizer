@@ -3,10 +3,10 @@
 // window, dB) and asserts recognizeChord names them. Run with
 // `npm run check:chords`.
 import { recognizeChord } from '../ts/chords.ts'
+import { spectrumDb as analyserSpectrum } from './audio.ts'
 
 const SAMPLE_RATE = 44100
 const FFT_SIZE = 16384 // must match CHORD_FFT_SIZE in ts/microphone.ts
-const MAX_HZ = 1600 // only bins chromagram reads are computed
 
 let seed = 5
 const noise = () => ((seed = (seed * 16807) % 2147483647) / 2147483647) * 2 - 1
@@ -92,33 +92,14 @@ function strum(midis: number[], bright = false): Float32Array {
 	return out
 }
 
-/** dB magnitude spectrum of the last FFT_SIZE samples (naive DFT, low bins only). */
-function spectrumDb(signal: Float32Array): Float32Array {
-	const frame = signal.subarray(signal.length - FFT_SIZE)
-	const bins = Math.ceil((MAX_HZ * FFT_SIZE) / SAMPLE_RATE) + 2
-	const out = new Float32Array(FFT_SIZE / 2).fill(-200)
-	const windowed = frame.map((x, i) => {
-		const p = (2 * Math.PI * i) / FFT_SIZE
-		return x * (0.42 - 0.5 * Math.cos(p) + 0.08 * Math.cos(2 * p)) // Blackman, as AnalyserNode
-	})
-	for (let k = 0; k < bins; k++) {
-		let re = 0
-		let im = 0
-		const w = (2 * Math.PI * k) / FFT_SIZE
-		for (let i = 0; i < FFT_SIZE; i++) {
-			re += windowed[i] * Math.cos(w * i)
-			im -= windowed[i] * Math.sin(w * i)
-		}
-		out[k] = 20 * Math.log10(Math.hypot(re, im) / FFT_SIZE + 1e-12)
-	}
-	return out
-}
+/** dB magnitude spectrum of the last FFT_SIZE samples, as AnalyserNode computes it. */
+const spectrumDb = (signal: Float32Array) => analyserSpectrum(signal.subarray(signal.length - FFT_SIZE))
 
 const binHz = SAMPLE_RATE / FFT_SIZE
 // Bright strums are harder: overtones of each chord's fifth spell a major 7th
 // and a 9th. The soft suite must pass in full; the bright one must not drop
-// below what it scores today (C -> Cmaj7 and the x79797 E7 -> E9 still miss).
-const MIN_PASSED = { soft: 45, bright: 43 }
+// below what it scores today (the x79797 E7 -> E9 still misses).
+const MIN_PASSED = { soft: 45, bright: 44 }
 
 let allOk = true
 for (const bright of [false, true]) {

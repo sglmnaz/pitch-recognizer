@@ -49,3 +49,5 @@ design-extract-output/
 
 # Local skill packages / tooling
 .claude/
+# Benchmark datasets (downloaded for local testing only, never bundled or committed)
+bench/data/

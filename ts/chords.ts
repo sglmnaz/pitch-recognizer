@@ -15,16 +15,24 @@ export interface ChordMatch {
 	score: number
 }
 
-// Chord types as intervals above the root.
-const CHORD_TYPES: { suffix: string; intervals: number[] }[] = [
-	{ suffix: '', intervals: [0, 4, 7] },
-	{ suffix: 'm', intervals: [0, 3, 7] },
-	{ suffix: '7', intervals: [0, 4, 7, 10] },
-	{ suffix: 'm7', intervals: [0, 3, 7, 10] },
-	{ suffix: 'maj7', intervals: [0, 4, 7, 11] },
-	{ suffix: '9', intervals: [0, 4, 7, 10, 2] },
-	{ suffix: 'sus2', intervals: [0, 2, 7] },
-	{ suffix: 'sus4', intervals: [0, 5, 7] },
+// Chord types as intervals above the root, each with a penalty subtracted from
+// its match score: simpler chords win unless the extra note is clearly there.
+// Overtones of a chord's own notes spell extensions — the fifth's 5th harmonic
+// and the third's 3rd harmonic are its major 7th, the fifth's 3rd harmonic its
+// 9th — and a weak third (common on real recordings) turns any triad into a
+// sus chord. Each note beyond a triad costs 0.03; maj7 and sus pay extra.
+// Tuned with `npm run bench` on GuitarSet + IDMT-SMT-Guitar (sus 0.05 and maj7
+// +0.03 gave +4 points majmin and +5 sevenths) while keeping every synthetic
+// voicing in scripts/chord-check.ts recognised.
+const CHORD_TYPES: { suffix: string; intervals: number[]; penalty: number }[] = [
+	{ suffix: '', intervals: [0, 4, 7], penalty: 0 },
+	{ suffix: 'm', intervals: [0, 3, 7], penalty: 0 },
+	{ suffix: '7', intervals: [0, 4, 7, 10], penalty: 0.03 },
+	{ suffix: 'm7', intervals: [0, 3, 7, 10], penalty: 0.03 },
+	{ suffix: 'maj7', intervals: [0, 4, 7, 11], penalty: 0.06 },
+	{ suffix: '9', intervals: [0, 4, 7, 10, 2], penalty: 0.06 },
+	{ suffix: 'sus2', intervals: [0, 2, 7], penalty: 0.05 },
+	{ suffix: 'sus4', intervals: [0, 5, 7], penalty: 0.05 },
 ]
 
 // Chroma is compressed (value^CHROMA_EXPONENT) before matching. Guitar voicings
@@ -39,11 +47,6 @@ const CHROMA_EXPONENT = 0.5
 // differ only in root, and the lowest note played is usually the root.
 const BASS_BONUS = 0.03
 const BASS_RANGE_DB = 30
-
-// Simplicity bias: each note beyond a triad costs this much. Overtones of the
-// chord's own fifth spell a major 7th (5th harmonic) and a 9th (3rd harmonic),
-// so without it bright strings turn C into Cmaj7 and E7 into E9.
-const EXTRA_NOTE_PENALTY = 0.03
 
 // Spectrum band folded into chroma. 75 Hz keeps the low E (82 Hz); above
 // ~1.5 kHz guitar partials are mostly upper harmonics, which add the wrong
@@ -71,8 +74,10 @@ const OVERTONE_WEIGHT = 0.25
 // harmonics spell its own major triad — is named as a chord.
 const MIN_NOTES = 3
 
-// Below this cosine similarity nothing is named.
-const MIN_SCORE = 0.8
+// Below this cosine similarity nothing is named. 0.8 left real strums unnamed
+// half the time (muted strings, partial voicings); 0.6 gained 10 points majmin
+// on the benchmark while single notes stay rejected by MIN_NOTES.
+const MIN_SCORE = 0.6
 
 interface Peak {
 	hz: number
@@ -160,12 +165,12 @@ function matchChord(chroma: number[], bass: number | null): ChordMatch | null {
 	let best: ChordMatch | null = null
 	let bestRank = -Infinity
 	for (let root = 0; root < 12; root++) {
-		for (const { suffix, intervals } of CHORD_TYPES) {
+		for (const { suffix, intervals, penalty } of CHORD_TYPES) {
 			let dot = 0
 			for (const interval of intervals) dot += compressed[(root + interval) % 12]
 			// Cosine with a binary template: dot / (|chroma| * sqrt(#notes)).
 			const score = dot / (norm * Math.sqrt(intervals.length))
-			const rank = score + (root === bass ? BASS_BONUS : 0) - EXTRA_NOTE_PENALTY * (intervals.length - 3)
+			const rank = score + (root === bass ? BASS_BONUS : 0) - penalty
 			if (rank > bestRank) {
 				bestRank = rank
 				best = {
