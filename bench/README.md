@@ -56,12 +56,23 @@ references outside a level's vocabulary are left out of it):
 | clean | 99.2 % | 155 ms | 61.7 % | 50.4 % | 274 ms |
 | phone-mid | 99.0 % | 153 ms | 62.2 % | 50.9 % | 273 ms |
 | phone-cheap | 96.7 % | 152 ms | | | |
-| unplugged | ~25 % (low strings 0 %: below the room noise) | 131 ms | | | |
+| unplugged | ~29 % (low strings 0 %: below the room noise) | 131 ms | | | |
 
 Notes above are IDMT (electric). On GuitarSet's acoustic notes (`--source guitarset
 --by-note`) RPA is 88.6 % clean: the octave-up check's margin was raised from
 0.02 to 0.05 after it was found pushing acoustic notes an octave down (G3 read
 as G2 in 13 % of frames).
+
+2026-10-17, gate hysteresis (new note 2× noise floor, tracked note 1.2× and
+clarity 0.7): acoustic RPA 87.9 → 91.7 % clean, 84.0 → 91.0 % phone-mid; electric
+phone-cheap 96.9 → 99.4 %; unplugged 24.9 → 29.1 %.
+
+2026-10-17, field recording of an unplugged electric in a room with mains hum
+(?debug recorder): hum's long periods were winning pitchy's period search. MPM
+limited to guitar lags + two 70 Hz high-pass stages + new-note clarity 0.85: the A
+string went from never read to 82 % of frames, no reading in silence; benchmark
+acoustic 91.7 → 93.5 % clean, 91.0 → 92.6 % phone-mid; unplugged 29.1 → 41.5 %;
+chords unchanged.
 
 `unplugged` is a known physical limit: the low strings reach the mic below the
 room noise. Tried and rejected (no gain or worse): pre-emphasis before MPM,

@@ -2,6 +2,7 @@
 // biquad band-pass, AnalyserNode's spectrum), so scripts can run the app's
 // real detection code on recordings and synthetic signals in Node.
 import { spawnSync } from 'node:child_process'
+import { HIGHPASS_HZ, HIGHPASS_STAGES, LOWPASS_HZ } from '../ts/microphone.ts'
 
 /** Decodes any audio file ffmpeg can read to mono float samples. */
 export function decode(path: string, sampleRate: number): Float32Array {
@@ -34,6 +35,18 @@ export function biquad(signal: Float32Array, sampleRate: number, type: 'highpass
 		out[i] = y
 	}
 	return out
+}
+
+/** The app's high-pass stages (ts/microphone.ts), as Web Audio applies them. */
+export function appHighpass(signal: Float32Array, sampleRate: number): Float32Array {
+	let out = signal
+	for (let stage = 0; stage < HIGHPASS_STAGES; stage++) out = biquad(out, sampleRate, 'highpass', HIGHPASS_HZ)
+	return out
+}
+
+/** The app's whole pitch-path band-pass: high-pass stages then the low-pass. */
+export function appBand(signal: Float32Array, sampleRate: number): Float32Array {
+	return biquad(appHighpass(signal, sampleRate), sampleRate, 'lowpass', LOWPASS_HZ)
 }
 
 /** In-place iterative radix-2 FFT; length must be a power of two. */

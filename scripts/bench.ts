@@ -16,13 +16,11 @@ import { existsSync, readdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { FFT_SIZE, processFrame, stop } from '../ts/microphone.ts'
 import { recognizeChord } from '../ts/chords.ts'
-import { biquad, CONDITIONS, decode, degrade, rms, spectrumDb } from './audio.ts'
+import { appBand, appHighpass, CONDITIONS, decode, degrade, rms, spectrumDb } from './audio.ts'
 
 const SAMPLE_RATE = 44100
 const HOP = Math.round(SAMPLE_RATE / 60) // one rAF frame
-// Same chain and analyser settings as ts/microphone.ts.
-const HIGHPASS_HZ = 60
-const LOWPASS_HZ = 1400
+// Same analyser settings as ts/microphone.ts (filters via appBand/appHighpass).
 const CHORD_FFT_SIZE = 16384
 // Chords are scored at 10 Hz to keep runs short; AnalyserNode's 0.8 smoothing
 // per 60 Hz frame is 0.8^6 per 10 Hz step.
@@ -249,7 +247,7 @@ interface NoteScore {
 }
 
 function evaluateNotes(item: Item<number>, signal: Float32Array, score: NoteScore) {
-	const filtered = biquad(biquad(signal, SAMPLE_RATE, 'highpass', HIGHPASS_HZ), SAMPLE_RATE, 'lowpass', LOWPASS_HZ)
+	const filtered = appBand(signal, SAMPLE_RATE)
 	stop()
 	const firstSeen = new Map<Segment<number>, number>()
 	for (let end = FFT_SIZE; end <= filtered.length; end += HOP) {
@@ -284,7 +282,7 @@ type Level = 'root' | 'majmin' | 'sevenths'
 type ChordScore = Record<Level, { hits: number; frames: number }> & { confusions: Map<string, number>; latencies: number[] }
 
 function evaluateChords(item: Item<Chord>, signal: Float32Array, score: ChordScore) {
-	const filtered = biquad(signal, SAMPLE_RATE, 'highpass', HIGHPASS_HZ)
+	const filtered = appHighpass(signal, SAMPLE_RATE)
 	const state = { smoothing: CHORD_SMOOTHING }
 	const recognised = new Set<Segment<Chord>>()
 	for (let end = CHORD_FFT_SIZE; end <= filtered.length; end += CHORD_HOP) {

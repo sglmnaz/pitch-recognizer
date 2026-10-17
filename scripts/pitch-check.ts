@@ -3,6 +3,7 @@
 // readings land on the right note, with no octave errors once the attack has
 // passed. Run with `npm run check:pitch` (Node 24 strips the TS types).
 import { FFT_SIZE, processFrame, stop } from '../ts/microphone.ts'
+import { appBand, degrade } from './audio.ts'
 
 const SAMPLE_RATE = 44100
 const HOP = Math.round(SAMPLE_RATE / 60) // one rAF frame
@@ -112,6 +113,46 @@ for (const level of [0.0003, 0.002, 0.02]) {
 	}
 	console.log(`${readings === 0 ? 'ok  ' : 'FAIL'} noise only ${level}  readings ${readings}`)
 	allOk = readings === 0 && allOk
+}
+// Pink room noise (more rumble in the low end, like a real room), through the
+// app's band-pass, at several levels: still never a note.
+for (const level of [0.0005, 0.003, 0.02]) {
+	stop()
+	const room = degrade(new Float32Array(SAMPLE_RATE * 6), SAMPLE_RATE, { name: 'room', highpassHz: 0, snrDb: Infinity, reverbSeconds: 0, noiseRms: level, pinkNoise: true }, 7)
+	const banded = appBand(room, SAMPLE_RATE)
+	let readings = 0
+	for (let end = FFT_SIZE; end <= banded.length; end += HOP) {
+		if (processFrame(banded.subarray(end - FFT_SIZE, end), SAMPLE_RATE, (end / SAMPLE_RATE) * 1000)) readings++
+	}
+	console.log(`${readings === 0 ? 'ok  ' : 'FAIL'} pink noise ${level}  readings ${readings}`)
+	allOk = readings === 0 && allOk
+}
+
+// Unplugged electric: a long-sustaining string, no body (dipole roll-off below
+// 300 Hz), 31 dB down over pink room noise. The needle must follow the low E
+// for over a second, not freeze as soon as the note nears the noise.
+{
+	stop()
+	const string = new Float32Array(SAMPLE_RATE * 4)
+	for (let i = Math.round(0.5 * SAMPLE_RATE); i < string.length; i++) {
+		const t = i / SAMPLE_RATE - 0.5
+		let s = 0
+		for (let n = 1; n <= 12; n++) {
+			s += (Math.abs(Math.sin((n * Math.PI) / 9)) / n) * Math.exp(-t / (1.6 / (1 + 0.15 * n))) * Math.sin(2 * Math.PI * n * 82.41 * Math.sqrt(1 + 1e-4 * n * n) * t + n)
+		}
+		string[i] = 0.3 * s
+	}
+	const unplugged = degrade(string, SAMPLE_RATE, { name: 'unplugged', highpassHz: 100, snrDb: Infinity, reverbSeconds: 0.3, gainDb: -31, noiseRms: 0.0008, sourceHighpassHz: 300, pinkNoise: true }, 3)
+	const banded = appBand(unplugged, SAMPLE_RATE)
+	let correct = 0
+	for (let end = FFT_SIZE; end <= banded.length; end += HOP) {
+		const reading = processFrame(banded.subarray(end - FFT_SIZE, end), SAMPLE_RATE, (end / SAMPLE_RATE) * 1000)
+		if (reading && Math.abs(1200 * Math.log2(reading.frequency / 82.41)) < 50) correct++
+	}
+	const seconds = (correct * HOP) / SAMPLE_RATE
+	const ok = seconds >= 1
+	console.log(`${ok ? 'ok  ' : 'FAIL'} unplugged E2 sustain  ${seconds.toFixed(2)}s read (min 1.00s)`)
+	allOk = ok && allOk
 }
 
 // A tone already sounding when listening starts must not be learned as

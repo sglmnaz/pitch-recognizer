@@ -1,4 +1,4 @@
-import { PitchDetector } from 'pitchy'
+import { Autocorrelator } from 'pitchy'
 
 /** A single accepted pitch measurement. */
 export interface PitchReading {
@@ -29,15 +29,30 @@ export type ErrorCallback = (error: unknown) => void
 const MIN_VOLUME = 0.0003
 const NOISE_MARGIN = 3
 const NOISE_FLOOR_RISE = 1.1
+// Gate hysteresis for pitch readings (NOISE_MARGIN above stays the "something
+// is sounding" level used by the waveform and the chords view). A new note
+// must clear NOTE_MARGIN; a note already being tracked keeps reading down to
+// SUSTAIN_MARGIN, as long as its pitch stays put. A single 3x gate cut an
+// unplugged electric's sustain at ~10 dB above the room noise while the string
+// was still clearly pitched (clarity 0.85-0.9): the needle froze a second
+// after the pluck, before there was time to turn the peg. With 2x / 1.2x a
+// synthetic unplugged low E reads twice as long (0.6 -> 1.2 s at -31 dB) and
+// the benchmark improves everywhere (acoustic 87.9 -> 91.7 % RPA, electric on
+// a cheap phone 96.9 -> 99.4 %); room noise alone still never reads.
+const NOTE_MARGIN = 2
+const SUSTAIN_MARGIN = 1.2
 
-// Pitchy clarity below this is almost always noise rather than a real note.
-// (Pitchy's own peak-picking constant k stays at its 0.9 default: McLeod's
-// thesis, table 6.3, measures it among the lowest octave-error rates on real
-// instrument recordings.)
-const MIN_CLARITY = 0.9
+// Clarity a new note needs. 0.9 (pitchy's default) rejected an unplugged A
+// string at 0.84-0.91 on the field recording; 0.85 read it 82 % of the time,
+// raised the benchmark (acoustic 92.2 -> 93.5 %, unplugged 32 -> 41.5 % RPA)
+// and still produced no note from room noise. 0.8 read slightly more but
+// doubled acoustic octave errors.
+const MIN_CLARITY = 0.85
 // Voicing hysteresis: a note already being tracked keeps going down to this
-// clarity while it decays into the noise, as long as the pitch stays put.
-const SUSTAIN_CLARITY = 0.8
+// clarity while it decays into the noise, as long as the pitch stays within
+// SUSTAIN_CENTS of it. 0.7 (was 0.8) follows an unplugged string ~0.3 s
+// further into its tail, still on the right note.
+const SUSTAIN_CLARITY = 0.7
 const SUSTAIN_CENTS = 50
 
 // Analysis window. MPM needs ~2 periods of the lowest note to work at all;
@@ -57,11 +72,17 @@ const CHORD_FFT_SIZE = 16384
 // Classic tuner front end: band-pass to the guitar range before detection
 // (Lourde & Saji, "A Digital Guitar Tuner", use 75–1320 Hz). The high-pass
 // removes rumble, handling noise and DC that pull the estimate toward
-// octave-down errors; 60 Hz leaves E2 (and drop-D, D2 73 Hz) unattenuated. The
-// low-pass trims pick and fret hiss while passing the first harmonics of every
-// playable note.
-const HIGHPASS_HZ = 60
-const LOWPASS_HZ = 1400
+// octave-down errors. The low-pass trims pick and fret hiss while passing the
+// first harmonics of every playable note.
+// The high-pass is HIGHPASS_STAGES cascaded biquads (12 dB/octave each): mains
+// hum (50/60 Hz) sits just below the low E, and on a field recording of an
+// unplugged electric in a humming room a single 60 Hz stage left the hum
+// strong enough to win the period search over the A and D strings. Two 70 Hz
+// stages take ~14 dB off 50 Hz for ~4 dB off the low E's fundamental (its
+// harmonics carry the period anyway).
+export const HIGHPASS_HZ = 70
+export const HIGHPASS_STAGES = 2
+export const LOWPASS_HZ = 1400
 
 // Fundamentals outside the guitar range are noise, not a string.
 const MIN_FREQUENCY = 60
@@ -118,7 +139,59 @@ const MIN_CUTOFF = 0.6
 const BETA = 0.02
 const DERIVATIVE_CUTOFF = 1.0
 
-const detector = PitchDetector.forFloat32Array(FFT_SIZE)
+const autocorrelator = Autocorrelator.forFloat32Array(FFT_SIZE)
+const nsdf = new Float32Array(FFT_SIZE)
+// MPM peak-picking constant k (McLeod & Wyvill): the first NSDF key maximum
+// within k of the highest one is the period. 0.9 as pitchy (McLeod's thesis,
+// table 6.3: among the lowest octave-error rates on real instruments); 0.8-0.85
+// sent the B string an octave up on the field recording.
+const PEAK_K = 0.9
+
+/**
+ * McLeod pitch method, as pitchy's PitchDetector, except that key maxima are
+ * only considered at lags of guitar fundamentals (MIN_FREQUENCY..MAX_FREQUENCY).
+ * Pitchy searches every lag, so a long-period component — mains hum and its
+ * beats, ~12-50 Hz — could set the highest maximum and push a real note's
+ * peak below k of it: on a humming room the A string came out as 55 Hz or as
+ * noise instead of 110 Hz. Returns [frequency, clarity], or [0, 0].
+ */
+function findPitch(input: Float32Array, sampleRate: number): [number, number] {
+	autocorrelator.autocorrelate(input, nsdf)
+	// NSDF (McLeod eq. 9), with m' updated incrementally as in pitchy.
+	let m = 2 * nsdf[0]
+	let i = 0
+	for (; i < nsdf.length && m > 0; i++) {
+		nsdf[i] = (2 * nsdf[i]) / m
+		m -= input[i] ** 2 + input[input.length - i - 1] ** 2
+	}
+	for (; i < nsdf.length; i++) nsdf[i] = 0
+
+	const minLag = Math.floor(sampleRate / MAX_FREQUENCY)
+	const maxLag = Math.min(nsdf.length - 2, Math.ceil(sampleRate / MIN_FREQUENCY))
+	// Key maximum: the highest point between a rising and a falling zero crossing.
+	const keys: number[] = []
+	for (let lag = 1, looking = false, peak = -1; lag <= maxLag; lag++) {
+		if (nsdf[lag - 1] <= 0 && nsdf[lag] > 0) {
+			looking = true
+			peak = lag
+		} else if (nsdf[lag - 1] > 0 && nsdf[lag] <= 0) {
+			looking = false
+			if (peak >= minLag) keys.push(peak)
+		} else if (looking && nsdf[lag] > nsdf[peak]) {
+			peak = lag
+		}
+	}
+	let nMax = 0
+	for (const key of keys) nMax = Math.max(nMax, nsdf[key])
+	const peak = keys.find((key) => nsdf[key] >= PEAK_K * nMax)
+	if (peak === undefined) return [0, 0]
+
+	// Parabolic interpolation around the peak (McLeod §5).
+	const [a, b, c] = [nsdf[peak - 1], nsdf[peak], nsdf[peak + 1]]
+	const denominator = a - 2 * b + c
+	const shift = denominator === 0 ? 0 : (a - c) / (2 * denominator)
+	return [sampleRate / (peak + shift), Math.min(1, b - 0.25 * (a - c) * shift)]
+}
 
 let audioContext: AudioContext | null = null
 let stream: MediaStream | null = null
@@ -145,6 +218,15 @@ let lastReading: PitchReading | null = null
 let lastReadingAt = 0
 // Whether the latest frame cleared the silence gate (shared with the chords view).
 let sounding = false
+
+/** What the last frame measured and why it did or did not read (for ?debug). */
+export interface FrameStats {
+	volume: number
+	noiseFloor: number
+	clarity: number
+	reason: 'silent' | 'below noise' | 'attack' | 'low clarity' | 'out of range' | 'reading'
+}
+const stats: FrameStats = { volume: 0, noiseFloor: 0, clarity: 0, reason: 'silent' }
 
 function rootMeanSquare(input: Float32Array): number {
 	let sumSquares = 0
@@ -265,6 +347,9 @@ function processFrame(input: Float32Array, sampleRate: number, now: number): Pit
 	lastFrameAt = now
 
 	sounding = volume >= Math.max(MIN_VOLUME, NOISE_MARGIN * (noiseFloor ?? 0))
+	stats.volume = volume
+	stats.clarity = 0
+	stats.reason = 'silent'
 	if (volume < MIN_VOLUME) {
 		learnNoise(volume, dt)
 		resetSmoothing()
@@ -276,16 +361,20 @@ function processFrame(input: Float32Array, sampleRate: number, now: number): Pit
 		attackUntil = now + ATTACK_MS
 	}
 
-	const [rawPitch, clarity] = detector.findPitch(input, sampleRate)
+	const [rawPitch, clarity] = findPitch(input, sampleRate)
 	const pitch = clarity >= SUSTAIN_CLARITY ? correctOctaveUp(input, sampleRate, rawPitch) : rawPitch
 	const sustaining =
 		filteredValue !== null && Math.abs(1200 * Math.log2(pitch / filteredValue)) < SUSTAIN_CENTS
 	const voiced = clarity >= MIN_CLARITY || (sustaining && clarity >= SUSTAIN_CLARITY)
+	stats.clarity = clarity
 
 	// Only unpitched frames teach the noise floor: a note held from the moment
 	// listening starts (or sung for a long time) must never gate itself out.
 	if (!voiced) learnNoise(volume, dt)
-	if (volume < NOISE_MARGIN * (noiseFloor ?? 0)) {
+	stats.noiseFloor = noiseFloor ?? 0
+	stats.reason = now < attackUntil ? 'attack' : !voiced ? 'low clarity' : pitch < MIN_FREQUENCY || pitch > MAX_FREQUENCY ? 'out of range' : 'reading'
+	if (volume < (sustaining ? SUSTAIN_MARGIN : NOTE_MARGIN) * (noiseFloor ?? 0)) {
+		stats.reason = 'below noise'
 		resetSmoothing()
 		return held(now)
 	}
@@ -326,17 +415,21 @@ async function start(onReading: ReadingCallback, onError: ErrorCallback) {
 		audioContext = new AudioContext()
 		const source = audioContext.createMediaStreamSource(stream)
 
-		// source -> high-pass -> low-pass -> analyser: confine to the guitar band.
-		const highpass = audioContext.createBiquadFilter()
-		highpass.type = 'highpass'
-		highpass.frequency.value = HIGHPASS_HZ
+		// source -> high-pass stages -> low-pass -> analyser: confine to the guitar band.
+		let highpass: AudioNode = source
+		for (let stage = 0; stage < HIGHPASS_STAGES; stage++) {
+			const filter = audioContext.createBiquadFilter()
+			filter.type = 'highpass'
+			filter.frequency.value = HIGHPASS_HZ
+			highpass.connect(filter)
+			highpass = filter
+		}
 		const lowpass = audioContext.createBiquadFilter()
 		lowpass.type = 'lowpass'
 		lowpass.frequency.value = LOWPASS_HZ
 
 		const analyser = audioContext.createAnalyser()
 		analyser.fftSize = FFT_SIZE
-		source.connect(highpass)
 		highpass.connect(lowpass)
 		lowpass.connect(analyser)
 
@@ -417,9 +510,19 @@ function getSpectrum(): { spectrumDb: Float32Array; binHz: number } | null {
 	return { spectrumDb: chordSpectrum, binHz: audioContext.sampleRate / CHORD_FFT_SIZE }
 }
 
+/** Measurements of the latest frame (debug view). */
+function getStats(): Readonly<FrameStats> {
+	return stats
+}
+
+/** The raw microphone stream, as the app captures it (debug recorder). */
+function getStream(): MediaStream | null {
+	return stream
+}
+
 /** True while the input clears the adaptive silence gate (a note or chord is sounding). */
 function isSounding(): boolean {
 	return sounding
 }
 
-export { start, stop, processFrame, getWaveform, getSpectrum, isSounding, isSuspended, resume }
+export { start, stop, processFrame, getWaveform, getSpectrum, getStats, getStream, isSounding, isSuspended, resume }

@@ -719,3 +719,12 @@ button {
 		align-items: center;
 	}
 }
+
+/* ?debug diagnostics line */
+.debug {
+	margin: 0;
+	font-family: var(--font-mono);
+	font-size: 11px;
+	color: var(--fg-muted);
+	text-align: center;
+}
