@@ -4,7 +4,9 @@ import {
 	degreeMap,
 	degreeNumber,
 	degreesOf,
+	FRETS,
 	identifyScales,
+	midiAt,
 	pitchClassOf,
 	positionRun,
 	positionWindows,
@@ -78,6 +80,11 @@ const boxes = positionWindows(pitchClassOf('A'), type('Minor pentatonic')).map((
 check('A minor pentatonic boxes', boxes.join(' ') === '4-8 7-11 9-13 11-15 2-6', boxes.join(' '))
 const eBoxes = positionWindows(pitchClassOf('E'), type('Major')).map(([lo, hi]) => `${lo}-${hi}`)
 check('E major box 1 is the open position', eBoxes[0] === '0-3', eBoxes.join(' '))
+
+// The neck runs to fret 22; every box of every scale fits on it.
+check('Neck has 22 frets, top note D6', FRETS === 22 && midiAt(0, FRETS) === 86)
+const allFit = SCALE_TYPES.every((t) => Array.from({ length: 12 }, (_, pc) => positionWindows(pc, t)).flat().every(([lo, hi]) => lo >= 0 && hi <= FRETS))
+check('All position boxes fit frets 0-22', allFit)
 
 // Playback runs.
 const box1 = positionRun(pitchClassOf('A'), type('Minor pentatonic'), [4, 8])

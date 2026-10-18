@@ -7,6 +7,9 @@ const DURATION_S = 1.6
 // highs die first and low strings ring longer, like steel strings.
 const DECAY = 0.996
 const VOLUME = 0.5
+// Synthesis rate, above the device's: a longer delay line per period keeps
+// the high frets in tune with an integer delay.
+const RATE = 96000
 // How long after a pluck the mic should ignore what it hears (the speaker).
 const RING_MS = 900
 
@@ -16,14 +19,16 @@ let ringingUntil = 0
 
 function pluck(context: AudioContext, midi: number): AudioBuffer {
 	const frequency = 440 * 2 ** ((midi - 69) / 12)
-	const length = Math.round(context.sampleRate * DURATION_S)
-	const buffer = context.createBuffer(1, length, context.sampleRate)
+	const length = Math.round(RATE * DURATION_S)
+	// The context resamples a buffer of any rate on playback.
+	const buffer = context.createBuffer(1, length, RATE)
 	const out = buffer.getChannelData(0)
 	// A noise burst circulating through a delay line one period long. The
 	// averaging filter adds half a sample of delay, hence the -0.5.
-	// ponytail: integer delay, so G5 (fret 15) is up to ~8 cents off; add a
-	// fractional (allpass) delay if this ever doubles as a reference pitch.
-	const period = Math.max(2, Math.round(context.sampleRate / frequency - 0.5))
+	// ponytail: integer delay; at RATE the top note (D6, fret 22) is up to ~8
+	// cents off. Add a fractional (allpass) delay if this ever doubles as a
+	// reference pitch.
+	const period = Math.max(2, Math.round(RATE / frequency - 0.5))
 	const line = Float32Array.from({ length: period }, () => Math.random() * 2 - 1)
 	for (let i = 0, at = 0; i < length; i++) {
 		const next = (at + 1) % period

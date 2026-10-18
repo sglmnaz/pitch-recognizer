@@ -99,7 +99,7 @@ export function pitchClassesOf(rootPc: number, type: ScaleType): Set<number> {
 /** Standard tuning as MIDI notes, high E first (top row of the diagram, like tab). */
 export const STRINGS = [64, 59, 55, 50, 45, 40]
 export const STRING_NAMES = ['E', 'B', 'G', 'D', 'A', 'E']
-export const FRETS = 15
+export const FRETS = 22
 
 export const midiAt = (string: number, fret: number) => STRINGS[string] + fret
 

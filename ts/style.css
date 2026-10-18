@@ -984,13 +984,12 @@ button {
 	}
 
 	.neck:not(.neck--vertical) {
-		width: 680px;
+		width: 820px;
 	}
 }
 
 /* A vertical neck is tall: keep its controls above it, with the Display menu
-   opening downward. Wider screens size it by the viewport height instead of
-   the width, so all 15 frets fit at a comfortable size. */
+   opening downward. */
 .neck-card:has(.neck--vertical) .neck-toolbar {
 	order: -2;
 }

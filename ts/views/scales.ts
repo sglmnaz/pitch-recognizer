@@ -21,7 +21,7 @@ import {
 } from '../scales'
 import type { View } from './view'
 
-const INLAYS = [3, 5, 7, 9, 12, 15]
+const INLAYS = [3, 5, 7, 9, 12, 15, 17, 19, 21]
 // ponytail: results capped; a couple of marked notes already narrow it to a
 // screenful, add paging if someone wants to browse all ~150 for a single note.
 const MAX_RESULTS = 30
@@ -36,16 +36,20 @@ const ADD_HOLD_MS = 200
 // so they narrow up the neck. Along = distance from the open-string column,
 // across = string index (0 = high E). Horizontal draws along → x, high E on
 // top like tab; vertical draws along → y, low E on the left like a chord
-// diagram. 640 units (the mockup's proportions) leave fret 15 26 wide, room for a root dot.
+// diagram. 820 units over 22 frets leave fret 15 27 wide (the mockup's
+// proportions) and fret 22 18 wide, where dots shrink a little to fit.
 const OPEN = 30 // room for open-string notes before the nut
-const LENGTH = 640
+const LENGTH = 820
+// Vertical: frets 0–15 fill the screen; 16–22 continue below it.
+const SCREEN_FRETS = 15
 const SPACING = { h: 28, v: 36 }
 const MARGIN = { h: 14, v: 34 } // first string from the edge; v leaves room for fret numbers
 const DOT_R = 10
 const ROOT_R = 11
 // Vertical: drawn 1:1 with EQUAL fret spacing (it reads like a chord chart;
 // users found narrowing frets odd top to bottom), frets 0–15 exactly filling
-// the screen height left by everything that shares it (see verticalLength).
+// the screen height left by everything that shares it (see verticalLength),
+// the rest continuing below the fold.
 // On phones the strings spread across the board's width. On a short screen
 // dots shrink to their fret (never below MIN_R) and labels with them (never
 // below MIN_FONT). Horizontal keeps real fret spacing and, on phones, scrolls.
@@ -259,19 +263,18 @@ export function createScalesView(root: HTMLElement, mic: MicControl): View & { s
 		if (hintChanged && Settings.get().fretboardVertical && !root.hidden) render()
 	}
 
-	// Vertical neck length so frets 0–15 end exactly where the screen does,
-	// with the toolbar (and hint) above the board in view: the screen height
-	// minus those controls, the board's padding and legend, and the docked tab
-	// bar on phones, or on wider screens everything above the neck block (top
-	// bar), since the page should not need scrolling there.
+	// Vertical neck length so fret 15 ends exactly where the screen does, with
+	// the toolbar (and hint) above the board in view: the screen height minus
+	// those controls, the board's top padding, and the docked tab bar on
+	// phones, or on wider screens everything above the neck block (top bar).
+	// Frets 16–22, the board's bottom and the legend follow below the fold.
 	function verticalLength() {
 		const cardBox = card.getBoundingClientRect()
-		const style = getComputedStyle(board)
-		const above = board.getBoundingClientRect().top - cardBox.top
-		const legendHeight = legend.hidden ? 0 : legend.offsetHeight + parseFloat(getComputedStyle(legend).marginTop) * 2
-		const around = parseFloat(style.paddingTop) + parseFloat(style.paddingBottom) + legendHeight
+		const above = board.getBoundingClientRect().top - cardBox.top + parseFloat(getComputedStyle(board).paddingTop)
 		const reserve = phone.matches ? tabBar.offsetHeight + 4 : cardBox.top + scrollY + 16
-		return Math.max(300, Math.round(innerHeight - reserve - above - around))
+		const screen = Math.max(300, innerHeight - reserve - above)
+		// Equal frets: stretch the screen's 0–15 to the full 0–22 neck.
+		return Math.round(OPEN + 6 + ((screen - OPEN) * FRETS) / SCREEN_FRETS)
 	}
 
 	/* Playback ------------------------------------------------------------ */
@@ -425,19 +428,20 @@ export function createScalesView(root: HTMLElement, mic: MicControl): View & { s
 		const size = Settings.get().fretSize
 		const fill = vertical ? verticalLength() : null
 		const base = length ?? fill ?? LENGTH
-		const g = geometry(Math.round(base * size), OPEN, vertical)
+		// Phones, horizontal: drawn 1:1 (so MIN_R / MIN_FONT are real pixels)
+		// and scrolling; a neck within 10 % of the board's width just fits it,
+		// since a few px of scroll is a scrollbar for nothing.
+		const phoneWidth = !vertical && phone.matches ? (LENGTH * size <= boardWidth * 1.1 ? boardWidth : LENGTH * size) : null
+		const g = geometry(Math.round(phoneWidth ?? base * size), OPEN, vertical)
 		const { fretAt, noteAlong, halfCell } = g
 		const width = vertical ? MARGIN.v + 5 * spacingV + EDGE : g.length
 		const height = vertical ? g.length : MARGIN.h + 5 * SPACING.h + 30
 		neck.setAttribute('viewBox', `0 0 ${width} ${height}`)
 		neck.classList.toggle('neck--vertical', vertical)
 		// Vertical is drawn 1:1 (inline size beats the stylesheet's width: 100%).
-		// Horizontal: the rendered width grows with the length, so dots keep
-		// their size (phones: from the 680 px base, which scrolls). A phone neck
-		// within 10 % of the board's width just fits it: a few px of scroll is
-		// a scrollbar for nothing.
-		const phoneWidth = 680 * size <= boardWidth * 1.1 ? boardWidth : 680 * size
-		neck.style.width = vertical ? `${width}px` : phone.matches ? `${phoneWidth}px` : size === 1 ? '' : `${100 * size}%`
+		// Horizontal on wider screens: the rendered width grows with the length,
+		// so dots keep their size.
+		neck.style.width = vertical ? `${width}px` : phoneWidth ? `${g.length}px` : size === 1 ? '' : `${100 * size}%`
 		neck.style.height = vertical ? `${height}px` : ''
 
 		const degrees = shown ? degreeMap(shown.rootPc, shown.type) : new Map<number, string>()
