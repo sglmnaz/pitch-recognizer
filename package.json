@@ -9,6 +9,7 @@
 		"preview": "vite preview",
 		"check:pitch": "node scripts/pitch-check.ts",
 		"check:chords": "node scripts/chord-check.ts",
+		"check:scales": "node scripts/scale-check.ts",
 		"bench": "node scripts/bench.ts"
 	},
 	"keywords": [

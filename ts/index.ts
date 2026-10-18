@@ -3,6 +3,7 @@ import * as Microphone from './microphone'
 import { createTrainerView } from './views/trainer'
 import { createTunerView } from './views/tuner'
 import { createChordsView } from './views/chords'
+import { createScalesView } from './views/scales'
 import { createSettingsPanel } from './views/settings-panel'
 import type { View } from './views/view'
 
@@ -23,14 +24,26 @@ const tabButtons = Array.from(document.querySelectorAll<HTMLButtonElement>('[dat
 
 createSettingsPanel(settingsPanel)
 
+// The Scales tab has its own mic toggle instead of the shared #mic block.
+const scalesView = createScalesView(byId('view-scales'), {
+	state: () => (micBlocked ? 'blocked' : !micActive ? 'off' : Microphone.isSuspended() ? 'waiting' : 'listening'),
+	listen: (on) => {
+		if (!on) stopMic()
+		else if (!micActive) startMic()
+		else resumeMic()
+	},
+})
+
 const views: Record<string, { view: View; section: HTMLElement }> = {
 	trainer: { view: createTrainerView(byId('view-trainer')), section: byId('view-trainer') },
 	tuner: { view: createTunerView(byId('view-tuner')), section: byId('view-tuner') },
 	chords: { view: createChordsView(byId('view-chords')), section: byId('view-chords') },
+	scales: { view: scalesView, section: byId('view-scales') },
 }
 
 let currentName = 'tuner'
 let micActive = false
+let micBlocked = false
 
 /* Theme ------------------------------------------------------------------ */
 const SUN = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>'
@@ -78,14 +91,20 @@ function activate(name: string) {
 		section.hidden = key !== name
 	}
 	// One shared mic control, placed right under the active view's readout.
-	views[name].section.querySelector('.readout')?.after(mic)
+	// Views without one (Scales) have their own mic toggle: hide it there.
+	const readout = views[name].section.querySelector('.readout')
+	readout?.after(mic)
+	mic.hidden = !readout
 	for (const button of tabButtons) {
 		button.setAttribute('aria-selected', String(button.dataset.tab === name))
 	}
 
-	// All settings are trainer-related, so the gear only appears there.
-	settingsToggle.hidden = name !== 'trainer'
-	if (name !== 'trainer') setSettingsOpen(false)
+	// Settings exist for the Trainer and Scales only; show that tab's section.
+	const sections = settingsPanel.querySelectorAll<HTMLElement>('[data-for]')
+	sections.forEach((section) => (section.hidden = section.dataset.for !== name))
+	const hasSettings = [...sections].some((section) => !section.hidden)
+	settingsToggle.hidden = !hasSettings
+	if (!hasSettings) setSettingsOpen(false)
 
 	views[name].view.onActivate()
 }
@@ -118,6 +137,7 @@ function syncMicUi() {
 	micButton.textContent = listening ? 'Stop' : 'Listen'
 	micButton.classList.toggle('btn--solid', !listening)
 	setStatus(listening ? 'Listening' : waiting ? 'Tap to start' : 'Idle', listening)
+	scalesView.syncMic()
 }
 
 // ~23 ms at 44.1 kHz: two periods of the low E string, many of the high ones.
@@ -192,6 +212,7 @@ function drawWaveform(voiced: boolean) {
 
 async function startMic() {
 	micActive = true
+	micBlocked = false
 	syncMicUi()
 
 	await Microphone.start(
@@ -211,6 +232,7 @@ async function startMic() {
 			}
 		},
 		() => {
+			micBlocked = true
 			stopMic()
 			setStatus('Microphone unavailable', false)
 		}

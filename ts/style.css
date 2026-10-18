@@ -564,7 +564,12 @@ button {
 	padding: 8px;
 }
 
-.settings__section + .settings__section {
+.settings__section[hidden] {
+	display: none;
+}
+
+/* Hidden sections (other tab's settings) must not leave a divider behind. */
+.settings__section:not([hidden]) ~ .settings__section:not([hidden]) {
 	border-top: 1px solid var(--border);
 }
 
@@ -720,6 +725,647 @@ button {
 	}
 }
 
+.mic[hidden],
+.scales-pickers[hidden],
+.scale-info__notes[hidden] {
+	display: none;
+}
+
+/* Scales ----------------------------------------------------------------- */
+/* Small segmented control (Explore / Identify, labels, positions): the tab
+   bar's look at a smaller scale. */
+.segmented {
+	display: flex;
+	padding: 3px;
+	gap: 2px;
+	background: var(--surface-2);
+	border-radius: var(--radius);
+	box-shadow: var(--shadow-border);
+}
+
+.segmented button {
+	flex: 1;
+	border: none;
+	background: transparent;
+	color: var(--fg-secondary);
+	font-size: 13px;
+	font-weight: 500;
+	padding: 5px 12px;
+	border-radius: 4px;
+	cursor: pointer;
+	white-space: nowrap;
+	transition: color var(--dur) var(--ease), background var(--dur) var(--ease);
+}
+
+.segmented button:hover {
+	color: var(--fg);
+}
+
+.segmented button[aria-pressed='true'] {
+	color: var(--fg);
+	background: var(--surface);
+	box-shadow: var(--shadow-sm);
+}
+
+.segmented--small button {
+	padding: 4px 10px;
+	font-size: 12px;
+}
+
+.select {
+	appearance: none;
+	height: 36px;
+	min-width: 0;
+	padding: 0 30px 0 12px;
+	border: none;
+	border-radius: var(--radius);
+	font: inherit;
+	font-size: 14px;
+	color: var(--fg);
+	cursor: pointer;
+	box-shadow: var(--shadow-border);
+	/* Chevron drawn with two gradients so it follows the theme's colour. */
+	background:
+		linear-gradient(45deg, transparent 50%, var(--fg-muted) 50%) right 15px center / 5px 5px no-repeat,
+		linear-gradient(135deg, var(--fg-muted) 50%, transparent 50%) right 10px center / 5px 5px no-repeat,
+		var(--surface);
+}
+
+.select--small,
+.btn--small {
+	height: 32px;
+	font-size: 13px;
+}
+
+.btn--small {
+	padding: 0 12px;
+}
+
+.btn svg {
+	width: 14px;
+	height: 14px;
+	flex: none;
+}
+
+.view--scales {
+	gap: 16px;
+}
+
+/* One header line: mode, then root + scale (or the marked notes). */
+.scales-header {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px;
+}
+
+.scales-pickers {
+	flex: 1 1 280px;
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	min-width: 0;
+}
+
+.scales-root {
+	flex: none;
+	width: 76px;
+}
+
+.scales-type {
+	flex: 1;
+}
+
+.scales-marked {
+	flex: 1;
+	font-family: var(--font-mono);
+	font-size: 15px;
+	font-weight: 500;
+	word-spacing: 0.3em;
+}
+
+.scales-marked--empty {
+	font-family: var(--font-sans);
+	font-size: 13px;
+	font-weight: 400;
+	word-spacing: normal;
+	color: var(--fg-muted);
+}
+
+.scale-info {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+}
+
+.scale-info__title {
+	margin: 0;
+	font-size: 16px;
+	font-weight: 600;
+}
+
+/* Degree strip: note over degree; tapping toggles the degree's colour. */
+.scale-info__notes {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 6px;
+}
+
+.scale-note {
+	appearance: none;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	min-width: 40px;
+	padding: 5px 8px;
+	border: none;
+	border-radius: var(--radius);
+	background: var(--surface);
+	color: var(--fg);
+	font-family: var(--font-mono);
+	cursor: pointer;
+	box-shadow: var(--shadow-border);
+	transition: background var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
+}
+
+.scale-note:hover {
+	background: var(--surface-2);
+}
+
+.scale-note__name {
+	font-size: 15px;
+	font-weight: 500;
+}
+
+.scale-note__degree {
+	font-size: 11px;
+	color: var(--fg-muted);
+}
+
+/* Highlighted degrees wear the same colours as their dots on the neck. */
+.scale-note--root {
+	background: var(--root-fill);
+	box-shadow: 0 0 0 1px var(--root-stroke);
+}
+
+.scale-note--root .scale-note__name,
+.scale-note--root .scale-note__degree {
+	color: var(--root-text);
+}
+
+.scale-note--tone {
+	background: var(--tone-fill);
+	box-shadow: 0 0 0 1px var(--tone-stroke);
+}
+
+.scale-note--tone .scale-note__name,
+.scale-note--tone .scale-note__degree {
+	color: var(--tone-text);
+}
+
+.scale-note--root:hover,
+.scale-note--tone:hover {
+	filter: brightness(0.97);
+}
+
+/* The neck card is the hero: on wider screens it grows past the 520 px
+   column (up to 760 px) so the neck reads at about 1:1. */
+.neck-card {
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+	padding: 12px;
+}
+
+@media (min-width: 601px) {
+	.neck-card {
+		margin-inline: calc((100% - min(760px, 100vw - 40px)) / 2);
+	}
+}
+
+/* The board: its own surface with a hairline, and its own data-theme when
+   the fretboard theme setting forces light or dark. */
+.neck-board {
+	overflow-x: auto;
+	padding: 12px 10px 6px;
+	border-radius: var(--radius);
+	background: var(--board);
+	box-shadow: inset 0 0 0 1px var(--border);
+	color: var(--fg);
+}
+
+.neck {
+	display: block;
+	width: 100%;
+	height: auto;
+	font-family: var(--font-mono);
+	-webkit-tap-highlight-color: transparent;
+}
+
+/* Phones: the horizontal neck keeps a playable size and scrolls in its board;
+   the vertical one fits the width and grows down the page instead. */
+@media (max-width: 600px) {
+	.neck:not(.neck--vertical) {
+		width: 680px;
+	}
+
+	.neck--vertical {
+		max-width: 340px;
+		margin: 0 auto;
+	}
+}
+
+/* A vertical neck is tall: keep its controls above it, with the Display menu
+   opening downward. Wider screens size it by the viewport height instead of
+   the width, so all 15 frets fit at a comfortable size. */
+.neck-card:has(.neck--vertical) .neck-toolbar {
+	order: -2;
+}
+
+.neck-card:has(.neck--vertical) .neck-hint {
+	order: -1;
+}
+
+.neck-card:has(.neck--vertical) .display__menu {
+	top: calc(100% + 6px);
+	bottom: auto;
+}
+
+@media (min-width: 601px) {
+	.neck--vertical {
+		width: auto;
+		height: clamp(520px, calc(100vh - 220px), 900px);
+		max-width: 100%;
+		margin: 0 auto;
+	}
+
+	/* The board hugs the neck instead of spanning the card. */
+	.neck-card:has(.neck--vertical) .neck-board {
+		align-self: center;
+	}
+}
+
+.neck__inlay {
+	fill: var(--board-inlay);
+}
+
+.neck__fret {
+	stroke: var(--board-fret);
+	stroke-width: 1.2;
+}
+
+.neck__nut {
+	stroke: var(--board-nut);
+	stroke-width: 5;
+}
+
+.neck__string {
+	stroke: var(--board-string);
+}
+
+.neck__num {
+	fill: var(--fg-muted);
+	font-family: var(--font-sans);
+	font-size: 11px;
+	text-anchor: middle;
+	dominant-baseline: central;
+}
+
+.neck__box {
+	fill: color-mix(in srgb, var(--root-stroke) 7%, transparent);
+	stroke: var(--root-stroke);
+	stroke-width: 1.5;
+	stroke-dasharray: 5 4;
+}
+
+.cell {
+	cursor: pointer;
+	outline: none;
+}
+
+.cell__hit {
+	fill: transparent;
+}
+
+/* Dots: fill, 1 px outline and label from the degree palette (tokens.css). */
+.cell circle {
+	fill: transparent;
+	stroke: none;
+	stroke-width: 1;
+	transition: fill var(--dur) var(--ease);
+}
+
+.cell text {
+	fill: var(--note-text);
+	font-family: var(--font-sans);
+	font-size: 11.5px;
+	font-weight: 500;
+	text-anchor: middle;
+	dominant-baseline: central;
+	pointer-events: none;
+}
+
+/* Empty positions show nothing unless lit (heard / played) or hovered. */
+.cell:not(.cell--dot):not(.cell--lit) text {
+	display: none;
+}
+
+.cell:not(.cell--dot):hover circle {
+	fill: color-mix(in srgb, var(--note-stroke) 25%, transparent);
+}
+
+.cell--scale circle {
+	fill: var(--note-fill);
+	stroke: var(--note-stroke);
+}
+
+.cell--tone circle {
+	fill: var(--tone-fill);
+	stroke: var(--tone-stroke);
+}
+
+.cell--tone text {
+	fill: var(--tone-text);
+}
+
+.cell--root circle {
+	fill: var(--root-fill);
+	stroke: var(--root-stroke);
+}
+
+.cell--root text {
+	fill: var(--root-text);
+	font-size: 12px;
+}
+
+/* Identify: a marked note off any shown scale is solid; on a shown scale it
+   keeps its degree colours and its outline thickens. */
+.cell--marked circle {
+	fill: var(--solid);
+	stroke: var(--solid);
+}
+
+.cell--marked text {
+	fill: var(--solid-fg);
+}
+
+.cell--marked:is(.cell--scale, .cell--tone, .cell--root) circle {
+	stroke-width: 3;
+}
+
+.cell--marked.cell--scale circle {
+	fill: var(--note-fill);
+	stroke: var(--note-stroke);
+}
+
+.cell--marked.cell--scale text {
+	fill: var(--note-text);
+}
+
+.cell--marked.cell--tone circle {
+	fill: var(--tone-fill);
+	stroke: var(--tone-stroke);
+}
+
+.cell--marked.cell--tone text {
+	fill: var(--tone-text);
+}
+
+.cell--marked.cell--root circle {
+	fill: var(--root-fill);
+	stroke: var(--root-stroke);
+}
+
+.cell--marked.cell--root text {
+	fill: var(--root-text);
+}
+
+/* Outside the chosen position. */
+.cell--dim {
+	opacity: 0.18;
+}
+
+/* Heard from the mic or sounding in Play scale. */
+.cell--lit {
+	opacity: 1;
+}
+
+.cell--lit circle {
+	stroke: var(--fg);
+	stroke-width: 3;
+}
+
+.cell--lit:not(.cell--dot) circle {
+	fill: var(--note-fill);
+}
+
+.cell:focus-visible circle {
+	stroke: var(--accent);
+	stroke-width: 2.5;
+}
+
+/* Legend under the neck, in the board's palette. */
+.neck-legend {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 6px 18px;
+	margin: 6px 4px 2px;
+	padding: 0;
+	list-style: none;
+	font-size: 12px;
+	color: var(--fg-secondary);
+}
+
+.neck-legend li {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+}
+
+.neck-legend li::before {
+	content: '';
+	width: 12px;
+	height: 12px;
+	border-radius: 50%;
+	background: var(--note-fill);
+	box-shadow: inset 0 0 0 1px var(--note-stroke);
+}
+
+.neck-legend .neck-legend__root::before {
+	background: var(--root-fill);
+	box-shadow: inset 0 0 0 1px var(--root-stroke);
+}
+
+.neck-legend .neck-legend__tone::before {
+	background: var(--tone-fill);
+	box-shadow: inset 0 0 0 1px var(--tone-stroke);
+}
+
+.neck-legend[hidden],
+.neck-legend [hidden] {
+	display: none;
+}
+
+/* Slim toolbar under the board. */
+.neck-toolbar {
+	/* Anchors the Display menu, so it opens from the card's left edge and
+	   never pokes out of a phone screen. */
+	position: relative;
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px;
+}
+
+/* Opens upward, over the board it controls. */
+.display__menu {
+	position: absolute;
+	bottom: calc(100% + 6px);
+	left: 0;
+	z-index: 30;
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	width: min(264px, 100%);
+	padding: 12px;
+	background: var(--surface);
+	border-radius: var(--radius-lg);
+	box-shadow: var(--shadow-md);
+}
+
+.display__menu[hidden] {
+	display: none;
+}
+
+.position-chip {
+	height: 26px;
+	padding: 0 10px;
+	border: none;
+	border-radius: var(--radius-pill);
+	background: color-mix(in srgb, var(--accent) 12%, transparent);
+	color: var(--accent);
+	font-family: var(--font-mono);
+	font-size: 12px;
+	font-weight: 500;
+	cursor: pointer;
+}
+
+.position-chip[hidden] {
+	display: none;
+}
+
+/* Mic toggle: the Scales tab's own, clearly labelled mic control. The dot
+   turns green while the mic is actually listening, and pulses when on. */
+.mic-toggle {
+	margin-left: auto;
+	display: inline-flex;
+	align-items: center;
+	gap: 7px;
+	height: 32px;
+	padding: 0 12px;
+	border: none;
+	border-radius: var(--radius-pill);
+	background: var(--surface);
+	color: var(--fg-secondary);
+	font-size: 13px;
+	font-weight: 500;
+	cursor: pointer;
+	box-shadow: var(--shadow-border);
+	transition: color var(--dur) var(--ease), background var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
+}
+
+.mic-toggle svg {
+	width: 14px;
+	height: 14px;
+}
+
+.mic-toggle:hover {
+	color: var(--fg);
+}
+
+.mic-toggle[aria-pressed='true'] {
+	color: var(--fg);
+	background: var(--surface-2);
+	box-shadow: 0 0 0 1px var(--border-strong);
+}
+
+.mic-toggle--live .status__dot {
+	background: var(--success);
+}
+
+.mic-toggle--live[aria-pressed='true'] .status__dot {
+	animation: pulse 1.8s var(--ease) infinite;
+}
+
+.neck-hint {
+	margin: 0;
+	font-size: 12px;
+	color: var(--fg-muted);
+}
+
+.neck-hint[hidden] {
+	display: none;
+}
+
+.scale-results {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.scale-result {
+	display: grid;
+	grid-template-columns: 1fr auto;
+	gap: 2px 12px;
+	width: 100%;
+	padding: 10px 14px;
+	border: none;
+	border-radius: var(--radius);
+	background: var(--surface);
+	color: var(--fg);
+	text-align: left;
+	cursor: pointer;
+	box-shadow: var(--shadow-border);
+	transition: background var(--dur) var(--ease);
+}
+
+.scale-result:hover {
+	background: var(--surface-2);
+}
+
+.scale-result[aria-pressed='true'] {
+	box-shadow: 0 0 0 1px var(--accent);
+}
+
+.scale-result__title {
+	font-size: 14px;
+	font-weight: 500;
+}
+
+.scale-result__extra {
+	font-family: var(--font-mono);
+	font-size: 12px;
+	color: var(--fg-muted);
+}
+
+.scale-result__notes {
+	grid-column: 1 / -1;
+	font-family: var(--font-mono);
+	font-size: 12px;
+	color: var(--fg-secondary);
+	word-spacing: 0.2em;
+}
+
+.scale-results__more {
+	font-size: 12px;
+	color: var(--fg-muted);
+	text-align: center;
+	padding: 4px;
+}
+
 /* ?debug diagnostics line */
 .debug {
 	margin: 0;
@@ -727,4 +1373,175 @@ button {
 	font-size: 11px;
 	color: var(--fg-muted);
 	text-align: center;
+}
+
+/* Wider screens ---------------------------------------------------------- */
+/* Phones (< 600 px) keep the single column and floating tab bar above.
+   Tablets get a slightly wider column; desktops (>= 960 px) a real layout:
+   a wide container, two columns per view, and a full-width fretboard. */
+@media (min-width: 601px) and (max-width: 959px) {
+	.app {
+		max-width: 640px;
+	}
+}
+
+@media (min-width: 960px) {
+	.app {
+		max-width: 1180px;
+		padding: calc(28px + env(safe-area-inset-top)) 40px 64px;
+		gap: 28px;
+	}
+
+	/* Tabs keep a segmented-control size on the left; settings and theme sit
+	   at the far right of the wide bar. */
+	.tabs {
+		flex: 0 1 560px;
+		margin-right: auto;
+	}
+
+	.settings {
+		right: 40px;
+	}
+
+	/* Tuner and Chords: the big readout on the left, mic and hint beside it,
+	   so nothing is stretched into a long thin line. */
+	#view-tuner:not([hidden]),
+	#view-chords:not([hidden]) {
+		display: grid;
+		grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+		grid-template-areas:
+			'readout mic'
+			'readout hint';
+		grid-template-rows: auto 1fr;
+		gap: 20px 28px;
+		align-items: start;
+	}
+
+	/* Trainer: what to play (score, staff) on the left, what you play
+	   (readout, mic) on the right. */
+	#view-trainer:not([hidden]) {
+		display: grid;
+		grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+		grid-template-areas:
+			'score readout'
+			'prompt readout'
+			'prompt mic'
+			'controls mic';
+		gap: 20px 28px;
+		align-items: start;
+	}
+
+	.view > .readout {
+		grid-area: readout;
+		align-self: stretch;
+		display: flex;
+		flex-direction: column;
+		justify-content: center;
+		padding: 40px 28px 32px;
+	}
+
+	.view > .mic {
+		grid-area: mic;
+		align-self: stretch;
+		justify-content: center;
+	}
+
+	.view > .hint {
+		grid-area: hint;
+		text-align: left;
+	}
+
+	.view > .scoreboard {
+		grid-area: score;
+	}
+
+	/* The staff card grows to the height of the readout + mic beside it. */
+	.view > .prompt {
+		grid-area: prompt;
+		align-self: stretch;
+		justify-content: center;
+		gap: 32px;
+	}
+
+	.view > .controls {
+		grid-area: controls;
+		align-self: end;
+	}
+
+	.view > .readout {
+		min-height: 360px;
+	}
+
+	/* Auto side margins would shrink the meter in the flex column. */
+	.view > .readout .meter {
+		width: 100%;
+		max-width: 400px;
+	}
+
+	.readout__note {
+		font-size: 112px;
+	}
+
+	.wave {
+		height: 112px;
+	}
+
+	.staff {
+		width: 180px;
+		height: 180px;
+	}
+
+	.prompt__note {
+		font-size: 56px;
+	}
+
+	/* Scales: pickers and degree strip share a row, the neck takes the full
+	   width, Identify results fill a grid of cards under it. */
+	.view--scales:not([hidden]) {
+		display: grid;
+		grid-template-columns: minmax(0, 1fr) auto;
+		grid-template-areas:
+			'header info'
+			'neck neck'
+			'results results';
+		gap: 20px 32px;
+		align-items: center;
+	}
+
+	.view--scales > .scales-header {
+		grid-area: header;
+		max-width: 560px;
+	}
+
+	.view--scales > .scale-info {
+		grid-area: info;
+		align-items: flex-end;
+	}
+
+	.view--scales > .neck-card {
+		grid-area: neck;
+		margin-inline: 0;
+	}
+
+	.view--scales > .scale-results {
+		grid-area: results;
+		display: grid;
+		grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+		align-self: start;
+	}
+
+	/* Vertical neck: it stands on the left, controls and results beside it. */
+	.view--scales:not([hidden]):has(.neck--vertical) {
+		grid-template-columns: auto minmax(0, 1fr);
+		grid-template-areas:
+			'neck header'
+			'neck info'
+			'neck results';
+		grid-template-rows: auto auto 1fr;
+		align-items: start;
+	}
+
+	.view--scales:has(.neck--vertical) > .scale-info {
+		align-items: flex-start;
+	}
 }

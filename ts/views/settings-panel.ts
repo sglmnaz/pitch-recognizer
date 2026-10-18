@@ -1,16 +1,19 @@
 import * as Settings from '../settings'
 
 /**
- * Wires the settings popover: the boolean switches, the per-note target chips,
+ * Wires the settings popover: the switches and selects, the per-note target chips,
  * and the All/None shortcuts. Keeps the controls in sync with stored settings.
  */
 export function createSettingsPanel(root: HTMLElement) {
-	const switches = Array.from(root.querySelectorAll<HTMLInputElement>('[data-setting]'))
+	// Checkbox switches store booleans, selects store their value.
+	const switches = Array.from(root.querySelectorAll<HTMLInputElement | HTMLSelectElement>('[data-setting]'))
+	const valueOf = (input: HTMLInputElement | HTMLSelectElement) =>
+		input instanceof HTMLInputElement && input.type === 'checkbox' ? input.checked : input.value
 	const chips = root.querySelector<HTMLElement>('#noteChips')!
 
 	for (const input of switches) {
 		input.addEventListener('change', () => {
-			Settings.update({ [input.dataset.setting!]: input.checked } as Partial<Settings.Settings>)
+			Settings.update({ [input.dataset.setting!]: valueOf(input) } as Partial<Settings.Settings>)
 		})
 	}
 
@@ -31,9 +34,11 @@ export function createSettingsPanel(root: HTMLElement) {
 	}
 
 	function syncSwitches() {
-		const current = Settings.get() as unknown as Record<string, boolean>
+		const current = Settings.get() as unknown as Record<string, boolean | string>
 		for (const input of switches) {
-			input.checked = Boolean(current[input.dataset.setting!])
+			const value = current[input.dataset.setting!]
+			if (input instanceof HTMLInputElement && input.type === 'checkbox') input.checked = Boolean(value)
+			else input.value = String(value)
 		}
 	}
 

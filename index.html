@@ -42,6 +42,15 @@
 					</svg>
 					Chords
 				</button>
+				<button class="tab" role="tab" data-tab="scales" aria-selected="false">
+					<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+						<path d="M5 21v-5" />
+						<path d="M10 21v-9" />
+						<path d="M15 21V8" />
+						<path d="M20 21V4" />
+					</svg>
+					Scales
+				</button>
 				<button class="tab" role="tab" data-tab="trainer" aria-selected="false">
 					<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
 						<path d="M6 8.5a6.5 6.5 0 1 1 13 0c0 6-6 6-6 10a3.5 3.5 0 1 1-7 0" />
@@ -60,7 +69,30 @@
 		</header>
 
 		<div class="settings" id="settings" role="dialog" aria-label="Settings" hidden>
-			<div class="settings__section">
+			<!-- Sections show only on their tab (data-for, index.ts). -->
+			<div class="settings__section" data-for="scales">
+				<label class="switch">
+					<span class="switch__text">
+						<span class="switch__title">Fretboard theme</span>
+						<span class="switch__desc">Light or dark, whatever the app theme</span>
+					</span>
+					<select class="select select--small" data-setting="fretboardTheme">
+						<option value="auto">Auto</option>
+						<option value="light">Light</option>
+						<option value="dark">Dark</option>
+					</select>
+				</label>
+				<label class="switch">
+					<span class="switch__text">
+						<span class="switch__title">Vertical fretboard</span>
+						<span class="switch__desc">Neck top to bottom, like a chord diagram</span>
+					</span>
+					<input type="checkbox" class="switch__input" data-setting="fretboardVertical" />
+					<span class="switch__track"></span>
+				</label>
+			</div>
+
+			<div class="settings__section" data-for="trainer">
 				<label class="switch">
 					<span class="switch__text">
 						<span class="switch__title">Match any octave</span>
@@ -87,7 +119,7 @@
 				</label>
 			</div>
 
-			<div class="settings__section">
+			<div class="settings__section" data-for="trainer">
 				<div class="settings__heading">
 					<span class="panel__label">Target notes</span>
 					<span class="settings__actions">
@@ -181,6 +213,79 @@
 				<div class="chroma" aria-hidden="true"></div>
 			</div>
 			<p class="hint">Strum and let it ring. Recognizes major, minor, 7th, 9th and sus chords.</p>
+		</section>
+
+		<!-- Scales: explorer + identifier on one fretboard (ts/views/scales.ts). -->
+		<section class="view view--scales" id="view-scales" role="tabpanel" hidden>
+			<div class="scales-header">
+				<div class="segmented segmented--small" role="group" aria-label="Mode">
+					<button type="button" data-mode="explore" aria-pressed="true">Explore</button>
+					<button type="button" data-mode="identify" aria-pressed="false">Identify</button>
+				</div>
+				<div class="scales-pickers scales-explore">
+					<select class="select select--small scales-root" aria-label="Root"></select>
+					<select class="select select--small scales-type" aria-label="Scale"></select>
+				</div>
+				<div class="scales-pickers scales-identify" hidden>
+					<span class="scales-marked"></span>
+					<button class="btn btn--small" type="button" data-action="clear">Clear</button>
+				</div>
+			</div>
+
+			<div class="scale-info">
+				<h2 class="scale-info__title"></h2>
+				<!-- Degree strip; tapping a degree toggles its colour on the neck. -->
+				<div class="scale-info__notes" role="group" aria-label="Scale degrees, tap to colour"></div>
+			</div>
+
+			<div class="panel neck-card">
+				<div class="neck-board">
+					<svg class="neck" xmlns="http://www.w3.org/2000/svg"></svg>
+					<ul class="neck-legend">
+						<li class="neck-legend__root">root</li>
+						<li class="neck-legend__tone"></li>
+						<li>other scale notes</li>
+					</ul>
+				</div>
+				<div class="neck-toolbar">
+					<button class="btn btn--small" type="button" data-action="play">
+						<svg viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true">
+							<path d="M7 4v16l13-8z" />
+						</svg>
+						<span>Play scale</span>
+					</button>
+					<div class="display">
+						<button class="btn btn--small" type="button" data-action="display" aria-expanded="false" aria-haspopup="true">
+							<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+								<path d="M21 4h-7M10 4H3M21 12h-9M8 12H3M21 20h-5M12 20H3M14 2v4M8 10v4M16 18v4" />
+							</svg>
+							<span>Display</span>
+						</button>
+						<div class="display__menu" role="dialog" aria-label="Display" hidden>
+							<span class="panel__label">Labels</span>
+							<div class="segmented segmented--small" role="group" aria-label="Labels">
+								<button type="button" data-labels="notes">Notes</button>
+								<button type="button" data-labels="intervals">Intervals</button>
+								<button type="button" data-labels="none">None</button>
+							</div>
+							<span class="panel__label">View</span>
+							<div class="segmented segmented--small scales-positions" role="group" aria-label="Position"></div>
+						</div>
+					</div>
+					<button class="position-chip" type="button" hidden aria-label="Show the whole neck"></button>
+					<button class="mic-toggle" type="button" data-action="mic" aria-pressed="false">
+						<span class="status__dot"></span>
+						<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+							<rect x="9" y="2" width="6" height="12" rx="3" />
+							<path d="M5 10v1a7 7 0 0 0 14 0v-1M12 18v4" />
+						</svg>
+						<span class="mic-toggle__label">Light up what I play</span>
+					</button>
+				</div>
+				<p class="neck-hint" hidden></p>
+			</div>
+
+			<ol class="scale-results"></ol>
 		</section>
 
 		<!-- Mic control. index.ts moves it right under the active view's readout. -->

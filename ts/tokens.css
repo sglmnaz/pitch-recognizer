@@ -51,6 +51,26 @@
 	--accent-hover: #0062d1;
 	--accent-contrast: #ffffff;
 
+	/* Scale degrees (fretboard dots, degree strip): root, highlighted degrees
+	   (3rd/5th by default), other scale notes. Fill, 1 px outline, label.
+	   The fretboard can force either palette with its own data-theme. */
+	--root-fill: #e6f1fb;
+	--root-stroke: #185fa5;
+	--root-text: #0c447c;
+	--tone-fill: #e1f5ee;
+	--tone-stroke: #0f6e56;
+	--tone-text: #085041;
+	--note-fill: #f1efe8;
+	--note-stroke: #5f5e5a;
+	--note-text: #444441;
+
+	/* Fretboard wood and hardware. */
+	--board: #f7f6f2;
+	--board-fret: #c3c1b9;
+	--board-string: #8d8b84;
+	--board-nut: #444441;
+	--board-inlay: #c3c1b9;
+
 	--success: #1a8245;
 	--success-bg: #e8f5ec;
 	--warning: #c2670a;
@@ -86,6 +106,22 @@
 	--accent: #3b9eff;
 	--accent-hover: #61b0ff;
 	--accent-contrast: #04060a;
+
+	--root-fill: #0c447c;
+	--root-stroke: #85b7eb;
+	--root-text: #e6f1fb;
+	--tone-fill: #085041;
+	--tone-stroke: #5dcaa5;
+	--tone-text: #e1f5ee;
+	--note-fill: #444441;
+	--note-stroke: #b4b2a9;
+	--note-text: #f1efe8;
+
+	--board: #1f1f1f;
+	--board-fret: #5a5a57;
+	--board-string: #8f8e89;
+	--board-nut: #d3d1c7;
+	--board-inlay: #5a5a57;
 
 	--success: #5ec27a;
 	--success-bg: rgba(94, 194, 122, 0.12);

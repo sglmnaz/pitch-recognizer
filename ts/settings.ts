@@ -9,6 +9,14 @@ export interface Settings {
 	lightStaff: boolean
 	/** Notes (by scientific name) the user has switched off as targets. */
 	disabledNotes: string[]
+	/** Scales fretboard palette: follow the app theme, or force one. */
+	fretboardTheme: 'auto' | 'light' | 'dark'
+	/** Run the neck top to bottom like a chord diagram (any screen width). */
+	fretboardVertical: boolean
+	/** What the fretboard dots say. */
+	scaleLabels: 'notes' | 'intervals' | 'none'
+	/** Degree numbers (1–7) drawn in colour; b3 counts as 3. */
+	scaleDegrees: number[]
 }
 
 const STORAGE_KEY = 'pitch-recognizer:settings'
@@ -18,6 +26,10 @@ const defaults: Settings = {
 	matchAnyOctave: false,
 	lightStaff: false,
 	disabledNotes: [],
+	fretboardTheme: 'auto',
+	fretboardVertical: false,
+	scaleLabels: 'notes',
+	scaleDegrees: [1, 3, 5],
 }
 
 const listeners = new Set<() => void>()
