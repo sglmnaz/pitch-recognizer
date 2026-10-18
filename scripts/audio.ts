@@ -2,6 +2,7 @@
 // biquad band-pass, AnalyserNode's spectrum), so scripts can run the app's
 // real detection code on recordings and synthetic signals in Node.
 import { spawnSync } from 'node:child_process'
+import { fft } from '../ts/fft.ts'
 import { HIGHPASS_HZ, HIGHPASS_STAGES, LOWPASS_HZ } from '../ts/microphone.ts'
 
 /** Decodes any audio file ffmpeg can read to mono float samples. */
@@ -47,35 +48,6 @@ export function appHighpass(signal: Float32Array, sampleRate: number): Float32Ar
 /** The app's whole pitch-path band-pass: high-pass stages then the low-pass. */
 export function appBand(signal: Float32Array, sampleRate: number): Float32Array {
 	return biquad(appHighpass(signal, sampleRate), sampleRate, 'lowpass', LOWPASS_HZ)
-}
-
-/** In-place iterative radix-2 FFT; length must be a power of two. */
-function fft(re: Float64Array, im: Float64Array) {
-	const n = re.length
-	for (let i = 1, j = 0; i < n; i++) {
-		let bit = n >> 1
-		for (; j & bit; bit >>= 1) j ^= bit
-		j ^= bit
-		if (i < j) {
-			;[re[i], re[j]] = [re[j], re[i]]
-			;[im[i], im[j]] = [im[j], im[i]]
-		}
-	}
-	for (let size = 2; size <= n; size <<= 1) {
-		const step = (-2 * Math.PI) / size
-		for (let start = 0; start < n; start += size) {
-			for (let k = 0; k < size / 2; k++) {
-				const [wr, wi] = [Math.cos(step * k), Math.sin(step * k)]
-				const [i, j] = [start + k, start + k + size / 2]
-				const tr = wr * re[j] - wi * im[j]
-				const ti = wr * im[j] + wi * re[j]
-				re[j] = re[i] - tr
-				im[j] = im[i] - ti
-				re[i] += tr
-				im[i] += ti
-			}
-		}
-	}
 }
 
 /**

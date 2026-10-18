@@ -7,6 +7,7 @@
 //   npm run bench -- --task notes     # or chords
 //   npm run bench -- --limit 20 --conditions clean,phone-mid   # quick iteration
 //   npm run bench -- --task notes --source guitarset --by-note   # acoustic notes, per note
+//   npm run bench -- --split tune     # tune constants here; default reports the test split
 //   npm run bench -- --json out.json  # save results to diff two versions
 //
 // Sources (any that are present): bench/audio (your own labelled files, see
@@ -84,6 +85,19 @@ interface Item<T> {
 	id: string
 	load: () => Float32Array
 	segments: Segment<T>[]
+}
+
+// Tune / test split, by instrument and by player, so constants are tuned on
+// data the reported numbers never see (same-data or shuffled evaluation
+// overstates accuracy: Fretiq, arXiv 2607.18303, 97 % shuffled vs 87 % held out).
+// IDMT notes: guitar AR tunes, FS and LP test. GuitarSet: players 00-01 tune,
+// 02-05 test. IDMT chords: the "fast" takes tune, the "slow" ones test. Own
+// recordings always count as test.
+function splitOf(id: string): 'tune' | 'test' {
+	if (/^idmt\/AR_/.test(id)) return 'tune'
+	if (/^guitarset\/0[01]_/.test(id)) return 'tune'
+	if (/^idmt\/fast\//.test(id)) return 'tune'
+	return 'test'
 }
 
 /** Evenly spaced selection, so the default subset covers the whole source. */
@@ -314,6 +328,8 @@ function evaluateChords(item: Item<Chord>, signal: Float32Array, score: ChordSco
 const args = process.argv.slice(2)
 const option = (name: string) => (args.includes(name) ? args[args.indexOf(name) + 1] : null)
 const limit = args.includes('--full') ? Infinity : Number(option('--limit') ?? DEFAULT_LIMIT)
+const split = option('--split') ?? 'test'
+const inSplit = <T>(items: Item<T>[]) => (split === 'all' ? items : items.filter((item) => splitOf(item.id) === split))
 const conditions = option('--conditions')?.split(',')
 const activeConditions = CONDITIONS.filter((c) => !conditions || conditions.includes(c.name))
 const task = option('--task')
@@ -327,10 +343,10 @@ if (task !== 'chords') {
 	const sources = option('--source')
 	const items = [
 		...ownItems('note', parseNote),
-		...(sources && !sources.includes('idmt') ? [] : spread(idmtNotes(), limit)),
-		...(sources && !sources.includes('guitarset') ? [] : spread(guitarSetNotes(), limit)),
+		...(sources && !sources.includes('idmt') ? [] : spread(inSplit(idmtNotes()), limit)),
+		...(sources && !sources.includes('guitarset') ? [] : spread(inSplit(guitarSetNotes()), limit)),
 	]
-	console.log(`\nNOTES — ${items.length} items (RPA right note; RCA octave ignored; RCA−RPA = octave errors)`)
+	console.log(`\nNOTES (${split} split) — ${items.length} items (RPA right note; RCA octave ignored; RCA−RPA = octave errors)`)
 	console.log('condition        RPA     RCA  voiced  IQR¢  first-ok')
 	for (const condition of activeConditions) {
 		const score: NoteScore = { byNote: new Map(), frames: 0, pitchHits: 0, chromaHits: 0, voiced: 0, offsets: [], firstCorrect: [] }
@@ -353,8 +369,8 @@ if (task !== 'chords') {
 }
 
 if (task !== 'notes') {
-	const items = [...ownItems('chord', parseAppChord), ...spread(idmtChords(), limit), ...spread(guitarSetChords(), limit)]
-	console.log(`\nCHORDS — ${items.length} items (frame-level chord symbol recall, MIREX reductions)`)
+	const items = [...ownItems('chord', parseAppChord), ...spread(inSplit(idmtChords()), limit), ...spread(inSplit(guitarSetChords()), limit)]
+	console.log(`\nCHORDS (${split} split) — ${items.length} items (frame-level chord symbol recall, MIREX reductions)`)
 	console.log('condition       root  majmin sevenths  latency  top confusions (sevenths)')
 	for (const condition of activeConditions) {
 		const score: ChordScore = { root: { hits: 0, frames: 0 }, majmin: { hits: 0, frames: 0 }, sevenths: { hits: 0, frames: 0 }, confusions: new Map(), latencies: [] }

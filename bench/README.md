@@ -74,6 +74,15 @@ string went from never read to 82 % of frames, no reading in silence; benchmark
 acoustic 91.7 → 93.5 % clean, 91.0 → 92.6 % phone-mid; unplugged 29.1 → 41.5 %;
 chords unchanged.
 
+2026-10-18, tune/test split introduced (constants are tuned on `--split tune`,
+numbers reported on the test split). Spectral subtraction of the room noise
+inside the autocorrelation, test split: clean 98.4 → 98.5 %, phone-mid 98.5 →
+98.8 %, phone-cheap 95.8 → 97.1 %, unplugged 19.3 → 33.1 % (first reading 129 →
+85 ms). Field recording: G3 19 → 84 %, E4 41 → 67 %, D3 35 → 61 %, E2 0 → 30 %,
+no reading in silence. Tried and rejected: minimum-statistics noise tracking
+(erases long-held notes); learning noise from every quiet frame (learns note
+tails, −2 points clean).
+
 `unplugged` is a known physical limit: the low strings reach the mic below the
 room noise. Tried and rejected (no gain or worse): pre-emphasis before MPM,
 a looser noise margin (25 → 28 %, but more gate openings on noise), an 8192

@@ -1,4 +1,4 @@
-import { Autocorrelator } from 'pitchy'
+import { fft } from './fft.ts'
 
 /** A single accepted pitch measurement. */
 export interface PitchReading {
@@ -139,8 +139,32 @@ const MIN_CUTOFF = 0.6
 const BETA = 0.02
 const DERIVATIVE_CUTOFF = 1.0
 
-const autocorrelator = Autocorrelator.forFloat32Array(FFT_SIZE)
+// Autocorrelation via the power spectrum (Wiener-Khinchin), zero-padded to 2x
+// so it is linear, not circular. Computing it this way lets stationary room
+// noise be subtracted from the spectrum first (see NOISE_SUBTRACTION).
+const PADDED = 2 * FFT_SIZE
+const spectrumRe = new Float64Array(PADDED)
+const spectrumIm = new Float64Array(PADDED)
+const framePower = new Float64Array(PADDED)
 const nsdf = new Float32Array(FFT_SIZE)
+
+// Noise subtraction (spectral subtraction, as in speech enhancement): the
+// power spectrum of room-noise frames is averaged into noisePower, and
+// NOISE_SUBTRACTION times it is removed from every frame's power spectrum
+// before the autocorrelation, keeping at least SPECTRAL_FLOOR of each bin
+// (avoids the "musical noise" of over-subtraction). Hum, fans and whines are
+// stationary, so they cancel instead of competing with the string.
+// A frame teaches the estimate only if it is near the noise floor AND has no
+// periodicity at guitar lags (clarity < NOISE_LEARN_CLARITY): a decaying
+// note is still periodic there, while hum's periods lie outside the range,
+// so earlier notes' tails are not learned and subtracted from later ones.
+// (Minimum statistics, Martin 2001, was tried: it learns any long-held note
+// as "stationary noise" and erased it.) 0 disables it.
+const NOISE_SUBTRACTION = 3
+const SPECTRAL_FLOOR = 0.05
+const NOISE_LEARN_RATE = 0.05
+const NOISE_LEARN_CLARITY = 0.3
+let noisePower: Float64Array | null = null
 // MPM peak-picking constant k (McLeod & Wyvill): the first NSDF key maximum
 // within k of the highest one is the period. 0.9 as pitchy (McLeod's thesis,
 // table 6.3: among the lowest octave-error rates on real instruments); 0.8-0.85
@@ -148,7 +172,9 @@ const nsdf = new Float32Array(FFT_SIZE)
 const PEAK_K = 0.9
 
 /**
- * McLeod pitch method, as pitchy's PitchDetector, except that key maxima are
+ * McLeod pitch method (as the pitchy library implements it, which this
+ * replaces), with two changes: the autocorrelation goes through the power
+ * spectrum so room noise can be subtracted first, and key maxima are
  * only considered at lags of guitar fundamentals (MIN_FREQUENCY..MAX_FREQUENCY).
  * Pitchy searches every lag, so a long-period component — mains hum and its
  * beats, ~12-50 Hz — could set the highest maximum and push a real note's
@@ -156,12 +182,32 @@ const PEAK_K = 0.9
  * noise instead of 110 Hz. Returns [frequency, clarity], or [0, 0].
  */
 function findPitch(input: Float32Array, sampleRate: number): [number, number] {
-	autocorrelator.autocorrelate(input, nsdf)
-	// NSDF (McLeod eq. 9), with m' updated incrementally as in pitchy.
-	let m = 2 * nsdf[0]
+	spectrumRe.fill(0)
+	spectrumIm.fill(0)
+	spectrumRe.set(input)
+	fft(spectrumRe, spectrumIm)
+	let total = 0
+	let kept = 0
+	for (let k = 0; k < PADDED; k++) {
+		const power = spectrumRe[k] * spectrumRe[k] + spectrumIm[k] * spectrumIm[k]
+		framePower[k] = power
+		const clean = noisePower ? Math.max(power - NOISE_SUBTRACTION * noisePower[k], SPECTRAL_FLOOR * power) : power
+		total += power
+		kept += clean
+		spectrumRe[k] = clean
+		spectrumIm[k] = 0
+	}
+	// The FFT of the (real, even) power spectrum is PADDED x the autocorrelation.
+	fft(spectrumRe, spectrumIm)
+
+	// NSDF (McLeod eq. 9): 2 r(τ) / m'(τ), m' updated incrementally as in
+	// pitchy. m' comes from the raw samples, so it is scaled by the share of
+	// energy left after noise subtraction to stay consistent with r.
+	const share = total > 0 ? kept / total : 1
+	let m = 2 * (spectrumRe[0] / PADDED / share)
 	let i = 0
 	for (; i < nsdf.length && m > 0; i++) {
-		nsdf[i] = (2 * nsdf[i]) / m
+		nsdf[i] = (2 * (spectrumRe[i] / PADDED)) / (m * share)
 		m -= input[i] ** 2 + input[input.length - i - 1] ** 2
 	}
 	for (; i < nsdf.length; i++) nsdf[i] = 0
@@ -236,20 +282,19 @@ function rootMeanSquare(input: Float32Array): number {
 	return Math.sqrt(sumSquares / input.length)
 }
 
-// McLeod's normalized square difference at one lag, best of lag±1 (the true
-// peak sits between integer lags).
-function nsdfPeak(input: Float32Array, lag: number): number {
-	let best = -1
-	for (let l = lag - 1; l <= lag + 1; l++) {
-		let cross = 0
-		let energy = 0
-		for (let j = 0; j + l < input.length; j++) {
-			cross += input[j] * input[j + l]
-			energy += input[j] * input[j] + input[j + l] * input[j + l]
-		}
-		if (energy > 0) best = Math.max(best, (2 * cross) / energy)
+// The current frame's NSDF (from findPitch) at one lag, best of lag±1 (the
+// true peak sits between integer lags).
+function nsdfPeak(lag: number): number {
+	return Math.max(nsdf[lag - 1], nsdf[lag], nsdf[lag + 1])
+}
+
+/** Folds the last frame's power spectrum into the room-noise estimate. */
+function learnNoisePower() {
+	if (!noisePower) {
+		noisePower = Float64Array.from(framePower)
+		return
 	}
-	return best
+	for (let k = 0; k < PADDED; k++) noisePower[k] += NOISE_LEARN_RATE * (framePower[k] - noisePower[k])
 }
 
 // See SUBHARMONIC_MARGIN.
@@ -258,7 +303,7 @@ function correctOctaveUp(input: Float32Array, sampleRate: number, pitch: number)
 	while (pitch / 2 >= MIN_FREQUENCY && (2 * sampleRate) / pitch < input.length / 2) {
 		const lag = Math.round(sampleRate / pitch)
 		const doubleLag = Math.round((2 * sampleRate) / pitch)
-		if (nsdfPeak(input, doubleLag) - nsdfPeak(input, lag) < SUBHARMONIC_MARGIN) break
+		if (nsdfPeak(doubleLag) - nsdfPeak(lag) < SUBHARMONIC_MARGIN) break
 		pitch /= 2
 	}
 	return pitch
@@ -371,6 +416,7 @@ function processFrame(input: Float32Array, sampleRate: number, now: number): Pit
 	// Only unpitched frames teach the noise floor: a note held from the moment
 	// listening starts (or sung for a long time) must never gate itself out.
 	if (!voiced) learnNoise(volume, dt)
+	if (clarity < NOISE_LEARN_CLARITY && noiseFloor !== null && volume < NOTE_MARGIN * noiseFloor) learnNoisePower()
 	stats.noiseFloor = noiseFloor ?? 0
 	stats.reason = now < attackUntil ? 'attack' : !voiced ? 'low clarity' : pitch < MIN_FREQUENCY || pitch > MAX_FREQUENCY ? 'out of range' : 'reading'
 	if (volume < (sustaining ? SUSTAIN_MARGIN : NOTE_MARGIN) * (noiseFloor ?? 0)) {
@@ -480,6 +526,7 @@ function stop() {
 	chordSpectrum = null
 	resetSmoothing()
 	noiseFloor = null
+	noisePower = null
 	lastFrameAt = 0
 	envelope = 0
 	lastReading = null

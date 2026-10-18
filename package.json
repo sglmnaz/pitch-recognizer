@@ -22,7 +22,6 @@
 	"author": "",
 	"license": "MIT",
 	"dependencies": {
-		"pitchy": "^4.1.0",
 		"vexflow": "^4.2.5"
 	},
 	"devDependencies": {

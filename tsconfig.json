@@ -12,6 +12,8 @@
 		"isolatedModules": true,
 		"resolveJsonModule": true,
 		"noEmit": true,
+		/* Node 24 runs the TS scripts directly and needs explicit .ts import paths. */
+		"allowImportingTsExtensions": true,
 
 		/* Type checking */
 		"strict": true,
