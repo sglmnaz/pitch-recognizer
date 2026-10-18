@@ -264,13 +264,16 @@ export function createScalesView(root: HTMLElement, mic: MicControl): View & { s
 	// minus those controls, the board's padding and legend, and the docked tab
 	// bar on phones, or on wider screens everything above the neck block (top
 	// bar), since the page should not need scrolling there.
+	// Returns the board's own padding + legend too, to cap a larger neck's
+	// board at the screen height (it then scrolls inside).
 	function verticalLength() {
 		const cardBox = card.getBoundingClientRect()
-		const boardBox = board.getBoundingClientRect()
-		const above = boardBox.top - cardBox.top
-		const around = boardBox.height - neck.getBoundingClientRect().height
+		const style = getComputedStyle(board)
+		const above = board.getBoundingClientRect().top - cardBox.top
+		const legendHeight = legend.hidden ? 0 : legend.offsetHeight + parseFloat(getComputedStyle(legend).marginTop) * 2
+		const around = parseFloat(style.paddingTop) + parseFloat(style.paddingBottom) + legendHeight
 		const reserve = phone.matches ? tabBar.offsetHeight + 4 : cardBox.top + scrollY + 16
-		return Math.max(300, Math.round(innerHeight - reserve - above - around))
+		return { length: Math.max(300, Math.round(innerHeight - reserve - above - around)), around }
 	}
 
 	/* Playback ------------------------------------------------------------ */
@@ -393,7 +396,6 @@ export function createScalesView(root: HTMLElement, mic: MicControl): View & { s
 		const { scaleLabels, fretboardVertical } = Settings.get()
 		const vertical = fretboardVertical
 		const o = vertical ? 'v' : 'h'
-		const fit = vertical
 		const boardWidth = board.clientWidth - parseFloat(getComputedStyle(board).paddingLeft) * 2
 		const spacingV = phone.matches ? Math.max(SPACING.v, (boardWidth - MARGIN.v - EDGE) / 5) : SPACING.v
 		const spacing = vertical ? spacingV : SPACING.h
@@ -418,15 +420,24 @@ export function createScalesView(root: HTMLElement, mic: MicControl): View & { s
 			const [x2, y2] = xy(along2, a2)
 			return `x="${Math.min(x1, x2)}" y="${Math.min(y1, y2)}" width="${Math.abs(x2 - x1)}" height="${Math.abs(y2 - y1)}"`
 		}
-		const g = vertical ? geometry(length ?? verticalLength(), OPEN, true) : geometry(LENGTH, OPEN)
+		// Fret size setting: scales the neck's length (frets' height when vertical,
+		// width when horizontal) at constant dot size. Above 1 the neck scrolls
+		// inside its board; below 1 dots shrink with their frets.
+		const size = Settings.get().fretSize
+		const fill = vertical ? verticalLength() : null
+		const base = length ?? fill?.length ?? LENGTH
+		const g = geometry(Math.round(base * size), OPEN, vertical)
 		const { fretAt, noteAlong, halfCell } = g
 		const width = vertical ? MARGIN.v + 5 * spacingV + EDGE : g.length
 		const height = vertical ? g.length : MARGIN.h + 5 * SPACING.h + 30
 		neck.setAttribute('viewBox', `0 0 ${width} ${height}`)
 		neck.classList.toggle('neck--vertical', vertical)
 		// Vertical is drawn 1:1 (inline size beats the stylesheet's width: 100%).
-		neck.style.width = vertical ? `${width}px` : ''
+		// Horizontal: the rendered width grows with the length, so dots keep
+		// their size (phones: from the 680 px base, which scrolls).
+		neck.style.width = vertical ? `${width}px` : size === 1 ? '' : phone.matches ? `${680 * size}px` : `${100 * size}%`
 		neck.style.height = vertical ? `${height}px` : ''
+		board.style.maxHeight = fill && size > 1 ? `${fill.length + fill.around}px` : ''
 
 		const degrees = shown ? degreeMap(shown.rootPc, shown.type) : new Map<number, string>()
 		const box = shown && position ? positionWindows(shown.rootPc, shown.type)[position - 1] : null
@@ -468,7 +479,7 @@ export function createScalesView(root: HTMLElement, mic: MicControl): View & { s
 				const at = noteAlong(fret)
 				const half = halfCell(fret)
 				const full = isRoot ? ROOT_R : DOT_R
-				const r = fit ? Math.max(MIN_R, Math.min(full, half + 0.4)) : full
+				const r = Math.max(MIN_R, Math.min(full, half + 0.4))
 				const font = r < full ? `style="font-size:${Math.max(MIN_FONT, r * 1.15).toFixed(1)}px"` : ''
 				const focusable = mode === 'identify' || degree !== undefined
 				parts.push(
@@ -486,9 +497,9 @@ export function createScalesView(root: HTMLElement, mic: MicControl): View & { s
 		// The board's padding and legend were measured around the previous
 		// drawing; if the fill is off (first vertical draw, a scrollbar gone),
 		// draw once more at the corrected length.
-		if (vertical && length === undefined) {
-			const want = verticalLength()
-			if (Math.abs(want - g.length) > 1) drawNeck(shown, names, highlighted, want)
+		if (fill && length === undefined) {
+			const want = verticalLength().length
+			if (Math.abs(want - fill.length) > 1) drawNeck(shown, names, highlighted, want)
 		}
 	}
 

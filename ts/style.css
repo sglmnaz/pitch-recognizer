@@ -956,7 +956,7 @@ button {
 /* The board: its own surface with a hairline, and its own data-theme when
    the fretboard theme setting forces light or dark. */
 .neck-board {
-	overflow-x: auto;
+	overflow: auto;
 	padding: 12px 10px 6px;
 	border-radius: var(--radius);
 	background: var(--board);
@@ -966,6 +966,7 @@ button {
 
 .neck {
 	display: block;
+	margin-inline: auto;
 	width: 100%;
 	height: auto;
 	font-family: var(--font-mono);
@@ -1306,6 +1307,14 @@ button {
 
 .mic-toggle--live[aria-pressed='true'] .status__dot {
 	animation: pulse 1.8s var(--ease) infinite;
+}
+
+/* Settings slider (Fret size). */
+.range {
+	flex: none;
+	width: 120px;
+	accent-color: var(--accent);
+	cursor: pointer;
 }
 
 /* Narrow phones: Play and Display become icon buttons (title + aria via the

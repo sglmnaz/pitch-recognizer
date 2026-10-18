@@ -17,6 +17,8 @@ export interface Settings {
 	scaleLabels: 'notes' | 'intervals' | 'none'
 	/** Degree numbers (1–7) drawn in colour; b3 counts as 3. */
 	scaleDegrees: number[]
+	/** Fret size multiplier, 0.5–1.5: height when vertical, width when horizontal. */
+	fretSize: number
 }
 
 const STORAGE_KEY = 'pitch-recognizer:settings'
@@ -30,6 +32,7 @@ const defaults: Settings = {
 	fretboardVertical: false,
 	scaleLabels: 'notes',
 	scaleDegrees: [1, 3, 5],
+	fretSize: 1,
 }
 
 const listeners = new Set<() => void>()

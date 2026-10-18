@@ -5,14 +5,15 @@ import * as Settings from '../settings'
  * and the All/None shortcuts. Keeps the controls in sync with stored settings.
  */
 export function createSettingsPanel(root: HTMLElement) {
-	// Checkbox switches store booleans, selects store their value.
+	// Checkbox switches store booleans, sliders numbers, selects their value.
 	const switches = Array.from(root.querySelectorAll<HTMLInputElement | HTMLSelectElement>('[data-setting]'))
 	const valueOf = (input: HTMLInputElement | HTMLSelectElement) =>
-		input instanceof HTMLInputElement && input.type === 'checkbox' ? input.checked : input.value
+		input.type === 'checkbox' ? (input as HTMLInputElement).checked : input.type === 'range' ? Number(input.value) : input.value
 	const chips = root.querySelector<HTMLElement>('#noteChips')!
 
 	for (const input of switches) {
-		input.addEventListener('change', () => {
+		// Sliders apply live while dragging.
+		input.addEventListener(input.type === 'range' ? 'input' : 'change', () => {
 			Settings.update({ [input.dataset.setting!]: valueOf(input) } as Partial<Settings.Settings>)
 		})
 	}
@@ -34,7 +35,7 @@ export function createSettingsPanel(root: HTMLElement) {
 	}
 
 	function syncSwitches() {
-		const current = Settings.get() as unknown as Record<string, boolean | string>
+		const current = Settings.get() as unknown as Record<string, boolean | string | number>
 		for (const input of switches) {
 			const value = current[input.dataset.setting!]
 			if (input instanceof HTMLInputElement && input.type === 'checkbox') input.checked = Boolean(value)
