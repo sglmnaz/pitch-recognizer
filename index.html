@@ -25,7 +25,7 @@
 <body>
 	<main class="app">
 		<header class="topbar">
-			<!-- On phones this bar floats at the bottom, within thumb reach (style.css). -->
+			<!-- On phones this bar is docked to the bottom, within thumb reach (style.css). -->
 			<nav class="tabs" role="tablist">
 				<button class="tab" role="tab" data-tab="tuner" aria-selected="true">
 					<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -238,7 +238,7 @@
 				<div class="scale-info__notes" role="group" aria-label="Scale degrees, tap to colour"></div>
 			</div>
 
-			<div class="panel neck-card">
+			<div class="neck-card">
 				<div class="neck-board">
 					<svg class="neck" xmlns="http://www.w3.org/2000/svg"></svg>
 					<ul class="neck-legend">
@@ -248,14 +248,14 @@
 					</ul>
 				</div>
 				<div class="neck-toolbar">
-					<button class="btn btn--small" type="button" data-action="play">
+					<button class="btn btn--small" type="button" data-action="play" title="Play scale">
 						<svg viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true">
 							<path d="M7 4v16l13-8z" />
 						</svg>
 						<span>Play scale</span>
 					</button>
 					<div class="display">
-						<button class="btn btn--small" type="button" data-action="display" aria-expanded="false" aria-haspopup="true">
+						<button class="btn btn--small" type="button" data-action="display" aria-expanded="false" aria-haspopup="true" title="Display options">
 							<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
 								<path d="M21 4h-7M10 4H3M21 12h-9M8 12H3M21 20h-5M12 20H3M14 2v4M8 10v4M16 18v4" />
 							</svg>
@@ -279,7 +279,7 @@
 							<rect x="9" y="2" width="6" height="12" rx="3" />
 							<path d="M5 10v1a7 7 0 0 0 14 0v-1M12 18v4" />
 						</svg>
-						<span class="mic-toggle__label">Light up what I play</span>
+						<span class="mic-toggle__label">Listen</span>
 					</button>
 				</div>
 				<p class="neck-hint" hidden></p>

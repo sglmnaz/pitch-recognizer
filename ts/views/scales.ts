@@ -39,13 +39,31 @@ const ADD_HOLD_MS = 200
 // diagram. 640 units (the mockup's proportions) leave fret 15 26 wide, room for a root dot.
 const OPEN = 30 // room for open-string notes before the nut
 const LENGTH = 640
-const SCALE = (LENGTH - OPEN - 6) / (1 - 2 ** (-FRETS / 12))
-const fretAt = (n: number) => OPEN + SCALE * (1 - 2 ** (-n / 12))
-const noteAlong = (fret: number) => (fret === 0 ? OPEN - 15 : (fretAt(fret - 1) + fretAt(fret)) / 2)
 const SPACING = { h: 28, v: 36 }
 const MARGIN = { h: 14, v: 34 } // first string from the edge; v leaves room for fret numbers
 const DOT_R = 10
 const ROOT_R = 11
+// Vertical: drawn 1:1 with EQUAL fret spacing (it reads like a chord chart;
+// users found narrowing frets odd top to bottom), frets 0–15 exactly filling
+// the screen height left by everything that shares it (see verticalLength).
+// On phones the strings spread across the board's width. On a short screen
+// dots shrink to their fret (never below MIN_R) and labels with them (never
+// below MIN_FONT). Horizontal keeps real fret spacing and, on phones, scrolls.
+const EDGE = 24 // past the high E, room for its dots
+const MIN_R = 6
+const MIN_FONT = 9
+
+/** Fret positions for a neck `length` long with `open` units before the nut:
+ * real (narrowing) spacing, or equal spacing. */
+function geometry(length: number, open: number, equal = false) {
+	const scale = (length - open - 6) / (1 - 2 ** (-FRETS / 12))
+	const fretAt = equal
+		? (n: number) => open + (n * (length - open - 6)) / FRETS
+		: (n: number) => open + scale * (1 - 2 ** (-n / 12))
+	const noteAlong = (fret: number) => (fret === 0 ? open / 2 : (fretAt(fret - 1) + fretAt(fret)) / 2)
+	const halfCell = (fret: number) => (fret === 0 ? open / 2 : (fretAt(fret) - fretAt(fret - 1)) / 2)
+	return { length, open, fretAt, noteAlong, halfCell }
+}
 
 type Mode = 'explore' | 'identify'
 type Shown = { rootPc: number; type: ScaleType }
@@ -68,7 +86,9 @@ export function createScalesView(root: HTMLElement, mic: MicControl): View & { s
 	const clearButton = $<HTMLButtonElement>('[data-action="clear"]')
 	const infoTitle = $<HTMLElement>('.scale-info__title')
 	const strip = $<HTMLElement>('.scale-info__notes')
+	const card = $<HTMLElement>('.neck-card')
 	const board = $<HTMLElement>('.neck-board')
+	const tabBar = document.querySelector<HTMLElement>('.tabs')!
 	const neck = $<SVGSVGElement>('.neck')
 	const playButton = $<HTMLButtonElement>('[data-action="play"]')
 	const playLabel = playButton.querySelector('span')!
@@ -81,6 +101,7 @@ export function createScalesView(root: HTMLElement, mic: MicControl): View & { s
 	const micLabel = $<HTMLElement>('.mic-toggle__label')
 	const hint = $<HTMLElement>('.neck-hint')
 	const results = $<HTMLElement>('.scale-results')
+	const phone = matchMedia('(max-width: 600px)')
 	const legend = $<HTMLElement>('.neck-legend')
 	const legendRoot = $<HTMLElement>('.neck-legend__root')
 	const legendTone = $<HTMLElement>('.neck-legend__tone')
@@ -208,13 +229,21 @@ export function createScalesView(root: HTMLElement, mic: MicControl): View & { s
 	})
 
 	Settings.subscribe(render)
+	// The phone neck is sized from the board's width: redraw when that changes.
+	const redraw = () => {
+		if (!root.hidden) render()
+	}
+	phone.addEventListener('change', redraw)
+	window.addEventListener('resize', redraw)
 
 	/* Mic toggle ---------------------------------------------------------- */
 	function syncMic() {
 		const state = mic.state()
 		const listening = state === 'listening'
 		const on = mode === 'explore' ? listening : addByEar && listening
-		micLabel.textContent = mode === 'explore' ? 'Light up what I play' : 'Add notes by playing'
+		micLabel.textContent = mode === 'explore' ? 'Listen' : 'Play to mark'
+		micButton.title =
+			mode === 'explore' ? 'Light up the notes you play on the guitar' : 'Mark the notes you play on the guitar'
 		micButton.setAttribute('aria-pressed', String(on))
 		micButton.classList.toggle('mic-toggle--live', listening)
 		const text =
@@ -224,7 +253,24 @@ export function createScalesView(root: HTMLElement, mic: MicControl): View & { s
 					? 'Tap anywhere to start the microphone.'
 					: ''
 		hint.textContent = text
+		const hintChanged = hint.hidden !== !text
 		hint.hidden = !text
+		// The hint takes height from a vertical neck that fills the screen.
+		if (hintChanged && Settings.get().fretboardVertical && !root.hidden) render()
+	}
+
+	// Vertical neck length so frets 0–15 end exactly where the screen does,
+	// with the toolbar (and hint) above the board in view: the screen height
+	// minus those controls, the board's padding and legend, and the docked tab
+	// bar on phones, or on wider screens everything above the neck block (top
+	// bar), since the page should not need scrolling there.
+	function verticalLength() {
+		const cardBox = card.getBoundingClientRect()
+		const boardBox = board.getBoundingClientRect()
+		const above = boardBox.top - cardBox.top
+		const around = boardBox.height - neck.getBoundingClientRect().height
+		const reserve = phone.matches ? tabBar.offsetHeight + 4 : cardBox.top + scrollY + 16
+		return Math.max(300, Math.round(innerHeight - reserve - above - around))
 	}
 
 	/* Playback ------------------------------------------------------------ */
@@ -233,6 +279,7 @@ export function createScalesView(root: HTMLElement, mic: MicControl): View & { s
 		playTimer = 0
 		playingMidi = null
 		playLabel.textContent = 'Play scale'
+		playButton.title = 'Play scale'
 		applyLit()
 	}
 
@@ -251,6 +298,7 @@ export function createScalesView(root: HTMLElement, mic: MicControl): View & { s
 			playTimer = window.setTimeout(tick, STEP_MS)
 		}
 		playLabel.textContent = 'Stop'
+		playButton.title = 'Stop'
 		tick()
 	}
 
@@ -341,11 +389,19 @@ export function createScalesView(root: HTMLElement, mic: MicControl): View & { s
 		}
 	}
 
-	function drawNeck(shown: Shown | null, names: Map<number, string>, highlighted: (degree: string) => boolean) {
+	function drawNeck(shown: Shown | null, names: Map<number, string>, highlighted: (degree: string) => boolean, length?: number) {
 		const { scaleLabels, fretboardVertical } = Settings.get()
 		const vertical = fretboardVertical
 		const o = vertical ? 'v' : 'h'
-		const across = (a: number) => MARGIN[o] + (vertical ? 5 - a : a) * SPACING[o]
+		const fit = vertical
+		const boardWidth = board.clientWidth - parseFloat(getComputedStyle(board).paddingLeft) * 2
+		const spacingV = phone.matches ? Math.max(SPACING.v, (boardWidth - MARGIN.v - EDGE) / 5) : SPACING.v
+		const spacing = vertical ? spacingV : SPACING.h
+		const across = (a: number) => MARGIN[o] + (vertical ? 5 - a : a) * spacing
+		// Fixed distances past the outer strings, whatever the string spacing:
+		// wires, nut and position box reach 14 units out, fret numbers sit 22 out.
+		const out = 14 / spacing
+		const numAt = 5 + 22 / spacing
 		const xy = (along: number, a: number) => (vertical ? [across(a), along] : [along, across(a)])
 		const pt = (along: number, a: number, p = '') => {
 			const [x, y] = xy(along, a)
@@ -362,10 +418,15 @@ export function createScalesView(root: HTMLElement, mic: MicControl): View & { s
 			const [x2, y2] = xy(along2, a2)
 			return `x="${Math.min(x1, x2)}" y="${Math.min(y1, y2)}" width="${Math.abs(x2 - x1)}" height="${Math.abs(y2 - y1)}"`
 		}
-		const width = vertical ? MARGIN.v + 5 * SPACING.v + 24 : LENGTH
-		const height = vertical ? LENGTH : MARGIN.h + 5 * SPACING.h + 30
+		const g = vertical ? geometry(length ?? verticalLength(), OPEN, true) : geometry(LENGTH, OPEN)
+		const { fretAt, noteAlong, halfCell } = g
+		const width = vertical ? MARGIN.v + 5 * spacingV + EDGE : g.length
+		const height = vertical ? g.length : MARGIN.h + 5 * SPACING.h + 30
 		neck.setAttribute('viewBox', `0 0 ${width} ${height}`)
 		neck.classList.toggle('neck--vertical', vertical)
+		// Vertical is drawn 1:1 (inline size beats the stylesheet's width: 100%).
+		neck.style.width = vertical ? `${width}px` : ''
+		neck.style.height = vertical ? `${height}px` : ''
 
 		const degrees = shown ? degreeMap(shown.rootPc, shown.type) : new Map<number, string>()
 		const box = shown && position ? positionWindows(shown.rootPc, shown.type)[position - 1] : null
@@ -376,17 +437,17 @@ export function createScalesView(root: HTMLElement, mic: MicControl): View & { s
 			const spots = fret === 12 ? [1.5, 3.5] : [2.5]
 			for (const a of spots) parts.push(`<circle class="neck__inlay" ${pt(at, a, 'c')} r="4"/>`)
 			// Fret numbers beyond the low E: under the neck, or left of it when vertical.
-			parts.push(`<text class="neck__num" ${vertical ? pt(at, 5.56) : pt(at, 5.72)}>${fret}</text>`)
+			parts.push(`<text class="neck__num" ${pt(at, numAt)}>${fret}</text>`)
 		}
 		// Wires and nut run half a string space past the outer strings.
-		for (let fret = 1; fret <= FRETS; fret++) parts.push(`<line class="neck__fret" ${line(fretAt(fret), -0.5, fretAt(fret), 5.5)}/>`)
-		parts.push(`<line class="neck__nut" ${line(OPEN, -0.5, OPEN, 5.5)}/>`)
+		for (let fret = 1; fret <= FRETS; fret++) parts.push(`<line class="neck__fret" ${line(fretAt(fret), -out, fretAt(fret), 5 + out)}/>`)
+		parts.push(`<line class="neck__nut" ${line(g.open, -out, g.open, 5 + out)}/>`)
 		// Thicker toward the low E, like real gauges (.010–.046): 0.7 to 2.4.
-		STRINGS.forEach((_, s) => parts.push(`<line class="neck__string" style="stroke-width:${0.7 + s * 0.34}" ${line(OPEN, s, LENGTH, s)}/>`))
+		STRINGS.forEach((_, s) => parts.push(`<line class="neck__string" style="stroke-width:${0.7 + s * 0.34}" ${line(g.open, s, g.length, s)}/>`))
 		if (box) {
 			const from = box[0] === 0 ? 2 : fretAt(box[0] - 1) + 1
 			const to = fretAt(box[1]) - 1
-			parts.push(`<rect class="neck__box" ${rect(from, -0.5, to, 5.5)} rx="6"/>`)
+			parts.push(`<rect class="neck__box" ${rect(from, -out, to, 5 + out)} rx="6"/>`)
 		}
 
 		STRINGS.forEach((_, s) => {
@@ -405,20 +466,30 @@ export function createScalesView(root: HTMLElement, mic: MicControl): View & { s
 				if (box && (fret < box[0] || fret > box[1])) classes.push('cell--dim')
 				const label = scaleLabels === 'none' ? '' : scaleLabels === 'intervals' && degree ? degree : name
 				const at = noteAlong(fret)
-				const half = fret === 0 ? 15 : (fretAt(fret) - fretAt(fret - 1)) / 2
+				const half = halfCell(fret)
+				const full = isRoot ? ROOT_R : DOT_R
+				const r = fit ? Math.max(MIN_R, Math.min(full, half + 0.4)) : full
+				const font = r < full ? `style="font-size:${Math.max(MIN_FONT, r * 1.15).toFixed(1)}px"` : ''
 				const focusable = mode === 'identify' || degree !== undefined
 				parts.push(
 					`<g class="${classes.join(' ')}" data-s="${s}" data-f="${fret}" data-midi="${midi}" role="button" tabindex="${focusable ? 0 : -1}"` +
 						` aria-label="${STRING_NAMES[s]} string, ${fret === 0 ? 'open' : `fret ${fret}`}, ${name}${degree ? ` (${degree})` : ''}"` +
 						(mode === 'identify' ? ` aria-pressed="${isMarked}"` : '') +
 						`><rect class="cell__hit" ${rect(at - half, s - 0.5, at + half, s + 0.5)}/>` +
-						`<circle ${pt(at, s, 'c')} r="${isRoot ? ROOT_R : DOT_R}"/>` +
-						`<text ${pt(at, s)}>${label}</text></g>`
+						`<circle ${pt(at, s, 'c')} r="${r}"/>` +
+						`<text ${pt(at, s)} ${font}>${label}</text></g>`
 				)
 			}
 		})
 		neck.innerHTML = parts.join('')
 		applyLit()
+		// The board's padding and legend were measured around the previous
+		// drawing; if the fill is off (first vertical draw, a scrollbar gone),
+		// draw once more at the corrected length.
+		if (vertical && length === undefined) {
+			const want = verticalLength()
+			if (Math.abs(want - g.length) > 1) drawNeck(shown, names, highlighted, want)
+		}
 	}
 
 	const ORDINALS = ['', 'root', '2nd', '3rd', '4th', '5th', '6th', '7th']
@@ -460,7 +531,8 @@ export function createScalesView(root: HTMLElement, mic: MicControl): View & { s
 		strip.hidden = !shown
 		playButton.disabled = !shown
 		positionChip.hidden = !(shown && position)
-		positionChip.textContent = `Position ${position} ×`
+		// "Pos 5 ×" on narrow phones (CSS hides the "ition"), so the toolbar fits.
+		positionChip.innerHTML = `Pos<span>ition</span> ${position} ×`
 		const names = new Map<number, string>()
 		if (shown) renderStrip(shown, highlighted).notes.forEach((n) => names.set(pitchClassOf(n), n))
 		else stopPlaying()
@@ -471,10 +543,10 @@ export function createScalesView(root: HTMLElement, mic: MicControl): View & { s
 		markedText.classList.toggle('scales-marked--empty', markedPcs.size === 0)
 		clearButton.disabled = marked.size === 0
 
-		drawNeck(shown, names, highlighted)
-		renderLegend(shown, scaleDegrees)
-		renderResults(matches)
 		syncMic()
+		renderLegend(shown, scaleDegrees)
+		drawNeck(shown, names, highlighted)
+		renderResults(matches)
 	}
 
 	return {

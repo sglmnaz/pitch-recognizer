@@ -79,22 +79,26 @@ button {
 	flex: none;
 }
 
-/* Phones: the tab bar floats at the bottom, within thumb reach; settings and
-   theme (rarely used) stay at the top. */
+/* Phones: the tab bar is docked to the bottom edge, within thumb reach, and
+   clears the iPhone home indicator; settings and theme (rarely used) stay at
+   the top. The app's bottom padding keeps content out from under it
+   (~62 px bar + breathing room). */
 @media (max-width: 600px) {
 	.app {
-		padding-bottom: calc(112px + env(safe-area-inset-bottom));
+		padding-bottom: calc(88px + env(safe-area-inset-bottom));
 	}
 
 	.tabs {
 		position: fixed;
-		left: 16px;
-		right: 16px;
-		bottom: calc(16px + env(safe-area-inset-bottom));
+		left: 0;
+		right: 0;
+		bottom: 0;
 		z-index: 20;
-		padding: 4px;
-		border-radius: var(--radius-lg);
-		box-shadow: var(--shadow-md);
+		padding: 4px 8px calc(4px + env(safe-area-inset-bottom));
+		border-radius: 0;
+		border-top: 1px solid var(--border);
+		background: var(--surface);
+		box-shadow: none;
 	}
 
 	.tab {
@@ -103,6 +107,12 @@ button {
 		padding: 8px 4px;
 		font-size: 11px;
 		border-radius: var(--radius);
+	}
+
+	/* On the opaque bar the selected tab is a quiet tint, not a raised card. */
+	.tabs .tab[aria-selected='true'] {
+		background: var(--surface-2);
+		box-shadow: none;
 	}
 
 	.tab svg {
@@ -928,13 +938,13 @@ button {
 	filter: brightness(0.97);
 }
 
-/* The neck card is the hero: on wider screens it grows past the 520 px
-   column (up to 760 px) so the neck reads at about 1:1. */
+/* The neck block is the hero: on wider screens it grows past the 520 px
+   column (up to 760 px) so the neck reads at about 1:1. No card of its own:
+   the board is the only box. */
 .neck-card {
 	display: flex;
 	flex-direction: column;
 	gap: 10px;
-	padding: 12px;
 }
 
 @media (min-width: 601px) {
@@ -962,16 +972,15 @@ button {
 	-webkit-tap-highlight-color: transparent;
 }
 
-/* Phones: the horizontal neck keeps a playable size and scrolls in its board;
-   the vertical one fits the width and grows down the page instead. */
+/* Phones: the horizontal neck keeps a playable size and scrolls inside its
+   board; the vertical one is drawn to fit (ts/views/scales.ts). */
 @media (max-width: 600px) {
-	.neck:not(.neck--vertical) {
-		width: 680px;
+	.neck-board {
+		padding: 10px 6px 4px;
 	}
 
-	.neck--vertical {
-		max-width: 340px;
-		margin: 0 auto;
+	.neck:not(.neck--vertical) {
+		width: 680px;
 	}
 }
 
@@ -991,15 +1000,15 @@ button {
 	bottom: auto;
 }
 
-@media (min-width: 601px) {
-	.neck--vertical {
-		width: auto;
-		height: clamp(520px, calc(100vh - 220px), 900px);
-		max-width: 100%;
-		margin: 0 auto;
-	}
+/* The vertical neck gets its exact size inline from ts/views/scales.ts. */
+.neck--vertical {
+	max-width: none;
+	margin: 0 auto;
+}
 
-	/* The board hugs the neck instead of spanning the card. */
+/* Wider screens: the board hugs the vertical neck instead of spanning the
+   column. (On phones the neck spans the board.) */
+@media (min-width: 601px) {
 	.neck-card:has(.neck--vertical) .neck-board {
 		align-self: center;
 	}
@@ -1238,6 +1247,7 @@ button {
 }
 
 .position-chip {
+	white-space: nowrap;
 	height: 26px;
 	padding: 0 10px;
 	border: none;
@@ -1258,6 +1268,7 @@ button {
    turns green while the mic is actually listening, and pulses when on. */
 .mic-toggle {
 	margin-left: auto;
+	white-space: nowrap;
 	display: inline-flex;
 	align-items: center;
 	gap: 7px;
@@ -1295,6 +1306,23 @@ button {
 
 .mic-toggle--live[aria-pressed='true'] .status__dot {
 	animation: pulse 1.8s var(--ease) infinite;
+}
+
+/* Narrow phones: Play and Display become icon buttons (title + aria via the
+   title attribute), so the toolbar stays on one line. */
+@media (max-width: 440px) {
+	.neck-toolbar .btn span {
+		display: none;
+	}
+
+	.neck-toolbar .btn--small {
+		width: 34px;
+		padding: 0;
+	}
+
+	.position-chip span {
+		display: none;
+	}
 }
 
 .neck-hint {
@@ -1376,7 +1404,7 @@ button {
 }
 
 /* Wider screens ---------------------------------------------------------- */
-/* Phones (< 600 px) keep the single column and floating tab bar above.
+/* Phones (< 600 px) keep the single column and docked tab bar above.
    Tablets get a slightly wider column; desktops (>= 960 px) a real layout:
    a wide container, two columns per view, and a full-width fretboard. */
 @media (min-width: 601px) and (max-width: 959px) {
