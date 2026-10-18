@@ -955,8 +955,11 @@ button {
 
 /* The board: its own surface with a hairline, and its own data-theme when
    the fretboard theme setting forces light or dark. */
+/* Only a horizontal neck scrolls, sideways; a vertical one grows with the
+   page (no second scrollbar). */
 .neck-board {
-	overflow: auto;
+	overflow-x: auto;
+	overflow-y: hidden;
 	padding: 12px 10px 6px;
 	border-radius: var(--radius);
 	background: var(--board);
@@ -1005,6 +1008,10 @@ button {
 .neck--vertical {
 	max-width: none;
 	margin: 0 auto;
+}
+
+.neck-card:has(.neck--vertical) .neck-board {
+	overflow: visible;
 }
 
 /* Wider screens: the board hugs the vertical neck instead of spanning the

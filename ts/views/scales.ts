@@ -264,8 +264,6 @@ export function createScalesView(root: HTMLElement, mic: MicControl): View & { s
 	// minus those controls, the board's padding and legend, and the docked tab
 	// bar on phones, or on wider screens everything above the neck block (top
 	// bar), since the page should not need scrolling there.
-	// Returns the board's own padding + legend too, to cap a larger neck's
-	// board at the screen height (it then scrolls inside).
 	function verticalLength() {
 		const cardBox = card.getBoundingClientRect()
 		const style = getComputedStyle(board)
@@ -273,7 +271,7 @@ export function createScalesView(root: HTMLElement, mic: MicControl): View & { s
 		const legendHeight = legend.hidden ? 0 : legend.offsetHeight + parseFloat(getComputedStyle(legend).marginTop) * 2
 		const around = parseFloat(style.paddingTop) + parseFloat(style.paddingBottom) + legendHeight
 		const reserve = phone.matches ? tabBar.offsetHeight + 4 : cardBox.top + scrollY + 16
-		return { length: Math.max(300, Math.round(innerHeight - reserve - above - around)), around }
+		return Math.max(300, Math.round(innerHeight - reserve - above - around))
 	}
 
 	/* Playback ------------------------------------------------------------ */
@@ -421,11 +419,12 @@ export function createScalesView(root: HTMLElement, mic: MicControl): View & { s
 			return `x="${Math.min(x1, x2)}" y="${Math.min(y1, y2)}" width="${Math.abs(x2 - x1)}" height="${Math.abs(y2 - y1)}"`
 		}
 		// Fret size setting: scales the neck's length (frets' height when vertical,
-		// width when horizontal) at constant dot size. Above 1 the neck scrolls
-		// inside its board; below 1 dots shrink with their frets.
+		// width when horizontal) at constant dot size. Above 1 a vertical neck
+		// just grows and the page scrolls (one scrollbar, not two); a horizontal
+		// one scrolls sideways in its board. Below 1 dots shrink with their frets.
 		const size = Settings.get().fretSize
 		const fill = vertical ? verticalLength() : null
-		const base = length ?? fill?.length ?? LENGTH
+		const base = length ?? fill ?? LENGTH
 		const g = geometry(Math.round(base * size), OPEN, vertical)
 		const { fretAt, noteAlong, halfCell } = g
 		const width = vertical ? MARGIN.v + 5 * spacingV + EDGE : g.length
@@ -434,10 +433,12 @@ export function createScalesView(root: HTMLElement, mic: MicControl): View & { s
 		neck.classList.toggle('neck--vertical', vertical)
 		// Vertical is drawn 1:1 (inline size beats the stylesheet's width: 100%).
 		// Horizontal: the rendered width grows with the length, so dots keep
-		// their size (phones: from the 680 px base, which scrolls).
-		neck.style.width = vertical ? `${width}px` : size === 1 ? '' : phone.matches ? `${680 * size}px` : `${100 * size}%`
+		// their size (phones: from the 680 px base, which scrolls). A phone neck
+		// within 10 % of the board's width just fits it: a few px of scroll is
+		// a scrollbar for nothing.
+		const phoneWidth = 680 * size <= boardWidth * 1.1 ? boardWidth : 680 * size
+		neck.style.width = vertical ? `${width}px` : phone.matches ? `${phoneWidth}px` : size === 1 ? '' : `${100 * size}%`
 		neck.style.height = vertical ? `${height}px` : ''
-		board.style.maxHeight = fill && size > 1 ? `${fill.length + fill.around}px` : ''
 
 		const degrees = shown ? degreeMap(shown.rootPc, shown.type) : new Map<number, string>()
 		const box = shown && position ? positionWindows(shown.rootPc, shown.type)[position - 1] : null
@@ -498,8 +499,8 @@ export function createScalesView(root: HTMLElement, mic: MicControl): View & { s
 		// drawing; if the fill is off (first vertical draw, a scrollbar gone),
 		// draw once more at the corrected length.
 		if (fill && length === undefined) {
-			const want = verticalLength().length
-			if (Math.abs(want - fill.length) > 1) drawNeck(shown, names, highlighted, want)
+			const want = verticalLength()
+			if (Math.abs(want - fill) > 1) drawNeck(shown, names, highlighted, want)
 		}
 	}
 
