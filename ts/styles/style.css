@@ -28,6 +28,11 @@ button {
 	font-family: inherit;
 }
 
+/* The hidden attribute always hides, whatever display a class sets. */
+[hidden] {
+	display: none !important;
+}
+
 /* App shell -------------------------------------------------------------- */
 .app {
 	position: relative;
@@ -269,10 +274,6 @@ button {
 	display: flex;
 	flex-direction: column;
 	gap: var(--stack);
-}
-
-.view[hidden] {
-	display: none;
 }
 
 .panel {
@@ -741,12 +742,6 @@ button {
 	}
 }
 
-.mic[hidden],
-.scales-pickers[hidden],
-.scale-info__notes[hidden] {
-	display: none;
-}
-
 /* Scales ----------------------------------------------------------------- */
 /* Small segmented control (Explore / Identify, labels, positions): the tab
    bar's look at a smaller scale. */
@@ -1191,13 +1186,6 @@ button {
 }
 
 /* Fretboard extras (ts/ui/fretboard.ts): chord-diagram overlays ------------- */
-/* An optional tone: outline only. */
-.cell--optional circle {
-	fill: transparent;
-	stroke: var(--note-stroke);
-	stroke-dasharray: 2 2;
-}
-
 .neck__barre {
 	fill: var(--note-fill);
 	stroke: var(--note-stroke);
@@ -1279,11 +1267,6 @@ button {
 	box-shadow: inset 0 0 0 1px var(--tone-stroke);
 }
 
-.neck-legend[hidden],
-.neck-legend [hidden] {
-	display: none;
-}
-
 /* Slim toolbar under the board. */
 .neck-toolbar {
 	/* Anchors the Display menu, so it opens from the card's left edge and
@@ -1311,10 +1294,6 @@ button {
 	box-shadow: var(--shadow-md);
 }
 
-.display__menu[hidden] {
-	display: none;
-}
-
 .position-chip {
 	white-space: nowrap;
 	height: 26px;
@@ -1327,10 +1306,6 @@ button {
 	font-size: 12px;
 	font-weight: 500;
 	cursor: pointer;
-}
-
-.position-chip[hidden] {
-	display: none;
 }
 
 /* Mic toggle: the Scales tab's own, clearly labelled mic control. The dot
@@ -1409,10 +1384,6 @@ button {
 	margin: 0;
 	font-size: 12px;
 	color: var(--fg-muted);
-}
-
-.neck-hint[hidden] {
-	display: none;
 }
 
 .scale-results {
@@ -1868,10 +1839,6 @@ button {
 	text-align: center;
 }
 
-.a4-note[hidden] {
-	display: none;
-}
-
 .scale-info .a4-note {
 	margin: 0;
 	text-align: inherit;
@@ -2260,10 +2227,6 @@ label.metro-row {
 	padding: 0 16px 14px;
 }
 
-.metro-progress[hidden] {
-	display: none;
-}
-
 .metro-progress__bar {
 	height: 6px;
 	border-radius: var(--radius-pill);
@@ -2379,12 +2342,6 @@ label.metro-row {
 	align-self: flex-start;
 	width: 100%;
 	max-width: 360px;
-}
-
-/* Several of these set their own display; [hidden] must still win. */
-#view-trainer > [hidden],
-.ear [hidden] {
-	display: none;
 }
 
 /* Phones: question first, then the mic (it sits after the hidden Notes
@@ -2644,14 +2601,6 @@ label.metro-row {
 }
 
 /* Chords: Listen / Library / Identify (ts/features/chords/chord-library.view.ts) ---------- */
-.chord-library[hidden],
-.chord-identify[hidden],
-.chord-keys[hidden],
-.voicings__empty[hidden],
-#view-chords > [hidden] {
-	display: none;
-}
-
 /* The recognized chord is a button: it opens in the Library. */
 .chord-link {
 	display: block;
@@ -3023,12 +2972,6 @@ label.metro-row {
 	flex-direction: column;
 	gap: 12px;
 	min-width: 0;
-}
-
-.harmony[hidden],
-.harmony [hidden],
-.chord-fits[hidden] {
-	display: none;
 }
 
 .harmony__head {
@@ -3507,7 +3450,6 @@ a.btn {
 	order: 2;
 }
 
-.changes-stage [hidden],
 .changes-stage[data-phase='done'] :is(.changes-meta, .changes-target, .changes-next, .changes-heard) {
 	display: none;
 }
