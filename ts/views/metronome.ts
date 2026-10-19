@@ -314,5 +314,6 @@ export function createMetronomeView(root: HTMLElement): View {
 		// (reset() also runs when the mic is stopped or blocked, which must not stop the clicks).
 		onReading() {},
 		reset() {},
+		wantsMic: () => false,
 	}
 }

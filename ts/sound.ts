@@ -43,8 +43,8 @@ function pluck(context: AudioContext, midi: number): AudioBuffer {
 	return buffer
 }
 
-/** Plays a MIDI note `delay` seconds from now. */
-export function play(midi: number, delay = 0) {
+/** Plays a MIDI note `delay` seconds from now; `volume` < 1 for notes that ring together (a chord). */
+export function play(midi: number, delay = 0, volume = 1) {
 	ctx ??= new AudioContext()
 	if (ctx.state === 'suspended') ctx.resume()
 	const { a4 } = Settings.get()
@@ -56,7 +56,12 @@ export function play(midi: number, delay = 0) {
 	if (!buffer) buffers.set(midi, (buffer = pluck(ctx, midi)))
 	const source = ctx.createBufferSource()
 	source.buffer = buffer
-	source.connect(ctx.destination)
+	if (volume === 1) source.connect(ctx.destination)
+	else {
+		const gain = ctx.createGain()
+		gain.gain.value = volume
+		source.connect(gain).connect(ctx.destination)
+	}
 	source.start(ctx.currentTime + delay)
 	ringingUntil = Math.max(ringingUntil, performance.now() + delay * 1000 + RING_MS)
 }

@@ -13,6 +13,7 @@
 		"check:tunings": "node scripts/tuning-check.ts",
 		"check:metronome": "node scripts/metronome-check.ts",
 		"check:chord-theory": "node scripts/chord-theory-check.ts",
+		"check:ear": "node scripts/ear-check.ts",
 		"bench": "node scripts/bench.ts"
 	},
 	"keywords": [

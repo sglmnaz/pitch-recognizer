@@ -1,5 +1,6 @@
 import { possibleFrequencies, possibleFrequenciesWithoutAccidentals, type NoteInfo } from './notes'
 import { clampA4, tuningById } from './tuning'
+import { DEFAULT_INTERVALS, DEFAULT_QUALITIES, pool } from './ear'
 
 export interface Settings {
 	/** Add sharps/flats to the pool of possible target notes. */
@@ -57,6 +58,19 @@ export interface Settings {
 	/* Fretboard (shared by every neck, ts/fretboard.ts) */
 	/** Mirror the neck: nut on the right when horizontal, low string on the right when vertical. */
 	leftHanded: boolean
+
+	/* Trainer: ear training (ts/ear.ts) */
+	/** Which exercise the Trainer shows. */
+	trainerExercise: 'notes' | 'intervals' | 'chords'
+	/** Interval ids (ts/ear.ts INTERVALS) and chord quality ids (QUALITIES) asked. */
+	earIntervals: string[]
+	earChords: string[]
+	/** How the two notes of an interval are played; mixed picks one per question. */
+	earDirection: 'up' | 'down' | 'harmonic' | 'mixed'
+	/** Seconds between the two notes of a melodic interval. */
+	earGap: number
+	/** Move on by itself shortly after a right answer. */
+	earAutoAdvance: boolean
 }
 
 const STORAGE_KEY = 'pitch-recognizer:settings'
@@ -91,6 +105,14 @@ const defaults: Settings = {
 
 	/* Fretboard */
 	leftHanded: false,
+
+	/* Trainer: ear training */
+	trainerExercise: 'notes',
+	earIntervals: DEFAULT_INTERVALS,
+	earChords: DEFAULT_QUALITIES,
+	earDirection: 'up',
+	earGap: 0.75,
+	earAutoAdvance: true,
 }
 
 const listeners = new Set<() => void>()
@@ -100,8 +122,16 @@ function load(): Settings {
 	try {
 		const stored = localStorage.getItem(STORAGE_KEY)
 		const merged: Settings = stored ? { ...defaults, ...JSON.parse(stored) } : { ...defaults }
-		// Stored values can be stale or hand-edited: keep the tuner's inputs valid.
-		return { ...merged, a4: clampA4(merged.a4), tuning: tuningById(merged.tuning).id }
+		// Stored values can be stale or hand-edited: keep the tuner's and the
+		// ear trainer's inputs valid (unknown ids dropped, nothing left = defaults).
+		return {
+			...merged,
+			a4: clampA4(merged.a4),
+			tuning: tuningById(merged.tuning).id,
+			trainerExercise: ['notes', 'intervals', 'chords'].includes(merged.trainerExercise) ? merged.trainerExercise : 'notes',
+			earIntervals: pool('intervals', Array.isArray(merged.earIntervals) ? merged.earIntervals : []),
+			earChords: pool('chords', Array.isArray(merged.earChords) ? merged.earChords : []),
+		}
 	} catch {
 		return { ...defaults }
 	}

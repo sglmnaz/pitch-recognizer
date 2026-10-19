@@ -4,7 +4,7 @@ import type { PitchReading } from './microphone'
 
 // The note must be held in tune for at least this long to win the round.
 // Long enough to rule out a passing glissando, short enough to feel responsive.
-const HOLD_MS = 350
+export const HOLD_MS = 350
 
 export interface Evaluation {
 	/** Note closest to the current reading, or null while silent. */

@@ -36,22 +36,42 @@ const scalesView = createScalesView(byId('view-scales'), {
 })
 
 const views: Record<string, { view: View; section: HTMLElement }> = {
-	trainer: { view: createTrainerView(byId('view-trainer')), section: byId('view-trainer') },
+	// Switching between its exercises changes whether it needs the mic.
+	trainer: { view: createTrainerView(byId('view-trainer'), () => syncMicNeed()), section: byId('view-trainer') },
 	tuner: { view: createTunerView(byId('view-tuner')), section: byId('view-tuner') },
 	chords: { view: createChordsView(byId('view-chords')), section: byId('view-chords') },
 	scales: { view: scalesView, section: byId('view-scales') },
-	// No microphone use: it has no .readout, so the shared #mic block hides there.
+	// No microphone use (wantsMic false, no .readout for the #mic block).
 	metronome: { view: createMetronomeView(byId('view-metronome')), section: byId('view-metronome') },
 }
 
 let currentName = 'tuner'
 let micActive = false
 let micBlocked = false
-// The Metronome tab turns the mic off (it would hear the clicks, and on phones an
-// open mic can change audio routing). True while the mic should come back on
-// leaving it: it was on when the tab opened, or the app booted straight into it.
-// A mic the user had stopped stays stopped.
+// Views with no use for the mic (wantsMic false: the Metronome, the Trainer's
+// Chords exercise) turn it off: it would hear the clicks or the strums, and on
+// phones an open mic can change audio routing. True while the mic should come
+// back on leaving them: it was on when they opened, or the app booted straight
+// into one. A mic the user had stopped stays stopped.
 let micResume = false
+
+function syncMicNeed() {
+	const wanted = views[currentName].view.wantsMic?.() ?? true
+	// One shared mic control, placed right under the active view's readout.
+	// Views without one (Scales) have their own mic toggle: hide it there.
+	const readout = views[currentName].section.querySelector('.readout')
+	readout?.after(mic)
+	mic.hidden = !readout || !wanted
+	if (!wanted) {
+		if (micActive) {
+			micResume = true
+			stopMic()
+		}
+	} else if (micResume) {
+		micResume = false
+		startMic()
+	}
+}
 
 /* Theme ------------------------------------------------------------------ */
 const SUN = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>'
@@ -98,11 +118,6 @@ function activate(name: string) {
 	for (const [key, { section }] of Object.entries(views)) {
 		section.hidden = key !== name
 	}
-	// One shared mic control, placed right under the active view's readout.
-	// Views without one (Scales) have their own mic toggle: hide it there.
-	const readout = views[name].section.querySelector('.readout')
-	readout?.after(mic)
-	mic.hidden = !readout
 	for (const button of tabButtons) {
 		button.setAttribute('aria-selected', String(button.dataset.tab === name))
 	}
@@ -114,16 +129,7 @@ function activate(name: string) {
 	settingsToggle.hidden = !hasSettings
 	if (!hasSettings) setSettingsOpen(false)
 
-	if (name === 'metronome') {
-		if (micActive) {
-			micResume = true
-			stopMic()
-		}
-	} else if (micResume) {
-		micResume = false
-		startMic()
-	}
-
+	syncMicNeed()
 	views[name].view.onActivate()
 }
 
@@ -350,7 +356,7 @@ if (DEBUG) {
 applyTheme(document.documentElement.dataset.theme === 'dark' ? 'dark' : 'light')
 activate(location.hash.replace('#', ''))
 drawWaveform(false)
-// Listen by default: a tuner that is not listening just looks broken. (Not on
-// the Metronome tab: the mic starts when the user leaves it.)
-if (currentName === 'metronome') micResume = true
+// Listen by default: a tuner that is not listening just looks broken. (Not
+// where the view has no use for it: the mic starts when the user leaves.)
+if (views[currentName].view.wantsMic?.() === false) micResume = true
 else startMic()

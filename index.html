@@ -246,7 +246,8 @@
 				</label>
 			</div>
 
-			<div class="settings__section" data-for="trainer">
+			<!-- Trainer: data-exercise limits a section to those exercises (ts/views/trainer.ts). -->
+			<div class="settings__section" data-for="trainer" data-exercise="notes">
 				<label class="switch">
 					<span class="switch__text">
 						<span class="switch__title">Match any octave</span>
@@ -273,7 +274,7 @@
 				</label>
 			</div>
 
-			<div class="settings__section" data-for="trainer">
+			<div class="settings__section" data-for="trainer" data-exercise="notes">
 				<div class="settings__heading">
 					<span class="panel__label">Target notes</span>
 					<span class="settings__actions">
@@ -283,10 +284,67 @@
 				</div>
 				<div class="chips" id="noteChips"></div>
 			</div>
+
+			<div class="settings__section" data-for="trainer" data-exercise="intervals">
+				<label class="switch">
+					<span class="switch__text">
+						<span class="switch__title">Direction</span>
+						<span class="switch__desc">How the two notes are played</span>
+					</span>
+					<select class="select select--small" data-setting="earDirection">
+						<option value="up">Ascending</option>
+						<option value="down">Descending</option>
+						<option value="harmonic">Harmonic</option>
+						<option value="mixed">Mixed</option>
+					</select>
+				</label>
+				<label class="switch">
+					<span class="switch__text">
+						<span class="switch__title">Note gap</span>
+						<span class="switch__desc">Time between the two notes</span>
+					</span>
+					<select class="select select--small" data-setting="earGap" data-type="number">
+						<option value="0.45">Fast</option>
+						<option value="0.75">Normal</option>
+						<option value="1.1">Slow</option>
+					</select>
+				</label>
+			</div>
+
+			<div class="settings__section" data-for="trainer" data-exercise="intervals">
+				<div class="settings__heading">
+					<span class="panel__label">Intervals</span>
+				</div>
+				<div class="chips chips--6" data-chips="earIntervals"></div>
+			</div>
+
+			<div class="settings__section" data-for="trainer" data-exercise="chords">
+				<div class="settings__heading">
+					<span class="panel__label">Chord qualities</span>
+				</div>
+				<div class="chips" data-chips="earChords"></div>
+			</div>
+
+			<div class="settings__section" data-for="trainer" data-exercise="intervals chords">
+				<label class="switch">
+					<span class="switch__text">
+						<span class="switch__title">Auto-advance</span>
+						<span class="switch__desc">Next question shortly after a right answer</span>
+					</span>
+					<input type="checkbox" class="switch__input" data-setting="earAutoAdvance" />
+					<span class="switch__track"></span>
+				</label>
+			</div>
 		</div>
 
 		<!-- Trainer ------------------------------------------------------- -->
 		<section class="view" id="view-trainer" role="tabpanel" hidden>
+			<div class="segmented trainer-mode" role="group" aria-label="Exercise">
+				<button type="button" data-exercise="notes" aria-pressed="true">Notes</button>
+				<button type="button" data-exercise="intervals" aria-pressed="false">Intervals</button>
+				<button type="button" data-exercise="chords" aria-pressed="false">Chords</button>
+			</div>
+
 			<div class="panel scoreboard">
 				<div class="stat">
 					<span class="stat__value" data-stat="score">0</span>
@@ -302,7 +360,8 @@
 				</div>
 			</div>
 
-			<div class="panel prompt">
+			<!-- Notes exercise: data-only="notes"; Intervals / Chords: data-only="ear". -->
+			<div class="panel prompt" data-only="notes">
 				<div id="staff" class="staff"></div>
 				<div class="prompt__meta">
 					<p class="prompt__hint">Match this note</p>
@@ -311,7 +370,7 @@
 				</div>
 			</div>
 
-			<div class="panel readout">
+			<div class="panel readout" data-only="notes">
 				<div class="readout__note readout__idle">--</div>
 				<div class="readout__sub">Press Listen to start</div>
 				<div class="meter">
@@ -331,8 +390,35 @@
 				<p class="a4-note" hidden></p>
 			</div>
 
-			<div class="controls">
+			<div class="controls" data-only="notes">
 				<button class="btn btn--block" type="button" data-action="skip">Skip note</button>
+			</div>
+
+			<!-- Ear training (ts/views/ear.ts): the app plays, the user names it. -->
+			<div class="panel ear" data-only="ear" hidden>
+				<div class="ear__head">
+					<div class="ear__question">
+						<p class="ear__prompt">Which interval?</p>
+						<p class="ear__hint"></p>
+					</div>
+					<button class="btn ear__play" type="button" data-action="replay" aria-keyshortcuts="Space">
+						<svg viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true">
+							<path d="M7 4v16l13-8z" />
+						</svg>
+						<span>Play</span>
+					</button>
+				</div>
+				<div class="ear__answers" role="group" aria-label="Answers"></div>
+				<p class="ear__feedback" aria-live="polite"></p>
+				<button class="btn btn--solid btn--block ear__next" type="button" data-action="next" aria-keyshortcuts="Enter" hidden>Next</button>
+			</div>
+
+			<div class="panel ear-stats" data-only="ear" hidden>
+				<div class="ear-stats__head">
+					<span class="panel__label">This session</span>
+					<span class="ear-stats__total"></span>
+				</div>
+				<ol class="ear-stats__list"></ol>
 			</div>
 		</section>
 

@@ -4,10 +4,16 @@ import * as Settings from '../settings'
 import { centsBetween, getClosestNote } from '../notes'
 import type { PitchReading } from '../microphone'
 import type { View } from './view'
+import { createEarView } from './ear'
 
 const CENTS_RANGE = 50
 
-export function createTrainerView(root: HTMLElement): View {
+/**
+ * Three exercises behind one segmented control: Notes (match the note on the
+ * staff with the mic), and the ear drills Intervals / Chords (ts/views/ear.ts).
+ * `onMicNeed` tells index.ts that wantsMic() changed: Chords has no use for it.
+ */
+export function createTrainerView(root: HTMLElement, onMicNeed: () => void): View {
 	const staff = root.querySelector<HTMLElement>('#staff')!
 	const promptHint = root.querySelector<HTMLElement>('.prompt__hint')!
 	const promptNote = root.querySelector<HTMLElement>('.prompt__note')!
@@ -106,9 +112,10 @@ export function createTrainerView(root: HTMLElement): View {
 		}
 	})
 
-	return {
+	const notes: View = {
 		onActivate() {
 			ensureStarted()
+			updateScoreboard()
 			applyStaffTheme()
 			clearReadout('Play the note shown above')
 		},
@@ -141,5 +148,46 @@ export function createTrainerView(root: HTMLElement): View {
 				advance()
 			}
 		},
+	}
+
+	/* Exercise switch ------------------------------------------------------ */
+	const ear = createEarView(root)
+	const modeButtons = Array.from(root.querySelectorAll<HTMLButtonElement>('.trainer-mode [data-exercise]'))
+	const exercise = () => Settings.get().trainerExercise
+	const active = () => (exercise() === 'notes' ? notes : ear)
+
+	function applyExercise() {
+		const ex = exercise()
+		const kind = ex === 'notes' ? 'notes' : 'ear'
+		for (const button of modeButtons) button.setAttribute('aria-pressed', String(button.dataset.exercise === ex))
+		root.classList.toggle('trainer--ear', kind === 'ear')
+		for (const element of root.querySelectorAll<HTMLElement>('[data-only]')) element.hidden = element.dataset.only !== kind
+		// index.ts shows every data-for="trainer" settings section on this tab;
+		// narrow them to the exercise so the popover only holds what applies.
+		for (const section of document.querySelectorAll<HTMLElement>('.settings__section[data-for="trainer"]')) {
+			section.hidden = !section.dataset.exercise!.split(' ').includes(ex)
+		}
+	}
+
+	for (const button of modeButtons) {
+		button.addEventListener('click', () => {
+			const ex = button.dataset.exercise as Settings.Settings['trainerExercise']
+			if (ex === exercise()) return
+			active().reset()
+			Settings.update({ trainerExercise: ex })
+			applyExercise()
+			onMicNeed()
+			active().onActivate()
+		})
+	}
+
+	return {
+		onActivate() {
+			applyExercise()
+			active().onActivate()
+		},
+		reset: () => active().reset(),
+		onReading: (reading) => active().onReading(reading),
+		wantsMic: () => exercise() !== 'chords',
 	}
 }

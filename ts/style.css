@@ -1518,6 +1518,7 @@ button {
 		display: grid;
 		grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
 		grid-template-areas:
+			'mode mode'
 			'score readout'
 			'prompt readout'
 			'prompt mic'
@@ -2324,5 +2325,261 @@ label.metro-row {
 
 	.metro-tempo {
 		max-width: 560px;
+	}
+}
+
+/* Trainer exercises: Notes / Intervals / Chords (ts/views/trainer.ts, ear.ts) */
+.trainer-mode {
+	align-self: flex-start;
+	width: 100%;
+	max-width: 360px;
+}
+
+/* Several of these set their own display; [hidden] must still win. */
+#view-trainer > [hidden],
+.ear [hidden] {
+	display: none;
+}
+
+/* Phones: question first, then the mic (it sits after the hidden Notes
+   readout in the DOM), then the session summary. */
+.trainer--ear > .mic {
+	order: 1;
+}
+
+.trainer--ear > .ear-stats {
+	order: 2;
+}
+
+.ear {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+	padding: 20px;
+}
+
+.ear__head {
+	display: flex;
+	align-items: flex-start;
+	justify-content: space-between;
+	gap: 12px;
+}
+
+.ear__question {
+	min-width: 0;
+}
+
+.ear__prompt {
+	margin: 0;
+	font-size: 17px;
+	font-weight: 600;
+	letter-spacing: -0.01em;
+}
+
+.ear__hint {
+	margin: 2px 0 0;
+	font-size: 13px;
+	color: var(--fg-muted);
+}
+
+.ear__play {
+	flex: none;
+	min-width: 96px;
+}
+
+.ear__answers {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(84px, 1fr));
+	gap: 8px;
+}
+
+.ear-answer {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 2px;
+	min-height: 56px;
+	padding: 6px 4px;
+	border: none;
+	border-radius: var(--radius);
+	background: var(--surface);
+	color: var(--fg);
+	box-shadow: var(--shadow-border);
+	cursor: pointer;
+	transition: background var(--dur) var(--ease), box-shadow var(--dur) var(--ease), opacity var(--dur) var(--ease);
+}
+
+.ear-answer:hover:not(:disabled) {
+	background: var(--surface-2);
+}
+
+.ear-answer:disabled {
+	opacity: 0.45;
+	cursor: not-allowed;
+}
+
+.ear-answer__short {
+	font-family: var(--font-mono);
+	font-size: 17px;
+	font-weight: 500;
+	line-height: 1.1;
+}
+
+.ear-answer__name {
+	font-size: 11px;
+	line-height: 1.2;
+	color: var(--fg-muted);
+	text-align: center;
+}
+
+.ear-answer[data-state='right'] {
+	background: var(--success-bg);
+	box-shadow: 0 0 0 1.5px var(--success);
+}
+
+.ear-answer[data-state='right'] .ear-answer__short {
+	color: var(--success);
+}
+
+.ear-answer[data-state='wrong'] {
+	box-shadow: 0 0 0 1.5px var(--warning);
+}
+
+.ear__feedback {
+	min-height: 1.5em;
+	margin: 0;
+	font-size: 14px;
+	color: var(--fg-secondary);
+}
+
+.ear__feedback[data-state='right'] {
+	color: var(--success);
+	font-weight: 500;
+}
+
+/* Session summary: weakest answers first, one thin bar each. */
+.ear-stats {
+	padding: 14px 16px;
+}
+
+.ear-stats__head {
+	display: flex;
+	justify-content: space-between;
+	align-items: baseline;
+	margin-bottom: 10px;
+}
+
+.ear-stats__total {
+	font-family: var(--font-mono);
+	font-size: 12px;
+	color: var(--fg-secondary);
+}
+
+.ear-stats__list {
+	display: grid;
+	gap: 6px;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.ear-stats__empty {
+	font-size: 12px;
+	color: var(--fg-muted);
+}
+
+.ear-stat {
+	display: grid;
+	grid-template-columns: 44px minmax(0, 1fr) 40px;
+	align-items: center;
+	gap: 10px;
+	font-family: var(--font-mono);
+	font-size: 12px;
+}
+
+.ear-stat__bar {
+	height: 6px;
+	border-radius: var(--radius-pill);
+	background: var(--surface-2);
+	box-shadow: var(--shadow-border);
+	overflow: hidden;
+}
+
+.ear-stat__bar span {
+	display: block;
+	height: 100%;
+	background: var(--fg-muted);
+}
+
+.ear-stat__bar .ear-stat__fill--good {
+	background: var(--success);
+}
+
+.ear-stat__n {
+	text-align: right;
+	color: var(--fg-secondary);
+}
+
+.chips--6 {
+	grid-template-columns: repeat(6, 1fr);
+}
+
+@media (max-width: 600px) {
+	.trainer-mode {
+		max-width: none;
+	}
+
+	.trainer-mode button {
+		min-height: 38px;
+	}
+
+	.ear__play,
+	.settings__section[data-for='trainer'] .chip,
+	.settings__section[data-for='trainer'] .select {
+		height: 44px;
+	}
+}
+
+/* Desktop: the question on the left, the session summary (and the mic, for
+   sung intervals) on the right. */
+@media (min-width: 960px) {
+	.view > .trainer-mode {
+		grid-area: mode;
+	}
+
+	#view-trainer.trainer--ear:not([hidden]) {
+		grid-template-areas:
+			'mode mode'
+			'score stats'
+			'ear stats'
+			'ear mic';
+		grid-template-rows: auto auto auto 1fr;
+	}
+
+	.view > .ear {
+		grid-area: ear;
+		padding: 24px;
+	}
+
+	.view > .ear-stats {
+		grid-area: stats;
+	}
+
+	.trainer--ear > .mic {
+		align-self: start;
+	}
+
+	.ear-answer {
+		min-height: 64px;
+	}
+
+	/* Twelve intervals in two even rows, ten qualities likewise. */
+	.ear__answers[data-exercise='intervals'] {
+		grid-template-columns: repeat(6, 1fr);
+	}
+
+	.ear__answers[data-exercise='chords'] {
+		grid-template-columns: repeat(5, 1fr);
 	}
 }

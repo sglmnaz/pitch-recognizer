@@ -1,4 +1,5 @@
 import * as Settings from '../settings'
+import { INTERVALS, QUALITIES } from '../ear'
 
 /**
  * Wires the settings popover: the switches and selects, the per-note target chips,
@@ -86,9 +87,42 @@ export function createSettingsPanel(root: HTMLElement) {
 		}
 	}
 
+	// Ear-training chips (data-chips="earIntervals" / "earChords"): one per
+	// table entry, pressed = asked. The last one cannot be switched off, so a
+	// round always has something to ask.
+	const earChips = Array.from(root.querySelectorAll<HTMLElement>('[data-chips]'))
+	for (const container of earChips) {
+		const key = container.dataset.chips as 'earIntervals' | 'earChords'
+		const items = key === 'earIntervals' ? INTERVALS : QUALITIES
+		container.replaceChildren(
+			...items.map((item) => {
+				const chip = document.createElement('button')
+				chip.type = 'button'
+				chip.className = 'chip'
+				chip.textContent = item.id
+				chip.title = item.name
+				chip.setAttribute('aria-label', item.name)
+				chip.addEventListener('click', () => {
+					const enabled = Settings.get()[key]
+					const next = enabled.includes(item.id) ? enabled.filter((id) => id !== item.id) : [...enabled, item.id]
+					if (next.length > 0) Settings.update({ [key]: next })
+				})
+				return chip
+			})
+		)
+	}
+
+	function syncEarChips() {
+		for (const container of earChips) {
+			const enabled = Settings.get()[container.dataset.chips as 'earIntervals' | 'earChords']
+			for (const chip of container.children) chip.setAttribute('aria-pressed', String(enabled.includes(chip.textContent!)))
+		}
+	}
+
 	function sync() {
 		syncSwitches()
 		renderChips()
+		syncEarChips()
 		syncA4Notes()
 	}
 
