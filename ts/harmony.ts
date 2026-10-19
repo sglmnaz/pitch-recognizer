@@ -57,7 +57,7 @@ export const PROGRESSIONS: Progression[] = [
 	{ name: 'Doo-wop', numerals: 'I vi IV V', mode: 'major' },
 	{ name: 'Pop, minor start', numerals: 'vi IV I V', mode: 'major' },
 	{ name: 'Jazz ii–V–I', numerals: 'ii7 V7 Imaj7', mode: 'major' },
-	{ name: '12-bar blues', numerals: 'I7 I7 I7 I7 IV7 IV7 I7 I7 V7 IV7 I7 V7', mode: 'major', alsoFor: ['Blues', 'Minor pentatonic'] },
+	{ name: '12-bar blues', numerals: 'I7 I7 I7 I7 IV7 IV7 I7 I7 V7 IV7 I7 V7', mode: 'major', alsoFor: ['Blues', 'Minor pentatonic', 'Mixolydian'] },
 	{ name: 'Minor three-chord', numerals: 'i iv v i', mode: 'minor' },
 	{ name: 'Minor pop', numerals: 'i bVI bIII bVII', mode: 'minor' },
 	// The major V borrows harmonic minor's leading tone, as both cadences do.
@@ -65,8 +65,16 @@ export const PROGRESSIONS: Progression[] = [
 	{ name: 'Minor ii–V–i', numerals: 'ii° V i', mode: 'minor' },
 ]
 
-export const progressionsFor = (type: ScaleType) =>
-	PROGRESSIONS.filter((p) => p.mode === familyOf(type) || p.alsoFor?.includes(type.name))
+/**
+ * Progressions for a scale: those of its family for the major and minor
+ * scales (natural, harmonic, melodic) and their pentatonics; modes only get
+ * what is written for them (the 12-bar blues over Mixolydian), since a
+ * minor i–iv–v is not Dorian's i–IV–v.
+ */
+export function progressionsFor(type: ScaleType): Progression[] {
+	const family = MODES[type.name] === undefined ? familyOf(type) : null
+	return PROGRESSIONS.filter((p) => p.mode === family || p.alsoFor?.includes(type.name))
+}
 
 const ROMAN = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII']
 const NUMERAL = /^([b#]?)(VII|VI|V|IV|III|II|I|vii|vi|v|iv|iii|ii|i)([°ø]?)(maj7|7)?$/
@@ -139,6 +147,45 @@ export const CIRCLE: CircleKey[] = MAJORS.map((major, i) => ({
 
 /** Where a key sits on the circle: a major key on the outer ring, a minor one by its relative major. */
 export const circleIndex = (pc: number, family: Family) => mod12((family === 'minor' ? pc + 3 : pc) * 7)
+
+// Semitones a mode's root sits above its parent major's root (D Dorian: C major).
+const MODES: Record<string, number> = { Dorian: 2, Phrygian: 4, Lydian: 5, Mixolydian: 7, Locrian: 11 }
+
+export interface Key {
+	pc: number
+	family: Family
+	/** A mode, shown as its parent major (D Dorian → C major). */
+	mode: boolean
+}
+
+/**
+ * The key a scale is written in, i.e. its key signature: its own major or
+ * minor key (harmonic and melodic minor keep the natural minor's
+ * signature), or a mode's parent major. Null for whole tone, the diminished
+ * scales and chromatic.
+ */
+export function keyOf(rootPc: number, type: ScaleType): Key | null {
+	const offset = MODES[type.name]
+	if (offset !== undefined) return { pc: mod12(rootPc - offset), family: 'major', mode: true }
+	const family = familyOf(type)
+	return family && { pc: mod12(rootPc), family, mode: false }
+}
+
+/** The key's name as the circle spells it: 'C major', 'D# minor'. */
+export function keyTitle(key: Key): string {
+	const k = CIRCLE[circleIndex(key.pc, key.family)]
+	return key.family === 'major' ? `${k.major} major` : `${k.minor} minor`
+}
+
+/** 'A minor, no sharps or flats'; a mode: 'D Dorian · parent C major, no sharps or flats'. '' without a key. */
+export function keyName(rootPc: number, type: ScaleType): string {
+	const key = keyOf(rootPc, type)
+	if (!key) return ''
+	const signature = signatureName(CIRCLE[circleIndex(key.pc, key.family)].accidentals)
+	return key.mode
+		? `${spellScale(ROOTS[mod12(rootPc)], type).root} ${type.name} · parent ${keyTitle(key)}, ${signature}`
+		: `${keyTitle(key)}, ${signature}`
+}
 
 /** 2 → '2 sharps', -1 → '1 flat', 0 → 'no sharps or flats'. */
 export function signatureName(accidentals: number): string {

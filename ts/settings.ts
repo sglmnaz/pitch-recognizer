@@ -161,6 +161,9 @@ function load(): Settings {
 			chordsMode: oneOf(merged.chordsMode, ['listen', 'library', 'identify']),
 			chordLabels: oneOf(merged.chordLabels, ['degrees', 'notes', 'fingers', 'none']),
 			chordPlay: oneOf(merged.chordPlay, ['strum', 'arpeggio']),
+			chordView: oneOf(merged.chordView, ['triads', 'sevenths']),
+			progressionBpm: Number.isFinite(Number(merged.progressionBpm)) ? Math.min(140, Math.max(60, Math.round(Number(merged.progressionBpm)))) : 80,
+			progressionLoop: merged.progressionLoop === true,
 		}
 	} catch {
 		return { ...defaults }

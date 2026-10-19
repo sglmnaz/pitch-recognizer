@@ -6,8 +6,8 @@ import { createFretboard } from '../fretboard'
 import * as Settings from '../settings'
 import * as Sound from '../sound'
 import { chordsOfScale, identifyChords, type ChordType } from '../chord-theory'
-import { chordShapes, shapeString, voicingSpec } from '../chord-shapes'
-import { chordSource, CIRCLE, circleIndex, familyOf, MAJOR, MINOR, progressionsFor, resolveProgression, scalesForChord, signatureName, type KeyChord } from '../harmony'
+import { chordShapes, shapeString, voicingSpec, type Voicing } from '../chord-shapes'
+import { chordSource, CIRCLE, circleIndex, keyName, keyOf, MAJOR, MINOR, progressionsFor, resolveProgression, scalesForChord, signatureName, type KeyChord } from '../harmony'
 import { pitchClassOf, ROOTS, scaleTitle, spellScale, STRINGS, type ScaleType } from '../scales'
 
 // A strum: low string to high, this far apart (a quick downstroke).
@@ -47,6 +47,14 @@ const svgEl = (name: string, attrs: Record<string, string | number>) => {
 	return el
 }
 
+// Chord symbol -> its most playable voicing (chordShapes walks ~10^5 shapes
+// the first time; every strum and redraw asks again).
+const voicings = new Map<string, Voicing | undefined>()
+function voicingOf(chord: KeyChord) {
+	if (!voicings.has(chord.symbol)) voicings.set(chord.symbol, chordShapes(chord.rootPc, chord.type, { limit: 1 })[0])
+	return voicings.get(chord.symbol)
+}
+
 const sig = (n: number) => (n === 0 ? '' : `${Math.abs(n)}${n > 0 ? '♯' : '♭'}`)
 
 export function createHarmony(root: HTMLElement, host: HarmonyHost) {
@@ -65,6 +73,7 @@ export function createHarmony(root: HTMLElement, host: HarmonyHost) {
 	const detailNotes = $<HTMLElement>('.chord-detail__notes')
 	const openLink = $<HTMLAnchorElement>('[data-action="open-chord"]')
 	const progNote = $<HTMLElement>('.harmony__note--progressions')
+	const keyNote = $<HTMLElement>('.harmony__note--key')
 	const loopButton = $<HTMLButtonElement>('[data-action="loop"]')
 	const progList = $<HTMLElement>('.progressions')
 	const circle = $<SVGSVGElement>('.circle')
@@ -83,7 +92,7 @@ export function createHarmony(root: HTMLElement, host: HarmonyHost) {
 	let selected: number | null = null
 	let chordsKey = ''
 	let progKey = ''
-	let keyName = ''
+	let progKeyName = ''
 	// Progression playback.
 	let playing: { index: number; chords: KeyChord[]; bar: number } | null = null
 	let barTimer = 0
@@ -93,7 +102,9 @@ export function createHarmony(root: HTMLElement, host: HarmonyHost) {
 	paneButtons.forEach((button) =>
 		button.addEventListener('click', () => {
 			pane = button.dataset.pane as Pane
-			// The tapped chord lights the neck only while its pane shows.
+			// Playback belongs to the Progressions pane; the tapped chord lights
+			// the neck only while the Chords pane shows.
+			if (pane !== 'progressions') stop(false, 'Stopped')
 			host.redraw()
 		})
 	)
@@ -101,8 +112,16 @@ export function createHarmony(root: HTMLElement, host: HarmonyHost) {
 		button.addEventListener('click', () => Settings.update({ chordView: button.dataset.chordView as Settings.Settings['chordView'] }))
 	)
 	loopButton.addEventListener('click', () => Settings.update({ progressionLoop: !Settings.get().progressionLoop }))
-	$<HTMLButtonElement>('[data-action="strum"]').addEventListener('click', () => selected !== null && strum(chords[selected]))
-	$<HTMLButtonElement>('[data-action="chord-clear"]').addEventListener('click', () => select(null))
+	$<HTMLButtonElement>('[data-action="strum"]').addEventListener('click', () => {
+		if (selected === null) return
+		Sound.stopAll()
+		strum(chords[selected])
+	})
+	$<HTMLButtonElement>('[data-action="chord-clear"]').addEventListener('click', () => {
+		// The button is about to vanish: focus goes back to the chord it closes.
+		if (selected !== null) (chordRow.children[selected] as HTMLElement | undefined)?.focus()
+		select(null)
+	})
 	openLink.addEventListener('click', (event) => {
 		event.preventDefault()
 		if (selected === null) return
@@ -115,10 +134,8 @@ export function createHarmony(root: HTMLElement, host: HarmonyHost) {
 	function select(index: number | null) {
 		stop()
 		selected = index === selected ? null : index
-		if (selected !== null) {
-			strum(chords[selected])
-			announce(`${chords[selected].symbol}: ${chords[selected].notes.join(' ')}`)
-		}
+		Sound.stopAll()
+		if (selected !== null) strum(chords[selected])
 		host.redraw()
 	}
 
@@ -126,11 +143,15 @@ export function createHarmony(root: HTMLElement, host: HarmonyHost) {
 	/** The chord's most playable voicing, low string to high, `at` seconds from now. */
 	function strum(chord: KeyChord, at = 0) {
 		host.stopScale()
-		const voicing = chordShapes(chord.rootPc, chord.type, { limit: 1 })[0]
+		const voicing = voicingOf(chord)
 		if (!voicing) return
+		// Strings ringing together at 1/sqrt(n) each stay as loud as one note
+		// (ts/views/chord-library.ts); the mic ignores the whole note (NOTE_MS),
+		// not just its attack, or it would hear the chord as notes played.
+		const gain = 1 / Math.sqrt(voicing.frets.filter((f) => f >= 0).length)
 		let i = 0
 		for (let s = STRINGS.length - 1; s >= 0; s--) {
-			if (voicing.frets[s] >= 0) Sound.play(STRINGS[s] + voicing.frets[s], at + STRUM_S * i++)
+			if (voicing.frets[s] >= 0) Sound.play(STRINGS[s] + voicing.frets[s], at + STRUM_S * i++, gain, Sound.NOTE_MS)
 		}
 	}
 
@@ -145,32 +166,38 @@ export function createHarmony(root: HTMLElement, host: HarmonyHost) {
 	function playBar() {
 		if (!playing) return
 		if (playing.bar >= playing.chords.length) {
-			if (!Settings.get().progressionLoop) return stop(true)
+			if (!Settings.get().progressionLoop) return stop(true, 'Finished')
 			playing.bar = 0
 		}
 		const chord = playing.chords[playing.bar]
 		const beat = 60 / Settings.get().progressionBpm
 		for (const b of STRUM_BEATS) strum(chord, b * beat)
-		announce(`${chord.symbol}, ${chord.numeral}`)
 		playing.bar++
 		nextBarAt += BEATS * beat * 1000
 		barTimer = window.setTimeout(playBar, Math.max(0, nextBarAt - performance.now()))
 		host.redraw()
 	}
 
-	function play(index: number, list: KeyChord[]) {
+	function play(index: number, list: KeyChord[], name: string) {
 		stop()
+		Sound.stopAll()
 		playing = { index, chords: list, bar: 0 }
 		nextBarAt = performance.now()
+		announce(`Playing ${name}: ${list.map((c) => c.symbol).join(', ')}`)
 		playBar()
 	}
 
-	/** Stops a progression; `redraw` when nothing else is about to redraw the neck. */
-	function stop(redraw = false) {
+	/**
+	 * Stops a progression and its scheduled strums; `redraw` when nothing
+	 * else is about to redraw the neck. `say` it only when the user stopped
+	 * it or it ended, not when a new key or tab silently ends it.
+	 */
+	function stop(redraw = false, say = '') {
 		if (!playing) return
 		clearTimeout(barTimer)
 		playing = null
-		announce('Stopped')
+		Sound.stopAll()
+		if (say) announce(say)
 		syncProgressions()
 		if (redraw) host.redraw()
 	}
@@ -195,7 +222,8 @@ export function createHarmony(root: HTMLElement, host: HarmonyHost) {
 					const button = document.createElement('button')
 					button.type = 'button'
 					button.className = `harmony-chord harmony-chord--${quality(chord.type)}`
-					button.setAttribute('aria-label', `${chord.numeral}: ${chord.root} ${chord.type.name}`)
+					// Starts with the visible text (voice control), then says it in words.
+					button.setAttribute('aria-label', `${chord.numeral} ${chord.symbol}, ${chord.root} ${chord.type.name}`)
 					const numeral = document.createElement('span')
 					numeral.className = 'harmony-chord__numeral'
 					numeral.textContent = chord.numeral
@@ -219,7 +247,7 @@ export function createHarmony(root: HTMLElement, host: HarmonyHost) {
 		const chord = chords[selected]
 		detailSymbol.textContent = chord.symbol
 		detailName.textContent = `${chord.numeral} · ${chord.root} ${chord.type.name}`
-		const voicing = chordShapes(chord.rootPc, chord.type, { limit: 1 })[0]
+		const voicing = voicingOf(chord)
 		detailNotes.textContent = chord.notes.join(' ') + (voicing ? `  ·  ${shapeString(voicing)}` : '')
 		openLink.setAttribute('aria-label', `Open ${chord.symbol} in Chords`)
 		if (voicing) diagram.render(voicingSpec(voicing, chord.rootPc, chord.type))
@@ -231,8 +259,8 @@ export function createHarmony(root: HTMLElement, host: HarmonyHost) {
 		if (key !== progKey) {
 			stop()
 			progKey = key
-			const family = familyOf(type)
-			keyName = family ? `${spellScale(ROOTS[rootPc], family === 'major' ? MAJOR : MINOR).root} ${family}` : ''
+			// 'A minor'; a mode: 'G Mixolydian' (the 12-bar blues is in G, not C).
+			progKeyName = keyName(rootPc, type).split(/,| · /)[0]
 			progList.replaceChildren(
 				...progressionsFor(type).map((progression, index) => {
 					const list = resolveProgression(progression, rootPc)
@@ -246,7 +274,7 @@ export function createHarmony(root: HTMLElement, host: HarmonyHost) {
 					const button = document.createElement('button')
 					button.type = 'button'
 					button.className = 'btn btn--small progression__play'
-					button.addEventListener('click', () => (playing?.index === index ? stop(true) : play(index, list)))
+					button.addEventListener('click', () => (playing?.index === index ? stop(true, 'Stopped') : play(index, list, progression.name)))
 					head.append(name, button)
 					const row = document.createElement('ol')
 					row.className = 'progression__chords'
@@ -274,7 +302,7 @@ export function createHarmony(root: HTMLElement, host: HarmonyHost) {
 
 	function syncProgressions() {
 		const { progressionBpm, progressionLoop } = Settings.get()
-		progNote.textContent = [keyName && `In ${keyName}`, `${progressionBpm} BPM`].filter(Boolean).join(' · ')
+		progNote.textContent = [progKeyName && `In ${progKeyName}`, `${progressionBpm} BPM`].filter(Boolean).join(' · ')
 		loopButton.setAttribute('aria-pressed', String(progressionLoop))
 		Array.from(progList.children).forEach((item, index) => {
 			const on = playing?.index === index
@@ -283,18 +311,21 @@ export function createHarmony(root: HTMLElement, host: HarmonyHost) {
 			const name = item.querySelector('.progression__name')!.textContent
 			button.innerHTML = `${on ? STOP_ICON : PLAY_ICON}<span>${on ? 'Stop' : 'Play'}</span>`
 			button.setAttribute('aria-label', `${on ? 'Stop' : 'Play'} ${name}`)
-			item.querySelectorAll('.progression__chord').forEach((chip, bar) =>
-				chip.classList.toggle('progression__chord--now', on && bar === playing!.bar - 1)
-			)
+			item.querySelectorAll('.progression__chord').forEach((chip, bar) => {
+				const now = on && bar === playing!.bar - 1
+				chip.classList.toggle('progression__chord--now', now)
+				if (now) chip.setAttribute('aria-current', 'true')
+				else chip.removeAttribute('aria-current')
+			})
 		})
 	}
 
 	/* Circle of fifths ---------------------------------------------------- */
 	// Built once; render() only moves the highlight, so focus survives a tap.
-	// Rings: majors outside, relative minors inside, radii in a 400 viewBox
-	// (inner ring 52 deep: 44 px at a 340 px circle, a phone's thumb).
+	// Rings: majors outside, relative minors inside, radii in a 400 viewBox,
+	// each 63 deep: 44 px for a thumb even at a 280 px circle (a 320 px phone).
 	const C = 200
-	const RINGS = { major: [136, 196], minor: [84, 136] } as const
+	const RINGS = { major: [135, 198], minor: [72, 135] } as const
 	const keyCells: SVGGElement[] = []
 	const at = (r: number, deg: number) => [C + r * Math.sin((deg * Math.PI) / 180), C - r * Math.cos((deg * Math.PI) / 180)]
 	const center = svgEl('text', { class: 'circle__center', x: C, y: C - 6 })
@@ -373,9 +404,11 @@ export function createHarmony(root: HTMLElement, host: HarmonyHost) {
 		target.focus()
 	})
 
+	// A mode lights its parent major: D Dorian is written in C major.
 	function renderCircle(rootPc: number, type: ScaleType) {
-		const family = familyOf(type)
-		const index = family ? circleIndex(rootPc, family) : -1
+		const key = keyOf(rootPc, type)
+		const family = key?.family
+		const index = key ? circleIndex(key.pc, key.family) : -1
 		const near = (i: number) => index >= 0 && [11, 0, 1].includes((i - index + 12) % 12)
 		const isCurrent = (c: SVGGElement) => Number(c.dataset.index) === index && c.dataset.ring === family
 		// The one tab stop: the key in focus, else the current key, else C.
@@ -387,14 +420,15 @@ export function createHarmony(root: HTMLElement, host: HarmonyHost) {
 			c.setAttribute('aria-current', String(current))
 			c.setAttribute('tabindex', c === rover ? '0' : '-1')
 		})
+		keyNote.textContent = key ? keyName(rootPc, type) : `${scaleTitle(spellScale(ROOTS[rootPc], type).root, type)} has no key signature.`
 		if (index < 0) {
 			center.textContent = 'Tap a key'
 			centerSig.textContent = ''
 			return
 		}
-		const key = CIRCLE[index]
-		center.textContent = family === 'major' ? key.major : key.minor
-		centerSig.textContent = `${family} · ${signatureName(key.accidentals)}`
+		const k = CIRCLE[index]
+		center.textContent = family === 'major' ? k.major : k.minor
+		centerSig.textContent = `${family} · ${signatureName(k.accidentals)}`
 	}
 
 	/* Identify: scales a marked chord fits -------------------------------- */
@@ -448,6 +482,8 @@ export function createHarmony(root: HTMLElement, host: HarmonyHost) {
 			state = next
 			sync()
 		},
+		/** A progression is sounding: the Scales view's mic ignores what it hears. */
+		playing: () => playing !== null,
 		/** The chord to light on the neck: the bar playing, else the one tapped. */
 		chord(): KeyChord | null {
 			if (state?.mode !== 'explore') return null

@@ -7,6 +7,8 @@ import {
 	CIRCLE,
 	circleIndex,
 	familyOf,
+	keyName,
+	keyOf,
 	parseNumeral,
 	PROGRESSIONS,
 	progressionsFor,
@@ -118,6 +120,9 @@ check('major gets the major progressions', names('Major').includes('Pop') && !na
 check('natural minor gets the minor progressions', names('Natural minor').includes('Andalusian') && !names('Natural minor').includes('Pop'))
 check('blues scale gets the 12-bar blues', names('Blues').includes('12-bar blues'))
 check('whole tone gets none', names('Whole tone').length === 0)
+check('Dorian gets no minor progressions', names('Dorian').length === 0, names('Dorian').join(', '))
+check('harmonic minor gets the minor progressions', names('Harmonic minor').includes('Andalusian'))
+check('Mixolydian gets only the 12-bar blues', names('Mixolydian').join(', ') === '12-bar blues', names('Mixolydian').join(', '))
 
 /* Circle of fifths -------------------------------------------------------- */
 check('12 keys', CIRCLE.length === 12)
@@ -130,6 +135,18 @@ check('F# is also Gb', CIRCLE[6].major === 'F#' && CIRCLE[6].majorAlt === 'Gb' &
 check('G major index', circleIndex(pitchClassOf('G'), 'major') === 1)
 check('E minor sits with G', circleIndex(pitchClassOf('E'), 'minor') === 1)
 check('D minor sits with F', circleIndex(pitchClassOf('D'), 'minor') === 11)
+// Modes sit on the circle where their parent major does.
+const at = (root: string, name: string) => {
+	const key = keyOf(pitchClassOf(root), scale(name))
+	return key && circleIndex(key.pc, key.family)
+}
+for (const [root, name] of [['D', 'Dorian'], ['E', 'Phrygian'], ['F', 'Lydian'], ['G', 'Mixolydian'], ['B', 'Locrian'], ['C', 'Major'], ['A', 'Natural minor'], ['A', 'Harmonic minor']])
+	check(`${root} ${name} sits at C / Am`, at(root, name) === 0, String(at(root, name)))
+check('A Dorian sits at G', at('A', 'Dorian') === 1)
+check('whole tone has no key', keyOf(0, scale('Whole tone')) === null)
+check('key name of D Dorian', keyName(pitchClassOf('D'), scale('Dorian')) === 'D Dorian · parent C major, no sharps or flats', keyName(pitchClassOf('D'), scale('Dorian')))
+check('key name of E minor', keyName(pitchClassOf('E'), scale('Natural minor')) === 'E minor, 1 sharp', keyName(pitchClassOf('E'), scale('Natural minor')))
+check('key name of Eb Mixolydian', keyName(pitchClassOf('Eb'), scale('Mixolydian')) === 'Eb Mixolydian · parent Ab major, 4 flats', keyName(pitchClassOf('Eb'), scale('Mixolydian')))
 check('signature names', [signatureName(0), signatureName(1), signatureName(-3)].join(', ') === 'no sharps or flats, 1 sharp, 3 flats')
 
 /* Scales for a chord ------------------------------------------------------ */

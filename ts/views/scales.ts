@@ -462,8 +462,9 @@ export function createScalesView(root: HTMLElement, mic: MicControl): View & { s
 		},
 
 		onReading(reading) {
-			// The synth's own notes come back through the mic: ignore them.
-			const midi = reading && !Sound.isRinging() ? Math.round(midiOfFrequency(reading.frequency, Settings.get().a4)) : null
+			// The synth's own notes come back through the mic: ignore them, and
+			// everything while a progression plays (its rests too).
+			const midi = reading && !Sound.isRinging() && !harmony.playing() ? Math.round(midiOfFrequency(reading.frequency, Settings.get().a4)) : null
 			const now = performance.now()
 			if (midi !== heardMidi) {
 				heardMidi = midi
