@@ -1,0 +1,178 @@
+/* Settings tab (ts/features/settings/settings.view.ts) ------------------------------- */
+/* A plain scrolling page: one group per tab, a heading over a card of rows. */
+.view--settings {
+	gap: 24px;
+}
+
+.settings-group {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	/* Entering Settings scrolls a group to the top: keep its heading clear of
+	   the notch. */
+	scroll-margin-top: calc(16px + env(safe-area-inset-top));
+}
+
+.settings-group__title {
+	margin: 0 0 0 2px;
+	font-size: 16px;
+	font-weight: 600;
+	letter-spacing: -0.01em;
+}
+
+.settings-group__desc {
+	margin: -6px 0 0 2px;
+	font-size: 12px;
+	color: var(--fg-muted);
+}
+
+/* Trainer: one card per exercise under a small label. */
+.settings-group__sub {
+	margin: 6px 0 0 2px;
+	font-size: 11px;
+	font-weight: 500;
+	letter-spacing: 0.04em;
+	text-transform: uppercase;
+	color: var(--fg-muted);
+}
+
+.settings-card {
+	padding: 6px;
+}
+
+.settings__section {
+	padding: 8px;
+}
+
+.settings__section + .settings__section {
+	border-top: 1px solid var(--border);
+}
+
+.settings__theme {
+	flex: none;
+}
+
+.settings__heading {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	margin-bottom: 12px;
+}
+
+.settings__actions {
+	display: flex;
+	gap: 4px;
+}
+
+.link-btn {
+	border: none;
+	background: transparent;
+	color: var(--fg-secondary);
+	font-size: 12px;
+	font-weight: 500;
+	padding: 3px 8px;
+	border-radius: var(--radius-sm);
+	cursor: pointer;
+	transition:
+		color var(--dur) var(--ease),
+		background var(--dur) var(--ease);
+}
+
+.link-btn:hover {
+	color: var(--fg);
+	background: var(--surface-2);
+}
+
+/* Settings slider (Fret size). */
+.range {
+	flex: none;
+	width: 120px;
+	accent-color: var(--accent);
+	cursor: pointer;
+}
+
+@media (min-width: 960px) {
+	/* Settings: two balanced columns of groups instead of one long strip. */
+	.view--settings:not([hidden]) {
+		display: block;
+		columns: 2;
+		column-gap: 28px;
+	}
+
+	.settings-group {
+		break-inside: avoid;
+		margin-bottom: 28px;
+	}
+}
+
+.settings__presets {
+	display: flex;
+	justify-content: space-between;
+}
+
+.number {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+}
+
+.input {
+	width: 76px;
+	height: 32px;
+	padding: 0 8px;
+	border: none;
+	border-radius: var(--radius);
+	background: var(--surface);
+	color: var(--fg);
+	box-shadow: var(--shadow-border);
+	font-family: var(--font-mono);
+	font-size: 13px;
+	text-align: right;
+	-moz-appearance: textfield;
+	appearance: textfield;
+}
+
+.input::-webkit-inner-spin-button,
+.input::-webkit-outer-spin-button {
+	-webkit-appearance: none;
+	margin: 0;
+}
+
+.number__unit {
+	font-family: var(--font-mono);
+	font-size: 12px;
+	color: var(--fg-muted);
+}
+
+@media (max-width: 600px) {
+	.view--settings .input,
+	.view--settings .select,
+	.view--settings .range,
+	.view--settings .segmented button {
+		height: 44px;
+	}
+
+	.settings__presets .link-btn,
+	.settings__actions .link-btn {
+		min-width: 44px;
+		min-height: 44px;
+	}
+
+	.view--settings .chip {
+		height: 44px;
+	}
+
+	.settings-group[data-group='trainer'] .input {
+		min-height: 44px;
+	}
+}
+
+.view--settings {
+	position: relative;
+}
+
+.view--settings > .help-btn {
+	position: absolute;
+	top: 0;
+	right: 0;
+}

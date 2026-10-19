@@ -1,0 +1,387 @@
+/* The neck block is the hero: on wider screens it grows past the 520 px
+   column (up to 760 px) so the neck reads at about 1:1. No card of its own:
+   the board is the only box. */
+.neck-card {
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+}
+
+@media (min-width: 601px) {
+	.neck-card {
+		margin-inline: calc((100% - min(760px, 100vw - 40px)) / 2);
+	}
+}
+
+/* The board: its own surface with a hairline, and its own data-theme when
+   the fretboard theme setting forces light or dark. */
+/* Only a horizontal neck scrolls, sideways; a vertical one grows with the
+   page (no second scrollbar). */
+.neck-board {
+	overflow-x: auto;
+	overflow-y: hidden;
+	padding: 12px 10px 6px;
+	border-radius: var(--radius);
+	background: var(--board);
+	box-shadow: inset 0 0 0 1px var(--border);
+	color: var(--fg);
+}
+
+.neck {
+	display: block;
+	margin-inline: auto;
+	width: 100%;
+	height: auto;
+	font-family: var(--font-mono);
+	-webkit-tap-highlight-color: transparent;
+}
+
+/* Phones: the horizontal neck keeps a playable size and scrolls inside its
+   board; the vertical one is drawn to fit (ts/features/scales/scales.view.ts). */
+@media (max-width: 600px) {
+	.neck-board {
+		padding: 10px 6px 4px;
+	}
+
+	.neck:not(.neck--vertical) {
+		width: 820px;
+	}
+}
+
+/* A vertical neck is tall: keep its controls above it, with the Display menu
+   opening downward. */
+.neck-card:has(.neck--vertical) .neck-toolbar {
+	order: -2;
+}
+
+.neck-card:has(.neck--vertical) .neck-hint {
+	order: -1;
+}
+
+.neck-card:has(.neck--vertical) .display__menu {
+	top: calc(100% + 6px);
+	bottom: auto;
+}
+
+/* The vertical neck gets its exact size inline from ts/features/scales/scales.view.ts. */
+.neck--vertical {
+	max-width: none;
+	margin: 0 auto;
+}
+
+.neck-card:has(.neck--vertical) .neck-board {
+	overflow: visible;
+}
+
+/* Wider screens: the board hugs the vertical neck instead of spanning the
+   column. (On phones the neck spans the board.) */
+@media (min-width: 601px) {
+	.neck-card:has(.neck--vertical) .neck-board {
+		align-self: center;
+	}
+}
+
+.neck__inlay {
+	fill: var(--board-inlay);
+}
+
+.neck__fret {
+	stroke: var(--board-fret);
+	stroke-width: 1.2;
+}
+
+.neck__nut {
+	stroke: var(--board-nut);
+	stroke-width: 5;
+}
+
+.neck__string {
+	stroke: var(--board-string);
+}
+
+.neck__num {
+	fill: var(--fg-muted);
+	font-family: var(--font-sans);
+	font-size: 11px;
+	text-anchor: middle;
+	dominant-baseline: central;
+}
+
+.neck__box {
+	fill: color-mix(in srgb, var(--root-stroke) 7%, transparent);
+	stroke: var(--root-stroke);
+	stroke-width: 1.5;
+	stroke-dasharray: 5 4;
+}
+
+.cell {
+	cursor: pointer;
+	outline: none;
+}
+
+.cell__hit {
+	fill: transparent;
+}
+
+/* Dots: fill, 1 px outline and label from the degree palette (tokens.css). */
+.cell circle {
+	fill: transparent;
+	stroke: none;
+	stroke-width: 1;
+	transition: fill var(--dur) var(--ease);
+}
+
+.cell text {
+	fill: var(--note-text);
+	font-family: var(--font-sans);
+	font-size: 11.5px;
+	font-weight: 500;
+	text-anchor: middle;
+	dominant-baseline: central;
+	pointer-events: none;
+}
+
+/* Empty positions show nothing unless lit (heard / played) or hovered. */
+.cell:not(.cell--dot):not(.cell--lit) text {
+	display: none;
+}
+
+.cell:not(.cell--dot):hover circle {
+	fill: color-mix(in srgb, var(--note-stroke) 25%, transparent);
+}
+
+.cell--scale circle {
+	fill: var(--note-fill);
+	stroke: var(--note-stroke);
+}
+
+.cell--tone circle {
+	fill: var(--tone-fill);
+	stroke: var(--tone-stroke);
+}
+
+.cell--tone text {
+	fill: var(--tone-text);
+}
+
+.cell--root circle {
+	fill: var(--root-fill);
+	stroke: var(--root-stroke);
+}
+
+.cell--root text {
+	fill: var(--root-text);
+	font-size: 12px;
+}
+
+/* Identify: a marked note off any shown scale is solid; on a shown scale it
+   keeps its degree colours and its outline thickens. */
+.cell--marked circle {
+	fill: var(--solid);
+	stroke: var(--solid);
+}
+
+.cell--marked text {
+	fill: var(--solid-fg);
+}
+
+.cell--marked:is(.cell--scale, .cell--tone, .cell--root) circle {
+	stroke-width: 3;
+}
+
+.cell--marked.cell--scale circle {
+	fill: var(--note-fill);
+	stroke: var(--note-stroke);
+}
+
+.cell--marked.cell--scale text {
+	fill: var(--note-text);
+}
+
+.cell--marked.cell--tone circle {
+	fill: var(--tone-fill);
+	stroke: var(--tone-stroke);
+}
+
+.cell--marked.cell--tone text {
+	fill: var(--tone-text);
+}
+
+.cell--marked.cell--root circle {
+	fill: var(--root-fill);
+	stroke: var(--root-stroke);
+}
+
+.cell--marked.cell--root text {
+	fill: var(--root-text);
+}
+
+/* Outside the chosen position. */
+.cell--dim {
+	opacity: 0.18;
+}
+
+/* Heard from the mic or sounding in Play scale. */
+.cell--lit {
+	opacity: 1;
+}
+
+.cell--lit circle {
+	stroke: var(--fg);
+	stroke-width: 3;
+}
+
+.cell--lit:not(.cell--dot) circle {
+	fill: var(--note-fill);
+}
+
+.cell:focus-visible circle {
+	stroke: var(--accent);
+	stroke-width: 2.5;
+}
+
+/* Fretboard extras (ts/ui/fretboard.ts): chord-diagram overlays ------------- */
+.neck__barre {
+	fill: var(--note-fill);
+	stroke: var(--note-stroke);
+	stroke-width: 1;
+}
+
+.neck__open {
+	fill: none;
+	stroke: var(--fg-secondary);
+	stroke-width: 1.5;
+}
+
+.neck__muted,
+.neck__finger {
+	fill: var(--fg-secondary);
+	font-family: var(--font-sans);
+	font-size: 12px;
+	text-anchor: middle;
+	dominant-baseline: central;
+}
+
+/* Left-handed: the board opens scrolled to the nut on the right, so the
+   legend under a scrolling neck follows the view instead of the content. */
+.neck-board:has(.neck--left) .neck-legend {
+	position: sticky;
+	left: 0;
+}
+
+/* A chord diagram is a fixed small grid, drawn 1:1 on the board's surface. */
+.neck--chord {
+	margin: 0;
+	border-radius: var(--radius);
+	background: var(--board);
+	color: var(--fg);
+}
+
+.neck--chord .neck__num {
+	font-size: 10px;
+}
+
+.neck--chord .cell text {
+	font-size: 9.5px;
+}
+
+/* Legend under the neck, in the board's palette. */
+.neck-legend {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 6px 18px;
+	margin: 6px 4px 2px;
+	padding: 0;
+	list-style: none;
+	font-size: 12px;
+	color: var(--fg-secondary);
+}
+
+.neck-legend li {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+}
+
+.neck-legend li::before {
+	content: '';
+	width: 12px;
+	height: 12px;
+	border-radius: 50%;
+	background: var(--note-fill);
+	box-shadow: inset 0 0 0 1px var(--note-stroke);
+}
+
+.neck-legend .neck-legend__root::before {
+	background: var(--root-fill);
+	box-shadow: inset 0 0 0 1px var(--root-stroke);
+}
+
+.neck-legend .neck-legend__tone::before {
+	background: var(--tone-fill);
+	box-shadow: inset 0 0 0 1px var(--tone-stroke);
+}
+
+/* Slim toolbar under the board. */
+.neck-toolbar {
+	/* Anchors the Display menu, so it opens from the card's left edge and
+	   never pokes out of a phone screen. */
+	position: relative;
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px;
+}
+
+/* Opens upward, over the board it controls. */
+.display__menu {
+	position: absolute;
+	bottom: calc(100% + 6px);
+	left: 0;
+	z-index: 30;
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	width: min(264px, 100%);
+	padding: 12px;
+	background: var(--surface);
+	border-radius: var(--radius-lg);
+	box-shadow: var(--shadow-md);
+}
+
+.position-chip {
+	white-space: nowrap;
+	height: 26px;
+	padding: 0 10px;
+	border: none;
+	border-radius: var(--radius-pill);
+	background: color-mix(in srgb, var(--accent) 12%, transparent);
+	color: var(--accent);
+	font-family: var(--font-mono);
+	font-size: 12px;
+	font-weight: 500;
+	cursor: pointer;
+}
+
+/* Narrow phones: Play and Display become icon buttons (title + aria via the
+   title attribute), so the toolbar stays on one line. */
+@media (max-width: 440px) {
+	.neck-toolbar .btn span {
+		display: none;
+	}
+
+	.neck-toolbar .btn--small {
+		width: 34px;
+		padding: 0;
+	}
+
+	.position-chip span {
+		display: none;
+	}
+}
+
+.neck-hint {
+	margin: 0;
+	font-size: 12px;
+	color: var(--fg-muted);
+}

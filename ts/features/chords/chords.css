@@ -1,0 +1,418 @@
+/* Chords: live pitch-class profile under the chord name. */
+.chroma {
+	display: grid;
+	grid-template-columns: repeat(12, 1fr);
+	gap: 4px;
+	margin-top: 24px;
+}
+
+.chroma__bin {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 6px;
+}
+
+.chroma__bar {
+	width: 100%;
+	max-width: 20px;
+	height: 48px;
+	border-radius: var(--radius-sm);
+	background: var(--border-strong);
+	transform: scaleY(0);
+	transform-origin: bottom;
+	transition:
+		transform 80ms linear,
+		background var(--dur) var(--ease);
+}
+
+.chroma__bin--tone .chroma__bar {
+	background: var(--accent);
+}
+
+.chroma__label {
+	font-family: var(--font-mono);
+	font-size: 10px;
+	color: var(--fg-muted);
+}
+
+.chroma__bin--tone .chroma__label {
+	color: var(--fg);
+}
+
+/* Chords: Listen / Library / Identify (ts/features/chords/chord-library.view.ts) ---------- */
+/* The recognized chord is a button: it opens in the Library. */
+.chord-link {
+	display: block;
+	margin: 0 auto;
+	padding: 0 8px;
+	border: none;
+	border-radius: var(--radius);
+	background: none;
+	color: inherit;
+	cursor: pointer;
+}
+
+.chord-link:enabled:hover {
+	color: var(--accent);
+}
+
+.chord-link:disabled {
+	color: var(--fg-muted);
+	cursor: default;
+}
+
+/* The cue under a recognized chord's notes (the button's aria-label says it too). */
+.chord-link:enabled + .readout__sub::after {
+	content: 'Tap to open in Library';
+	display: block;
+	margin-top: 4px;
+	font-family: var(--font-sans);
+	font-size: 12px;
+	color: var(--fg-muted);
+}
+
+.chord-library,
+.chord-identify {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+}
+
+.chord-pick {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+}
+
+/* Twelve roots in one row; two rows of six on phones (thumb-sized). */
+.chord-roots {
+	display: grid;
+	grid-template-columns: repeat(12, minmax(0, 1fr));
+	gap: 4px;
+}
+
+.chord-root {
+	height: 36px;
+	padding: 0 2px;
+	border: none;
+	border-radius: var(--radius);
+	background: var(--surface);
+	color: var(--fg-secondary);
+	font-family: var(--font-mono);
+	font-size: 13px;
+	font-weight: 500;
+	white-space: nowrap;
+	cursor: pointer;
+	box-shadow: var(--shadow-border);
+	transition:
+		color var(--dur) var(--ease),
+		background var(--dur) var(--ease);
+}
+
+.chord-root:hover {
+	color: var(--fg);
+}
+
+.chord-root[aria-pressed='true'] {
+	background: var(--solid);
+	color: var(--solid-fg);
+	box-shadow: none;
+}
+
+.chord-type {
+	width: 100%;
+}
+
+.chord-info {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+}
+
+.chord-info__symbol {
+	margin: 0;
+	font-family: var(--font-mono);
+	font-size: 56px;
+	font-weight: 500;
+	line-height: 1;
+	letter-spacing: -0.03em;
+	outline: none;
+}
+
+.chord-info__name {
+	margin: 0;
+	font-size: 14px;
+	color: var(--fg-secondary);
+}
+
+.chord-info__notes {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 6px;
+}
+
+.chord-note {
+	cursor: default;
+}
+
+.chord-note:hover {
+	background: var(--surface);
+}
+
+.chord-keys {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+	margin-top: 4px;
+}
+
+.chord-keys__list {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 6px;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.key-chip {
+	padding: 3px 8px;
+	border-radius: var(--radius);
+	background: var(--surface);
+	box-shadow: var(--shadow-border);
+	font-family: var(--font-mono);
+	font-size: 12px;
+	color: var(--fg-secondary);
+}
+
+.key-chip b {
+	color: var(--fg);
+	font-weight: 600;
+}
+
+/* Diagrams: the best one big across the row, the others in a grid. */
+.voicings {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(156px, 1fr));
+	gap: 8px;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.voicing--hero {
+	grid-column: 1 / -1;
+}
+
+.voicing__btn {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 2px;
+	width: 100%;
+	padding: 10px 6px 8px;
+	border: none;
+	border-radius: var(--radius-lg);
+	background: var(--surface);
+	color: var(--fg);
+	cursor: pointer;
+	box-shadow: var(--shadow-border);
+	transition: background var(--dur) var(--ease);
+}
+
+.voicing__btn:hover {
+	background: var(--surface-2);
+}
+
+.voicing__btn:active {
+	box-shadow: 0 0 0 1px var(--accent);
+}
+
+/* Until it scrolls in and is drawn: a diagram's size, so the grid does not jump. */
+.voicing .neck:not([viewBox]) {
+	width: 152px;
+	height: 150px;
+}
+
+.voicing--hero .neck {
+	zoom: 1.5;
+}
+
+.voicing__title {
+	margin-top: 4px;
+	font-family: var(--font-mono);
+	font-size: 12px;
+	font-weight: 500;
+}
+
+.voicing--hero .voicing__title {
+	font-size: 14px;
+}
+
+.voicing__pos {
+	font-size: 11px;
+	color: var(--fg-muted);
+}
+
+/* Identify: marked shape, low string first. */
+.chord-shape {
+	flex: 1;
+	min-width: 0;
+	font-family: var(--font-mono);
+	font-size: 15px;
+	font-weight: 500;
+	letter-spacing: 0.08em;
+}
+
+.chord-shape--empty {
+	font-family: var(--font-sans);
+	font-size: 13px;
+	font-weight: 400;
+	letter-spacing: normal;
+	color: var(--fg-muted);
+}
+
+.chord-result__symbol {
+	font-family: var(--font-mono);
+	font-size: 18px;
+	font-weight: 500;
+}
+
+.chord-results__empty {
+	font-size: 13px;
+	color: var(--fg-muted);
+	padding: 4px 2px;
+}
+
+@media (max-width: 600px) {
+	.chords-modes button {
+		min-height: 44px;
+	}
+
+	.chord-roots {
+		grid-template-columns: repeat(6, minmax(0, 1fr));
+	}
+
+	.chord-root,
+	.chord-type,
+	.chord-identify .neck-toolbar .btn--small {
+		height: 44px;
+	}
+
+	.chord-info__symbol {
+		font-size: 48px;
+	}
+
+	/* Two small diagrams per row at 375 px. */
+	.voicings {
+		grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+	}
+}
+
+@media (min-width: 960px) {
+	#view-chords:not([hidden]) {
+		grid-template-areas:
+			'modes modes'
+			'readout mic'
+			'readout hint';
+		grid-template-rows: auto auto 1fr;
+	}
+
+	#view-chords > .view-top {
+		grid-area: modes;
+	}
+
+	/* Library and Identify lay themselves out below the switch. */
+	#view-chords:not([hidden]):is([data-mode='library'], [data-mode='identify']) {
+		display: flex;
+		align-items: stretch;
+	}
+
+	/* Library: what the chord is on the left, how to play it on the right. */
+	.chord-library:not([hidden]) {
+		display: grid;
+		grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
+		grid-template-areas:
+			'pick voicings'
+			'info voicings';
+		grid-template-rows: auto 1fr;
+		gap: 24px 32px;
+		align-items: start;
+	}
+
+	.chord-library > .chord-pick {
+		grid-area: pick;
+	}
+
+	.chord-library > .chord-info {
+		grid-area: info;
+	}
+
+	.chord-library > .chord-voicings {
+		grid-area: voicings;
+	}
+
+	.chord-roots {
+		grid-template-columns: repeat(6, minmax(0, 1fr));
+	}
+
+	.chord-info__symbol {
+		font-size: 80px;
+	}
+
+	.voicing--hero .neck {
+		zoom: 1.8;
+	}
+
+	/* Identify: the neck takes the full width, results fill a grid under it. */
+	.chord-identify > .neck-card {
+		margin-inline: 0;
+	}
+
+	.chord-identify > .chord-results {
+		display: grid;
+		grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+	}
+}
+
+@media (max-width: 600px) {
+	.chroma {
+		margin-top: 16px;
+	}
+
+	/* Chords Library: chord name, notes and the best diagram in one screen. */
+	.chord-info {
+		gap: 6px;
+	}
+
+	.chord-info__symbol {
+		font-size: 40px;
+	}
+
+	.voicing--hero .neck {
+		zoom: 1.25;
+	}
+
+	/* "In keys" label and chips share lines instead of stacking. */
+	.chord-keys {
+		flex-direction: row;
+		flex-wrap: wrap;
+		align-items: center;
+		margin-top: 0;
+	}
+}
+
+@media (max-width: 600px) and (max-height: 760px) {
+	.chroma {
+		margin-top: 12px;
+	}
+
+	.chord-info__symbol {
+		font-size: 34px;
+	}
+
+	.voicing--hero .neck {
+		zoom: 1.1;
+	}
+}

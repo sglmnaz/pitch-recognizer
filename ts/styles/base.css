@@ -1,0 +1,51 @@
+* {
+	box-sizing: border-box;
+}
+
+html {
+	-webkit-text-size-adjust: 100%;
+}
+
+body {
+	margin: 0;
+	/* dvh = the height actually visible. On phones 100vh is the height with the
+	   browser toolbar hidden, so a page that fits would still scroll by the
+	   toolbar's height. vh stays as the fallback for older browsers. */
+	min-height: 100vh;
+	min-height: 100dvh;
+	font-family: var(--font-sans);
+	font-size: 14px;
+	line-height: 1.5;
+	color: var(--fg);
+	background: var(--bg);
+	-webkit-font-smoothing: antialiased;
+	text-rendering: optimizeLegibility;
+}
+
+button {
+	font-family: inherit;
+}
+
+/* The hidden attribute always hides, whatever display a class sets. */
+[hidden] {
+	/* biome-ignore lint/complexity/noImportantStyles: it must beat every class. */
+	display: none !important;
+}
+
+:focus-visible {
+	outline: 2px solid var(--accent);
+	outline-offset: 2px;
+}
+
+/* Tuner follow-ups: screen-reader text, A4 note, 44 px touch targets ------- */
+.sr-only {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	margin: -1px;
+	padding: 0;
+	overflow: hidden;
+	clip: rect(0 0 0 0);
+	white-space: nowrap;
+	border: 0;
+}

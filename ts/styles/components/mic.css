@@ -1,0 +1,105 @@
+/* Mic control: waveform, big listen button, status ----------------------- */
+.mic {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 12px;
+}
+
+.wave-panel {
+	align-self: stretch;
+	padding: 8px 12px;
+}
+
+/* Live input waveform: muted while only noise comes in, accent on a note. */
+.wave {
+	display: block;
+	width: 100%;
+	height: 56px;
+	color: var(--border-strong);
+	transition: color var(--dur) var(--ease);
+}
+
+.wave--live {
+	color: var(--fg-muted);
+}
+
+.wave--voiced {
+	color: var(--accent);
+}
+
+.status {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	font-size: 13px;
+	color: var(--fg-muted);
+	font-variant-numeric: tabular-nums;
+}
+
+.status__dot {
+	width: 8px;
+	height: 8px;
+	border-radius: 50%;
+	background: var(--border-strong);
+	flex: none;
+}
+
+.status--live .status__dot {
+	background: var(--success);
+	box-shadow: 0 0 0 0 var(--success);
+	animation: pulse 1.8s var(--ease) infinite;
+}
+
+@keyframes pulse {
+	0% {
+		box-shadow: 0 0 0 0 color-mix(in srgb, var(--success) 55%, transparent);
+	}
+	70% {
+		box-shadow: 0 0 0 6px transparent;
+	}
+	100% {
+		box-shadow: 0 0 0 0 transparent;
+	}
+}
+
+/* ?debug diagnostics line */
+.debug {
+	margin: 0;
+	font-family: var(--font-mono);
+	font-size: 11px;
+	color: var(--fg-muted);
+	text-align: center;
+}
+
+@media (min-width: 960px) {
+	.wave {
+		height: 80px;
+	}
+}
+
+/* Phones: one screen per view ------------------------------------------------
+   The main interaction of each view (readout + mic, question + answers, tempo
+   + Start) fits a 375 x 812 phone above the docked tab bar without scrolling;
+   stats, voicing lists and progressions may scroll below. Tap targets stay at
+   44 px or more: only paddings, hero type and the waveform shrink. */
+@media (max-width: 600px) {
+	/* Shared mic block: a slimmer scope and a 48 px button. */
+	.mic {
+		gap: 8px;
+	}
+
+	.wave-panel {
+		padding: 6px 12px;
+	}
+
+	.wave {
+		height: 40px;
+	}
+}
+
+@media (max-width: 600px) and (max-height: 760px) {
+	.wave {
+		height: 32px;
+	}
+}

@@ -1,0 +1,172 @@
+/* Tuner / readout -------------------------------------------------------- */
+.readout {
+	padding: 28px 20px 24px;
+	text-align: center;
+	transition:
+		background var(--dur) var(--ease),
+		box-shadow var(--dur) var(--ease);
+}
+
+.readout--locked {
+	background: var(--success-bg);
+	box-shadow: 0 0 0 1px var(--success);
+}
+
+.readout__note {
+	font-family: var(--font-mono);
+	font-weight: 500;
+	font-size: 84px;
+	line-height: 0.95;
+	letter-spacing: -0.04em;
+	transition: color var(--dur) var(--ease);
+}
+
+.readout--locked .readout__note {
+	color: var(--success);
+}
+
+.readout__idle {
+	color: var(--fg-muted);
+}
+
+.readout__sub {
+	margin-top: 6px;
+	font-family: var(--font-mono);
+	font-size: 14px;
+	color: var(--fg-muted);
+	font-variant-numeric: tabular-nums;
+	min-height: 1.2em;
+}
+
+/* Cents meter ------------------------------------------------------------ */
+.meter {
+	margin: 22px auto 0;
+	max-width: 320px;
+}
+
+.meter__scale {
+	position: relative;
+	height: 40px;
+}
+
+/*
+ * Tuning zones along the track: green in the centre (in tune, ~±5 cents),
+ * yellow either side (close, ~±5-20 cents), fading to neutral at the extremes.
+ * The -50..+50 cents range maps linearly to 0..100%, so 1 cent == 1%.
+ */
+.meter__zones {
+	position: absolute;
+	left: 0;
+	right: 0;
+	bottom: 8px;
+	height: 6px;
+	border-radius: var(--radius-pill);
+	background: linear-gradient(
+		90deg,
+		var(--surface-2) 0 30%,
+		color-mix(in srgb, var(--warning) 55%, transparent) 30% 45%,
+		color-mix(in srgb, var(--success) 75%, transparent) 45% 55%,
+		color-mix(in srgb, var(--warning) 55%, transparent) 55% 70%,
+		var(--surface-2) 70% 100%
+	);
+}
+
+.meter__ticks {
+	position: absolute;
+	inset: 0;
+	display: flex;
+	justify-content: space-between;
+	align-items: flex-end;
+	padding-bottom: 6px;
+}
+
+.meter__tick {
+	width: 1px;
+	background: var(--border-strong);
+	height: 10px;
+}
+
+.meter__tick--center {
+	height: 18px;
+	background: var(--fg-muted);
+}
+
+.meter__needle {
+	position: absolute;
+	left: 50%;
+	bottom: 4px;
+	width: 2px;
+	height: 28px;
+	border-radius: 2px;
+	background: var(--fg);
+	transform: translateX(-50%);
+	transition:
+		left 80ms linear,
+		background var(--dur) var(--ease);
+}
+
+.readout--locked .meter__needle {
+	background: var(--success);
+}
+
+.meter__labels {
+	display: flex;
+	justify-content: space-between;
+	font-family: var(--font-mono);
+	font-size: 11px;
+	color: var(--fg-muted);
+	margin-top: 2px;
+}
+
+.hint {
+	font-size: 12px;
+	color: var(--fg-muted);
+	text-align: center;
+	margin: 0;
+}
+
+@media (max-width: 420px) {
+	.readout__note {
+		font-size: 64px;
+	}
+}
+
+@media (min-width: 960px) {
+	.readout__note {
+		font-size: 112px;
+	}
+}
+
+/* "A4 = 432 Hz" where the Trainer and Scales show notes (ts/features/settings/settings.view.ts). */
+.a4-note {
+	margin: 12px 0 0;
+	font-family: var(--font-mono);
+	font-size: 11px;
+	color: var(--fg-muted);
+	text-align: center;
+}
+
+@media (max-width: 600px) {
+	.readout {
+		padding: 20px 16px 16px;
+	}
+
+	.meter {
+		margin-top: 16px;
+	}
+}
+
+/* Short phones (360 x 740 and the like): smaller hero numbers too. */
+@media (max-width: 600px) and (max-height: 760px) {
+	.readout__note {
+		font-size: 52px;
+	}
+
+	.readout {
+		padding-block: 12px;
+	}
+
+	.meter {
+		margin-top: 12px;
+	}
+}

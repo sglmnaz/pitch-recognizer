@@ -1,0 +1,42 @@
+/* Scales ----------------------------------------------------------------- */
+/* Small segmented control (Explore / Identify, labels, positions): the tab
+   bar's look at a smaller scale. */
+.segmented {
+	display: flex;
+	padding: 3px;
+	gap: 2px;
+	background: var(--surface-2);
+	border-radius: var(--radius);
+	box-shadow: var(--shadow-border);
+}
+
+.segmented button {
+	flex: 1;
+	border: none;
+	background: transparent;
+	color: var(--fg-secondary);
+	font-size: 13px;
+	font-weight: 500;
+	padding: 5px 12px;
+	border-radius: 4px;
+	cursor: pointer;
+	white-space: nowrap;
+	transition:
+		color var(--dur) var(--ease),
+		background var(--dur) var(--ease);
+}
+
+.segmented button:hover {
+	color: var(--fg);
+}
+
+.segmented button[aria-pressed='true'] {
+	color: var(--fg);
+	background: var(--surface);
+	box-shadow: var(--shadow-sm);
+}
+
+.segmented--small button {
+	padding: 4px 10px;
+	font-size: 12px;
+}

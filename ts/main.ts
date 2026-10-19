@@ -1,4 +1,4 @@
-import './styles/style.css'
+import './styles/main.css'
 import * as Sound from './core/sound'
 import { createTrainerView } from './features/trainer/trainer.view'
 import { createTunerView } from './features/tuner/tuner.view'
