@@ -1180,6 +1180,58 @@ button {
 	stroke-width: 2.5;
 }
 
+/* Fretboard extras (ts/fretboard.ts): chord-diagram overlays ------------- */
+/* An optional tone: outline only. */
+.cell--muted circle {
+	fill: transparent;
+	stroke: var(--note-stroke);
+	stroke-dasharray: 2 2;
+}
+
+.neck__barre {
+	fill: var(--note-fill);
+	stroke: var(--note-stroke);
+	stroke-width: 1;
+}
+
+.neck__open {
+	fill: none;
+	stroke: var(--fg-secondary);
+	stroke-width: 1.5;
+}
+
+.neck__muted,
+.neck__finger {
+	fill: var(--fg-secondary);
+	font-family: var(--font-sans);
+	font-size: 12px;
+	text-anchor: middle;
+	dominant-baseline: central;
+}
+
+/* Left-handed: the board opens scrolled to the nut on the right, so the
+   legend under a scrolling neck follows the view instead of the content. */
+.neck-board:has(.neck--left) .neck-legend {
+	position: sticky;
+	left: 0;
+}
+
+/* A chord diagram is a fixed small grid, drawn 1:1 on the board's surface. */
+.neck--chord {
+	margin: 0;
+	border-radius: var(--radius);
+	background: var(--board);
+	color: var(--fg);
+}
+
+.neck--chord .neck__num {
+	font-size: 10px;
+}
+
+.neck--chord .cell text {
+	font-size: 9.5px;
+}
+
 /* Legend under the neck, in the board's palette. */
 .neck-legend {
 	display: flex;

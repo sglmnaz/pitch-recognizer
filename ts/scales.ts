@@ -52,7 +52,8 @@ export function pitchClassOf(name: string): number {
 function parseDegree(degree: string) {
 	const number = Number(degree.replace(/[#b]/g, ''))
 	const acc = [...degree].reduce((sum, ch) => sum + (ch === '#' ? 1 : ch === 'b' ? -1 : 0), 0)
-	return { number, semitones: MAJOR_STEPS[number - 1] + acc }
+	// 9, 11, 13 (chord extensions, ts/chord-theory.ts) are 2, 4, 6 an octave up.
+	return { number, semitones: MAJOR_STEPS[(number - 1) % 7] + 12 * Math.floor((number - 1) / 7) + acc }
 }
 
 export function degreesOf(type: ScaleType): string[] {

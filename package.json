@@ -12,6 +12,7 @@
 		"check:scales": "node scripts/scale-check.ts",
 		"check:tunings": "node scripts/tuning-check.ts",
 		"check:metronome": "node scripts/metronome-check.ts",
+		"check:chord-theory": "node scripts/chord-theory-check.ts",
 		"bench": "node scripts/bench.ts"
 	},
 	"keywords": [

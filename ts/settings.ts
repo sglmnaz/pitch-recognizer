@@ -53,6 +53,10 @@ export interface Settings {
 	metroTrainerStep: number
 	metroTrainerBars: number
 	metroTrainerTarget: number
+
+	/* Fretboard (shared by every neck, ts/fretboard.ts) */
+	/** Mirror the neck: nut on the right when horizontal, low string on the right when vertical. */
+	leftHanded: boolean
 }
 
 const STORAGE_KEY = 'pitch-recognizer:settings'
@@ -84,6 +88,9 @@ const defaults: Settings = {
 	metroTrainerStep: 5,
 	metroTrainerBars: 4,
 	metroTrainerTarget: 160,
+
+	/* Fretboard */
+	leftHanded: false,
 }
 
 const listeners = new Set<() => void>()
