@@ -126,7 +126,7 @@ in a new room. Details in [bench/README.md](bench/README.md).
 index.html              App shell: all markup; TS only wires it up
 vite.config.ts          Vite + PWA (manifest, Workbox precache)
 ts/
-  main.ts               Tab routing, shared mic block, mic lifecycle
+  main.ts               Tab routing and bootstrap
   core/                 Runtime services
     microphone.ts       Web Audio capture + MPM pitch detection loop
     fft.ts              FFT used by the detector
@@ -145,10 +145,13 @@ ts/
     ear.ts / changes.ts Ear-training and chord-change drill logic
     game.ts             Notes trainer rounds and scoring
   ui/                   Shared UI: view.ts (the View interface), fretboard.ts
-                        (SVG neck), music-renderer.ts (VexFlow staff), help.ts
+                        (SVG neck), music-renderer.ts (VexFlow staff), help.ts,
+                        mic-block.ts (the mic and the shared #mic block),
+                        waveform.ts, debug.ts (?debug line and recorder)
   features/<tab>/       One folder per tab, a factory per view (*.view.ts):
-                        tuner, chords (+ chord-library), scales (+ harmony),
-                        trainer (+ ear, changes), metronome, settings
+                        tuner, chords (+ chord-library), scales (+ harmony,
+                        circle, progression-player), trainer (+ ear, changes,
+                        changes.session, changes.recognizer), metronome, settings
   styles/               tokens.css / style.css (Geist tokens, light + dark /
                         layout and components), fonts/
 scripts/                Self-checks, benchmark, chord-model training data

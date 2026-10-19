@@ -128,7 +128,7 @@ export function createTunerView(root: HTMLElement): View {
 		},
 
 		// Also runs on mic Stop, which must not cut a reference tone: it ends on
-		// its own timer, and leaving the tab stops it (index.ts activate()).
+		// its own timer, and leaving the tab stops it (main.ts activate()).
 		reset() {
 			if (refIndex === null) idle()
 		},
