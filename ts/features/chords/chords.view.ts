@@ -1,7 +1,7 @@
 import * as Microphone from '../../core/microphone'
 import * as Settings from '../../core/settings'
 import * as Sound from '../../core/sound'
-import { chordModelReady, loadChordModel, PITCH_CLASSES, resetChordTracking, trackChord } from '../../music/chords'
+import { chordModelReady, loadChordModel, PITCH_CLASSES, resetChordTracking, trackChord, withSilenceReset } from '../../music/chords'
 import type { View } from '../../ui/view'
 import { createChordModes } from './chord-library.view'
 
@@ -13,6 +13,7 @@ const CHORD_CONFIRM_MS = 150
 // The HMM forgets the chord only after this much continuous silence, so a
 // short gap between strums (the gate closing on a decay) keeps its evidence.
 const SILENCE_RESET_MS = 300
+const tracker = withSilenceReset({ track: trackChord, reset: resetChordTracking }, SILENCE_RESET_MS)
 
 /** `onMicNeed` tells index.ts that wantsMic() changed: only Listen uses the mic. */
 export function createChordsView(root: HTMLElement, onMicNeed: () => void): View {
@@ -39,7 +40,6 @@ export function createChordsView(root: HTMLElement, onMicNeed: () => void): View
 	let shown: string | null = null
 	let candidate: string | null = null
 	let candidateSince = 0
-	let silentSince: number | null = null
 
 	function render(label: string | null, notes: string[], idleText: string) {
 		name.textContent = label ?? '--'
@@ -58,8 +58,7 @@ export function createChordsView(root: HTMLElement, onMicNeed: () => void): View
 	}
 
 	function idle(text = 'Strum a chord') {
-		resetChordTracking()
-		silentSince = null
+		tracker.reset()
 		shown = null
 		candidate = null
 		render(null, [], text)
@@ -84,12 +83,7 @@ export function createChordsView(root: HTMLElement, onMicNeed: () => void): View
 			// started elsewhere still ringing) count as silence, not as a chord.
 			const loud = Microphone.isSounding() && !Sound.isRinging()
 			const now = performance.now()
-			const analysis = loud && spectrum ? trackChord(spectrum.spectrumDb, spectrum.binHz, now, Settings.get().a4) : null
-			if (analysis) silentSince = null
-			else {
-				silentSince ??= now
-				if (now - silentSince >= SILENCE_RESET_MS) resetChordTracking()
-			}
+			const analysis = tracker.track(loud ? spectrum : null, now, Settings.get().a4)
 			const chord = analysis?.chord ?? null
 
 			const label = chord?.name ?? null

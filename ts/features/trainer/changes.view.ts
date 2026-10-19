@@ -6,8 +6,8 @@ import * as Changes from '../../music/changes'
 import * as Metronome from '../../core/metronome'
 import * as Microphone from '../../core/microphone'
 import * as Settings from '../../core/settings'
-import { createChordTracker, loadChordModel, PITCH_CLASSES } from '../../music/chords'
-import { chordType } from '../../music/chord-theory'
+import { createChordTracker, loadChordModel, PITCH_CLASSES, withSilenceReset } from '../../music/chords'
+import { parseChordSymbol } from '../../music/chord-library'
 import { chordShapes, voicingSpec } from '../../music/chord-shapes'
 import { createFretboard, type Fretboard } from '../../ui/fretboard'
 import type { View } from '../../ui/view'
@@ -30,13 +30,11 @@ export interface HeardChord {
 	confidence?: number
 }
 
-// Our own tracker (ts/music/chords.ts): the Chords view's smoother never shares state with it.
-const tracker = createChordTracker()
-// Like the Chords view: forget the tracked chord after this much continuous
-// silence (not on every silent frame, a strum's gaps are part of it), so the
-// HMM never carries a chord across a long gap.
+// Our own tracker (ts/music/chords.ts): the Chords view's smoother never
+// shares state with it. Like the Chords view, it forgets the chord after
+// this much continuous silence.
 const SILENCE_RESET_MS = 300
-let silentSince: number | null = null
+const tracker = withSilenceReset(createChordTracker(), SILENCE_RESET_MS)
 
 // ?debug: chords fed by hand from the console (the mic is often unavailable
 // where the UI is tested). undefined = off, null = "no chord". Each fed
@@ -52,12 +50,7 @@ export function heardChord(now: number): HeardChord | null {
 	// Same silence gate as the Chords view. Until the model has loaded the
 	// tracker answers "no chord" (and starts the load itself).
 	const spectrum = Microphone.getSpectrum()
-	const analysis = spectrum && Microphone.isSounding() ? tracker.track(spectrum.spectrumDb, spectrum.binHz, now, Settings.get().a4) : null
-	if (analysis) silentSince = null
-	else {
-		silentSince ??= now
-		if (now - silentSince >= SILENCE_RESET_MS) tracker.reset()
-	}
+	const analysis = tracker.track(Microphone.isSounding() ? spectrum : null, now, Settings.get().a4)
 	const chord = analysis?.chord
 	if (!chord) return null
 	const root = chord.notes[0]
@@ -67,7 +60,6 @@ export function heardChord(now: number): HeardChord | null {
 /** Forgets what the recognizer was following, so a new session (or a mic restart) starts clean. */
 export function resetHeard() {
 	tracker.reset()
-	silentSince = null
 }
 
 /** A strum's attack this frame (the pitch pipeline's onset detector): what tells a played chord from a recognizer flip. */
@@ -175,9 +167,8 @@ export function createChangesView(root: HTMLElement): View {
 		shapesKey = key
 		for (const shape of shapes) shape.board.destroy()
 		shapes = sequence.map((symbol) => {
-			const rootName = symbol.match(/^[A-G][#b]?/)![0]
-			const rootPc = PITCH_CLASSES.indexOf(rootName)
-			const type = chordType(symbol.slice(rootName.length))!
+			// The setting only holds Changes.CHANGE_CHORDS, all parseable.
+			const { rootPc, type } = parseChordSymbol(symbol)!
 			const figure = document.createElement('figure')
 			figure.className = 'changes-shape'
 			const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg')

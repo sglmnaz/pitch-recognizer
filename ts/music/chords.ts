@@ -410,3 +410,31 @@ export function createChordTracker(): ChordTracker {
 const defaultTracker = createChordTracker()
 export const trackChord: ChordTracker['track'] = (spectrumDb, binHz, timeMs, a4) => defaultTracker.track(spectrumDb, binHz, timeMs, a4)
 export const resetChordTracking = () => defaultTracker.reset()
+
+/** One analyser frame, or null while silent (the mic's gate is closed). */
+export type SpectrumFrame = { spectrumDb: Float32Array; binHz: number } | null
+
+/**
+ * A tracker fed silence too: it forgets the chord only after `ms` of
+ * continuous silence (not on every silent frame: a strum's gaps, the gate
+ * closing on a decay, are part of it), so the HMM never carries a chord
+ * across a long gap. track() answers null while silent.
+ */
+export function withSilenceReset(tracker: ChordTracker, ms: number) {
+	let silentSince: number | null = null
+	return {
+		track(frame: SpectrumFrame, timeMs: number, a4?: number): ChordAnalysis | null {
+			if (frame) {
+				silentSince = null
+				return tracker.track(frame.spectrumDb, frame.binHz, timeMs, a4)
+			}
+			silentSince ??= timeMs
+			if (timeMs - silentSince >= ms) tracker.reset()
+			return null
+		},
+		reset() {
+			tracker.reset()
+			silentSince = null
+		},
+	}
+}
