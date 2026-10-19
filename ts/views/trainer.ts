@@ -175,6 +175,13 @@ export function createTrainerView(root: HTMLElement, onMicNeed: () => void): Vie
 		}
 	}
 
+	let sing = Settings.get().earSing
+	Settings.subscribe(() => {
+		if (Settings.get().earSing === sing) return
+		sing = Settings.get().earSing
+		onMicNeed()
+	})
+
 	for (const button of modeButtons) {
 		button.addEventListener('click', () => {
 			const ex = button.dataset.exercise as Settings.Settings['trainerExercise']
@@ -194,6 +201,7 @@ export function createTrainerView(root: HTMLElement, onMicNeed: () => void): Vie
 		},
 		reset: () => active().reset(),
 		onReading: (reading) => active().onReading(reading),
-		wantsMic: () => exercise() !== 'chords',
+		// Intervals only listen when sung answers are on.
+		wantsMic: () => exercise() === 'notes' || (exercise() === 'intervals' && Settings.get().earSing),
 	}
 }

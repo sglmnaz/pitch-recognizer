@@ -15,6 +15,9 @@ const STATS_SHOWN = 6
 
 const DIRECTION_TEXT: Record<Ear.Direction, string> = { up: 'Ascending', down: 'Descending', harmonic: 'Harmonic' }
 
+// Extra time after a played note before the mic may take a sung answer.
+const RING_MARGIN_MS = 500
+
 export function createEarView(root: HTMLElement): View {
 	const panel = root.querySelector<HTMLElement>('.ear')!
 	const promptText = panel.querySelector<HTMLElement>('.ear__prompt')!
@@ -129,7 +132,7 @@ export function createEarView(root: HTMLElement): View {
 		const prefix = q?.exercise === 'intervals' ? `${DIRECTION_TEXT[q.direction]}. ` : 'Strummed. '
 		if (text) hint.textContent = text
 		else if (!played) hint.textContent = `${prefix}Press Play to hear it.`
-		else if (q?.exercise === 'intervals' && micLive) {
+		else if (q?.exercise === 'intervals' && micLive && Settings.get().earSing) {
 			hint.textContent = `${prefix}Tap the answer, or sing or play the ${q.direction === 'harmonic' ? 'upper' : 'second'} note.`
 		} else hint.textContent = `${prefix}${q?.exercise === 'intervals' ? 'Tap the interval.' : 'Tap its quality.'}`
 	}
@@ -148,7 +151,9 @@ export function createEarView(root: HTMLElement): View {
 		// A replay replaces what is still sounding instead of stacking on it, and
 		// the mic ignores the whole note (its tail could otherwise answer).
 		Sound.stopAll()
-		for (const note of notes) Sound.play(note.midi, note.at, gain, Sound.NOTE_MS)
+		// The mic ignores each note for its whole length plus a margin: audio can
+		// start late (a context just resumed, Bluetooth output) and the room rings on.
+		for (const note of notes) Sound.play(note.midi, note.at, gain, Sound.NOTE_MS + RING_MARGIN_MS)
 		hold = null
 		if (!played) {
 			played = true
@@ -260,6 +265,9 @@ export function createEarView(root: HTMLElement): View {
 		},
 
 		onReading(reading: PitchReading | null) {
+			// Sung answers are opt-in: through the phone speaker the mic can hear the
+			// question itself, so by default answers are taps only.
+			if (!Settings.get().earSing) return
 			if (!micLive) {
 				micLive = true
 				showHint()

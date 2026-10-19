@@ -77,6 +77,8 @@ export interface Settings {
 	earDirection: 'up' | 'down' | 'harmonic' | 'mixed'
 	/** Seconds between the two notes of a melodic interval. */
 	earGap: number
+	/** Intervals: answer by singing or playing the second note (needs the mic; off by default). */
+	earSing: boolean
 	/** Move on by itself shortly after a right answer. */
 	earAutoAdvance: boolean
 }
@@ -124,6 +126,7 @@ const defaults: Settings = {
 	earChords: DEFAULT_QUALITIES,
 	earDirection: 'up',
 	earGap: 0.75,
+	earSing: false,
 	earAutoAdvance: true,
 }
 
