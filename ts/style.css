@@ -1961,6 +1961,32 @@ button {
 	font-variant-numeric: tabular-nums;
 }
 
+/* The number is a text field: tap it to type a tempo. It looks like plain text
+   until focused, then shows the accent underline of a field being edited. */
+input.metro-bpm__value {
+	display: block;
+	width: 3ch;
+	padding: 0;
+	border: none;
+	border-bottom: 2px solid transparent;
+	border-radius: 0;
+	background: none;
+	color: inherit;
+	text-align: center;
+	cursor: text;
+	caret-color: var(--accent);
+	transition: border-color var(--dur) var(--ease);
+}
+
+input.metro-bpm__value:hover {
+	border-bottom-color: var(--border-strong);
+}
+
+input.metro-bpm__value:focus {
+	outline: none;
+	border-bottom-color: var(--accent);
+}
+
 .metro-bpm__unit {
 	position: absolute;
 	left: 100%;
@@ -2060,7 +2086,7 @@ button {
 /* Tempo row: − slider + ------------------------------------------------- */
 .metro-tempo {
 	display: grid;
-	grid-template-columns: auto minmax(0, 1fr) auto;
+	grid-template-columns: auto auto minmax(0, 1fr) auto auto;
 	align-items: center;
 	gap: 8px;
 	width: 100%;
@@ -2941,5 +2967,33 @@ label.metro-row {
 	.chord-identify > .chord-results {
 		display: grid;
 		grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+	}
+}
+
+/* ±10 BPM: the big steps either side of ±1, a smaller mono label so they read as secondary. */
+.metro-step--ten {
+	font-size: 14px;
+	font-weight: 500;
+	color: var(--fg-secondary);
+}
+
+/* Speed trainer settings, shown under its switch while it is on. */
+.metro-trainer__config {
+	border-top: 1px solid var(--border);
+}
+
+.metro-stepper__value--wide {
+	min-width: 4.5ch;
+	font-size: 16px;
+}
+
+@media (max-width: 600px) {
+	.metro-tempo {
+		gap: 6px;
+	}
+
+	.metro-tempo .metro-step {
+		width: 44px;
+		height: 44px;
 	}
 }

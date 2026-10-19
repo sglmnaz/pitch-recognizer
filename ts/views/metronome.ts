@@ -39,7 +39,7 @@ const clamp = (value: number, min: number, max: number) => Math.min(max, Math.ma
 
 export function createMetronomeView(root: HTMLElement): View {
 	const $ = <T extends Element>(selector: string) => root.querySelector<T>(selector)!
-	const bpmValue = $<HTMLElement>('.metro-bpm__value')
+	const bpmValue = $<HTMLInputElement>('.metro-bpm__value')
 	const name = $<HTMLElement>('.metro-name')
 	const dotsBox = $<HTMLElement>('.metro-dots')
 	const slider = $<HTMLInputElement>('.metro-slider')
@@ -54,6 +54,7 @@ export function createMetronomeView(root: HTMLElement): View {
 	const progress = $<HTMLElement>('.metro-progress')
 	const progressFill = $<HTMLElement>('.metro-progress__bar span')
 	const progressText = $<HTMLElement>('.metro-progress__text')
+	const trainerConfig = $<HTMLElement>('.metro-trainer__config')
 	const flash = $<HTMLElement>('.metro-flash')
 
 	let dots: HTMLButtonElement[] = []
@@ -107,9 +108,32 @@ export function createMetronomeView(root: HTMLElement): View {
 	}
 
 	for (const button of root.querySelectorAll<HTMLButtonElement>('[data-tempo]')) {
-		const direction = Number(button.dataset.tempo)
-		onPress(button, (repeats) => nudge(direction * (repeats > SPEED_UP ? 5 : 1)), true)
+		const by = Number(button.dataset.tempo)
+		// ±1 speeds up when held; ±10 is already the big step.
+		onPress(button, (repeats) => nudge(Math.abs(by) === 1 && repeats > SPEED_UP ? by * 5 : by), true)
 	}
+
+	// Tap the number to type a tempo: committed on Enter or when focus leaves,
+	// Escape puts the current tempo back.
+	bpmValue.addEventListener('focus', () => bpmValue.select())
+	// The field is as wide as its digits, so the BPM unit hangs right off the number.
+	const fitBpm = () => (bpmValue.style.width = `${Math.max(2, bpmValue.value.length)}ch`)
+	bpmValue.addEventListener('input', () => {
+		bpmValue.value = bpmValue.value.replace(/\D/g, '')
+		fitBpm()
+	})
+	bpmValue.addEventListener('change', () => {
+		const typed = Number(bpmValue.value)
+		if (bpmValue.value !== '' && typed > 0) setBpm(typed)
+		showBpm(Metronome.getState().bpm, true)
+	})
+	bpmValue.addEventListener('keydown', (event) => {
+		if (event.key === 'Enter') bpmValue.blur()
+		if (event.key === 'Escape') {
+			showBpm(Metronome.getState().bpm, true)
+			bpmValue.blur()
+		}
+	})
 
 	onPress(tapButton, () => {
 		const now = performance.now()
@@ -222,8 +246,12 @@ export function createMetronomeView(root: HTMLElement): View {
 	new MutationObserver(() => root.hidden && halt()).observe(root, { attributes: true, attributeFilter: ['hidden'] })
 
 	/* Beats ----------------------------------------------------------------- */
-	function showBpm(bpm: number) {
-		bpmValue.textContent = String(bpm)
+	function showBpm(bpm: number, force = false) {
+		// Never overwrite what the user is typing.
+		if (force || document.activeElement !== bpmValue) {
+			bpmValue.value = String(bpm)
+			fitBpm()
+		}
 		slider.value = String(bpm)
 		const { metroBeats, metroUnit } = Settings.get()
 		name.textContent = `${tempoName(bpm)} · ${metroBeats}/${metroUnit}`
@@ -250,11 +278,46 @@ export function createMetronomeView(root: HTMLElement): View {
 	})
 
 	/* Speed trainer ---------------------------------------------------------- */
-	trainerSwitch.addEventListener('change', () => Settings.update({ metroTrainerOn: trainerSwitch.checked }))
+	const TRAINER_LIMITS = {
+		step: { key: 'metroTrainerStep', min: 1, max: 20, by: 1 },
+		bars: { key: 'metroTrainerBars', min: 1, max: 16, by: 1 },
+		target: { key: 'metroTrainerTarget', min: Metronome.MIN_BPM, max: Metronome.MAX_BPM, by: 5 },
+	} as const
+	const trainerValues = Object.fromEntries(
+		Object.keys(TRAINER_LIMITS).map((name) => [name, $<HTMLElement>(`[data-value="${name}"]`)]),
+	) as Record<keyof typeof TRAINER_LIMITS, HTMLElement>
+
+	trainerSwitch.addEventListener('change', () => {
+		const on = trainerSwitch.checked
+		const { metroBpm, metroTrainerTarget } = Settings.get()
+		// A target at or under the start tempo would do nothing: start 40 BPM higher.
+		const target = metroTrainerTarget > metroBpm ? metroTrainerTarget : Math.min(Metronome.MAX_BPM, Math.ceil((metroBpm + 40) / 5) * 5)
+		Settings.update({ metroTrainerOn: on, metroTrainerTarget: target })
+	})
+
+	for (const button of root.querySelectorAll<HTMLButtonElement>('[data-trainer]')) {
+		const limits = TRAINER_LIMITS[button.dataset.trainer as keyof typeof TRAINER_LIMITS]
+		const direction = Number(button.dataset.by)
+		onPress(
+			button,
+			() => {
+				const current = Settings.get()[limits.key]
+				// Snap to the step grid first, so 163 goes to 165 or 160, then by whole steps.
+				const snapped = direction > 0 ? Math.floor(current / limits.by) * limits.by : Math.ceil(current / limits.by) * limits.by
+				Settings.update({ [limits.key]: clamp(snapped + direction * limits.by, limits.min, limits.max) })
+			},
+			true,
+		)
+	}
 
 	function renderTrainer() {
 		const { metroTrainerOn: on, metroTrainerStep: step, metroTrainerBars: bars, metroTrainerTarget: target, metroBpm: start } = Settings.get()
-		trainerDesc.textContent = `+${step} BPM every ${bars} ${bars === 1 ? 'bar' : 'bars'}, up to ${target}`
+		const barsText = `${bars} ${bars === 1 ? 'bar' : 'bars'}`
+		trainerDesc.textContent = on ? `From ${start} BPM, +${step} every ${barsText}` : 'Speeds up while you play'
+		trainerValues.step.textContent = `+${step}`
+		trainerValues.bars.textContent = barsText
+		trainerValues.target.textContent = `${target}`
+		trainerConfig.hidden = !on
 		progress.hidden = !on
 		if (!on) return
 		const { running, bpm } = Metronome.getState()
@@ -262,7 +325,7 @@ export function createMetronomeView(root: HTMLElement): View {
 		progressFill.style.width = `${span > 0 ? clamp(((bpm - start) / span) * 100, 0, 100) : 0}%`
 		progressText.textContent =
 			span <= 0
-				? `Set a target above ${start} BPM in settings`
+				? `Set “Up to” above ${start} BPM`
 				: !running
 					? `Starts at ${start} BPM`
 					: bpm >= target
@@ -301,7 +364,7 @@ export function createMetronomeView(root: HTMLElement): View {
 
 		const running = Metronome.getState().running
 		startButton.textContent = running ? 'Stop' : 'Start'
-		startButton.classList.toggle('btn--solid', !running)
+		startButton.setAttribute('aria-pressed', String(running))
 	}
 
 	Metronome.setTempo(Settings.get().metroBpm)
