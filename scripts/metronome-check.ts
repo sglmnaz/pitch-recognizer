@@ -118,6 +118,38 @@ run(2)
 check('shrinking the bar mid-run wraps at the new count', heard.slice(-3).every((e) => e.beat < 2), heard.slice(-3).map((e) => e.beat).join())
 Metronome.stop()
 
+/* Subdivision 16ths -> none, mid-beat: no stray click, same grid ---------- */
+clicks.length = heard.length = late.length = 0
+Metronome.configure({ beats: 4, accents: [2, 1, 1, 1], subdivision: 4 })
+Metronome.setTempo(60)
+Metronome.start()
+run(1.3)
+const switchedAt = now
+Metronome.configure({ subdivision: 1 })
+run(5)
+Metronome.stop()
+const first = clicks[0].at
+const after = clicks.filter((c) => c.scheduledAt > switchedAt + 0.2)
+check(
+	'16ths -> none mid-beat: clicks stay on the beat grid, 1 s apart',
+	after.length >= 4 && after.every((c, i) => near((c.at - first) % 1 || 1, 1) && (i === 0 || near(c.at - after[i - 1].at, 1))),
+	after.map((c) => (c.at - first).toFixed(3)).join(' ')
+)
+
+/* A stalled main thread skips the backlog instead of bursting ------------- */
+clicks.length = heard.length = late.length = 0
+Metronome.configure({ subdivision: 1 })
+Metronome.setTempo(120)
+Metronome.start()
+run(1)
+const before = clicks.length
+now += 5
+tick()
+const burst = clicks.slice(before)
+check('after a 5 s stall no click is played late', burst.every((c) => c.at >= now - 0.05) && burst.length <= 2, `${burst.length} click(s)`)
+check('after the stall clicks are back on the 0.5 s grid', burst.every((c) => near(((c.at - clicks[0].at) / 0.5) % 1 || 1, 1)))
+Metronome.stop()
+
 if (failures) {
 	console.error(`\n${failures} check(s) failed`)
 	process.exit(1)

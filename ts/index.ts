@@ -47,6 +47,11 @@ const views: Record<string, { view: View; section: HTMLElement }> = {
 let currentName = 'tuner'
 let micActive = false
 let micBlocked = false
+// The Metronome tab turns the mic off (it would hear the clicks, and on phones an
+// open mic can change audio routing). True while the mic should come back on
+// leaving it: it was on when the tab opened, or the app booted straight into it.
+// A mic the user had stopped stays stopped.
+let micResume = false
 
 /* Theme ------------------------------------------------------------------ */
 const SUN = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>'
@@ -108,6 +113,16 @@ function activate(name: string) {
 	const hasSettings = [...sections].some((section) => !section.hidden)
 	settingsToggle.hidden = !hasSettings
 	if (!hasSettings) setSettingsOpen(false)
+
+	if (name === 'metronome') {
+		if (micActive) {
+			micResume = true
+			stopMic()
+		}
+	} else if (micResume) {
+		micResume = false
+		startMic()
+	}
 
 	views[name].view.onActivate()
 }
@@ -335,5 +350,7 @@ if (DEBUG) {
 applyTheme(document.documentElement.dataset.theme === 'dark' ? 'dark' : 'light')
 activate(location.hash.replace('#', ''))
 drawWaveform(false)
-// Listen by default: a tuner that is not listening just looks broken.
-startMic()
+// Listen by default: a tuner that is not listening just looks broken. (Not on
+// the Metronome tab: the mic starts when the user leaves it.)
+if (currentName === 'metronome') micResume = true
+else startMic()

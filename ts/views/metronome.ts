@@ -13,6 +13,14 @@ const HOLD_DELAY_MS = 400
 const REPEAT_MS = 70
 const SPEED_UP = 20
 
+// Beat dot tap targets: never smaller than MIN_DOT px, DOT_GAP apart (match .metro-dots in style.css).
+const MIN_DOT = 44
+const DOT_GAP = 8
+
+// After the user sets the tempo, beat events still queued at the old one are ignored this long.
+const USER_TEMPO_QUIET_MS = 400
+const MAX_FLASHES_PER_S = 3
+
 // Conventional boundaries (BPM) between the tempo names.
 const TEMPO_NAMES: [number, string][] = [
 	[66, 'Largo'],
@@ -53,10 +61,14 @@ export function createMetronomeView(root: HTMLElement): View {
 	let barInStep = 0
 	let taps: number[] = []
 	let wakeLock: WakeLockSentinel | null = null
+	let dragging = false
+	let userTempoAt = 0
+	const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)')
 
 	/* Tempo ----------------------------------------------------------------- */
 	/** The one way the user changes tempo: engine first, then the stored setting. */
 	function setBpm(bpm: number) {
+		userTempoAt = performance.now()
 		bpm = clamp(Math.round(bpm), Metronome.MIN_BPM, Metronome.MAX_BPM)
 		Metronome.setTempo(bpm)
 		Settings.update({ metroBpm: bpm })
@@ -64,6 +76,8 @@ export function createMetronomeView(root: HTMLElement): View {
 	const nudge = (by: number) => setBpm(Metronome.getState().bpm + by)
 
 	slider.addEventListener('input', () => setBpm(Number(slider.value)))
+	slider.addEventListener('pointerdown', () => (dragging = true))
+	for (const type of ['pointerup', 'pointercancel']) slider.addEventListener(type, () => (dragging = false))
 
 	/** Pointer-down acts at once (no 300 ms touch delay, and timing taps matter);
 	 * `click` with detail 0 is the keyboard. Holding repeats. */
@@ -124,21 +138,44 @@ export function createMetronomeView(root: HTMLElement): View {
 			const dot = document.createElement('button')
 			dot.type = 'button'
 			dot.className = 'metro-dot'
-			dot.textContent = String(beat + 1)
+			// The button is the full-size tap target; the face inside is what scales and colours.
+			const face = document.createElement('span')
+			face.className = 'metro-dot__face'
+			face.textContent = String(beat + 1)
+			dot.append(face)
 			dot.addEventListener('click', () => setAccent(beat, NEXT_ACCENT[Settings.get().metroAccents[beat] ?? 1]))
 			return dot
 		})
 		lit = null
 		dotsBox.replaceChildren(...dots)
-		// Two even rows once a single row would make the dots too small to tap.
-		dotsBox.style.setProperty('--per-row', String(beats > 8 ? Math.ceil(beats / 2) : beats))
+		layoutDots()
 	}
+
+	// Even rows, wrapping as soon as a single row would shrink the dots below a
+	// thumb-sized tap target (the CSS sizes each dot from --per-row).
+	function layoutDots() {
+		const width = dotsBox.clientWidth
+		if (!width || !dots.length) return // hidden tab: the ResizeObserver calls again
+		const fit = Math.max(1, Math.floor((width + DOT_GAP) / (MIN_DOT + DOT_GAP)))
+		const rows = Math.ceil(dots.length / fit)
+		dotsBox.style.setProperty('--per-row', String(Math.ceil(dots.length / rows)))
+	}
+	new ResizeObserver(layoutDots).observe(dotsBox)
 
 	/* Run / stop ------------------------------------------------------------ */
 	async function holdScreen() {
 		// A sleeping phone silences the page; ask the screen to stay on while it clicks.
+		// The browser releases the sentinel itself when the page is hidden: a stale one does not count.
+		if (wakeLock && !wakeLock.released) return
 		try {
-			wakeLock = (await navigator.wakeLock?.request('screen')) ?? null
+			const lock = await navigator.wakeLock?.request('screen')
+			if (!lock) return
+			// Stopped (or a second request won) while this one was pending: do not leak it.
+			if (!Metronome.getState().running || (wakeLock && !wakeLock.released)) return void lock.release()
+			wakeLock = lock
+			lock.addEventListener('release', () => {
+				if (wakeLock === lock) wakeLock = null
+			})
 		} catch {
 			// Refused (low battery, unsupported): the metronome still runs.
 		}
@@ -171,10 +208,11 @@ export function createMetronomeView(root: HTMLElement): View {
 	})
 
 	document.addEventListener('keydown', (event) => {
-		if (root.hidden || event.code !== 'Space' || event.repeat) return
-		// Buttons and switches act on Space themselves; selects use it to open.
-		const target = event.target as Element
-		if (target.closest?.('button, select, textarea') || (target instanceof HTMLInputElement && target.type === 'checkbox')) return
+		if (root.hidden || event.code !== 'Space' || event.repeat || event.ctrlKey || event.altKey || event.metaKey) return
+		// Only where Space does nothing else: the bare page, or the tempo slider.
+		// (Buttons, switches and selects act on Space themselves.)
+		const target = event.target
+		if (target !== document.body && !(target instanceof HTMLInputElement && target.type === 'range')) return
 		event.preventDefault()
 		toggle()
 	})
@@ -193,14 +231,20 @@ export function createMetronomeView(root: HTMLElement): View {
 
 	Metronome.onBeat((event) => {
 		if (root.hidden) return
-		showBpm(event.bpm)
+		// The tempo only moves by itself under the speed trainer. Events still queued
+		// at the old tempo must not overwrite what the user just set or is dragging.
+		if (Settings.get().metroTrainerOn && !dragging && performance.now() - userTempoAt > USER_TEMPO_QUIET_MS) showBpm(event.bpm)
 		if (event.sub !== 0) return
 		lit?.classList.remove('metro-dot--lit')
 		lit = dots[event.beat] ?? null
 		lit?.classList.add('metro-dot--lit')
 		if (event.beat === 0) {
 			barInStep = event.bar % Settings.get().metroTrainerBars
-			if (Settings.get().metroFlash) flash.animate([{ opacity: 0.22 }, { opacity: 0 }], { duration: 320, easing: 'ease-out' })
+			// WCAG 2.3.1: never more than 3 flashes a second, and none for reduced motion.
+			const perSecond = event.bpm / Settings.get().metroBeats / 60
+			if (Settings.get().metroFlash && perSecond <= MAX_FLASHES_PER_S && !reducedMotion.matches) {
+				flash.animate([{ opacity: 0.22 }, { opacity: 0 }], { duration: 320, easing: 'ease-out' })
+			}
 		}
 		renderTrainer()
 	})

@@ -53,6 +53,8 @@ export const MAX_BPM = 300
 
 const TICK_MS = 25
 const LOOKAHEAD = 0.12
+// A step this far in the past was missed (stalled main thread): skip it, do not play it late.
+const STALE = 0.05
 // Browsers throttle timers in background tabs (to 1 s, sometimes 1 min), so
 // while hidden schedule far enough ahead to survive a throttled wake-up. A
 // worker's timer is not throttled in most browsers (startTimer), this is the
@@ -97,7 +99,11 @@ let bus: GainNode | null = null
 let running = false
 let baseBpm = 100
 let liveBpm = 100
-let nextTime = 0
+// Time of the current beat and its length. Clicks sit at beatTime + sub * beatDur / subdivision,
+// so changing the subdivision mid-beat cannot shift the grid, and a tempo change
+// takes effect on the next beat line.
+let beatTime = 0
+let beatDur = 0.6
 let bar = 0
 let beat = 0
 let sub = 0
@@ -147,7 +153,8 @@ export function start() {
 	bar = beat = sub = 0
 	heard = { bar: 0, beat: 0 }
 	pending.length = 0
-	nextTime = ctx.currentTime + START_DELAY
+	beatTime = ctx.currentTime + START_DELAY
+	beatDur = 60 / liveBpm
 	running = true
 	startTimer()
 	schedule()
@@ -172,8 +179,13 @@ function schedule() {
 	if (!running || !ctx) return
 	try {
 		const horizon = ctx.currentTime + (document.hidden ? LOOKAHEAD_HIDDEN : LOOKAHEAD)
-		while (nextTime < horizon) {
-			playStep(nextTime)
+		// After a stall (busy main thread, throttled timer) skip the missed steps
+		// instead of playing them all at once; bar and beat counters stay on the grid.
+		// Subdivision shrunk mid-beat: the rest of that beat's clicks no longer exist.
+		if (sub >= config.subdivision) nextBeat()
+		while (stepTime() < ctx.currentTime - STALE) advance()
+		while (stepTime() < horizon) {
+			playStep(stepTime())
 			advance()
 		}
 		flush()
@@ -183,6 +195,8 @@ function schedule() {
 	}
 }
 
+const stepTime = () => beatTime + (sub * beatDur) / config.subdivision
+
 function playStep(time: number) {
 	const accent = config.accents[beat] ?? 1
 	pending.push({ time, bar, beat, sub, accent, bpm: liveBpm })
@@ -191,15 +205,20 @@ function playStep(time: number) {
 }
 
 function advance() {
-	nextTime += 60 / liveBpm / config.subdivision
-	if (++sub < config.subdivision) return
+	if (++sub >= config.subdivision) nextBeat()
+}
+
+function nextBeat() {
 	sub = 0
+	beatTime += beatDur
 	// `beats` may shrink mid-bar, hence >=.
-	if (++beat < config.beats) return
-	beat = 0
-	bar++
-	const { enabled, step, bars, target } = config.trainer
-	if (enabled && bar % bars === 0 && liveBpm < target) liveBpm = Math.min(target, liveBpm + step)
+	if (++beat >= config.beats) {
+		beat = 0
+		bar++
+		const { enabled, step, bars, target } = config.trainer
+		if (enabled && bar % bars === 0 && liveBpm < target) liveBpm = Math.min(target, liveBpm + step)
+	}
+	beatDur = 60 / liveBpm
 }
 
 function click(time: number, accented: boolean, level: number) {

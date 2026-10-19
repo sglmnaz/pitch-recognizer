@@ -1660,7 +1660,7 @@ button {
 /* Beat dots. --per-row (set from the view) sizes them to share a row evenly;
    normal beats are smaller than accents, muted ones dashed. */
 .metro-dots {
-	--gap: 10px;
+	--gap: 8px;
 	--size: min(56px, calc((100% - (var(--per-row, 4) - 1) * var(--gap)) / var(--per-row, 4)));
 	display: flex;
 	flex-wrap: wrap;
@@ -1670,11 +1670,25 @@ button {
 	margin: 22px 0 18px;
 }
 
+/* The button keeps the full --size as its tap target (ts/views/metronome.ts
+   keeps that at 44 px or more); only the face inside shrinks, so beats read
+   small without becoming hard to hit. */
 .metro-dot {
 	flex: none;
 	width: var(--size);
 	aspect-ratio: 1;
 	padding: 0;
+	border: none;
+	background: none;
+	cursor: pointer;
+	-webkit-tap-highlight-color: transparent;
+}
+
+.metro-dot__face {
+	display: grid;
+	place-items: center;
+	width: 100%;
+	height: 100%;
 	border: 2px solid var(--border-strong);
 	border-radius: 50%;
 	background: var(--surface-2);
@@ -1682,9 +1696,7 @@ button {
 	font-family: var(--font-mono);
 	font-size: 14px;
 	font-weight: 500;
-	cursor: pointer;
 	transform: scale(0.78);
-	-webkit-tap-highlight-color: transparent;
 	transition:
 		transform 90ms var(--ease),
 		background 90ms var(--ease),
@@ -1693,20 +1705,20 @@ button {
 		box-shadow 90ms var(--ease);
 }
 
-.metro-dot[data-accent='2'] {
+.metro-dot[data-accent='2'] .metro-dot__face {
 	transform: scale(1);
 	border-color: var(--fg);
 	color: var(--fg);
 }
 
-.metro-dot[data-accent='0'] {
+.metro-dot[data-accent='0'] .metro-dot__face {
 	border-style: dashed;
 	background: transparent;
 	color: var(--fg-muted);
 	opacity: 0.7;
 }
 
-.metro-dot--lit {
+.metro-dot--lit .metro-dot__face {
 	background: var(--accent);
 	border-color: var(--accent);
 	color: var(--accent-contrast);
@@ -1714,12 +1726,12 @@ button {
 	transform: scale(0.92);
 }
 
-.metro-dot--lit[data-accent='2'] {
+.metro-dot--lit[data-accent='2'] .metro-dot__face {
 	transform: scale(1.08);
 	box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 28%, transparent);
 }
 
-.metro-dot--lit[data-accent='0'] {
+.metro-dot--lit[data-accent='0'] .metro-dot__face {
 	background: transparent;
 	color: var(--accent);
 }
@@ -1908,6 +1920,27 @@ label.metro-row {
 	font-size: 12px;
 	color: var(--fg-muted);
 	font-variant-numeric: tabular-nums;
+}
+
+/* Thumb-sized targets on phones. */
+@media (max-width: 600px) {
+	/* Room for six 44 px dots in a row (6/8, 6/4) at 375 px. */
+	.metro-hero {
+		padding-inline: 12px;
+	}
+
+	.metro-step--small {
+		width: 44px;
+		height: 44px;
+	}
+
+	.metro-row .segmented button {
+		min-height: 44px;
+	}
+
+	.metro-row--stack .segmented button {
+		padding-block: 0;
+	}
 }
 
 @media (max-width: 420px) {
