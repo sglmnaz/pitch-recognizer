@@ -13,6 +13,7 @@ import { createFretboard, type Fretboard } from '../../ui/fretboard'
 import type { View } from '../../ui/view'
 import { bindSegmented, liveRegion, onBareKey, scoped } from '../../ui/dom'
 import { reducedMotion } from '../../ui/media'
+import { screenLock } from '../../ui/screen-lock'
 
 /* Chord adapter ------------------------------------------------------------ */
 
@@ -151,7 +152,6 @@ export function createChangesView(root: HTMLElement): View {
 	let lastClickAt = -Infinity
 	// Readings arrive every frame while the mic runs and reset() runs when it stops.
 	let micLive = false
-	let wakeLock: WakeLockSentinel | null = null
 
 	const selection = () => Settings.get().changesChords
 	const valid = () => selection().length >= 2
@@ -351,23 +351,8 @@ export function createChangesView(root: HTMLElement): View {
 		strip.setAttribute('aria-label', `${hits} of ${marks.length} changes on time`)
 	}
 
-	/* Screen wake lock: a phone that sleeps mid-session stops the mic. ------- */
-	async function holdScreen() {
-		if (wakeLock && !wakeLock.released) return
-		try {
-			const lock = await navigator.wakeLock?.request('screen')
-			if (!lock) return
-			if (!isRunning()) return void lock.release()
-			wakeLock = lock
-		} catch {
-			// Refused or unsupported: the drill still runs.
-		}
-	}
-
-	function releaseScreen() {
-		void wakeLock?.release()
-		wakeLock = null
-	}
+	// A phone that sleeps mid-session stops the mic.
+	const wakeLock = screenLock(isRunning)
 
 	/* Run ------------------------------------------------------------------- */
 	function start() {
@@ -431,7 +416,7 @@ export function createChangesView(root: HTMLElement): View {
 			announce(`Play ${session.sequence[0]} on the first beat`, true)
 		}
 		setRunningUi(true)
-		holdScreen()
+		wakeLock.hold()
 	}
 
 	/** One-minute: the clock starts; whatever is already ringing is the starting chord. */
@@ -454,7 +439,7 @@ export function createChangesView(root: HTMLElement): View {
 		const wasTime = session.mode === 'time'
 		if (clicking) Metronome.stop()
 		clicking = false
-		releaseScreen()
+		wakeLock.release()
 		phase = 'idle'
 		if (!wasTime && finished) {
 			const count = counter.count

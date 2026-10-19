@@ -4,6 +4,7 @@ import { clamp } from '../../core/math'
 import type { View } from '../../ui/view'
 import { bindSegmented, onBareKey, scoped } from '../../ui/dom'
 import { reducedMotion } from '../../ui/media'
+import { screenLock } from '../../ui/screen-lock'
 
 const MAX_BEATS = 12
 // Taps further apart than this start a new measurement; the average covers the
@@ -59,7 +60,6 @@ export function createMetronomeView(root: HTMLElement): View {
 	let lit: HTMLButtonElement | null = null
 	let barInStep = 0
 	let taps: number[] = []
-	let wakeLock: WakeLockSentinel | null = null
 	// True while the engine runs from this tab's Start (not the Trainer's
 	// Changes exercise, which shares it): this view configures it, keeps the
 	// screen on and follows its beats only then.
@@ -187,29 +187,15 @@ export function createMetronomeView(root: HTMLElement): View {
 	new ResizeObserver(layoutDots).observe(dotsBox)
 
 	/* Run / stop ------------------------------------------------------------ */
-	async function holdScreen() {
-		// A sleeping phone silences the page; ask the screen to stay on while it clicks.
-		// The browser releases the sentinel itself when the page is hidden: a stale one does not count.
-		if (wakeLock && !wakeLock.released) return
-		try {
-			const lock = await navigator.wakeLock?.request('screen')
-			if (!lock) return
-			// Stopped (or a second request won) while this one was pending: do not leak it.
-			if (!owned || (wakeLock && !wakeLock.released)) return void lock.release()
-			wakeLock = lock
-			lock.addEventListener('release', () => {
-				if (wakeLock === lock) wakeLock = null
-			})
-		} catch {
-			// Refused (low battery, unsupported): the metronome still runs.
-		}
-	}
+	// The screen stays on while it clicks; only on this tab's Start: the
+	// Trainer's Changes exercise may be what runs the engine.
+	const wakeLock = screenLock(() => owned && Metronome.getState().running)
 
 	function run() {
 		owned = true
 		Metronome.start()
 		barInStep = 0
-		holdScreen()
+		wakeLock.hold()
 		sync()
 	}
 
@@ -217,8 +203,7 @@ export function createMetronomeView(root: HTMLElement): View {
 		if (!owned) return
 		owned = false
 		Metronome.stop()
-		void wakeLock?.release()
-		wakeLock = null
+		wakeLock.release()
 		lit?.classList.remove('metro-dot--lit')
 		lit = null
 		barInStep = 0
@@ -227,12 +212,6 @@ export function createMetronomeView(root: HTMLElement): View {
 
 	const toggle = () => (owned ? halt() : run())
 	startButton.addEventListener('click', toggle)
-
-	// The wake lock is dropped when the page is hidden; take it again on return.
-	// Only on this tab: the Trainer's Changes exercise may be what runs the engine.
-	document.addEventListener('visibilitychange', () => {
-		if (!document.hidden && owned && Metronome.getState().running && !wakeLock) holdScreen()
-	})
 
 	// Space starts and stops where it does nothing else: the bare page, or the
 	// tempo slider. (Buttons, switches and selects act on Space themselves.)
