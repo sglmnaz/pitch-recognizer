@@ -14,6 +14,7 @@ import type { View } from '../../ui/view'
 import { bindSegmented, liveRegion, onBareKey, scoped } from '../../ui/dom'
 import { reducedMotion } from '../../ui/media'
 import { screenLock } from '../../ui/screen-lock'
+import { focusMicButton } from '../../ui/mic-block'
 import { faking, heardChord, installDebugHook, resetHeard, strummed } from './changes.recognizer'
 import { clockText, createChangesSession, verdict } from './changes.session'
 
@@ -285,7 +286,7 @@ export function createChangesView(root: HTMLElement): View {
 		if (!valid()) return
 		if (!micLive && !faking()) {
 			status.textContent = 'The microphone is off. Press Listen, then Start.'
-			document.getElementById('micButton')?.focus()
+			focusMicButton()
 			return
 		}
 		const s = Settings.get()
