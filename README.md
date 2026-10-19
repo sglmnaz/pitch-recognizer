@@ -16,15 +16,15 @@ in [**Vercel Geist**](https://vercel.com/geist) (light & dark), and bundled with
 ## How to use
 
 1. Press **Listen** and allow microphone access.
-2. Switch between **Trainer** and **Tuner** with the tabs in the header. Toggle the
-   theme with the button on the right.
+2. Switch views with the tab bar (docked at the bottom on phones). The last tab,
+   **Settings**, holds every tab's options and the theme (System / Light / Dark).
 
 **Trainer:** a note appears on the staff (with its English and Italian solfège
 names). Sing or play it; the readout shows the note you are producing and how far
 off you are. Hold the correct note in tune for a moment to win the round and bump
 your score and streak. **Skip** passes on a note.
 
-Open the **settings** menu (gear icon) to:
+Under **Settings → Trainer → Notes**:
 
 - **Match any octave** — accept the right note in any octave, not just the one
   drawn (handy when the target sits outside your range).
@@ -87,7 +87,7 @@ vite.config.ts          Vite configuration
 tsconfig.json           TypeScript configuration (type-check only)
 PRODUCT.md / DESIGN.md  Product and design-system context
 ts/
-  index.ts              App shell: theme, tab routing, settings popover, mic lifecycle
+  index.ts              App shell: tab routing, mic lifecycle
   microphone.ts         Web Audio capture + pitch detection
   game.ts               Round logic, scoring, sustain detection
   settings.ts           Persisted settings + active note pool
@@ -100,7 +100,7 @@ ts/
     view.ts             Shared View interface
     trainer.ts          Trainer (guessing game) view
     tuner.ts            Tuner view
-    settings-panel.ts   Settings popover (switches + note chips)
+    settings-panel.ts   Settings tab (theme, switches, note chips)
 ```
 
 ## How pitch detection works

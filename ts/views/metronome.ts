@@ -61,6 +61,10 @@ export function createMetronomeView(root: HTMLElement): View {
 	let barInStep = 0
 	let taps: number[] = []
 	let wakeLock: WakeLockSentinel | null = null
+	// True while the engine runs from this tab's Start (not the Trainer's
+	// Changes exercise, which shares it): this view configures it, keeps the
+	// screen on and follows its beats only then.
+	let owned = false
 	let dragging = false
 	let userTempoAt = 0
 	const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)')
@@ -193,7 +197,7 @@ export function createMetronomeView(root: HTMLElement): View {
 			const lock = await navigator.wakeLock?.request('screen')
 			if (!lock) return
 			// Stopped (or a second request won) while this one was pending: do not leak it.
-			if (!Metronome.getState().running || (wakeLock && !wakeLock.released)) return void lock.release()
+			if (!owned || (wakeLock && !wakeLock.released)) return void lock.release()
 			wakeLock = lock
 			lock.addEventListener('release', () => {
 				if (wakeLock === lock) wakeLock = null
@@ -204,6 +208,7 @@ export function createMetronomeView(root: HTMLElement): View {
 	}
 
 	function run() {
+		owned = true
 		Metronome.start()
 		barInStep = 0
 		holdScreen()
@@ -211,7 +216,8 @@ export function createMetronomeView(root: HTMLElement): View {
 	}
 
 	function halt() {
-		if (!Metronome.getState().running) return
+		if (!owned) return
+		owned = false
 		Metronome.stop()
 		void wakeLock?.release()
 		wakeLock = null
@@ -221,13 +227,13 @@ export function createMetronomeView(root: HTMLElement): View {
 		sync()
 	}
 
-	const toggle = () => (Metronome.getState().running ? halt() : run())
+	const toggle = () => (owned ? halt() : run())
 	startButton.addEventListener('click', toggle)
 
 	// The wake lock is dropped when the page is hidden; take it again on return.
 	// Only on this tab: the Trainer's Changes exercise may be what runs the engine.
 	document.addEventListener('visibilitychange', () => {
-		if (!document.hidden && !root.hidden && Metronome.getState().running && !wakeLock) holdScreen()
+		if (!document.hidden && owned && Metronome.getState().running && !wakeLock) holdScreen()
 	})
 
 	document.addEventListener('keydown', (event) => {
@@ -240,9 +246,13 @@ export function createMetronomeView(root: HTMLElement): View {
 		toggle()
 	})
 
-	// Leaving the tab stops the clicks: nothing else on screen could stop them,
-	// and the tuner's microphone would hear them.
-	new MutationObserver(() => root.hidden && halt()).observe(root, { attributes: true, attributeFilter: ['hidden'] })
+	// Opening another tab stops the clicks: nothing else on screen could stop
+	// them, and the tuner's microphone would hear them. Settings is the
+	// exception: it has no mic, and a sound or volume change there must be heard.
+	window.addEventListener('hashchange', () => {
+		const tab = location.hash.replace('#', '')
+		if (tab !== 'metronome' && tab !== 'settings') halt()
+	})
 
 	/* Beats ----------------------------------------------------------------- */
 	function showBpm(bpm: number, force = false) {
@@ -257,7 +267,7 @@ export function createMetronomeView(root: HTMLElement): View {
 	}
 
 	Metronome.onBeat((event) => {
-		if (root.hidden) return
+		if (!owned) return
 		// The tempo only moves by itself under the speed trainer. Events still queued
 		// at the old tempo must not overwrite what the user just set or is dragging.
 		if (Settings.get().metroTrainerOn && !dragging && performance.now() - userTempoAt > USER_TEMPO_QUIET_MS) showBpm(event.bpm)
@@ -337,8 +347,9 @@ export function createMetronomeView(root: HTMLElement): View {
 		const s = Settings.get()
 		const accents = s.metroAccents as Metronome.Accent[]
 		// The engine is shared with the Trainer's Changes exercise, which sets its
-		// own meter: configure it only while this tab is the one on screen.
-		if (!root.hidden) Metronome.configure({
+		// own meter: configure it only from this tab, or while its own clicks run
+		// (Settings changes the sound and volume of a running metronome).
+		if (!root.hidden || owned) Metronome.configure({
 			beats: s.metroBeats,
 			accents,
 			subdivision: s.metroSubdivision,
@@ -362,7 +373,7 @@ export function createMetronomeView(root: HTMLElement): View {
 		trainerSwitch.checked = s.metroTrainerOn
 		renderTrainer()
 
-		const running = Metronome.getState().running
+		const running = owned
 		startButton.textContent = running ? 'Stop' : 'Start'
 		startButton.setAttribute('aria-pressed', String(running))
 	}
@@ -377,7 +388,7 @@ export function createMetronomeView(root: HTMLElement): View {
 			if (!Metronome.getState().running) Metronome.setTempo(Settings.get().metroBpm)
 			sync()
 		},
-		// No microphone here; stopping on leaving the tab is the MutationObserver's job
+		// No microphone here; stopping on leaving the tab is the hashchange listener's job
 		// (reset() also runs when the mic is stopped or blocked, which must not stop the clicks).
 		onReading() {},
 		reset() {},

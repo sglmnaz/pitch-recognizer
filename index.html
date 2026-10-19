@@ -535,8 +535,8 @@
 		<!-- Settings: its own tab (ts/views/settings-panel.ts). One group per tab, in tab
 		     order; entering it scrolls to the group of the tab the user came from. -->
 		<section class="view view--settings" id="view-settings" role="tabpanel" aria-label="Settings" hidden>
-			<section class="settings-group" data-group="appearance" aria-labelledby="settings-appearance">
-				<h2 class="settings-group__title" id="settings-appearance">Appearance</h2>
+			<section class="settings-group" data-group="appearance">
+				<h2 class="settings-group__title">Appearance</h2>
 				<div class="panel settings-card">
 					<div class="settings__section">
 						<div class="switch switch--wrap">
@@ -554,8 +554,8 @@
 				</div>
 			</section>
 
-			<section class="settings-group" data-group="fretboard" aria-labelledby="settings-fretboard">
-				<h2 class="settings-group__title" id="settings-fretboard">Fretboard</h2>
+			<section class="settings-group" data-group="fretboard">
+				<h2 class="settings-group__title">Fretboard</h2>
 				<p class="settings-group__desc">Chord diagrams and every neck</p>
 				<div class="panel settings-card">
 					<div class="settings__section">
@@ -582,10 +582,10 @@
 				</div>
 			</section>
 
-			<section class="settings-group" data-group="tuner" aria-labelledby="settings-tuner">
-				<h2 class="settings-group__title" id="settings-tuner">Tuner</h2>
+			<section class="settings-group" data-group="tuner">
+				<h2 class="settings-group__title">Tuner</h2>
 				<div class="panel settings-card">
-					<div class="settings__section" data-for="tuner">
+					<div class="settings__section">
 						<div class="switch switch--wrap">
 							<span class="switch__text">
 								<span class="switch__title">A4 reference</span>
@@ -626,10 +626,10 @@
 				</div>
 			</section>
 
-			<section class="settings-group" data-group="chords" aria-labelledby="settings-chords">
-				<h2 class="settings-group__title" id="settings-chords">Chords</h2>
+			<section class="settings-group" data-group="chords">
+				<h2 class="settings-group__title">Chords</h2>
 				<div class="panel settings-card">
-					<div class="settings__section" data-for="chords">
+					<div class="settings__section">
 						<label class="switch">
 							<span class="switch__text">
 								<span class="switch__title">Diagram labels</span>
@@ -656,10 +656,10 @@
 				</div>
 			</section>
 
-			<section class="settings-group" data-group="scales" aria-labelledby="settings-scales">
-				<h2 class="settings-group__title" id="settings-scales">Scales</h2>
+			<section class="settings-group" data-group="scales">
+				<h2 class="settings-group__title">Scales</h2>
 				<div class="panel settings-card">
-					<div class="settings__section" data-for="scales">
+					<div class="settings__section">
 						<label class="switch">
 							<span class="switch__text">
 								<span class="switch__title">Vertical fretboard</span>
@@ -708,11 +708,11 @@
 				</div>
 			</section>
 
-			<section class="settings-group" data-group="trainer" aria-labelledby="settings-trainer">
-				<h2 class="settings-group__title" id="settings-trainer">Trainer</h2>
+			<section class="settings-group" data-group="trainer">
+				<h2 class="settings-group__title">Trainer</h2>
 				<h3 class="settings-group__sub">Notes</h3>
 				<div class="panel settings-card">
-					<div class="settings__section" data-for="trainer" data-exercise="notes">
+					<div class="settings__section">
 						<label class="switch">
 							<span class="switch__text">
 								<span class="switch__title">Match any octave</span>
@@ -738,7 +738,7 @@
 							<span class="switch__track"></span>
 						</label>
 					</div>
-					<div class="settings__section" data-for="trainer" data-exercise="notes">
+					<div class="settings__section">
 						<div class="settings__heading">
 							<span class="panel__label">Target notes</span>
 							<span class="settings__actions">
@@ -751,7 +751,7 @@
 				</div>
 				<h3 class="settings-group__sub">Intervals</h3>
 				<div class="panel settings-card">
-					<div class="settings__section" data-for="trainer" data-exercise="intervals">
+					<div class="settings__section">
 						<label class="switch">
 							<span class="switch__text">
 								<span class="switch__title">Answer by singing</span>
@@ -784,13 +784,13 @@
 							</select>
 						</label>
 					</div>
-					<div class="settings__section" data-for="trainer" data-exercise="intervals">
+					<div class="settings__section">
 						<div class="settings__heading">
 							<span class="panel__label">Intervals asked</span>
 						</div>
 						<div class="chips chips--6" data-chips="earIntervals"></div>
 					</div>
-					<div class="settings__section" data-for="trainer" data-exercise="intervals">
+					<div class="settings__section">
 						<label class="switch">
 							<span class="switch__text">
 								<span class="switch__title">Auto-advance</span>
@@ -803,13 +803,13 @@
 				</div>
 				<h3 class="settings-group__sub">Chords</h3>
 				<div class="panel settings-card">
-					<div class="settings__section" data-for="trainer" data-exercise="chords">
+					<div class="settings__section">
 						<div class="settings__heading">
 							<span class="panel__label">Chord qualities</span>
 						</div>
 						<div class="chips" data-chips="earChords"></div>
 					</div>
-					<div class="settings__section" data-for="trainer" data-exercise="chords">
+					<div class="settings__section">
 						<label class="switch">
 							<span class="switch__text">
 								<span class="switch__title">Auto-advance</span>
@@ -822,7 +822,7 @@
 				</div>
 				<h3 class="settings-group__sub">Changes</h3>
 				<div class="panel settings-card">
-					<div class="settings__section" data-for="trainer" data-exercise="changes">
+					<div class="settings__section">
 						<label class="switch">
 							<span class="switch__text">
 								<span class="switch__title">Count-in</span>
@@ -843,7 +843,7 @@
 							</select>
 						</label>
 					</div>
-					<div class="settings__section" data-for="trainer" data-exercise="changes">
+					<div class="settings__section">
 						<div class="settings__heading">
 							<span class="panel__label">In time</span>
 						</div>
@@ -879,10 +879,10 @@
 				</div>
 			</section>
 
-			<section class="settings-group" data-group="metronome" aria-labelledby="settings-metronome">
-				<h2 class="settings-group__title" id="settings-metronome">Metronome</h2>
+			<section class="settings-group" data-group="metronome">
+				<h2 class="settings-group__title">Metronome</h2>
 				<div class="panel settings-card">
-					<div class="settings__section" data-for="metronome">
+					<div class="settings__section">
 						<label class="switch">
 							<span class="switch__text">
 								<span class="switch__title">Sound</span>

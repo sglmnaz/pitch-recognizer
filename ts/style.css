@@ -568,11 +568,7 @@ button {
 	padding: 8px;
 }
 
-.settings__section[hidden] {
-	display: none;
-}
-
-.settings__section:not([hidden]) ~ .settings__section:not([hidden]) {
+.settings__section + .settings__section {
 	border-top: 1px solid var(--border);
 }
 
@@ -3742,7 +3738,7 @@ a.btn {
 
 	.changes-mode button,
 	.changes-setup .chip,
-	.settings__section[data-for='trainer'] .input {
+	.settings-group[data-group='trainer'] .input {
 		min-height: 44px;
 	}
 
@@ -3927,6 +3923,11 @@ a.btn {
 
 	.metro-row--stack {
 		padding-block: 10px;
+	}
+
+	/* Two 44 px beat-note buttons (the 3 px track padding included). */
+	.metro-time .segmented {
+		width: 96px;
 	}
 }
 

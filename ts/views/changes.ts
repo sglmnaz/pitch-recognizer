@@ -133,7 +133,7 @@ export function createChangesView(root: HTMLElement): View {
 	const summary = $<HTMLElement>('.changes-summary')
 
 	let phase: Phase = 'idle'
-	// Frozen at Start: the popover may change settings mid-session.
+	// Frozen at Start: a session runs on the settings it started with.
 	let session = { mode: 'minute' as 'minute' | 'time', sequence: [] as string[], seconds: 60, beats: 4, bpm: 60, speedUp: false, countIn: true }
 	let stabilizer = Changes.createStabilizer()
 	let counter = Changes.createChangeCounter([])
