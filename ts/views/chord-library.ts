@@ -26,6 +26,8 @@ export interface ChordModes {
 	onActivate(): void
 	/** Opens a chord ('Am7', 'C/E') in the Library. Unknown symbols are ignored. */
 	openChord(symbol: string): void
+	/** Listen is showing: the recognizer wants the mic and its readings. */
+	listening(): boolean
 }
 
 // "C#/Db" read aloud as "C sharp or D flat".
@@ -37,13 +39,18 @@ const spoken = (label: string) =>
 
 const capitalized = (text: string) => text[0].toUpperCase() + text.slice(1)
 
-/** Strings low to high, all at once or one by one (the Play as setting). */
+/** Strings low to high, all at once or one by one (the Play as setting). A
+ * new strum cuts the last one off instead of stacking on it; six strings
+ * ringing together at 1/sqrt(n) each stay as loud as one note, like ts/views/ear.ts. */
 function play(midis: number[]) {
 	const step = Settings.get().chordPlay === 'arpeggio' ? ARPEGGIO_S : STRUM_S
-	midis.forEach((midi, i) => Sound.play(midi, i * step))
+	const gain = 1 / Math.sqrt(Math.max(1, midis.length))
+	Sound.stopAll()
+	midis.forEach((midi, i) => Sound.play(midi, i * step, gain))
 }
 
-export function createChordModes(root: HTMLElement): ChordModes {
+/** `onMicNeed` tells index.ts that listening() changed: only Listen uses the mic. */
+export function createChordModes(root: HTMLElement, onMicNeed: () => void): ChordModes {
 	const $ = <T extends Element>(selector: string) => root.querySelector<T>(selector)!
 	const modeButtons = Array.from(root.querySelectorAll<HTMLButtonElement>('[data-chords-mode]'))
 	const listenParts = [$<HTMLElement>(':scope > .readout'), $<HTMLElement>(':scope > .hint')]
@@ -54,6 +61,7 @@ export function createChordModes(root: HTMLElement): ChordModes {
 	function setMode(next: Mode) {
 		mode = next
 		if (Settings.get().chordsMode !== next) Settings.update({ chordsMode: next })
+		onMicNeed()
 		show()
 	}
 	modeButtons.forEach((b) => b.addEventListener('click', () => setMode(b.dataset.chordsMode as Mode)))
@@ -61,15 +69,33 @@ export function createChordModes(root: HTMLElement): ChordModes {
 	function show() {
 		root.dataset.mode = mode
 		modeButtons.forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.chordsMode === mode)))
+		// The shared #mic block follows wantsMic (index.ts).
 		for (const part of listenParts) part.hidden = mode !== 'listen'
-		// index.ts puts the shared mic block under the readout; it only means
-		// something in Listen. Not touched while another tab owns it.
-		if (!root.hidden) document.getElementById('mic')!.hidden = mode !== 'listen'
 		library.hidden = mode !== 'library'
 		identify.hidden = mode !== 'identify'
-		if (mode === 'library') renderLibrary()
+		if (mode === 'library') {
+			renderLibrary()
+			if (staleDiagrams) redrawDiagrams()
+		}
 		if (mode === 'identify') renderIdentify()
 	}
+
+	// Labels, left-handedness and the board theme redraw what is on screen;
+	// diagrams drawn while hidden are redrawn when they show (Identify always
+	// redraws then). Every other setting leaves the necks alone.
+	const look = () => {
+		const { chordLabels, leftHanded, fretboardTheme } = Settings.get()
+		return `${chordLabels}|${leftHanded}|${fretboardTheme}`
+	}
+	let lastLook = look()
+	let staleDiagrams = false
+	Settings.subscribe(() => {
+		if (look() === lastLook) return
+		lastLook = look()
+		if (root.hidden || mode !== 'library') staleDiagrams = true
+		else redrawDiagrams()
+		if (!root.hidden && mode === 'identify') renderIdentify()
+	})
 
 	/* Library ------------------------------------------------------------- */
 	const rootRow = $<HTMLElement>('.chord-roots')
@@ -84,7 +110,6 @@ export function createChordModes(root: HTMLElement): ChordModes {
 	let rootPc = 0
 	let type: ChordType = CHORD_TYPES[0]
 	let builtFor = ''
-	let labels = Settings.get().chordLabels
 	// Diagrams drawn so far; dropped (destroy) when the chord changes.
 	let drawn: { board: Fretboard; voicing: Voicing }[] = []
 
@@ -115,6 +140,7 @@ export function createChordModes(root: HTMLElement): ChordModes {
 
 	// Fingers: the numbers move into the dots, so the row under the diagram goes.
 	function specOf(voicing: Voicing) {
+		const labels = Settings.get().chordLabels
 		const spec = voicingSpec(voicing, rootPc, type, {
 			labels: labels === 'fingers' ? 'none' : labels,
 			fingers: labels !== 'fingers',
@@ -133,7 +159,7 @@ export function createChordModes(root: HTMLElement): ChordModes {
 				// A record queued before the chord changed: that card is gone.
 				if (!card.isConnected) continue
 				const voicing = chordShapes(rootPc, type, { limit: VOICINGS })[Number(card.dataset.index)]
-				const board = createFretboard(card.querySelector('svg')!, null, { autoRender: true })
+				const board = createFretboard(card.querySelector('svg')!, null)
 				board.render(specOf(voicing))
 				drawn.push({ board, voicing })
 			}
@@ -141,12 +167,10 @@ export function createChordModes(root: HTMLElement): ChordModes {
 		{ rootMargin: '200px 0px' }
 	)
 
-	Settings.subscribe(() => {
-		const next = Settings.get().chordLabels
-		if (next === labels) return
-		labels = next
+	function redrawDiagrams() {
+		staleDiagrams = false
 		for (const { board, voicing } of drawn) board.render(specOf(voicing))
-	})
+	}
 
 	function buildVoicings(symbol: string) {
 		observer.disconnect()
@@ -253,7 +277,8 @@ export function createChordModes(root: HTMLElement): ChordModes {
 	// Per string as in STRINGS: -1 not played (muted), else the fret. One note
 	// per string, like a real chord shape.
 	const shape = STRINGS.map(() => -1)
-	const neck = createFretboard($<SVGSVGElement>('.chord-identify .neck'), board, { onTap, autoRender: true })
+	const neckSvg = $<SVGSVGElement>('.chord-identify .neck')
+	const neck = createFretboard(neckSvg, board, { onTap })
 
 	function onTap(string: number, fret: number, midi: number) {
 		shape[string] = shape[string] === fret ? -1 : fret
@@ -266,9 +291,14 @@ export function createChordModes(root: HTMLElement): ChordModes {
 		shape.fill(-1)
 		renderIdentify()
 	})
-	// The phone neck is sized from the board's width.
+	// The phone neck is sized from the board's width; once per frame at most.
+	let resizeFrame = 0
 	window.addEventListener('resize', () => {
-		if (!root.hidden && mode === 'identify') renderIdentify()
+		if (resizeFrame) return
+		resizeFrame = requestAnimationFrame(() => {
+			resizeFrame = 0
+			if (!root.hidden && mode === 'identify') renderIdentify()
+		})
 	})
 
 	function message(text: string) {
@@ -298,10 +328,16 @@ export function createChordModes(root: HTMLElement): ChordModes {
 
 		shapeEl.textContent = midis.length ? shapeString({ frets: shape }) : 'Tap one note per string'
 		shapeEl.classList.toggle('chord-shape--empty', midis.length === 0)
-		strumButton.disabled = clearButton.disabled = midis.length === 0
-		status.textContent = top ? `Best match: ${top.symbol}, ${top.root} ${top.type.name}${top.bass ? ` over ${top.bass}` : ''}` : ''
+		// Clear (or the last note's tap) disables a focused button: keep focus on the neck.
+		const empty = midis.length === 0
+		if (empty && (document.activeElement === strumButton || document.activeElement === clearButton))
+			neckSvg.querySelector<SVGGElement>('[data-s][tabindex="0"]')?.focus()
+		strumButton.disabled = clearButton.disabled = empty
+		// Only a new best match is announced, not every redraw.
+		const best = top ? `Best match: ${top.symbol}, ${top.root} ${top.type.name}${top.bass ? ` over ${top.bass}` : ''}` : ''
+		if (status.textContent !== best) status.textContent = best
 
-		if (!midis.length) return results.replaceChildren(message('Tap a fret on each string you play; tap it again to clear. Open strings sit left of the nut.'))
+		if (empty) return results.replaceChildren(message('Tap a fret on each string you play; tap it again to clear. Open strings sit left of the nut.'))
 		if (!matches.length)
 			return results.replaceChildren(message(pcs.size < 2 ? 'Mark at least two different notes.' : 'No chord found. Is the root marked?'))
 		results.replaceChildren(
@@ -329,5 +365,5 @@ export function createChordModes(root: HTMLElement): ChordModes {
 		)
 	}
 
-	return { onActivate: show, openChord }
+	return { onActivate: show, openChord, listening: () => mode === 'listen' }
 }

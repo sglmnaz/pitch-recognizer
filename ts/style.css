@@ -2616,13 +2616,23 @@ label.metro-row {
 	cursor: pointer;
 }
 
-.chord-link:hover {
+.chord-link:enabled:hover {
 	color: var(--accent);
 }
 
-.chord-link.readout__idle {
+.chord-link:disabled {
+	color: var(--fg-muted);
 	cursor: default;
-	pointer-events: none;
+}
+
+/* The cue under a recognized chord's notes (the button's aria-label says it too). */
+.chord-link:enabled + .readout__sub::after {
+	content: 'Tap to open in Library';
+	display: block;
+	margin-top: 4px;
+	font-family: var(--font-sans);
+	font-size: 12px;
+	color: var(--fg-muted);
 }
 
 .chord-library,

@@ -130,6 +130,12 @@ const defaults: Settings = {
 const listeners = new Set<() => void>()
 let settings: Settings = load()
 
+/** A stored choice, or the first (the default) when it is not one of them.
+ * A declaration, not a const: `settings = load()` runs above it. */
+function oneOf<T extends string>(value: unknown, options: T[]): T {
+	return options.includes(value as T) ? (value as T) : options[0]
+}
+
 function load(): Settings {
 	try {
 		const stored = localStorage.getItem(STORAGE_KEY)
@@ -143,6 +149,9 @@ function load(): Settings {
 			trainerExercise: ['notes', 'intervals', 'chords'].includes(merged.trainerExercise) ? merged.trainerExercise : 'notes',
 			earIntervals: pool('intervals', Array.isArray(merged.earIntervals) ? merged.earIntervals : []),
 			earChords: pool('chords', Array.isArray(merged.earChords) ? merged.earChords : []),
+			chordsMode: oneOf(merged.chordsMode, ['listen', 'library', 'identify']),
+			chordLabels: oneOf(merged.chordLabels, ['degrees', 'notes', 'fingers', 'none']),
+			chordPlay: oneOf(merged.chordPlay, ['strum', 'arpeggio']),
 		}
 	} catch {
 		return { ...defaults }

@@ -39,7 +39,8 @@ const views: Record<string, { view: View; section: HTMLElement }> = {
 	// Switching between its exercises changes whether it needs the mic.
 	trainer: { view: createTrainerView(byId('view-trainer'), () => syncMicNeed()), section: byId('view-trainer') },
 	tuner: { view: createTunerView(byId('view-tuner')), section: byId('view-tuner') },
-	chords: { view: createChordsView(byId('view-chords')), section: byId('view-chords') },
+	// Only its Listen sub-view uses the mic (Library and Identify play sounds).
+	chords: { view: createChordsView(byId('view-chords'), () => syncMicNeed()), section: byId('view-chords') },
 	scales: { view: scalesView, section: byId('view-scales') },
 	// No microphone use (wantsMic false, no .readout for the #mic block).
 	metronome: { view: createMetronomeView(byId('view-metronome')), section: byId('view-metronome') },

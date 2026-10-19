@@ -7,12 +7,13 @@ import { createChordModes } from './chord-library'
 // a strum's attack and decay do not flicker through other chords.
 const CHORD_CONFIRM_MS = 250
 
-export function createChordsView(root: HTMLElement): View {
-	const name = root.querySelector<HTMLElement>('.readout__note')!
+/** `onMicNeed` tells index.ts that wantsMic() changed: only Listen uses the mic. */
+export function createChordsView(root: HTMLElement, onMicNeed: () => void): View {
+	const name = root.querySelector<HTMLButtonElement>('.readout__note')!
 	const sub = root.querySelector<HTMLElement>('.readout__sub')!
 	const chromaRow = root.querySelector<HTMLElement>('.chroma')!
 	// Listen / Library / Identify switch; the shown chord opens in the Library.
-	const modes = createChordModes(root)
+	const modes = createChordModes(root, onMicNeed)
 	name.addEventListener('click', () => shown && modes.openChord(shown))
 
 	const bins = PITCH_CLASSES.map((pitchClass) => {
@@ -35,6 +36,9 @@ export function createChordsView(root: HTMLElement): View {
 	function render(label: string | null, notes: string[], idleText: string) {
 		name.textContent = label ?? '--'
 		name.classList.toggle('readout__idle', label === null)
+		// The chord is a button into the Library; nothing to open while idle.
+		name.disabled = label === null
+		name.setAttribute('aria-label', label ? `Open ${label} in the Library` : 'No chord recognized')
 		sub.textContent = label ? notes.join(' · ') : idleText
 	}
 
@@ -58,8 +62,10 @@ export function createChordsView(root: HTMLElement): View {
 			modes.onActivate()
 		},
 		reset: () => idle(),
+		wantsMic: () => modes.listening(),
 
 		onReading() {
+			if (!modes.listening()) return
 			const spectrum = Microphone.getSpectrum()
 			// Same adaptive silence gate as the tuner, so quiet sources (an
 			// unplugged electric) are analysed too.
