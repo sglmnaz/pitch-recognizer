@@ -1655,15 +1655,6 @@ button {
 	height: 40px;
 }
 
-.tuner-mode {
-	flex: none;
-}
-
-.tuner-mode button {
-	min-height: 34px;
-	padding: 0 14px;
-}
-
 /* The meter's green band is the in-tune tolerance (--tol cents, 1 cent = 1% of
    the track, set by ts/views/tuner.ts); yellow reaches 15 cents past it. The
    Trainer never sets it, so its meter keeps the 5-cent band. */
@@ -1724,50 +1715,15 @@ button {
 	color: var(--fg-muted);
 }
 
-.string-chip[data-state='active'] {
-	background: var(--surface);
-	color: var(--fg);
-	box-shadow: 0 0 0 2px var(--accent);
-}
-
-.string-chip[data-state='locked'] {
-	background: var(--success);
-	color: var(--solid-fg);
-	box-shadow: none;
+.string-chip[data-state='ref'] sub {
+	color: inherit;
+	opacity: 0.7;
 }
 
 .string-chip[data-state='ref'] {
 	background: var(--solid);
 	color: var(--solid-fg);
 	box-shadow: none;
-}
-
-.string-chip[data-state='locked'] sub,
-.string-chip[data-state='ref'] sub {
-	color: inherit;
-	opacity: 0.7;
-}
-
-.string-chip__check {
-	position: absolute;
-	top: 4px;
-	right: 4px;
-	width: 11px;
-	height: 11px;
-	color: var(--success);
-	opacity: 0;
-	transform: scale(0.6);
-	transition: opacity var(--dur) var(--ease), transform var(--dur) var(--ease);
-}
-
-.string-chip[data-tuned] .string-chip__check,
-.string-chip[data-state='locked'] .string-chip__check {
-	opacity: 1;
-	transform: none;
-}
-
-.string-chip[data-state='locked'] .string-chip__check {
-	color: inherit;
 }
 
 /* Settings: A4 field (number + slider + presets). */
@@ -1884,10 +1840,6 @@ button {
 		height: 44px;
 	}
 
-	.tuner-mode button {
-		min-height: 38px;
-	}
-
 	.settings__section[data-for='tuner'] .input,
 	.settings__section[data-for='tuner'] .select {
 		height: 44px;
@@ -1900,12 +1852,6 @@ button {
 
 	.settings__section[data-for='tuner'] .range {
 		height: 44px;
-	}
-}
-
-@media (max-width: 380px) {
-	.tuner-mode button {
-		padding: 0 10px;
 	}
 }
 

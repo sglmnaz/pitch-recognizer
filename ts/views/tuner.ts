@@ -1,27 +1,13 @@
 import { centsBetween, getClosestNote } from '../notes'
 import * as Settings from '../settings'
 import * as Sound from '../sound'
-import { nearestString, STANDARD, TUNINGS, tuningById, tuningStrings, type TuningString } from '../tuning'
+import { nearestString, TUNINGS, tuningById, tuningStrings, type TuningString } from '../tuning'
 import type { PitchReading } from '../microphone'
 import type { View } from './view'
 
 const CENTS_RANGE = 50
-// In tune for this long before a string earns its check: a needle sweeping
-// through zero while the peg turns must not count.
-const LOCK_HOLD_MS = 500
-// A checked string that is played again this far off is being retuned (or has
-// drifted): take the check back.
-const RETUNE_CENTS = 15
-// Checks fade after a while: strings drift, and a new session starts fresh.
-const TUNED_TTL_MS = 10 * 60 * 1000
-// Chromatic mode names whatever you play, so a string chip only lights when
-// the nearest note IS that string's note (within half a semitone).
-const CHROMATIC_STRING_CENTS = 50
-
-const CHECK =
-	'<svg class="string-chip__check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg>'
-
-type ChipState = 'idle' | 'active' | 'locked' | 'ref'
+// The tuning select's first entry: no target strings, name whatever is played.
+const CHROMATIC = 'chromatic'
 
 export function createTunerView(root: HTMLElement): View {
 	const readout = root.querySelector<HTMLElement>('.readout')!
@@ -31,36 +17,29 @@ export function createTunerView(root: HTMLElement): View {
 	const zones = root.querySelector<HTMLElement>('.meter__zones')!
 	const stringsRow = root.querySelector<HTMLElement>('.strings')!
 	const tuningSelect = root.querySelector<HTMLSelectElement>('.tuner-tuning')!
-	const modeButtons = Array.from(root.querySelectorAll<HTMLButtonElement>('[data-tuner-mode]'))
 	const toleranceText = root.querySelector<HTMLElement>('.tuner-tolerance')!
 	const live = root.querySelector<HTMLElement>('.tuner-live')!
 
 	let strings: TuningString[] = []
 	let builtFor = ''
+	// The chips are only reference tones: tap to hear a string. They never
+	// follow what is played; the readout and needle do that.
 	let chips: HTMLButtonElement[] = []
-	const shown: { state: ChipState; tuned: boolean }[] = []
-	// String index -> when it was last confirmed in tune.
-	const tuned = new Map<number, number>()
-	let lockIndex = -1
-	let lockSince = 0
 	// The string whose reference tone is playing, and when it ends.
 	let refIndex: number | null = null
 	let refTimer = 0
 
 	/* Controls ------------------------------------------------------------ */
+	// Picking a tuning means tuning to its strings: cents are read off the
+	// nearest string however far it is (a drop-D low E reads against D, not as
+	// "D#"). Chromatic names the nearest note of any pitch; its chips keep the
+	// last tuning's strings as reference tones.
+	tuningSelect.add(new Option('Chromatic', CHROMATIC))
 	TUNINGS.forEach((tuning) => tuningSelect.add(new Option(tuning.name, tuning.id)))
-	tuningSelect.addEventListener('change', () => {
-		const tuning = tuningById(tuningSelect.value)
-		const patch: Partial<Settings.Settings> = { tuning: tuning.id }
-		// An alternate tuning is what Guitar mode is for: Chromatic would call
-		// a drop-D string "D" but a half-step-down one "D#" with no sense of the
-		// target. Standard leaves the user's mode alone.
-		if (tuning !== STANDARD) patch.tunerMode = 'guitar'
-		Settings.update(patch)
-	})
-
-	modeButtons.forEach((button) =>
-		button.addEventListener('click', () => Settings.update({ tunerMode: button.dataset.tunerMode as Settings.Settings['tunerMode'] }))
+	tuningSelect.addEventListener('change', () =>
+		Settings.update(
+			tuningSelect.value === CHROMATIC ? { tunerMode: 'chromatic' } : { tuning: tuningById(tuningSelect.value).id, tunerMode: 'guitar' }
+		)
 	)
 
 	stringsRow.addEventListener('click', (event) => {
@@ -79,37 +58,15 @@ export function createTunerView(root: HTMLElement): View {
 			chip.type = 'button'
 			chip.className = 'string-chip'
 			chip.dataset.state = 'idle'
-			chip.setAttribute('aria-label', chipLabel(string, 'idle', false))
-			chip.innerHTML = `<span class="string-chip__note">${string.name}<sub>${string.octave}</sub></span>${CHECK}`
+			chip.setAttribute('aria-label', `${string.name}${string.octave}, hear reference tone`)
+			chip.innerHTML = `<span class="string-chip__note">${string.name}<sub>${string.octave}</sub></span>`
 			return chip
 		})
-		shown.length = 0
-		strings.forEach(() => shown.push({ state: 'idle', tuned: false }))
 		stringsRow.replaceChildren(...chips)
 	}
 
-	function syncChips(active: number, locked: boolean) {
-		const now = performance.now()
-		chips.forEach((chip, i) => {
-			const at = tuned.get(i)
-			if (at !== undefined && now - at > TUNED_TTL_MS) tuned.delete(i)
-			const state: ChipState = i === refIndex ? 'ref' : i === active ? (locked ? 'locked' : 'active') : 'idle'
-			const done = tuned.has(i)
-			// Writes only on change: this runs every frame.
-			const changed = shown[i].state !== state || shown[i].tuned !== done
-			if (shown[i].state !== state) chip.dataset.state = shown[i].state = state
-			if (shown[i].tuned !== done) {
-				shown[i].tuned = done
-				chip.toggleAttribute('data-tuned', done)
-			}
-			// The check icon is decorative: the state goes in the name.
-			if (changed) chip.setAttribute('aria-label', chipLabel(strings[i], state, done))
-		})
-	}
-
-	function chipLabel(string: TuningString, state: ChipState, done: boolean) {
-		const status = state === 'ref' ? 'playing' : state === 'locked' ? 'in tune' : done ? 'tuned' : state === 'active' ? 'being played' : ''
-		return `${string.name}${string.octave}, hear reference tone${status ? `, ${status}` : ''}`
+	function syncChips() {
+		chips.forEach((chip, i) => (chip.dataset.state = i === refIndex ? 'ref' : 'idle'))
 	}
 
 	// Screen readers hear the note and whether it is in tune, never the
@@ -127,17 +84,14 @@ export function createTunerView(root: HTMLElement): View {
 		const key = `${tuning}@${a4}`
 		if (key !== builtFor) {
 			builtFor = key
-			// New targets: yesterday's checks no longer mean anything, and a
-			// reference tone still ringing is at the old pitch.
-			tuned.clear()
+			// A reference tone still ringing is at the old pitch.
 			const wasPlaying = refIndex !== null
 			endReference()
 			Sound.stopTone()
 			build()
 			if (wasPlaying) idle()
 		}
-		tuningSelect.value = tuningById(tuning).id
-		modeButtons.forEach((button) => button.setAttribute('aria-pressed', String(button.dataset.tunerMode === tunerMode)))
+		tuningSelect.value = tunerMode === 'chromatic' ? CHROMATIC : tuningById(tuning).id
 		// The meter's green band follows the tolerance (1 cent = 1% of the track).
 		zones.style.setProperty('--tol', String(tolerance))
 		toleranceText.textContent = String(tolerance)
@@ -155,7 +109,7 @@ export function createTunerView(root: HTMLElement): View {
 		announce(`Playing ${string.name}${string.octave}`)
 		needle.style.left = '50%'
 		readout.classList.remove('readout--locked')
-		syncChips(-1, false)
+		syncChips()
 		// While it rings the mic hears the speaker, not the guitar: readings
 		// are ignored until it has died away.
 		refTimer = window.setTimeout(() => {
@@ -177,25 +131,7 @@ export function createTunerView(root: HTMLElement): View {
 		announce('')
 		needle.style.left = '50%'
 		readout.classList.remove('readout--locked')
-		lockIndex = -1
-		syncChips(-1, false)
-	}
-
-	// Strings earn a check by holding in tune, and lose it when played far off.
-	function trackTuned(active: number, cents: number, locked: boolean, now: number) {
-		if (active < 0) {
-			lockIndex = -1
-			return
-		}
-		if (Math.abs(cents) > RETUNE_CENTS) tuned.delete(active)
-		if (!locked) {
-			lockIndex = -1
-		} else if (lockIndex !== active) {
-			lockIndex = active
-			lockSince = now
-		} else if (now - lockSince >= LOCK_HOLD_MS) {
-			tuned.set(active, now)
-		}
+		syncChips()
 	}
 
 	sync()
@@ -223,20 +159,19 @@ export function createTunerView(root: HTMLElement): View {
 				sub.textContent = 'Listening…'
 				announce('')
 				readout.classList.remove('readout--locked')
-				lockIndex = -1
-				syncChips(-1, false)
+						syncChips()
 				return
 			}
 
 			const { a4, tunerMode, tolerance } = Settings.get()
 			const guitar = tunerMode === 'guitar'
-			const near = nearestString(reading.frequency, strings)
 			let label: string
 			let cents: number
 			let prefix = ''
 			if (guitar) {
 				// Cents off the string being tuned, however far: a drop-D low E
 				// still reads against D until it gets there.
+				const near = nearestString(reading.frequency, strings)
 				const string = strings[near.index]
 				label = `${string.name}${string.octave}`
 				cents = near.cents
@@ -246,11 +181,6 @@ export function createTunerView(root: HTMLElement): View {
 				label = closest.note.split('/')[0]
 				cents = centsBetween(reading.frequency, closest.frequency)
 			}
-
-			const active = guitar || Math.abs(near.cents) <= CHROMATIC_STRING_CENTS ? near.index : -1
-			const stringLocked = active >= 0 && Math.abs(near.cents) <= tolerance
-			trackTuned(active, near.cents, stringLocked, performance.now())
-			syncChips(active, stringLocked)
 
 			note.classList.remove('readout__idle')
 			note.textContent = label

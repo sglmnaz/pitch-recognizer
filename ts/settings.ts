@@ -94,7 +94,7 @@ const defaults: Settings = {
 	scaleDegrees: [1, 3, 5],
 	fretSize: 1,
 	tuning: 'standard',
-	tunerMode: 'chromatic',
+	tunerMode: 'guitar',
 	a4: 440,
 	tolerance: 5,
 	toneVolume: 0.6,
