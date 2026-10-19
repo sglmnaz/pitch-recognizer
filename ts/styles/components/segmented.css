@@ -15,7 +15,7 @@
 	border: none;
 	background: transparent;
 	color: var(--fg-secondary);
-	font-size: 13px;
+	font-size: var(--text-md);
 	font-weight: 500;
 	padding: 5px 12px;
 	border-radius: 4px;
@@ -37,6 +37,6 @@
 }
 
 .segmented--small button {
-	padding: 4px 10px;
-	font-size: 12px;
+	padding: var(--space-4) var(--space-10);
+	font-size: var(--text-sm);
 }

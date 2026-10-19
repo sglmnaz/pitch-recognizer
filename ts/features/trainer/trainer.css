@@ -14,7 +14,7 @@
 	}
 
 	@media (max-width: 600px) and (max-height: 760px) {
-		padding-block: 6px;
+		padding-block: var(--space-6);
 	}
 }
 
@@ -36,7 +36,7 @@
 }
 
 .stat__label {
-	font-size: 12px;
+	font-size: var(--text-sm);
 	color: var(--fg-muted);
 }
 
@@ -44,16 +44,16 @@
 .prompt {
 	display: flex;
 	align-items: center;
-	gap: 20px;
-	padding: 20px;
+	gap: var(--space-20);
+	padding: var(--space-20);
 
 	@media (max-width: 600px) {
-		gap: 16px;
-		padding: 12px;
+		gap: var(--space-16);
+		padding: var(--space-12);
 	}
 
 	@media (max-width: 600px) and (max-height: 760px) {
-		padding: 10px;
+		padding: var(--space-10);
 	}
 }
 
@@ -87,9 +87,9 @@
 }
 
 .prompt__hint {
-	font-size: 13px;
+	font-size: var(--text-md);
 	color: var(--fg-muted);
-	margin: 0 0 6px;
+	margin: 0 0 var(--space-6);
 }
 
 .prompt__note {
@@ -113,15 +113,15 @@
 }
 
 .prompt__alt {
-	font-size: 15px;
+	font-size: var(--text-lg);
 	color: var(--fg-secondary);
-	margin-top: 4px;
+	margin-top: var(--space-4);
 }
 
 /* Footer controls -------------------------------------------------------- */
 .controls {
 	display: flex;
-	gap: 10px;
+	gap: var(--space-10);
 }
 
 /* Trainer exercises: Notes / Intervals / Chords (ts/features/trainer/trainer.view.ts, ear.ts) */
@@ -152,12 +152,12 @@
 .ear {
 	display: flex;
 	flex-direction: column;
-	gap: 16px;
-	padding: 20px;
+	gap: var(--space-16);
+	padding: var(--space-20);
 
 	@media (max-width: 600px) {
-		gap: 12px;
-		padding: 16px;
+		gap: var(--space-12);
+		padding: var(--space-16);
 	}
 }
 
@@ -165,7 +165,7 @@
 	display: flex;
 	align-items: flex-start;
 	justify-content: space-between;
-	gap: 12px;
+	gap: var(--space-12);
 }
 
 .ear__question {
@@ -174,14 +174,14 @@
 
 .ear__prompt {
 	margin: 0;
-	font-size: 17px;
+	font-size: var(--text-2xl);
 	font-weight: 600;
 	letter-spacing: -0.01em;
 }
 
 .ear__hint {
 	margin: 2px 0 0;
-	font-size: 13px;
+	font-size: var(--text-md);
 	color: var(--fg-muted);
 }
 
@@ -193,7 +193,7 @@
 .ear__answers {
 	display: grid;
 	grid-template-columns: repeat(auto-fill, minmax(84px, 1fr));
-	gap: 8px;
+	gap: var(--space-8);
 }
 
 .ear-answer {
@@ -203,7 +203,7 @@
 	justify-content: center;
 	gap: 2px;
 	min-height: 56px;
-	padding: 6px 4px;
+	padding: var(--space-6) var(--space-4);
 	border: none;
 	border-radius: var(--radius);
 	background: var(--surface);
@@ -240,13 +240,13 @@
 
 .ear-answer__short {
 	font-family: var(--font-mono);
-	font-size: 17px;
+	font-size: var(--text-2xl);
 	font-weight: 500;
 	line-height: 1.1;
 }
 
 .ear-answer__name {
-	font-size: 11px;
+	font-size: var(--text-xs);
 	line-height: 1.2;
 	color: var(--fg-muted);
 	text-align: center;
@@ -259,7 +259,7 @@
 .ear__feedback {
 	min-height: 1.5em;
 	margin: 0;
-	font-size: 14px;
+	font-size: var(--text-base);
 	color: var(--fg-secondary);
 
 	&[data-state='right'] {
@@ -277,25 +277,25 @@
 	display: flex;
 	justify-content: space-between;
 	align-items: baseline;
-	margin-bottom: 10px;
+	margin-bottom: var(--space-10);
 }
 
 .ear-stats__total {
 	font-family: var(--font-mono);
-	font-size: 12px;
+	font-size: var(--text-sm);
 	color: var(--fg-secondary);
 }
 
 .ear-stats__list {
 	display: grid;
-	gap: 6px;
+	gap: var(--space-6);
 	margin: 0;
 	padding: 0;
 	list-style: none;
 }
 
 .ear-stats__empty {
-	font-size: 12px;
+	font-size: var(--text-sm);
 	color: var(--fg-muted);
 }
 
@@ -303,9 +303,9 @@
 	display: grid;
 	grid-template-columns: 44px minmax(0, 1fr) 40px;
 	align-items: center;
-	gap: 10px;
+	gap: var(--space-10);
 	font-family: var(--font-mono);
-	font-size: 12px;
+	font-size: var(--text-sm);
 }
 
 .ear-stat__bar {
@@ -334,12 +334,12 @@
 @media (max-width: 600px) {
 	/* 44 px tap targets (the buttons themselves, not counting the track). */
 	.trainer-mode button {
-		min-height: 44px;
+		min-height: var(--tap);
 	}
 
 	.ear__play,
 	.ear__next {
-		height: 44px;
+		height: var(--tap);
 	}
 }
 
@@ -361,7 +361,7 @@
 
 	.view > .ear {
 		grid-area: ear;
-		padding: 24px;
+		padding: var(--space-24);
 	}
 
 	.view > .ear-stats {
@@ -401,8 +401,8 @@
 	display: flex;
 	flex-direction: column;
 	align-items: center;
-	gap: 6px;
-	padding: 16px 20px 20px;
+	gap: var(--space-6);
+	padding: var(--space-16) var(--space-20) var(--space-20);
 	text-align: center;
 }
 
@@ -416,7 +416,7 @@
 }
 
 .changes-clock {
-	font-size: 17px;
+	font-size: var(--text-2xl);
 	font-weight: 500;
 	color: var(--fg-secondary);
 }
@@ -429,7 +429,7 @@
 }
 
 .changes-count__label {
-	font-size: 12px;
+	font-size: var(--text-sm);
 	color: var(--fg-muted);
 }
 
@@ -439,7 +439,7 @@
 	font-weight: 500;
 	letter-spacing: -0.04em;
 	line-height: 1;
-	margin-top: 4px;
+	margin-top: var(--space-4);
 
 	@media (max-width: 600px) {
 		font-size: 76px;
@@ -458,12 +458,12 @@
 .changes-heard,
 .changes-status {
 	margin: 0;
-	font-size: 14px;
+	font-size: var(--text-base);
 	color: var(--fg-secondary);
 }
 
 .changes-heard {
-	font-size: 13px;
+	font-size: var(--text-md);
 	color: var(--fg-muted);
 }
 
@@ -505,15 +505,15 @@
 	display: flex;
 	flex-wrap: nowrap;
 	justify-content: center;
-	gap: 4px;
+	gap: var(--space-4);
 	max-width: 100%;
 	overflow: hidden;
 	min-height: 22px;
-	margin: 4px 0 0;
+	margin: var(--space-4) 0 0;
 	padding: 0;
 	list-style: none;
 	font-family: var(--font-mono);
-	font-size: 14px;
+	font-size: var(--text-base);
 }
 
 .changes-mark {
@@ -531,7 +531,7 @@
 }
 
 .changes-result {
-	margin-top: 4px;
+	margin-top: var(--space-4);
 }
 
 .changes-result__big {
@@ -545,17 +545,17 @@
 
 .changes-result__big small {
 	font-family: var(--font-sans);
-	font-size: 14px;
+	font-size: var(--text-base);
 	font-weight: 400;
 	letter-spacing: 0;
 	color: var(--fg-muted);
 }
 
 .changes-result__lines {
-	margin: 4px 0 0;
+	margin: var(--space-4) 0 0;
 	padding: 0;
 	list-style: none;
-	font-size: 13px;
+	font-size: var(--text-md);
 	color: var(--fg-secondary);
 }
 
@@ -569,9 +569,9 @@
 	display: grid;
 	grid-template-columns: repeat(var(--n, 2), minmax(0, 120px));
 	justify-content: center;
-	gap: 10px;
+	gap: var(--space-10);
 	align-self: stretch;
-	margin: 10px 0 12px;
+	margin: var(--space-10) 0 var(--space-12);
 
 	@media (min-width: 960px) {
 		grid-template-columns: repeat(var(--n, 2), minmax(0, 140px));
@@ -590,9 +590,9 @@
 }
 
 .changes-shape figcaption {
-	margin-top: 4px;
+	margin-top: var(--space-4);
 	font-family: var(--font-mono);
-	font-size: 13px;
+	font-size: var(--text-md);
 	color: var(--fg-secondary);
 }
 
@@ -609,24 +609,24 @@
 	display: flex;
 	flex-direction: column;
 	gap: 14px;
-	padding: 16px 20px;
+	padding: var(--space-16) var(--space-20);
 }
 
 .changes-group {
 	display: flex;
 	flex-direction: column;
-	gap: 8px;
+	gap: var(--space-8);
 }
 
 .changes-presets {
 	display: flex;
 	flex-wrap: wrap;
-	gap: 6px;
+	gap: var(--space-6);
 }
 
 .changes-preset {
-	min-width: 44px;
-	padding: 0 10px;
+	min-width: var(--tap);
+	padding: 0 var(--space-10);
 }
 
 .changes-chips {
@@ -635,7 +635,7 @@
 
 .changes-order {
 	font-family: var(--font-mono);
-	font-size: 12px;
+	font-size: var(--text-sm);
 	color: var(--fg-secondary);
 }
 
@@ -645,7 +645,7 @@
 	align-items: center;
 	gap: 6px 14px;
 	margin: 0;
-	font-size: 13px;
+	font-size: var(--text-md);
 	color: var(--fg-muted);
 }
 
@@ -675,12 +675,12 @@
 @media (max-width: 600px) {
 	/* Four exercises in a 288 px track at 320 px: trim the side padding. */
 	.trainer-mode button {
-		padding-inline: 4px;
+		padding-inline: var(--space-4);
 	}
 
 	.changes-mode button,
 	.changes-setup .chip {
-		min-height: 44px;
+		min-height: var(--tap);
 	}
 }
 

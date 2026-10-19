@@ -22,8 +22,8 @@
 
 	/* Phones: room for six 44 px dots in a row (6/8, 6/4) at 375 px. */
 	@media (max-width: 600px) {
-		padding-inline: 12px;
-		padding-block: 16px 12px;
+		padding-inline: var(--space-12);
+		padding-block: var(--space-16) var(--space-12);
 	}
 }
 
@@ -88,20 +88,20 @@ input.metro-bpm__value {
 	position: absolute;
 	left: 100%;
 	bottom: 0.1em;
-	margin-left: 8px;
+	margin-left: var(--space-8);
 	font-family: var(--font-mono);
-	font-size: 14px;
+	font-size: var(--text-base);
 	color: var(--fg-muted);
 	letter-spacing: 0.04em;
 }
 
 .metro-name {
-	margin-top: 6px;
-	font-size: 14px;
+	margin-top: var(--space-6);
+	font-size: var(--text-base);
 	color: var(--fg-secondary);
 
 	@media (min-width: 960px) {
-		font-size: 16px;
+		font-size: var(--text-xl);
 	}
 }
 
@@ -123,11 +123,11 @@ input.metro-bpm__value {
 	}
 
 	@media (max-width: 600px) {
-		margin: 16px 0 12px;
+		margin: var(--space-16) 0 var(--space-12);
 	}
 
 	@media (max-width: 600px) and (max-height: 760px) {
-		margin: 12px 0 10px;
+		margin: var(--space-12) 0 var(--space-10);
 	}
 }
 
@@ -155,7 +155,7 @@ input.metro-bpm__value {
 	background: var(--surface-2);
 	color: var(--fg-muted);
 	font-family: var(--font-mono);
-	font-size: 14px;
+	font-size: var(--text-base);
 	font-weight: 500;
 	transform: scale(0.78);
 	transition:
@@ -202,7 +202,7 @@ input.metro-bpm__value {
 	display: grid;
 	grid-template-columns: auto auto minmax(0, 1fr) auto auto;
 	align-items: center;
-	gap: 8px;
+	gap: var(--space-8);
 	width: 100%;
 
 	@media (min-width: 960px) {
@@ -210,7 +210,7 @@ input.metro-bpm__value {
 	}
 
 	@media (max-width: 600px) {
-		gap: 6px;
+		gap: var(--space-6);
 	}
 }
 
@@ -248,11 +248,11 @@ input.metro-bpm__value {
 .metro-step--small {
 	width: 40px;
 	height: 40px;
-	font-size: 18px;
+	font-size: var(--text-3xl);
 
 	@media (max-width: 600px) {
-		width: 44px;
-		height: 44px;
+		width: var(--tap);
+		height: var(--tap);
 	}
 }
 
@@ -268,14 +268,14 @@ input.metro-bpm__value {
 .metro-actions {
 	display: grid;
 	grid-template-columns: minmax(0, 1fr) 96px;
-	gap: 10px;
+	gap: var(--space-10);
 }
 
 .metro-start,
 .metro-tap {
 	height: 64px;
 	border-radius: var(--radius-lg);
-	font-size: 18px;
+	font-size: var(--text-3xl);
 	font-weight: 600;
 	user-select: none;
 	-webkit-user-select: none;
@@ -288,7 +288,7 @@ input.metro-bpm__value {
 }
 
 .metro-tap {
-	font-size: 16px;
+	font-size: var(--text-xl);
 
 	&:active {
 		background: var(--border);
@@ -301,14 +301,14 @@ input.metro-bpm__value {
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
-	gap: 12px;
+	gap: var(--space-12);
 	min-height: 56px;
-	padding: 8px 16px;
+	padding: var(--space-8) var(--space-16);
 	cursor: default;
 
 	@media (max-width: 600px) {
 		min-height: 52px;
-		padding-inline: 12px;
+		padding-inline: var(--space-12);
 	}
 }
 
@@ -324,11 +324,11 @@ label.metro-row {
 	flex-direction: column;
 	align-items: stretch;
 	justify-content: center;
-	gap: 8px;
-	padding-block: 12px;
+	gap: var(--space-8);
+	padding-block: var(--space-12);
 
 	@media (max-width: 600px) {
-		padding-block: 10px;
+		padding-block: var(--space-10);
 	}
 }
 
@@ -347,13 +347,13 @@ label.metro-row {
 
 .metro-row__label {
 	display: block;
-	font-size: 14px;
+	font-size: var(--text-base);
 	font-weight: 500;
 }
 
 .metro-row__desc {
 	display: block;
-	font-size: 12px;
+	font-size: var(--text-sm);
 	color: var(--fg-muted);
 }
 
@@ -368,14 +368,14 @@ label.metro-row {
 .metro-stepper {
 	display: flex;
 	align-items: center;
-	gap: 6px;
+	gap: var(--space-6);
 }
 
 .metro-stepper__value {
 	min-width: 2.2ch;
 	text-align: center;
 	font-family: var(--font-mono);
-	font-size: 18px;
+	font-size: var(--text-3xl);
 	font-weight: 500;
 }
 
@@ -402,16 +402,16 @@ label.metro-row {
 }
 
 .metro-progress__text {
-	margin-top: 8px;
+	margin-top: var(--space-8);
 	font-family: var(--font-mono);
-	font-size: 12px;
+	font-size: var(--text-sm);
 	color: var(--fg-muted);
 	font-variant-numeric: tabular-nums;
 }
 
 @media (max-width: 600px) {
 	.metro-row .segmented button {
-		min-height: 44px;
+		min-height: var(--tap);
 	}
 }
 
@@ -452,7 +452,7 @@ label.metro-row {
 
 /* ±10 BPM: the big steps either side of ±1, a smaller mono label so they read as secondary. */
 .metro-step--ten {
-	font-size: 14px;
+	font-size: var(--text-base);
 	font-weight: 500;
 	color: var(--fg-secondary);
 }
@@ -464,13 +464,13 @@ label.metro-row {
 
 .metro-stepper__value--wide {
 	min-width: 4.5ch;
-	font-size: 16px;
+	font-size: var(--text-xl);
 }
 
 @media (max-width: 600px) {
 	.metro-tempo .metro-step {
-		width: 44px;
-		height: 44px;
+		width: var(--tap);
+		height: var(--tap);
 	}
 }
 
@@ -478,12 +478,12 @@ label.metro-row {
 .metro-time {
 	display: flex;
 	align-items: center;
-	gap: 8px;
+	gap: var(--space-8);
 }
 
 .metro-time__over {
 	font-family: var(--font-mono);
-	font-size: 18px;
+	font-size: var(--text-3xl);
 	color: var(--fg-muted);
 }
 

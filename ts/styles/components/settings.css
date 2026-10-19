@@ -2,13 +2,13 @@
 /* A plain scrolling page: one group per tab, a heading over a card of rows. */
 .view--settings {
 	position: relative;
-	gap: 24px;
+	gap: var(--space-24);
 }
 
 .settings-group {
 	display: flex;
 	flex-direction: column;
-	gap: 8px;
+	gap: var(--space-8);
 	/* Entering Settings scrolls a group to the top: keep its heading clear of
 	   the notch. */
 	scroll-margin-top: calc(16px + env(safe-area-inset-top));
@@ -21,21 +21,21 @@
 
 .settings-group__title {
 	margin: 0 0 0 2px;
-	font-size: 16px;
+	font-size: var(--text-xl);
 	font-weight: 600;
 	letter-spacing: -0.01em;
 }
 
 .settings-group__desc {
 	margin: -6px 0 0 2px;
-	font-size: 12px;
+	font-size: var(--text-sm);
 	color: var(--fg-muted);
 }
 
 /* Trainer: one card per exercise under a small label. */
 .settings-group__sub {
 	margin: 6px 0 0 2px;
-	font-size: 11px;
+	font-size: var(--text-xs);
 	font-weight: 500;
 	letter-spacing: 0.04em;
 	text-transform: uppercase;
@@ -43,11 +43,11 @@
 }
 
 .settings-card {
-	padding: 6px;
+	padding: var(--space-6);
 }
 
 .settings__section {
-	padding: 8px;
+	padding: var(--space-8);
 }
 
 .settings__section + .settings__section {
@@ -62,19 +62,19 @@
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
-	margin-bottom: 12px;
+	margin-bottom: var(--space-12);
 }
 
 .settings__actions {
 	display: flex;
-	gap: 4px;
+	gap: var(--space-4);
 }
 
 .link-btn {
 	border: none;
 	background: transparent;
 	color: var(--fg-secondary);
-	font-size: 12px;
+	font-size: var(--text-sm);
 	font-weight: 500;
 	padding: 3px 8px;
 	border-radius: var(--radius-sm);
@@ -114,20 +114,20 @@
 .number {
 	display: inline-flex;
 	align-items: center;
-	gap: 6px;
+	gap: var(--space-6);
 }
 
 .input {
 	width: 76px;
 	height: 32px;
-	padding: 0 8px;
+	padding: 0 var(--space-8);
 	border: none;
 	border-radius: var(--radius);
 	background: var(--surface);
 	color: var(--fg);
 	box-shadow: var(--shadow-border);
 	font-family: var(--font-mono);
-	font-size: 13px;
+	font-size: var(--text-md);
 	text-align: right;
 	-moz-appearance: textfield;
 	appearance: textfield;
@@ -141,7 +141,7 @@
 
 .number__unit {
 	font-family: var(--font-mono);
-	font-size: 12px;
+	font-size: var(--text-sm);
 	color: var(--fg-muted);
 }
 
@@ -150,21 +150,21 @@
 	.view--settings .select,
 	.view--settings .range,
 	.view--settings .segmented button {
-		height: 44px;
+		height: var(--tap);
 	}
 
 	.settings__presets .link-btn,
 	.settings__actions .link-btn {
-		min-width: 44px;
-		min-height: 44px;
+		min-width: var(--tap);
+		min-height: var(--tap);
 	}
 
 	.view--settings .chip {
-		height: 44px;
+		height: var(--tap);
 	}
 
 	.settings-group[data-group='trainer'] .input {
-		min-height: 44px;
+		min-height: var(--tap);
 	}
 }
 

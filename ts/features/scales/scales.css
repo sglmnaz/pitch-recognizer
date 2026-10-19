@@ -1,5 +1,5 @@
 .view--scales {
-	gap: 16px;
+	gap: var(--space-16);
 }
 
 /* One header line: mode, then root + scale (or the marked notes). */
@@ -7,14 +7,14 @@
 	display: flex;
 	flex-wrap: wrap;
 	align-items: center;
-	gap: 8px;
+	gap: var(--space-8);
 }
 
 .scales-pickers {
 	flex: 1 1 280px;
 	display: flex;
 	align-items: center;
-	gap: 8px;
+	gap: var(--space-8);
 	min-width: 0;
 }
 
@@ -30,14 +30,14 @@
 .scales-marked {
 	flex: 1;
 	font-family: var(--font-mono);
-	font-size: 15px;
+	font-size: var(--text-lg);
 	font-weight: 500;
 	word-spacing: 0.3em;
 }
 
 .scales-marked--empty {
 	font-family: var(--font-sans);
-	font-size: 13px;
+	font-size: var(--text-md);
 	font-weight: 400;
 	word-spacing: normal;
 	color: var(--fg-muted);
@@ -46,12 +46,12 @@
 .scale-info {
 	display: flex;
 	flex-direction: column;
-	gap: 8px;
+	gap: var(--space-8);
 }
 
 .scale-info__title {
 	margin: 0;
-	font-size: 16px;
+	font-size: var(--text-xl);
 	font-weight: 600;
 }
 
@@ -59,7 +59,7 @@
 .scale-info__notes {
 	display: flex;
 	flex-wrap: wrap;
-	gap: 6px;
+	gap: var(--space-6);
 }
 
 .scale-note {
@@ -86,12 +86,12 @@
 }
 
 .scale-note__name {
-	font-size: 15px;
+	font-size: var(--text-lg);
 	font-weight: 500;
 }
 
 .scale-note__degree {
-	font-size: 11px;
+	font-size: var(--text-xs);
 	color: var(--fg-muted);
 }
 
@@ -130,12 +130,12 @@
 	align-items: center;
 	gap: 7px;
 	height: 32px;
-	padding: 0 12px;
+	padding: 0 var(--space-12);
 	border: none;
 	border-radius: var(--radius-pill);
 	background: var(--surface);
 	color: var(--fg-secondary);
-	font-size: 13px;
+	font-size: var(--text-md);
 	font-weight: 500;
 	cursor: pointer;
 	box-shadow: var(--shadow-border);
@@ -171,7 +171,7 @@
 .scale-results {
 	display: flex;
 	flex-direction: column;
-	gap: 6px;
+	gap: var(--space-6);
 	margin: 0;
 	padding: 0;
 	list-style: none;
@@ -202,29 +202,29 @@
 }
 
 .scale-result__title {
-	font-size: 14px;
+	font-size: var(--text-base);
 	font-weight: 500;
 }
 
 .scale-result__extra {
 	font-family: var(--font-mono);
-	font-size: 12px;
+	font-size: var(--text-sm);
 	color: var(--fg-muted);
 }
 
 .scale-result__notes {
 	grid-column: 1 / -1;
 	font-family: var(--font-mono);
-	font-size: 12px;
+	font-size: var(--text-sm);
 	color: var(--fg-secondary);
 	word-spacing: 0.2em;
 }
 
 .scale-results__more {
-	font-size: 12px;
+	font-size: var(--text-sm);
 	color: var(--fg-muted);
 	text-align: center;
-	padding: 4px;
+	padding: var(--space-4);
 }
 
 @media (min-width: 960px) {
@@ -306,7 +306,7 @@
 .harmony {
 	display: flex;
 	flex-direction: column;
-	gap: 12px;
+	gap: var(--space-12);
 	min-width: 0;
 }
 
@@ -314,7 +314,7 @@
 	display: flex;
 	flex-wrap: wrap;
 	align-items: center;
-	gap: 8px;
+	gap: var(--space-8);
 }
 
 .harmony__tabs {
@@ -339,12 +339,12 @@
 .harmony__pane {
 	display: flex;
 	flex-direction: column;
-	gap: 10px;
+	gap: var(--space-10);
 }
 
 .harmony__note {
 	margin: 0;
-	font-size: 12px;
+	font-size: var(--text-sm);
 	color: var(--fg-muted);
 }
 
@@ -366,7 +366,7 @@
 .harmony-chords {
 	display: grid;
 	grid-template-columns: repeat(auto-fill, minmax(72px, 1fr));
-	gap: 6px;
+	gap: var(--space-6);
 
 	@media (min-width: 601px) {
 		grid-template-columns: repeat(7, minmax(0, 1fr));
@@ -393,7 +393,7 @@
 
 .harmony-chord {
 	min-height: 52px;
-	padding: 8px 4px 6px;
+	padding: var(--space-8) var(--space-4) var(--space-6);
 	cursor: pointer;
 	transition:
 		background var(--dur) var(--ease),
@@ -412,7 +412,7 @@
 }
 
 .harmony-chord__numeral {
-	font-size: 11px;
+	font-size: var(--text-xs);
 	color: var(--fg-muted);
 }
 
@@ -420,7 +420,7 @@
 	max-width: 100%;
 	overflow: hidden;
 	text-overflow: ellipsis;
-	font-size: 15px;
+	font-size: var(--text-lg);
 	font-weight: 500;
 	white-space: nowrap;
 }
@@ -428,11 +428,11 @@
 .harmony-legend {
 	display: flex;
 	flex-wrap: wrap;
-	gap: 4px 16px;
+	gap: var(--space-4) var(--space-16);
 	margin: 0;
 	padding: 0;
 	list-style: none;
-	font-size: 12px;
+	font-size: var(--text-sm);
 	color: var(--fg-muted);
 }
 
@@ -441,7 +441,7 @@
 	display: inline-block;
 	width: 10px;
 	height: 3px;
-	margin-right: 6px;
+	margin-right: var(--space-6);
 	vertical-align: middle;
 	border-radius: 2px;
 	background: var(--quality);
@@ -454,16 +454,16 @@
 	display: flex;
 	flex-wrap: wrap;
 	align-items: center;
-	gap: 16px;
-	padding: 12px;
+	gap: var(--space-16);
+	padding: var(--space-12);
 	border-radius: var(--radius-lg);
 	background: var(--surface);
 	box-shadow: var(--shadow-border);
 
 	@media (max-width: 600px) {
 		align-self: stretch;
-		gap: 12px;
-		padding: 10px;
+		gap: var(--space-12);
+		padding: var(--space-10);
 	}
 }
 
@@ -486,13 +486,13 @@
 }
 
 .chord-detail__name {
-	font-size: 13px;
+	font-size: var(--text-md);
 	color: var(--fg-secondary);
 }
 
 .chord-detail__notes {
 	font-family: var(--font-mono);
-	font-size: 12px;
+	font-size: var(--text-sm);
 	color: var(--fg-muted);
 	word-spacing: 0.2em;
 	white-space: pre-wrap;
@@ -502,7 +502,7 @@
 .chord-detail__actions {
 	display: flex;
 	flex-wrap: wrap;
-	gap: 6px;
+	gap: var(--space-6);
 
 	@media (max-width: 600px) {
 		flex-basis: 100%;
@@ -514,7 +514,7 @@
 	padding: 0;
 
 	@media (max-width: 600px) {
-		width: 44px;
+		width: var(--tap);
 	}
 }
 
@@ -522,7 +522,7 @@
 .progressions {
 	display: grid;
 	grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-	gap: 8px;
+	gap: var(--space-8);
 	margin: 0;
 	padding: 0;
 	list-style: none;
@@ -535,8 +535,8 @@
 .progression {
 	display: flex;
 	flex-direction: column;
-	gap: 8px;
-	padding: 10px 12px 12px;
+	gap: var(--space-8);
+	padding: var(--space-10) var(--space-12) var(--space-12);
 	border-radius: var(--radius-lg);
 	background: var(--surface);
 	box-shadow: var(--shadow-border);
@@ -550,11 +550,11 @@
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
-	gap: 8px;
+	gap: var(--space-8);
 }
 
 .progression__name {
-	font-size: 14px;
+	font-size: var(--text-base);
 	font-weight: 500;
 }
 
@@ -565,7 +565,7 @@
 .progression__chords {
 	display: grid;
 	grid-template-columns: repeat(auto-fill, minmax(48px, 1fr));
-	gap: 4px;
+	gap: var(--space-4);
 	margin: 0;
 	padding: 0;
 	list-style: none;
@@ -580,12 +580,12 @@
 		color var(--dur) var(--ease);
 
 	@media (max-width: 600px) {
-		min-height: 44px;
+		min-height: var(--tap);
 	}
 }
 
 .progression__chord .harmony-chord__symbol {
-	font-size: 13px;
+	font-size: var(--text-md);
 }
 
 .progression__chord--now {
@@ -629,7 +629,7 @@
 
 .circle__key text {
 	fill: var(--fg);
-	font-size: 17px;
+	font-size: var(--text-2xl);
 	font-weight: 500;
 	text-anchor: middle;
 	dominant-baseline: central;
@@ -637,16 +637,16 @@
 }
 
 .circle__key--minor text {
-	font-size: 14px;
+	font-size: var(--text-base);
 	fill: var(--fg-secondary);
 }
 
 .circle__key text.circle__alt {
-	font-size: 12px;
+	font-size: var(--text-sm);
 }
 
 .circle__key text.circle__sig {
-	font-size: 10px;
+	font-size: var(--text-2xs);
 	fill: var(--fg-muted);
 }
 
@@ -692,7 +692,7 @@
 .circle__center-sig {
 	fill: var(--fg-muted);
 	font-family: var(--font-sans);
-	font-size: 11px;
+	font-size: var(--text-xs);
 	text-anchor: middle;
 	dominant-baseline: central;
 }
@@ -702,18 +702,18 @@
 	display: flex;
 	flex-wrap: wrap;
 	align-items: center;
-	gap: 6px;
+	gap: var(--space-6);
 }
 
 .chord-fits__label {
-	margin-right: 4px;
-	font-size: 13px;
+	margin-right: var(--space-4);
+	font-size: var(--text-md);
 	color: var(--fg-muted);
 }
 
 .chord-fits__chord {
 	font-family: var(--font-mono);
-	font-size: 15px;
+	font-size: var(--text-lg);
 	font-weight: 500;
 	color: var(--fg);
 }
@@ -724,12 +724,12 @@
 
 .chord-fits__scale {
 	height: 28px;
-	padding: 0 10px;
+	padding: 0 var(--space-10);
 	border: none;
 	border-radius: var(--radius-pill);
 	background: var(--surface);
 	color: var(--fg-secondary);
-	font-size: 12px;
+	font-size: var(--text-sm);
 	font-weight: 500;
 	cursor: pointer;
 	box-shadow: var(--shadow-border);
@@ -743,7 +743,7 @@
 	}
 
 	@media (max-width: 600px) {
-		height: 44px;
+		height: var(--tap);
 		padding: 0 14px;
 	}
 }
@@ -752,7 +752,7 @@
 @media (max-width: 600px) {
 	.harmony__tabs button,
 	.harmony__size button {
-		min-height: 44px;
+		min-height: var(--tap);
 	}
 
 	.harmony__size button {
@@ -762,7 +762,7 @@
 	.harmony__loop,
 	.chord-detail .btn--small,
 	.progression__play {
-		height: 44px;
+		height: var(--tap);
 	}
 
 	.chord-detail__actions .btn:not(.chord-detail__clear) {

@@ -2,15 +2,15 @@
 .chroma {
 	display: grid;
 	grid-template-columns: repeat(12, 1fr);
-	gap: 4px;
-	margin-top: 24px;
+	gap: var(--space-4);
+	margin-top: var(--space-24);
 
 	@media (max-width: 600px) {
-		margin-top: 16px;
+		margin-top: var(--space-16);
 	}
 
 	@media (max-width: 600px) and (max-height: 760px) {
-		margin-top: 12px;
+		margin-top: var(--space-12);
 	}
 }
 
@@ -18,7 +18,7 @@
 	display: flex;
 	flex-direction: column;
 	align-items: center;
-	gap: 6px;
+	gap: var(--space-6);
 }
 
 .chroma__bar {
@@ -40,7 +40,7 @@
 
 .chroma__label {
 	font-family: var(--font-mono);
-	font-size: 10px;
+	font-size: var(--text-2xs);
 	color: var(--fg-muted);
 }
 
@@ -53,7 +53,7 @@
 .chord-link {
 	display: block;
 	margin: 0 auto;
-	padding: 0 8px;
+	padding: 0 var(--space-8);
 	border: none;
 	border-radius: var(--radius);
 	background: none;
@@ -74,9 +74,9 @@
 .chord-link:enabled + .readout__sub::after {
 	content: 'Tap to open in Library';
 	display: block;
-	margin-top: 4px;
+	margin-top: var(--space-4);
 	font-family: var(--font-sans);
-	font-size: 12px;
+	font-size: var(--text-sm);
 	color: var(--fg-muted);
 }
 
@@ -84,20 +84,20 @@
 .chord-identify {
 	display: flex;
 	flex-direction: column;
-	gap: 16px;
+	gap: var(--space-16);
 }
 
 .chord-pick {
 	display: flex;
 	flex-direction: column;
-	gap: 8px;
+	gap: var(--space-8);
 }
 
 /* Twelve roots in one row; two rows of six on phones (thumb-sized). */
 .chord-roots {
 	display: grid;
 	grid-template-columns: repeat(12, minmax(0, 1fr));
-	gap: 4px;
+	gap: var(--space-4);
 
 	@media (max-width: 600px) {
 		grid-template-columns: repeat(6, minmax(0, 1fr));
@@ -116,7 +116,7 @@
 	background: var(--surface);
 	color: var(--fg-secondary);
 	font-family: var(--font-mono);
-	font-size: 13px;
+	font-size: var(--text-md);
 	font-weight: 500;
 	white-space: nowrap;
 	cursor: pointer;
@@ -143,11 +143,11 @@
 .chord-info {
 	display: flex;
 	flex-direction: column;
-	gap: 8px;
+	gap: var(--space-8);
 
 	/* Phones: chord name, notes and the best diagram in one screen. */
 	@media (max-width: 600px) {
-		gap: 6px;
+		gap: var(--space-6);
 	}
 }
 
@@ -175,14 +175,14 @@
 
 .chord-info__name {
 	margin: 0;
-	font-size: 14px;
+	font-size: var(--text-base);
 	color: var(--fg-secondary);
 }
 
 .chord-info__notes {
 	display: flex;
 	flex-wrap: wrap;
-	gap: 6px;
+	gap: var(--space-6);
 }
 
 .chord-note {
@@ -196,8 +196,8 @@
 .chord-keys {
 	display: flex;
 	flex-direction: column;
-	gap: 6px;
-	margin-top: 4px;
+	gap: var(--space-6);
+	margin-top: var(--space-4);
 
 	/* Phones: the "In keys" label and chips share lines instead of stacking. */
 	@media (max-width: 600px) {
@@ -211,7 +211,7 @@
 .chord-keys__list {
 	display: flex;
 	flex-wrap: wrap;
-	gap: 6px;
+	gap: var(--space-6);
 	margin: 0;
 	padding: 0;
 	list-style: none;
@@ -223,7 +223,7 @@
 	background: var(--surface);
 	box-shadow: var(--shadow-border);
 	font-family: var(--font-mono);
-	font-size: 12px;
+	font-size: var(--text-sm);
 	color: var(--fg-secondary);
 }
 
@@ -236,7 +236,7 @@
 .voicings {
 	display: grid;
 	grid-template-columns: repeat(auto-fill, minmax(156px, 1fr));
-	gap: 8px;
+	gap: var(--space-8);
 	margin: 0;
 	padding: 0;
 	list-style: none;
@@ -257,7 +257,7 @@
 	align-items: center;
 	gap: 2px;
 	width: 100%;
-	padding: 10px 6px 8px;
+	padding: var(--space-10) var(--space-6) var(--space-8);
 	border: none;
 	border-radius: var(--radius-lg);
 	background: var(--surface);
@@ -298,18 +298,18 @@
 }
 
 .voicing__title {
-	margin-top: 4px;
+	margin-top: var(--space-4);
 	font-family: var(--font-mono);
-	font-size: 12px;
+	font-size: var(--text-sm);
 	font-weight: 500;
 }
 
 .voicing--hero .voicing__title {
-	font-size: 14px;
+	font-size: var(--text-base);
 }
 
 .voicing__pos {
-	font-size: 11px;
+	font-size: var(--text-xs);
 	color: var(--fg-muted);
 }
 
@@ -318,14 +318,14 @@
 	flex: 1;
 	min-width: 0;
 	font-family: var(--font-mono);
-	font-size: 15px;
+	font-size: var(--text-lg);
 	font-weight: 500;
 	letter-spacing: 0.08em;
 }
 
 .chord-shape--empty {
 	font-family: var(--font-sans);
-	font-size: 13px;
+	font-size: var(--text-md);
 	font-weight: 400;
 	letter-spacing: normal;
 	color: var(--fg-muted);
@@ -333,25 +333,25 @@
 
 .chord-result__symbol {
 	font-family: var(--font-mono);
-	font-size: 18px;
+	font-size: var(--text-3xl);
 	font-weight: 500;
 }
 
 .chord-results__empty {
-	font-size: 13px;
+	font-size: var(--text-md);
 	color: var(--fg-muted);
 	padding: 4px 2px;
 }
 
 @media (max-width: 600px) {
 	.chords-modes button {
-		min-height: 44px;
+		min-height: var(--tap);
 	}
 
 	.chord-root,
 	.chord-type,
 	.chord-identify .neck-toolbar .btn--small {
-		height: 44px;
+		height: var(--tap);
 	}
 }
 

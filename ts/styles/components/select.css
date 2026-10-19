@@ -6,7 +6,7 @@
 	border: none;
 	border-radius: var(--radius);
 	font: inherit;
-	font-size: 14px;
+	font-size: var(--text-base);
 	color: var(--fg);
 	cursor: pointer;
 	box-shadow: var(--shadow-border);
@@ -19,5 +19,5 @@
 
 .select--small {
 	height: 32px;
-	font-size: 13px;
+	font-size: var(--text-md);
 }
