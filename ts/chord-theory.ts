@@ -81,9 +81,11 @@ export interface ChordMatch extends SpelledChord {
 
 /**
  * Chords containing the played pitch classes, best first: exact matches, then
- * fewest missing + extra notes (at most one of each; a dropped 5th costs
- * half), then the root being the bass, then how common the chord is. The
- * root must be played.
+ * fewest missing + extra notes, then the root being the bass, then how common
+ * the chord is. The root must be played; at most one extra note and one
+ * missing required tone. Omittable tones (the 5th, an 11's 3rd and 9th — what
+ * ts/chord-shapes.ts may leave out) may all be missing at half cost each, so
+ * every generated voicing is recognised.
  */
 export function identifyChords(pitchClasses: Set<number>, bassPc?: number): ChordMatch[] {
 	const played = new Set(pitchClasses)
@@ -96,12 +98,17 @@ export function identifyChords(pitchClasses: Set<number>, bassPc?: number): Chor
 			const tones = pitchClassesOf(rootPc, type)
 			const semitones = semitonesOf(type)
 			const optional = omittable(type)
-			let missing = 0
+			let required = 0
+			let dropped = 0
 			degreesOf(type).forEach((degree, i) => {
-				if (!played.has(mod12(rootPc + semitones[i]))) missing += optional.includes(degree) ? 0.5 : 1
+				if (!played.has(mod12(rootPc + semitones[i]))) {
+					if (optional.includes(degree)) dropped++
+					else required++
+				}
 			})
+			const missing = required + dropped / 2
 			const extra = [...played].filter((pc) => !tones.has(pc)).length
-			if (missing > 1 || extra > 1) return
+			if (required > 1 || extra > 1) return
 			const spelled = spellChord(ROOTS[rootPc], type)
 			const inverted = bassPc !== undefined && mod12(bassPc) !== rootPc
 			const bassIndex = inverted ? semitones.findIndex((s) => mod12(rootPc + s) === mod12(bassPc!)) : -1
@@ -160,9 +167,10 @@ const NUMERAL_SUFFIX: Record<string, string> = {
 // name a diatonic seventh.
 const TERTIAN = CHORD_TYPES.filter((t) => ['1 3 5', '1 3 5 7'].includes(degreesOf(t).map((d) => d.replace(/[#b]/g, '')).join(' ')))
 
-function diatonic(notes: string[], semitones: number[], degree: string, picks: number[]): DiatonicChord {
+function diatonic(notes: string[], semitones: number[], degree: string, picks: number[]): DiatonicChord | null {
 	const intervals = picks.map((j) => mod12(semitones[j] - semitones[picks[0]])).join(' ')
-	const type = TERTIAN.find((t) => semitonesOf(t).map(mod12).join(' ') === intervals)!
+	const type = TERTIAN.find((t) => semitonesOf(t).map(mod12).join(' ') === intervals)
+	if (!type) return null
 	const roman = ROMAN[Number(degree.replace(/[#b]/g, '')) - 1]
 	const minor = type.formula.includes('b3')
 	return {
@@ -177,21 +185,21 @@ function diatonic(notes: string[], semitones: number[], degree: string, picks: n
 /**
  * The triad and seventh on each degree of a seven-note scale (major, minor,
  * harmonic / melodic minor, the modes), with roman numerals relative to the
- * major scale (natural minor: i ii° bIII iv v bVI bVII). Other scales have
- * no stacked-thirds harmony: [].
+ * major scale (natural minor: i ii° bIII iv v bVI bVII). Other scales, and
+ * any 7-note scale stacking into a chord this table cannot name, give [].
  */
 export function chordsOfScale(rootPc: number, type: ScaleType): ScaleDegreeChords[] {
 	const degrees = degreesOf(type)
 	if (degrees.length !== 7) return []
 	const { notes } = spellScale(ROOTS[mod12(rootPc)], type)
 	const semitones = semitonesOf(type)
-	return degrees.map((degree, i) => {
+	const chords: ScaleDegreeChords[] = []
+	for (const [i, degree] of degrees.entries()) {
 		const stack = [0, 2, 4, 6].map((k) => (i + k) % 7)
-		return {
-			degree,
-			rootPc: mod12(rootPc + semitones[i]),
-			triad: diatonic(notes, semitones, degree, stack.slice(0, 3)),
-			seventh: diatonic(notes, semitones, degree, stack),
-		}
-	})
+		const triad = diatonic(notes, semitones, degree, stack.slice(0, 3))
+		const seventh = diatonic(notes, semitones, degree, stack)
+		if (!triad || !seventh) return []
+		chords.push({ degree, rootPc: mod12(rootPc + semitones[i]), triad, seventh })
+	}
+	return chords
 }

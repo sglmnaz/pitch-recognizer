@@ -7,8 +7,8 @@ import * as Settings from './settings'
 import { FRETS, ROOTS, STRINGS } from './scales'
 
 /** root / tone / note: the degree palette; marked: solid (Identify, off any
- * shown scale); muted: a hollow outline (e.g. an optional chord tone). */
-export type Role = 'root' | 'tone' | 'note' | 'marked' | 'muted'
+ * shown scale); optional: a dashed outline (e.g. a chord tone you may drop). */
+export type Role = 'root' | 'tone' | 'note' | 'marked' | 'optional'
 
 export interface Dot {
 	/** String index as in `STRINGS`: 0 = highest string. */
@@ -23,7 +23,7 @@ export interface Dot {
 	marked?: boolean
 	/** Faded, like the notes outside a position box. */
 	dimmed?: boolean
-	/** Finger number, drawn in a row past the last fret (chord diagrams only). */
+	/** Finger number, drawn in a row past the last fret (chord diagrams only, dots inside the window). */
 	finger?: number
 }
 
@@ -47,6 +47,8 @@ export interface NeckSpec {
 	strings?: ('open' | 'muted' | null)[]
 	/** Every cell is a toggle (focusable, aria-pressed = marked): Identify. */
 	toggles?: boolean
+	/** Accessible name of the whole neck (role="img" when nothing is tappable), e.g. "C, x32010". */
+	label?: string
 	/** Chord diagram: `frets` frets (default 4) from `from` (≥ 1; 1 draws the
 	 * nut, higher a "5fr" label). Vertical unless `vertical` is false. */
 	window?: { from: number; frets?: number; vertical?: boolean }
@@ -58,6 +60,10 @@ export interface FretboardOptions {
 	onTap?: (string: number, fret: number, midi: number) => void
 	/** Full vertical neck: the screen height frets 0–15 should fill (the view knows its layout). */
 	fill?: () => number
+	/** Redraw the last spec when the settings change (left-handed, board
+	 * theme…). For necks whose view does not re-render on Settings.subscribe
+	 * itself, e.g. a page of chord diagrams; call destroy() when dropping one. */
+	autoRender?: boolean
 }
 
 export interface Fretboard {
@@ -66,6 +72,8 @@ export interface Fretboard {
 	light(heard: number | null, playing?: number | null): void
 	/** Brings the position box into view (page scroll when vertical, board scroll when horizontal). */
 	revealBox(): void
+	/** Stops the autoRender subscription. */
+	destroy(): void
 }
 
 const INLAYS = [3, 5, 7, 9, 12, 15, 17, 19, 21]
@@ -122,12 +130,18 @@ function windowGeometry(from: number, frets: number) {
 
 const phone = matchMedia('(max-width: 600px)')
 
+// Labels and names come from callers: keep them text inside the markup.
+const esc = (text: string) => text.replace(/[&<>"]/g, (ch) => `&#${ch.charCodeAt(0)};`)
+
 export function createFretboard(svg: SVGSVGElement, board: HTMLElement | null, options: FretboardOptions = {}): Fretboard {
 	const tuning = options.tuning ?? STRINGS
 	const last = tuning.length - 1
 	let heard: number | null = null
 	let playing: number | null = null
 	let laidOut = ''
+	let lastSpec: NeckSpec | null = null
+	const unsubscribe = options.autoRender ? Settings.subscribe(() => lastSpec && render(lastSpec)) : () => {}
+	const interactive = Boolean(options.onTap)
 
 	// Taps (and Enter/Space on a focused note). A tap that re-renders the neck
 	// keeps focus on the same note.
@@ -161,9 +175,14 @@ export function createFretboard(svg: SVGSVGElement, board: HTMLElement | null, o
 	}
 
 	function render(spec: NeckSpec, length?: number) {
+		lastSpec = spec
 		const { fretboardVertical, fretSize: size, fretboardTheme, leftHanded } = Settings.get()
 		const win = spec.window
 		const vertical = win ? win.vertical !== false : fretboardVertical
+		// Measured before anything is resized (see the scroll handling below).
+		const layout = `${vertical}${leftHanded}`
+		const shown = Boolean(board?.clientWidth) && !win
+		const fromRight = shown && leftHanded && !vertical && layout === laidOut ? board!.scrollWidth - board!.scrollLeft - board!.clientWidth : null
 		const o = vertical ? 'v' : 'h'
 		// The board palette: on the board, or on a chord diagram's own svg.
 		const themed = board ?? svg
@@ -188,7 +207,7 @@ export function createFretboard(svg: SVGSVGElement, board: HTMLElement | null, o
 		const { fretAt, noteAlong, halfCell } = g
 		const first = win ? win.from : 1
 		const lastFret = win ? win.from + (win.frets ?? 4) - 1 : FRETS
-		const fingerRow = win && spec.dots.some((d) => d.finger) ? CHORD.fingers : 0
+		const fingerRow = win && spec.dots.some((d) => d.finger && d.fret >= win.from) ? CHORD.fingers : 0
 		const width = vertical ? margin + last * spacing + (win ? CHORD.edge : EDGE) : g.length + fingerRow
 		const height = vertical ? g.length + fingerRow : margin + last * spacing + 30
 
@@ -222,6 +241,11 @@ export function createFretboard(svg: SVGSVGElement, board: HTMLElement | null, o
 		svg.classList.toggle('neck--vertical', vertical)
 		svg.classList.toggle('neck--chord', Boolean(win))
 		svg.classList.toggle('neck--left', leftHanded)
+		// A diagram nobody taps is one picture to assistive tech, not ~30 buttons.
+		if (spec.label) {
+			svg.setAttribute('role', interactive ? 'group' : 'img')
+			svg.setAttribute('aria-label', spec.label)
+		}
 		// Vertical and chord diagrams are drawn 1:1 (inline size beats the
 		// stylesheet's width: 100%). Horizontal on wider screens: the rendered
 		// width grows with the length, so dots keep their size.
@@ -264,10 +288,13 @@ export function createFretboard(svg: SVGSVGElement, board: HTMLElement | null, o
 				parts.push(`<rect class="neck__barre" ${rect(at - r, lo - r / spacing, at + r, hi + r / spacing)} rx="${r}"/>`)
 			}
 			spec.strings?.forEach((mark, s) => {
-				if (mark === 'open' && !dots.has(`${s}-0`)) parts.push(`<circle class="neck__open" ${pt(noteAlong(0), s, 'c')} r="5"/>`)
-				if (mark === 'muted') parts.push(`<text class="neck__muted" ${pt(noteAlong(0), s)}>×</text>`)
+				if (mark === 'open' && !dots.has(`${s}-0`)) parts.push(`<circle class="neck__open" ${pt(noteAlong(0), s, 'c')} r="5" aria-hidden="true"/>`)
+				if (mark === 'muted') parts.push(`<text class="neck__muted" ${pt(noteAlong(0), s)} aria-hidden="true">×</text>`)
 			})
-			for (const d of spec.dots) if (d.finger) parts.push(`<text class="neck__finger" ${pt(g.length + fingerRow / 2 - 3, d.string)}>${d.finger}</text>`)
+			for (const d of spec.dots) {
+				if (d.finger && d.fret >= first && d.fret <= lastFret)
+					parts.push(`<text class="neck__finger" ${pt(g.length + fingerRow / 2 - 3, d.string)} aria-hidden="true">${d.finger}</text>`)
+			}
 		}
 
 		tuning.forEach((open, s) => {
@@ -275,39 +302,46 @@ export function createFretboard(svg: SVGSVGElement, board: HTMLElement | null, o
 			for (const fret of frets) {
 				const midi = open + fret
 				const dot = dots.get(`${s}-${fret}`)
-				const name = noteName(midi)
+				// A chord diagram draws only its dots (nothing to tap or light elsewhere).
+				if (win && !dot) continue
+				const name = esc(noteName(midi))
 				const isMarked = Boolean(dot && (dot.marked || dot.role === 'marked'))
 				const classes = ['cell']
 				if (dot) classes.push('cell--dot')
 				if (dot && dot.role !== 'marked') classes.push(dot.role === 'note' ? 'cell--scale' : `cell--${dot.role}`)
 				if (isMarked) classes.push('cell--marked')
 				if ((box && (fret < box[0] || fret > box[1])) || dot?.dimmed) classes.push('cell--dim')
-				const label = dot ? dot.label : spec.emptyLabels === false ? '' : name
+				const label = dot ? esc(dot.label) : spec.emptyLabels === false ? '' : name
 				const at = noteAlong(fret)
 				const half = halfCell(fret)
 				const full = win ? CHORD.r : dot?.role === 'root' ? ROOT_R : DOT_R
 				const r = Math.max(MIN_R, Math.min(full, half + 0.4))
 				const font = r < full ? `style="font-size:${Math.max(MIN_FONT, r * 1.15).toFixed(1)}px"` : ''
 				const focusable = spec.toggles || dot !== undefined
+				// Buttons only when a tap does something; otherwise the svg's label speaks for it.
+				const button = interactive
+					? ` role="button" tabindex="${focusable ? 0 : -1}"` +
+						` aria-label="${ROOTS[open % 12]} string, ${fret === 0 ? 'open' : `fret ${fret}`}, ${name}${dot?.detail ? ` (${esc(dot.detail)})` : ''}"` +
+						(spec.toggles ? ` aria-pressed="${isMarked}"` : '')
+					: ''
 				parts.push(
-					`<g class="${classes.join(' ')}" data-s="${s}" data-f="${fret}" data-midi="${midi}" role="button" tabindex="${focusable ? 0 : -1}"` +
-						` aria-label="${ROOTS[open % 12]} string, ${fret === 0 ? 'open' : `fret ${fret}`}, ${name}${dot?.detail ? ` (${dot.detail})` : ''}"` +
-						(spec.toggles ? ` aria-pressed="${isMarked}"` : '') +
+					`<g class="${classes.join(' ')}" data-s="${s}" data-f="${fret}" data-midi="${midi}"${button}` +
 						`><rect class="cell__hit" ${rect(at - half, s - 0.5, at + half, s + 0.5)}/>` +
 						`<circle ${pt(at, s, 'c')} r="${r}"/>` +
 						`<text ${pt(at, s)} ${font}>${label}</text></g>`
 				)
 			}
 		})
+		// A left-handed horizontal neck starts at the nut, now on the right, and
+		// keeps its distance from the right edge when it is redrawn wider or
+		// narrower (fret size, phone breakpoint), so the nut stays in view.
+		// Only once it is on screen (a hidden board has no scroll width).
 		svg.innerHTML = parts.join('')
 		applyLit()
-		// A left-handed horizontal neck starts at the nut, now on the right.
-		// Only once it is on screen (a hidden board has no scroll width).
-		const layout = `${vertical}${leftHanded}`
-		if (board?.clientWidth && !win && layout !== laidOut) {
-			if (!vertical) board.scrollLeft = leftHanded ? board.scrollWidth : 0
+		if (shown && layout !== laidOut) {
+			if (!vertical) board!.scrollLeft = leftHanded ? board!.scrollWidth : 0
 			laidOut = layout
-		}
+		} else if (fromRight !== null) board!.scrollLeft = board!.scrollWidth - board!.clientWidth - fromRight
 		// The board's padding and the view's layout were measured around the
 		// previous drawing; if the fill is off (first vertical draw, a scrollbar
 		// gone), draw once more at the corrected length.
@@ -321,6 +355,7 @@ export function createFretboard(svg: SVGSVGElement, board: HTMLElement | null, o
 		render: (spec) => render(spec),
 
 		light(heardMidi, playingMidi = null) {
+			if (heardMidi === heard && playingMidi === playing) return
 			heard = heardMidi
 			playing = playingMidi
 			applyLit()
@@ -335,5 +370,7 @@ export function createFretboard(svg: SVGSVGElement, board: HTMLElement | null, o
 				board.scrollBy({ left: box.left + box.width / 2 - (view.left + view.width / 2), behavior: 'smooth' })
 			}
 		},
+
+		destroy: unsubscribe,
 	}
 }

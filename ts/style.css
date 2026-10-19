@@ -1182,7 +1182,7 @@ button {
 
 /* Fretboard extras (ts/fretboard.ts): chord-diagram overlays ------------- */
 /* An optional tone: outline only. */
-.cell--muted circle {
+.cell--optional circle {
 	fill: transparent;
 	stroke: var(--note-stroke);
 	stroke-dasharray: 2 2;

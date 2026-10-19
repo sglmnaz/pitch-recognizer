@@ -2,8 +2,9 @@
 // every shape within a 4-fret span (plus open strings), at most four
 // fingers (a barre counts as one), ranked by how easy and how standard it
 // is. Pure, so `npm run check:chord-theory` runs it under Node.
-import { omittable, type ChordType } from './chord-theory.ts'
-import { degreesOf, semitonesOf, STRINGS } from './scales.ts'
+import { omittable, spellChord, type ChordType } from './chord-theory.ts'
+import type { Dot, NeckSpec } from './fretboard.ts'
+import { degreeNumber, degreesOf, ROOTS, semitonesOf, STRINGS } from './scales.ts'
 
 export interface Voicing {
 	/** Per string as in `STRINGS` (0 = highest): -1 muted, 0 open, else the fret. */
@@ -12,8 +13,13 @@ export interface Voicing {
 	fingers: number[]
 	/** The index finger across strings `from`–`to` (string indices) at `fret`. */
 	barre: { fret: number; from: number; to: number } | null
-	/** Lowest fretted fret (1 for an all-open shape): where a chord diagram starts. */
+	/** Lowest fretted fret (1 for an all-open shape). */
 	base: number
+	/** Highest fretted fret (0 for an all-open shape). */
+	high: number
+	/** First fret of its 4-fret chord diagram: 1 (the nut) when a string rings
+	 * open or everything fits frets 1–4, else `base`. */
+	from: number
 	/** The bass is not the root. */
 	inversion: boolean
 	/** Chord degrees left out (mostly the 5th). */
@@ -35,6 +41,9 @@ export interface ShapeOptions {
 // Lowest to highest fretted note: 3 frets apart at most (a 4-fret span).
 const SPAN = 3
 const MIN_STRINGS = 3
+// Frets a chord diagram shows. A shape with an open string must fit the
+// window from the nut (frets 1–4), or its diagram could not show both.
+const WINDOW = 4
 
 const mod12 = (n: number) => ((n % 12) + 12) % 12
 
@@ -120,8 +129,20 @@ function scoreOf(frets: number[], fingerCount: number, barre: boolean, omitted: 
 	)
 }
 
+// Computed once per chord, tuning and range, on first use: the generator
+// walks ~10⁵ fret combinations, a dictionary page asks for dozens of chords.
+const cache = new Map<string, Voicing[]>()
+
+/** The best `limit` voicings, best first. Cached: treat them as read-only. */
 export function chordShapes(rootPc: number, type: ChordType, options: ShapeOptions = {}): Voicing[] {
 	const { tuning = STRINGS, maxFret = 15, limit = 8, inversions = false } = options
+	const key = [mod12(rootPc), type.formula, type.omit ?? '', tuning, maxFret, inversions].join('|')
+	let all = cache.get(key)
+	if (!all) cache.set(key, (all = generate(mod12(rootPc), type, tuning, maxFret, inversions)))
+	return all.slice(0, limit)
+}
+
+function generate(rootPc: number, type: ChordType, tuning: number[], maxFret: number, inversions: boolean): Voicing[] {
 	const degrees = degreesOf(type)
 	const semitones = semitonesOf(type)
 	const degreeOf = new Map(semitones.map((s, i) => [mod12(rootPc + s), degrees[i]]))
@@ -141,11 +162,17 @@ export function chordShapes(rootPc: number, type: ChordType, options: ShapeOptio
 		const hand = fingering(frets)
 		if (!hand) return
 		const fretted = frets.filter((f) => f > 0)
+		const base = fretted.length ? Math.min(...fretted) : 1
+		const high = fretted.length ? Math.max(...fretted) : 0
+		const open = frets.includes(0)
+		if (open && high > WINDOW) return
 		const fingerCount = new Set(hand.fingers.filter((f) => f > 0)).size
 		found.set(frets.join(','), {
 			frets: [...frets],
 			...hand,
-			base: fretted.length ? Math.min(...fretted) : 1,
+			base,
+			high,
+			from: open || high <= WINDOW ? 1 : base,
 			inversion,
 			omitted,
 			score: scoreOf(frets, fingerCount, hand.barre !== null, omitted.length, inversion),
@@ -193,5 +220,50 @@ export function chordShapes(rootPc: number, type: ChordType, options: ShapeOptio
 		.filter(([key, v]) => (fuller.get(key) ?? -Infinity) < v.score)
 		.map(([, v]) => v)
 		.sort((a, b) => b.score - a.score || a.base - b.base)
-		.slice(0, limit)
+}
+
+export interface VoicingSpecOptions {
+	/** Text in the dots: chord degrees (default), note names or nothing. */
+	labels?: 'degrees' | 'notes' | 'none'
+	/** Finger numbers under the diagram (default true). */
+	fingers?: boolean
+	/** Default true, like a chord chart. */
+	vertical?: boolean
+	/** The tuning the voicing was generated for (default standard). */
+	tuning?: number[]
+}
+
+/**
+ * A voicing as a fretboard chord diagram: fretted notes as dots coloured by
+ * degree (root, 3rd / 5th, the rest), open rings and mute crosses above the
+ * nut, the barre, finger numbers and the 4-fret window from `voicing.from`.
+ */
+export function voicingSpec(voicing: Voicing, rootPc: number, type: ChordType, options: VoicingSpecOptions = {}): NeckSpec {
+	const { labels = 'degrees', fingers = true, vertical = true, tuning = STRINGS } = options
+	const chord = spellChord(ROOTS[mod12(rootPc)], type)
+	const semitones = semitonesOf(type)
+	const indexOf = (midi: number) => semitones.findIndex((s) => mod12(rootPc + s) === mod12(midi))
+	const dots: Dot[] = []
+	voicing.frets.forEach((fret, string) => {
+		if (fret <= 0) return
+		const i = indexOf(tuning[string] + fret)
+		const degree = chord.degrees[i]
+		const n = degreeNumber(degree)
+		dots.push({
+			string,
+			fret,
+			role: degree === '1' ? 'root' : n === 3 || n === 5 ? 'tone' : 'note',
+			label: labels === 'degrees' ? degree : labels === 'notes' ? chord.notes[i] : '',
+			detail: degree,
+			finger: fingers && voicing.fingers[string] ? voicing.fingers[string] : undefined,
+		})
+	})
+	return {
+		dots,
+		barres: voicing.barre ? [voicing.barre] : [],
+		strings: voicing.frets.map((f) => (f < 0 ? 'muted' : f === 0 ? 'open' : null)),
+		window: { from: voicing.from, frets: WINDOW, vertical },
+		noteName: (midi) => chord.notes[indexOf(midi)] ?? ROOTS[mod12(midi)],
+		label: `${chord.symbol}${voicing.inversion ? ' (inversion)' : ''}, ${shapeString(voicing)}`,
+	}
 }

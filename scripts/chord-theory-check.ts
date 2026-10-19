@@ -3,8 +3,8 @@
 // shapes. Run with `npm run check:chord-theory` (`-- --verbose` lists the
 // generated shapes).
 import { CHORD_TYPES, chordsOfScale, chordType, identifyChords, spellChord } from '../ts/chord-theory.ts'
-import { chordShapes, shapeString, type Voicing } from '../ts/chord-shapes.ts'
-import { pitchClassOf, SCALE_TYPES } from '../ts/scales.ts'
+import { chordShapes, shapeString, voicingSpec, type Voicing } from '../ts/chord-shapes.ts'
+import { pitchClassOf, SCALE_TYPES, STRINGS } from '../ts/scales.ts'
 
 const verbose = process.argv.includes('--verbose')
 let failures = 0
@@ -144,6 +144,39 @@ check('C13 has a voicing (5th dropped)', c13.length > 0 && c13[0].omitted.includ
 const dropD = [64, 59, 55, 50, 45, 38]
 const d5 = chordShapes(pitchClassOf('D'), type('5'), { tuning: dropD }).map(shapeString)
 check('Drop D: D5 000xxx among the top shapes', d5.slice(0, 3).includes('000xxx'), d5.slice(0, 3).join(' '))
+
+// Diagram windows: a shape with an open string starts at the nut.
+const from = (root: string, symbol: string, shape: string) => by(root, symbol, shape)?.from
+check('Diagram windows: A7, Am, C, Bm start at the nut, D7 x57575 at 5', from('A', '7', 'x02020') === 1 && from('A', 'm', 'x02210') === 1 && from('C', '', 'x32010') === 1 && from('B', 'm', 'x24432') === 1 && from('D', '7', 'x57575') === 5)
+const openFits = CHORD_TYPES.flatMap((t) => chordShapes(4, t, { limit: 50 })).every((v) => !v.frets.includes(0) || v.high <= 4)
+check('Shapes with an open string fit frets 1-4', openFits)
+check('chordShapes is cached', chordShapes(0, type(''))[0] === chordShapes(0, type(''), { limit: 3 })[0])
+
+const cSpec = voicingSpec(c!, 0, type(''))
+check(
+	'voicingSpec C x32010: 3 dots, x/o markers, window from 1, label',
+	cSpec.dots.length === 3 &&
+		cSpec.dots.map((d) => `${d.role}:${d.label}:${d.finger}`).join(' ') === 'root:1:1 tone:3:2 root:1:3' &&
+		cSpec.strings!.join(',') === 'open,,open,,,muted' &&
+		cSpec.window!.from === 1 &&
+		cSpec.label === 'C, x32010',
+	cSpec.dots.map((d) => `${d.role}:${d.label}:${d.finger}`).join(' ')
+)
+const d7Spec = voicingSpec(by('D', '7', 'x57575')!, pitchClassOf('D'), type('7'), { labels: 'notes' })
+check('voicingSpec D7 x57575: barre, window from 5, note labels', d7Spec.barres!.length === 1 && d7Spec.window!.from === 5 && d7Spec.dots.some((d) => d.label === 'F#'))
+
+// Whatever the generator voices, the identifier names (an 11 without its 3rd, a 13 without its 9th).
+const unnamed = CHORD_TYPES.flatMap((t) =>
+	chordShapes(0, t, { limit: 20 })
+		.filter((v) => {
+			const pcsOf = new Set(v.frets.flatMap((f, s) => (f < 0 ? [] : [(STRINGS[s] + f) % 12])))
+			return !identifyChords(pcsOf, 0).some((m) => m.type === t && m.rootPc === 0)
+		})
+		.map((v) => `C${t.symbol} ${shapeString(v)}`)
+)
+check('identifyChords names every generated voicing', unnamed.length === 0, unnamed.slice(0, 5).join(', '))
+// A 7-note scale whose stacked thirds include a chord the table cannot name: no half answer.
+check('Non-tertian 7-note scale gives []', chordsOfScale(0, { name: 'Double harmonic', formula: '1 b2 3 4 5 b6 7' }).length === 0)
 
 if (failures) {
 	console.error(`\n${failures} check(s) failed`)
