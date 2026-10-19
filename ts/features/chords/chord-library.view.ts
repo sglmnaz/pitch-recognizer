@@ -41,15 +41,8 @@ const spoken = (label: string) =>
 
 const capitalized = (text: string) => text[0].toUpperCase() + text.slice(1)
 
-/** Strings low to high, all at once or one by one (the Play as setting). A
- * new strum cuts the last one off instead of stacking on it; six strings
- * ringing together at 1/sqrt(n) each stay as loud as one note, like ts/features/trainer/ear.view.ts. */
-function play(midis: number[]) {
-	const step = Settings.get().chordPlay === 'arpeggio' ? ARPEGGIO_S : STRUM_S
-	const gain = 1 / Math.sqrt(Math.max(1, midis.length))
-	Sound.stopAll()
-	midis.forEach((midi, i) => Sound.play(midi, i * step, gain))
-}
+/** Strings low to high, all at once or one by one (the Play as setting). */
+const play = (midis: number[]) => Sound.strum(midis, { step: Settings.get().chordPlay === 'arpeggio' ? ARPEGGIO_S : STRUM_S })
 
 /** `onMicNeed` tells index.ts that listening() changed: only Listen uses the mic. */
 export function createChordModes(root: HTMLElement, onMicNeed: () => void): ChordModes {

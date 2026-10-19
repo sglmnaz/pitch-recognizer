@@ -74,6 +74,19 @@ export function play(midi: number, delay = 0, volume = 1, ringMs = RING_MS) {
 	ringingUntil = Math.max(ringingUntil, performance.now() + delay * 1000 + ringMs)
 }
 
+/**
+ * Strings that ring together, `step` seconds apart from `at`, in the order
+ * given (low to high for a downstroke). At 1/sqrt(n) each they stay as loud
+ * as one note. `stop` (default) cuts what is still sounding first, so a new
+ * strum never stacks on the last; false for a strum scheduled after another
+ * one (a progression's bar). `ringMs` as in play().
+ */
+export function strum(midis: number[], { step, at = 0, ringMs = RING_MS, stop = true }: { step: number; at?: number; ringMs?: number; stop?: boolean }) {
+	if (stop) stopAll()
+	const gain = 1 / Math.sqrt(Math.max(1, midis.length))
+	midis.forEach((midi, i) => play(midi, at + i * step, gain, ringMs))
+}
+
 /** Fades out (20 ms, no click) every plucked note still sounding or scheduled. */
 export function stopAll() {
 	if (!ctx) return

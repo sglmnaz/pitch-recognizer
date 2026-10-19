@@ -21,7 +21,8 @@ import {
 	signatureName,
 	type KeyChord,
 } from '../../music/harmony'
-import { pitchClassOf, ROOTS, scaleTitle, spellScale, STRINGS, type ScaleType } from '../../music/scales'
+import { pitchClassOf, ROOTS, scaleTitle, spellScale, type ScaleType } from '../../music/scales'
+import { shapeNotes } from '../../music/chord-library'
 import { bindSegmented, liveRegion, scoped, setPressed, svgEl } from '../../ui/dom'
 
 // A strum: low string to high, this far apart (a quick downstroke).
@@ -150,14 +151,10 @@ export function createHarmony(root: HTMLElement, host: HarmonyHost) {
 		host.stopScale()
 		const voicing = voicingOf(chord)
 		if (!voicing) return
-		// Strings ringing together at 1/sqrt(n) each stay as loud as one note
-		// (ts/features/chords/chord-library.view.ts); the mic ignores the whole note (NOTE_MS),
-		// not just its attack, or it would hear the chord as notes played.
-		const gain = 1 / Math.sqrt(voicing.frets.filter((f) => f >= 0).length)
-		let i = 0
-		for (let s = STRINGS.length - 1; s >= 0; s--) {
-			if (voicing.frets[s] >= 0) Sound.play(STRINGS[s] + voicing.frets[s], at + STRUM_S * i++, gain, Sound.NOTE_MS)
-		}
+		// The mic ignores the whole note (NOTE_MS), not just its attack, or it
+		// would hear the chord as notes played. Callers cut what still sounds
+		// (a bar's second strum must not cut its first).
+		Sound.strum(shapeNotes(voicing.frets).midis, { step: STRUM_S, at, ringMs: Sound.NOTE_MS, stop: false })
 	}
 
 	// ponytail: bars are timed with setTimeout from a fixed start (no drift,
