@@ -40,9 +40,11 @@ export function validSequence(value: unknown): string[] {
 
 // A chord counts once the recognizer has named it for STABLE_MS: long enough
 // that a strum's attack (and a metronome click) passing through other chord
-// names is not a change, short enough that a fast change still lands.
-// TODO: ~60–80 ms once the HMM chord tracker lands (it smooths by itself).
-export const STABLE_MS = 150
+// names is not a change, short enough that a fast change still lands. The
+// HMM tracker (ts/chords.ts) already smooths over time, so this only has to
+// outlast a few frames of its switching (the raw per-frame recognizer
+// needed 150 ms); more would just add latency.
+export const STABLE_MS = 70
 // Gaps shorter than this inside a run are bridged: a frame or two of another
 // name (the relative minor, "no chord" while the spectrum refills) must not
 // restart the clock of a chord that is still ringing. Four frames at 60 fps.
@@ -53,7 +55,8 @@ export const FLICKER_MS = 70
 // from the first frame that left the old chord, so any frame rate works.
 const GAP_MS = 40
 // A strum's attack this long before a run starts still makes it a played
-// chord: the recognizer names a chord a few hundred ms after its strum.
+// chord: the tracker names a chord ~200–370 ms after its strum (check:chords,
+// bench median 283 ms), with room to spare.
 const ATTACK_LEAD_MS = 500
 
 export interface Onset {

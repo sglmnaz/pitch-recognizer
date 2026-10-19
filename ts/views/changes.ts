@@ -6,7 +6,7 @@ import * as Changes from '../changes'
 import * as Metronome from '../metronome'
 import * as Microphone from '../microphone'
 import * as Settings from '../settings'
-import { PITCH_CLASSES, recognizeChord } from '../chords'
+import { createChordTracker, loadChordModel, PITCH_CLASSES } from '../chords'
 import { chordType } from '../chord-theory'
 import { chordShapes, voicingSpec } from '../chord-shapes'
 import { createFretboard, type Fretboard } from '../fretboard'
@@ -18,11 +18,8 @@ import type { View } from './view'
  * What the recognizer hears right now. Contract: `symbol` spelt like
  * Changes.CHANGE_CHORDS (a PITCH_CLASSES root + a chord-theory symbol: 'C',
  * 'Am', 'G7'), `rootPc` 0–11 (C = 0), `type` the symbol after the root ('',
- * 'm', '7'), `confidence` 0–1 when the recognizer has one; null = no chord.
- * Called once per mic frame with the frame's time. ts/chords.ts is being
- * replaced by a stateful tracker (createChordTracker().track(spectrumDb,
- * binHz, timeMs, a4)): swapping recognizers touches heardChord, resetHeard
- * and RECOGNITION_LATENCY_MS only.
+ * 'm', '7'), `confidence` 0–1; null = no chord. Called once per mic frame
+ * with the frame's time: the HMM tracker smooths over time.
  */
 export interface HeardChord {
 	symbol: string
@@ -31,6 +28,14 @@ export interface HeardChord {
 	confidence?: number
 }
 
+// Our own tracker (ts/chords.ts): the Chords view's smoother never shares state with it.
+const tracker = createChordTracker()
+// Like the Chords view: forget the tracked chord after this much continuous
+// silence (not on every silent frame, a strum's gaps are part of it), so the
+// HMM never carries a chord across a long gap.
+const SILENCE_RESET_MS = 300
+let silentSince: number | null = null
+
 // ?debug: chords fed by hand from the console (the mic is often unavailable
 // where the UI is tested). undefined = off, null = "no chord". Each fed
 // chord counts as strummed once.
@@ -38,24 +43,29 @@ let fake: string | null | undefined
 let fakeStrum = false
 
 export function heardChord(now: number): HeardChord | null {
-	void now // the tracker's timeMs; recognizeChord looks at one frame only
 	if (fake !== undefined) {
 		const root = fake?.match(/^[A-G][#b]?/)?.[0]
 		return fake && root ? { symbol: fake, rootPc: PITCH_CLASSES.indexOf(root), type: fake.slice(root.length) } : null
 	}
-	// Exactly as the Chords tab calls it (ts/views/chords.ts): same silence gate.
-	// recognizeChord assumes A4 = 440 (it takes no reference), so
-	// Settings.get().a4 has nowhere to go until the new recognizer takes one.
+	// Same silence gate as the Chords view. Until the model has loaded the
+	// tracker answers "no chord" (and starts the load itself).
 	const spectrum = Microphone.getSpectrum()
-	const chord = spectrum && Microphone.isSounding() ? recognizeChord(spectrum.spectrumDb, spectrum.binHz).chord : null
+	const analysis = spectrum && Microphone.isSounding() ? tracker.track(spectrum.spectrumDb, spectrum.binHz, now, Settings.get().a4) : null
+	if (analysis) silentSince = null
+	else {
+		silentSince ??= now
+		if (now - silentSince >= SILENCE_RESET_MS) tracker.reset()
+	}
+	const chord = analysis?.chord
 	if (!chord) return null
 	const root = chord.notes[0]
 	return { symbol: chord.name, rootPc: PITCH_CLASSES.indexOf(root), type: chord.name.slice(root.length), confidence: chord.score }
 }
 
-/** Forgets what the recognizer was following, so a new session starts clean. */
+/** Forgets what the recognizer was following, so a new session (or a mic restart) starts clean. */
 export function resetHeard() {
-	// TODO: tracker.reset() once createChordTracker lands; recognizeChord keeps no state.
+	tracker.reset()
+	silentSince = null
 }
 
 /** A strum's attack this frame (the pitch pipeline's onset detector): what tells a played chord from a recognizer flip. */
@@ -70,12 +80,14 @@ function strummed(): boolean {
 
 /* View --------------------------------------------------------------------- */
 
-// The recognizer names a chord this long after it was strummed (its 370 ms
-// spectrum has to fill with the new chord, smoothed 0.8 per frame), so an
-// onset is dated this much earlier before it is judged against a downbeat.
-// Calibration knob: raise it if clean changes read late on real guitars.
-// TODO: ~283 ms once the HMM chord tracker lands (its measured latency).
-const RECOGNITION_LATENCY_MS = 150
+// The tracker names a chord this long after it was strummed (its 370 ms
+// spectrum has to fill with the new chord and the HMM has to be convinced),
+// so an onset is dated this much earlier before it is judged against a
+// downbeat. 283 ms = the benchmark's median from a real chord change to its
+// first naming (bench/README.md); check:chords' synthetic strums read 205 ms
+// for a change after a pause, 372 ms from cold. Calibration knob: raise it
+// if clean changes read late on real guitars.
+const RECOGNITION_LATENCY_MS = 283
 // From a chord's (backdated) onset to the frame it is confirmed stable.
 const CONFIRM_MS = RECOGNITION_LATENCY_MS + Changes.STABLE_MS + Changes.FLICKER_MS
 const COUNT_IN_S = 3
@@ -637,6 +649,8 @@ export function createChangesView(root: HTMLElement): View {
 
 	return {
 		onActivate() {
+			// ~100 KB of weights, loaded on first use: start now so they are ready by Start.
+			loadChordModel().catch((error) => console.error('chord model failed to load', error))
 			status.textContent = ''
 			renderSetup()
 			renderIdle()

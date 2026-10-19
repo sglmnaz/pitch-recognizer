@@ -73,7 +73,7 @@ const strums = (symbols: string[], ms: number): Segments => symbols.map((s) => [
 	check('single-frame flicker does not split a held chord', flickered.length === 1, JSON.stringify(flickered))
 
 	// Stray names shorter than STABLE_MS (a strum's attack, a click) never count.
-	const blips = onsetsOf([[null, 300], ['D', STABLE_MS - 40], [null, 300], ['Am', 60], [null, 300]])
+	const blips = onsetsOf([[null, 300], ['D', STABLE_MS - 40], [null, 300], ['Am', STABLE_MS - 15], [null, 300]])
 	check('blips under the stability time are ignored', blips.length === 0, JSON.stringify(blips))
 
 	// Alternating chord / no-chord frames (an unsteady recognizer) still holds the chord.
@@ -114,10 +114,12 @@ const strums = (symbols: string[], ms: number): Segments => symbols.map((s) => [
 	const franticCount = countOf(pair, frantic)
 	check('changes faster than the refractory time are capped', franticCount <= (40 * 250) / REFRACTORY_MS && franticCount > 0, String(franticCount))
 
-	// Too fast to be stable (100 ms per chord) counts nothing.
+	// Too fast to be stable (under STABLE_MS per chord) counts nothing.
 	const blur: Segments = []
-	for (let i = 0; i < 20; i++) blur.push([i % 2 ? 'C' : 'G', 100, true])
+	for (let i = 0; i < 20; i++) blur.push([i % 2 ? 'C' : 'G', STABLE_MS - 20, true])
 	check('a blur under the stability time counts nothing', countOf(pair, blur) === 0)
+	// The HMM tracker's names are steady: a chord named for a little over STABLE_MS is a chord.
+	check('a chord named just past the stability time is stable', onsetsOf([[null, 200], ['D', STABLE_MS + 20], [null, 200]]).length === 1)
 
 	// Re-strumming the same chord, wrong chords in between: not changes.
 	check(
