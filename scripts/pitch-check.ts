@@ -179,7 +179,7 @@ for (const level of [0.0005, 0.003, 0.02]) {
 		reading = processFrame(tone.subarray(end - FFT_SIZE, end), SAMPLE_RATE, (end / SAMPLE_RATE) * 1000)
 	}
 	const ok = reading !== null && Math.abs(1200 * Math.log2(reading.frequency / 110)) < 5
-	console.log(`${ok ? 'ok  ' : 'FAIL'} tone from start ${reading ? reading.frequency.toFixed(2) + ' Hz' : 'no reading'}`)
+	console.log(`${ok ? 'ok  ' : 'FAIL'} tone from start ${reading ? `${reading.frequency.toFixed(2)} Hz` : 'no reading'}`)
 	allOk = ok && allOk
 }
 

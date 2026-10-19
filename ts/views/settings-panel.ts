@@ -54,14 +54,14 @@ export function createSettingsView(root: HTMLElement, from: () => string | null)
 	// selects their value (a number when marked data-type="number").
 	const switches = Array.from(root.querySelectorAll<HTMLInputElement | HTMLSelectElement>('[data-setting]'))
 	const isNumeric = (input: HTMLInputElement | HTMLSelectElement) => input.type === 'range' || input.type === 'number' || input.dataset.type === 'number'
-	const valueOf = (input: HTMLInputElement | HTMLSelectElement) =>
+	const inputValue = (input: HTMLInputElement | HTMLSelectElement) =>
 		input.type === 'checkbox' ? (input as HTMLInputElement).checked : isNumeric(input) ? Number(input.value) : input.value
 	const chips = root.querySelector<HTMLElement>('#noteChips')!
 
 	for (const input of switches) {
 		// Sliders apply live while dragging.
 		input.addEventListener(input.type === 'range' ? 'input' : 'change', () => {
-			let value = valueOf(input)
+			let value = inputValue(input)
 			if (typeof value === 'number' && input instanceof HTMLInputElement && input.min) {
 				// A typed number can be empty or out of range: clamp it, or put the
 				// stored value back.
