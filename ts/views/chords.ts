@@ -75,9 +75,7 @@ export function createChordsView(root: HTMLElement, onMicNeed: () => void): View
 			// unplugged electric) are analysed too.
 			const loud = Microphone.isSounding()
 			const now = performance.now()
-			// TODO: plain Settings.get().a4 once the tuner's A4 calibration is merged.
-			const a4 = (Settings.get() as { a4?: number }).a4 ?? 440
-			const analysis = loud && spectrum ? trackChord(spectrum.spectrumDb, spectrum.binHz, now, a4) : null
+			const analysis = loud && spectrum ? trackChord(spectrum.spectrumDb, spectrum.binHz, now, Settings.get().a4) : null
 			if (!analysis) resetChordTracking()
 			const chord = analysis?.chord ?? null
 
