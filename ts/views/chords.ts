@@ -1,11 +1,14 @@
 import * as Microphone from '../microphone'
-import { PITCH_CLASSES, recognizeChord } from '../chords'
+import * as Settings from '../settings'
+import { PITCH_CLASSES, resetChordTracking, trackChord } from '../chords'
 import type { View } from './view'
 import { createChordModes } from './chord-library'
 
-// A new label (chord or "none") must win for this long before it is shown, so
-// a strum's attack and decay do not flicker through other chords.
-const CHORD_CONFIRM_MS = 250
+// A new label (chord or "none") must win for this long before it is shown.
+// trackChord's HMM already keeps a strum's attack and decay from flickering
+// through other chords; this only hides single-frame changes. (250 ms before
+// the HMM, which made a chord change appear ~0.5 s late.)
+const CHORD_CONFIRM_MS = 100
 
 /** `onMicNeed` tells index.ts that wantsMic() changed: only Listen uses the mic. */
 export function createChordsView(root: HTMLElement, onMicNeed: () => void): View {
@@ -50,6 +53,7 @@ export function createChordsView(root: HTMLElement, onMicNeed: () => void): View
 	}
 
 	function idle(text = 'Strum a chord') {
+		resetChordTracking()
 		shown = null
 		candidate = null
 		render(null, [], text)
@@ -70,10 +74,13 @@ export function createChordsView(root: HTMLElement, onMicNeed: () => void): View
 			// Same adaptive silence gate as the tuner, so quiet sources (an
 			// unplugged electric) are analysed too.
 			const loud = Microphone.isSounding()
-			const analysis = loud && spectrum ? recognizeChord(spectrum.spectrumDb, spectrum.binHz) : null
+			const now = performance.now()
+			// TODO: plain Settings.get().a4 once the tuner's A4 calibration is merged.
+			const a4 = (Settings.get() as { a4?: number }).a4 ?? 440
+			const analysis = loud && spectrum ? trackChord(spectrum.spectrumDb, spectrum.binHz, now, a4) : null
+			if (!analysis) resetChordTracking()
 			const chord = analysis?.chord ?? null
 
-			const now = performance.now()
 			const label = chord?.name ?? null
 			if (label !== candidate) {
 				candidate = label

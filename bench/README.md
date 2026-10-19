@@ -1,7 +1,7 @@
 # Benchmark
 
 `npm run bench` runs the app's own note and chord detection (`processFrame` from
-`ts/microphone.ts`, `recognizeChord` from `ts/chords.ts`) over labelled guitar
+`ts/microphone.ts`, `trackChord` from `ts/chords.ts`) over labelled guitar
 audio and reports mir_eval-style metrics, accuracy **and** response time, so
 changes can be compared on the same data. Needs `ffmpeg` on the PATH.
 
@@ -88,3 +88,77 @@ room noise. Tried and rejected (no gain or worse): pre-emphasis before MPM,
 a looser noise margin (25 → 28 %, but more gate openings on noise), an 8192
 window (worse, +35 ms). The fix is placement: the phone ~10 cm from the strings
 instead of ~50 cm is ~+14 dB.
+
+## 2026-10-19: learned chord recognizer
+
+`ts/chords.ts` no longer matches templates against a hand-made chroma. Per
+analyser frame (16384-point spectrum, unchanged): log-frequency spectrum at 3
+bins per semitone on the A4 reference → harmonic stacking (sub-harmonics 1/5–1/2
+and harmonics 1–7, as Basic Pitch's HCQT: Bittner et al., ICASSP 2022) → three
+convolutions along pitch, shared at every pitch → a salience per semitone C2–B6
+(learned approximate transcription, the role of NNLS chroma — Mauch & Dixon,
+ISMIR 2010 — and of the deep chroma extractor — Korzeniowski & Widmer, ISMIR
+2016) → chroma + bass chroma + pooled features, rotated to each root and scored
+by one MLP shared by all 12 roots → softmax over 12 × 8 types + "no chord" →
+HMM forward filtering with a uniform switch rate (no lag; Cho & Bello, IEEE/ACM
+TASLP 2014: enforcing continuity is what matters). 10.7k parameters, weights in
+`ts/chord-model.ts` (~100 KB), ~0.6 ms per frame in Node.
+
+Training (tune split only — test-split audio is never read):
+
+```
+node scripts/chord-data.ts --out <dir>              # GuitarSet 00-01 + IDMT "fast", 5 conditions
+node scripts/chord-data.ts --out <dir> --synth 160  # synthetic strums, every chord type equally often
+python scripts/chord-train.py --data <dir> --synth --labels perf          # -> ts/chord-model.ts
+python scripts/chord-train.py --data <dir> --synth --labels perf --val    # hold out GuitarSet 01 + half of IDMT
+```
+
+Targets: chord class per frame (GuitarSet's performed annotation, IDMT's
+labels; single-note solo frames and silence = "no chord") plus the notes
+sounding (GuitarSet per-string annotations, exact for synthetic takes). The HMM
+switch rate, evidence power, "no chord" offset and type offsets were chosen on
+the held-out part of the tune split (`--val`), never on the test split. The
+type offsets (9: −1.75, maj7: −1 log-odds) undo the synthetic takes' flat
+type prior: they move held-out scores by < 1 point and keep the check's
+dominant-7th voicings from reading as 9ths (`check:chords`: soft 45/45, bright
+43/45, single notes, silence, noise and A4 = 432 / 466 Hz all pass).
+
+Test split, default subset (120 items), before → after:
+
+| | root | majmin | sevenths | latency |
+|---|---|---|---|---|
+| clean | 67.5 → **77.5 %** | 59.9 → **74.0 %** | 46.0 → **62.6 %** | 283 → 283 ms |
+| phone-good | 67.7 → **79.3 %** | 60.9 → **75.6 %** | 46.5 → **63.9 %** | 282 → 281 ms |
+| phone-mid | 68.1 → **79.1 %** | 61.1 → **75.2 %** | 47.0 → **63.3 %** | 282 → 282 ms |
+| phone-cheap | 67.1 → **75.7 %** | 60.2 → **72.1 %** | 45.3 → **61.0 %** | 281 → 284 ms |
+| unplugged | 31.3 → **55.2 %** | 24.9 → **52.4 %** | 9.0 → **46.8 %** | 429 → 372 ms |
+
+Overfitting: on the tune split it was trained on it scores 87.4 / 84.5 / 75.7 %
+(clean), against 77.5 / 74.0 / 62.6 % on test: a 10–13 point gap, which is why
+only test numbers are reported. The held-out validation inside the tune split
+(model trained without GuitarSet player 01 and half the IDMT progressions)
+gave 86 / 80 / 74 % on GuitarSet and 72 / 72 / 66 % on IDMT. The most frequent
+remaining error is "no chord" during a chord (soft strums, single bass notes in
+bossa / fingerpicked comping). The app's display confirmation went from
+250 ms to 100 ms, because the HMM now does the smoothing, so a change shows
+~150 ms sooner than the latency column suggests.
+
+Tried and rejected (held-out validation unless noted):
+- **GuitarSet's instructed labels** instead of the performed ones: +2.5 points on
+  GuitarSet, −3 sevenths on IDMT, and it teaches that a played maj7 is "maj",
+  against the synthetic data and the check's voicings. Kept the performed ones.
+- **No synthetic takes**: the model learns the recordings' prior and drops colour
+  notes (an early real-data-only model: 26/45 on the check's soft suite).
+- **Basic Pitch's single sub-harmonic (1/2)**: 1–2 points lower on GuitarSet,
+  and overtones of the fifth read as played 9ths (check: 41–44/45 soft).
+- **Bigger model** (24 channels, 48 hidden; or 20 epochs): no gain. **Note-loss
+  weight 3**: −1 to −3 points.
+- **"≥ 3 notes" gate** on the learned chroma (as the old MIN_NOTES): −11 points
+  root, single-note rejection 94 → 98 %. Synthetic ringing single notes
+  labelled "no chord" fixed the check's single notes instead.
+- **HMM without the "no chord" offset**: smoothing let "no chord" win whenever it
+  was a steady second best (unplugged 26 → 15 % root); the offset of 1.5 keeps
+  single-note rejection at the unsmoothed level (94 %) while gaining ~15 points
+  root on GuitarSet.
+  Higher self-transition (0.8–0.95 per 100 ms) or tempered evidence (power 0.5)
+  cost a frame of latency for nothing.

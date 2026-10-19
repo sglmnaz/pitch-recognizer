@@ -16,17 +16,17 @@
 import { existsSync, readdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { FFT_SIZE, processFrame, stop } from '../ts/microphone.ts'
-import { recognizeChord } from '../ts/chords.ts'
+import { resetChordTracking, trackChord } from '../ts/chords.ts'
 import { appBand, appHighpass, CONDITIONS, decode, degrade, rms, spectrumDb } from './audio.ts'
 
-const SAMPLE_RATE = 44100
+export const SAMPLE_RATE = 44100
 const HOP = Math.round(SAMPLE_RATE / 60) // one rAF frame
 // Same analyser settings as ts/microphone.ts (filters via appBand/appHighpass).
-const CHORD_FFT_SIZE = 16384
+export const CHORD_FFT_SIZE = 16384
 // Chords are scored at 10 Hz to keep runs short; AnalyserNode's 0.8 smoothing
 // per 60 Hz frame is 0.8^6 per 10 Hz step.
-const CHORD_HOP = 6 * HOP
-const CHORD_SMOOTHING = 0.8 ** 6
+export const CHORD_HOP = 6 * HOP
+export const CHORD_SMOOTHING = 0.8 ** 6
 // Note frames are scored from this long after the onset (attack not scored).
 const SETTLE_S = 0.3
 // Default subset size per task and source; --full runs everything.
@@ -44,7 +44,7 @@ function parseNote(name: string): number | null {
 	return match ? rootOf(match[1], match[2]) + 12 * (Number(match[3]) + 1) : null
 }
 
-type Chord = { root: number; quality: string } | null // null = no chord
+export type Chord = { root: number; quality: string } | null // null = no chord
 
 /** App names (`Am`, `F#m7`, `Bbmaj7`, `Dsus2`) -> root + Harte quality. */
 const APP_QUALITIES: Record<string, string> = { '': 'maj', m: 'min', '7': '7', m7: 'min7', maj7: 'maj7', '9': '9', sus2: 'sus2', sus4: 'sus4' }
@@ -55,7 +55,7 @@ function parseAppChord(name: string): Chord | undefined {
 }
 
 /** Harte labels (`D#:maj`, `A:min7/b3`, `N`) -> root + quality (bass and extensions dropped). */
-function parseHarte(label: string): Chord {
+export function parseHarte(label: string): Chord {
 	if (label === 'N' || label === 'X') return null
 	const [root, rest = 'maj'] = label.split(':')
 	const match = /^([A-G])(#|b)?$/.exec(root)!
@@ -64,9 +64,9 @@ function parseHarte(label: string): Chord {
 
 // MIREX-style reductions, as mir_eval.chord: references outside a level's
 // vocabulary are left out of that level's score.
-const MAJMIN: Record<string, string> = { maj: 'maj', '7': 'maj', maj7: 'maj', '9': 'maj', maj6: 'maj', min: 'min', min7: 'min', min6: 'min' }
-const SEVENTHS: Record<string, string> = { maj: 'maj', maj6: 'maj', min: 'min', min6: 'min', '7': '7', '9': '7', maj7: 'maj7', min7: 'min7' }
-function same(reference: Chord, estimate: Chord, level: Level): boolean | undefined {
+export const MAJMIN: Record<string, string> = { maj: 'maj', '7': 'maj', maj7: 'maj', '9': 'maj', maj6: 'maj', min: 'min', min7: 'min', min6: 'min' }
+export const SEVENTHS: Record<string, string> = { maj: 'maj', maj6: 'maj', min: 'min', min6: 'min', '7': '7', '9': '7', maj7: 'maj7', min7: 'min7' }
+export function same(reference: Chord, estimate: Chord, level: Level): boolean | undefined {
 	if (!reference) return undefined
 	if (level === 'root') return estimate?.root === reference.root
 	const map = level === 'majmin' ? MAJMIN : SEVENTHS
@@ -76,12 +76,12 @@ function same(reference: Chord, estimate: Chord, level: Level): boolean | undefi
 
 // --- items ------------------------------------------------------------------
 
-interface Segment<T> {
+export interface Segment<T> {
 	start: number
 	end: number
 	value: T
 }
-interface Item<T> {
+export interface Item<T> {
 	id: string
 	load: () => Float32Array
 	segments: Segment<T>[]
@@ -93,7 +93,7 @@ interface Item<T> {
 // IDMT notes: guitar AR tunes, FS and LP test. GuitarSet: players 00-01 tune,
 // 02-05 test. IDMT chords: the "fast" takes tune, the "slow" ones test. Own
 // recordings always count as test.
-function splitOf(id: string): 'tune' | 'test' {
+export function splitOf(id: string): 'tune' | 'test' {
 	if (/^idmt\/AR_/.test(id)) return 'tune'
 	if (/^guitarset\/0[01]_/.test(id)) return 'tune'
 	if (/^idmt\/fast\//.test(id)) return 'tune'
@@ -216,7 +216,7 @@ function idmtNotes(): Item<number>[] {
 const IDMT_QUALITIES: Record<string, string> = { '': 'maj', min: 'min', '7': '7', '13': '7', '79': '7', '713': '7', '7913': '7', '79b': '7', min7: 'min7', min79: 'min7', maj7: 'maj7' }
 
 /** IDMT-SMT-Guitar dataset 4, acoustic guitar through a microphone: chord changes per beat. */
-function idmtChords(): Item<Chord>[] {
+export function idmtChords(): Item<Chord>[] {
 	const root = join(IDMT, 'dataset4', 'acoustic_mic')
 	if (!existsSync(root)) return []
 	const items: Item<Chord>[] = []
@@ -292,20 +292,22 @@ function evaluateNotes(item: Item<number>, signal: Float32Array, score: NoteScor
 	score.firstCorrect.push(...[...firstSeen.values()].map((s) => s * 1000))
 }
 
-type Level = 'root' | 'majmin' | 'sevenths'
+export type Level = 'root' | 'majmin' | 'sevenths'
 type ChordScore = Record<Level, { hits: number; frames: number }> & { confusions: Map<string, number>; latencies: number[] }
 
 function evaluateChords(item: Item<Chord>, signal: Float32Array, score: ChordScore) {
 	const filtered = appHighpass(signal, SAMPLE_RATE)
 	const state = { smoothing: CHORD_SMOOTHING }
 	const recognised = new Set<Segment<Chord>>()
+	resetChordTracking()
 	for (let end = CHORD_FFT_SIZE; end <= filtered.length; end += CHORD_HOP) {
 		const spectrum = spectrumDb(filtered.subarray(end - CHORD_FFT_SIZE, end), state)
 		// The analyser window spans ~370 ms: score it against the chord at its centre.
 		const t = (end - CHORD_FFT_SIZE / 2) / SAMPLE_RATE
+		// Every frame goes through the tracker (its HMM state follows the audio), scored or not.
+		const match = trackChord(spectrum, SAMPLE_RATE / CHORD_FFT_SIZE, (end / SAMPLE_RATE) * 1000).chord
 		const segment = item.segments.find((s) => t >= s.start && t < s.end)
 		if (!segment) continue
-		const match = recognizeChord(spectrum, SAMPLE_RATE / CHORD_FFT_SIZE).chord
 		const estimate = match ? (parseAppChord(match.name) ?? null) : null
 		// Latency: from the chord change until the analyser first names it (majmin
 		// level), timed at the window's end — when the app could show it.
@@ -325,62 +327,66 @@ function evaluateChords(item: Item<Chord>, signal: Float32Array, score: ChordSco
 
 // --- main -------------------------------------------------------------------
 
-const args = process.argv.slice(2)
-const option = (name: string) => (args.includes(name) ? args[args.indexOf(name) + 1] : null)
-const limit = args.includes('--full') ? Infinity : Number(option('--limit') ?? DEFAULT_LIMIT)
-const split = option('--split') ?? 'test'
-const inSplit = <T>(items: Item<T>[]) => (split === 'all' ? items : items.filter((item) => splitOf(item.id) === split))
-const conditions = option('--conditions')?.split(',')
-const activeConditions = CONDITIONS.filter((c) => !conditions || conditions.includes(c.name))
-const task = option('--task')
-const jsonPath = option('--json')
+// Run only when invoked as a script: scripts/chord-data.ts imports the loaders.
+if (import.meta.main) {
 
-const pct = (hits: number, total: number) => (total ? `${((100 * hits) / total).toFixed(1)}%` : '-').padStart(6)
-const quantile = (xs: number[], p: number) => (xs.length ? [...xs].sort((a, b) => a - b)[Math.floor(p * (xs.length - 1))] : NaN)
-const results: Record<string, unknown> = { date: new Date().toISOString(), limit }
+	const args = process.argv.slice(2)
+	const option = (name: string) => (args.includes(name) ? args[args.indexOf(name) + 1] : null)
+	const limit = args.includes('--full') ? Infinity : Number(option('--limit') ?? DEFAULT_LIMIT)
+	const split = option('--split') ?? 'test'
+	const inSplit = <T>(items: Item<T>[]) => (split === 'all' ? items : items.filter((item) => splitOf(item.id) === split))
+	const conditions = option('--conditions')?.split(',')
+	const activeConditions = CONDITIONS.filter((c) => !conditions || conditions.includes(c.name))
+	const task = option('--task')
+	const jsonPath = option('--json')
 
-if (task !== 'chords') {
-	const sources = option('--source')
-	const items = [
-		...ownItems('note', parseNote),
-		...(sources && !sources.includes('idmt') ? [] : spread(inSplit(idmtNotes()), limit)),
-		...(sources && !sources.includes('guitarset') ? [] : spread(inSplit(guitarSetNotes()), limit)),
-	]
-	console.log(`\nNOTES (${split} split) — ${items.length} items (RPA right note; RCA octave ignored; RCA−RPA = octave errors)`)
-	console.log('condition        RPA     RCA  voiced  IQR¢  first-ok')
-	for (const condition of activeConditions) {
-		const score: NoteScore = { byNote: new Map(), frames: 0, pitchHits: 0, chromaHits: 0, voiced: 0, offsets: [], firstCorrect: [] }
-		items.forEach((item, i) => evaluateNotes(item, degrade(item.load(), SAMPLE_RATE, condition, i + 1), score))
-		const iqr = quantile(score.offsets, 0.75) - quantile(score.offsets, 0.25)
-		const firstOk = quantile(score.firstCorrect, 0.5)
-		console.log(
-			`${condition.name.padEnd(13)} ${pct(score.pitchHits, score.frames)}  ${pct(score.chromaHits, score.frames)}  ${pct(score.voiced, score.frames)}  ${iqr.toFixed(1).padStart(4)}  ${firstOk.toFixed(0).padStart(5)}ms`,
-		)
-		if (args.includes('--by-note')) {
-			const names = ['C', 'C#', 'D', 'Eb', 'E', 'F', 'F#', 'G', 'Ab', 'A', 'Bb', 'B']
-			const rows = [...score.byNote.entries()].sort((a, b) => a[0] - b[0]).filter(([, n]) => n.frames >= 20)
+	const pct = (hits: number, total: number) => (total ? `${((100 * hits) / total).toFixed(1)}%` : '-').padStart(6)
+	const quantile = (xs: number[], p: number) => (xs.length ? [...xs].sort((a, b) => a - b)[Math.floor(p * (xs.length - 1))] : NaN)
+	const results: Record<string, unknown> = { date: new Date().toISOString(), limit }
+
+	if (task !== 'chords') {
+		const sources = option('--source')
+		const items = [
+			...ownItems('note', parseNote),
+			...(sources && !sources.includes('idmt') ? [] : spread(inSplit(idmtNotes()), limit)),
+			...(sources && !sources.includes('guitarset') ? [] : spread(inSplit(guitarSetNotes()), limit)),
+		]
+		console.log(`\nNOTES (${split} split) — ${items.length} items (RPA right note; RCA octave ignored; RCA−RPA = octave errors)`)
+		console.log('condition        RPA     RCA  voiced  IQR¢  first-ok')
+		for (const condition of activeConditions) {
+			const score: NoteScore = { byNote: new Map(), frames: 0, pitchHits: 0, chromaHits: 0, voiced: 0, offsets: [], firstCorrect: [] }
+			items.forEach((item, i) => evaluateNotes(item, degrade(item.load(), SAMPLE_RATE, condition, i + 1), score))
+			const iqr = quantile(score.offsets, 0.75) - quantile(score.offsets, 0.25)
+			const firstOk = quantile(score.firstCorrect, 0.5)
 			console.log(
-				'   ' + rows.map(([midi, n]) => `${names[midi % 12]}${Math.floor(midi / 12) - 1} ${pct(n.pitchHits, n.frames).trim()}${n.chromaHits > n.pitchHits ? ` (oct ${pct(n.chromaHits - n.pitchHits, n.frames).trim()})` : ''}`).join(' · '),
+				`${condition.name.padEnd(13)} ${pct(score.pitchHits, score.frames)}  ${pct(score.chromaHits, score.frames)}  ${pct(score.voiced, score.frames)}  ${iqr.toFixed(1).padStart(4)}  ${firstOk.toFixed(0).padStart(5)}ms`,
 			)
+			if (args.includes('--by-note')) {
+				const names = ['C', 'C#', 'D', 'Eb', 'E', 'F', 'F#', 'G', 'Ab', 'A', 'Bb', 'B']
+				const rows = [...score.byNote.entries()].sort((a, b) => a[0] - b[0]).filter(([, n]) => n.frames >= 20)
+				console.log(
+					'   ' + rows.map(([midi, n]) => `${names[midi % 12]}${Math.floor(midi / 12) - 1} ${pct(n.pitchHits, n.frames).trim()}${n.chromaHits > n.pitchHits ? ` (oct ${pct(n.chromaHits - n.pitchHits, n.frames).trim()})` : ''}`).join(' · '),
+				)
+			}
+			const { offsets, firstCorrect, byNote, ...counts } = score
+			results[`notes/${condition.name}`] = { ...counts, iqr, firstOk }
 		}
-		const { offsets, firstCorrect, byNote, ...counts } = score
-		results[`notes/${condition.name}`] = { ...counts, iqr, firstOk }
 	}
-}
 
-if (task !== 'notes') {
-	const items = [...ownItems('chord', parseAppChord), ...spread(inSplit(idmtChords()), limit), ...spread(inSplit(guitarSetChords()), limit)]
-	console.log(`\nCHORDS (${split} split) — ${items.length} items (frame-level chord symbol recall, MIREX reductions)`)
-	console.log('condition       root  majmin sevenths  latency  top confusions (sevenths)')
-	for (const condition of activeConditions) {
-		const score: ChordScore = { root: { hits: 0, frames: 0 }, majmin: { hits: 0, frames: 0 }, sevenths: { hits: 0, frames: 0 }, confusions: new Map(), latencies: [] }
-		items.forEach((item, i) => evaluateChords(item, degrade(item.load(), SAMPLE_RATE, condition, i + 1), score))
-		const top = [...score.confusions.entries()].sort((a, b) => b[1] - a[1]).slice(0, 3).map(([k, v]) => `${k}×${v}`).join(' ')
-		const latency = quantile(score.latencies, 0.5)
-		console.log(`${condition.name.padEnd(13)} ${pct(score.root.hits, score.root.frames)} ${pct(score.majmin.hits, score.majmin.frames)}  ${pct(score.sevenths.hits, score.sevenths.frames)}  ${latency.toFixed(0).padStart(5)}ms  ${top}`)
-		const { confusions, latencies, ...levels } = score
-		results[`chords/${condition.name}`] = { ...levels, latency }
+	if (task !== 'notes') {
+		const items = [...ownItems('chord', parseAppChord), ...spread(inSplit(idmtChords()), limit), ...spread(inSplit(guitarSetChords()), limit)]
+		console.log(`\nCHORDS (${split} split) — ${items.length} items (frame-level chord symbol recall, MIREX reductions)`)
+		console.log('condition       root  majmin sevenths  latency  top confusions (sevenths)')
+		for (const condition of activeConditions) {
+			const score: ChordScore = { root: { hits: 0, frames: 0 }, majmin: { hits: 0, frames: 0 }, sevenths: { hits: 0, frames: 0 }, confusions: new Map(), latencies: [] }
+			items.forEach((item, i) => evaluateChords(item, degrade(item.load(), SAMPLE_RATE, condition, i + 1), score))
+			const top = [...score.confusions.entries()].sort((a, b) => b[1] - a[1]).slice(0, 3).map(([k, v]) => `${k}×${v}`).join(' ')
+			const latency = quantile(score.latencies, 0.5)
+			console.log(`${condition.name.padEnd(13)} ${pct(score.root.hits, score.root.frames)} ${pct(score.majmin.hits, score.majmin.frames)}  ${pct(score.sevenths.hits, score.sevenths.frames)}  ${latency.toFixed(0).padStart(5)}ms  ${top}`)
+			const { confusions, latencies, ...levels } = score
+			results[`chords/${condition.name}`] = { ...levels, latency }
+		}
 	}
-}
 
-if (jsonPath) writeFileSync(jsonPath, JSON.stringify(results, null, '\t'))
+	if (jsonPath) writeFileSync(jsonPath, JSON.stringify(results, null, '\t'))
+}

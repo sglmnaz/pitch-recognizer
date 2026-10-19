@@ -1,7 +1,39 @@
-// Chord recognition from a magnitude spectrum: pitch class profile (chroma) +
-// template matching, after Fujishima ("Realtime Chord Recognition of Musical
-// Sound", ICMC 1999). Pure functions so scripts/chord-check.ts can run them in
-// Node on synthetic strums.
+// Chord recognition from a magnitude spectrum with a small learned model
+// (weights in ts/chord-model.ts, trained by scripts/chord-train.py on the
+// benchmark's tune split) and HMM smoothing over time. Pure functions plus the
+// smoother's state, so scripts/chord-check.ts and scripts/bench.ts run them in
+// Node on synthetic strums and recordings.
+//
+// Pipeline, per analyser frame:
+//  1. logSpectrum: the FFT resampled to 3 bins per semitone, level-normalised.
+//  2. Harmonic stacking (Bittner et al., "A Lightweight Instrument-Agnostic
+//     Model for Polyphonic Note Transcription", ICASSP 2022 — Basic Pitch):
+//     the log spectrum read at sub-harmonics 1/5-1/2 and harmonics 1-7 of
+//     every bin, so small kernels see a note's whole overtone series and the
+//     lower notes it could be an overtone of.
+//  3. Three convolutions along pitch, the same weights at every pitch (the note
+//     model is transposition-equivariant), -> a salience per semitone C2..B6:
+//     approximate transcription learned from GuitarSet's per-string note
+//     annotations, the role of Mauch & Dixon's NNLS chroma (ISMIR 2010) and of
+//     Korzeniowski & Widmer's deep chroma extractor (ISMIR 2016).
+//  4. Chroma (noisy-OR of the saliences over octaves), a bass chroma (chance
+//     that each note is the lowest one sounding) and per-pitch-class pooled
+//     hidden features, rotated to each of the 12 roots and scored for the 8
+//     chord types by one small MLP shared by all roots (so every root learns
+//     from every key); a separate "no chord" logit. Softmax over 97 classes.
+//  5. trackChord: HMM forward filtering over those 97 states with a uniform
+//     switch probability (Cho & Bello, IEEE/ACM TASLP 22(2), 2014: enforcing
+//     continuity is what matters, a musically informed transition matrix adds
+//     little); online filtering adds no lag, unlike Viterbi decoding.
+//
+// Trained on the tune split only: GuitarSet players 00-01 (performed chord
+// labels and per-string notes), IDMT-SMT-Guitar dataset4 "fast" takes and
+// synthetic strums (scripts/chord-data.ts), all under the benchmark's phone
+// conditions. 10.7k parameters, ~0.6 ms per frame in Node.
+//
+// The tuning reference `a4` (the tuner's A4 calibration) moves the
+// log-frequency grid, so the model always sees notes on its semitone bins.
+import * as M from './chord-model.ts'
 
 /** Pitch-class names as guitarists usually spell them. */
 export const PITCH_CLASSES = ['C', 'C#', 'D', 'Eb', 'E', 'F', 'F#', 'G', 'Ab', 'A', 'Bb', 'B']
@@ -11,175 +43,282 @@ export interface ChordMatch {
 	name: string
 	/** Pitch classes of the chord, root first. */
 	notes: string[]
-	/** Cosine similarity between chroma and template, in [0, 1]. */
+	/** Probability of this chord, in [0, 1]. */
 	score: number
 }
 
-// Chord types as intervals above the root, each with a penalty subtracted from
-// its match score: simpler chords win unless the extra note is clearly there.
-// Overtones of a chord's own notes spell extensions — the fifth's 5th harmonic
-// and the third's 3rd harmonic are its major 7th, the fifth's 3rd harmonic its
-// 9th — and a weak third (common on real recordings) turns any triad into a
-// sus chord. Each note beyond a triad costs 0.03; maj7 and sus pay extra.
-// Tuned with `npm run bench` on GuitarSet + IDMT-SMT-Guitar (sus 0.05 and maj7
-// +0.03 gave +4 points majmin and +5 sevenths) while keeping every synthetic
-// voicing in scripts/chord-check.ts recognised.
-const CHORD_TYPES: { suffix: string; intervals: number[]; penalty: number }[] = [
-	{ suffix: '', intervals: [0, 4, 7], penalty: 0 },
-	{ suffix: 'm', intervals: [0, 3, 7], penalty: 0 },
-	{ suffix: '7', intervals: [0, 4, 7, 10], penalty: 0.03 },
-	{ suffix: 'm7', intervals: [0, 3, 7, 10], penalty: 0.03 },
-	{ suffix: 'maj7', intervals: [0, 4, 7, 11], penalty: 0.06 },
-	{ suffix: '9', intervals: [0, 4, 7, 10, 2], penalty: 0.06 },
-	{ suffix: 'sus2', intervals: [0, 2, 7], penalty: 0.05 },
-	{ suffix: 'sus4', intervals: [0, 5, 7], penalty: 0.05 },
-]
-
-// Chroma is compressed (value^CHROMA_EXPONENT) before matching. Guitar voicings
-// double the root and fifth on two or three strings but put the colour note
-// (the 7th, the minor third of an A-shape barre) on a single string; with raw
-// magnitudes that note never weighs enough to beat the plain triad. Log-like
-// compression is standard in chroma features for the same reason (Müller,
-// "Fundamentals of Music Processing", §5.2).
-const CHROMA_EXPONENT = 0.5
-
-// Bass-note tiebreak: chords sharing their notes (Dsus2 = Asus4, Am7 = C6)
-// differ only in root, and the lowest note played is usually the root.
-const BASS_BONUS = 0.03
-const BASS_RANGE_DB = 30
-
-// Spectrum band folded into chroma. 75 Hz keeps the low E (82 Hz); above
-// ~1.5 kHz guitar partials are mostly upper harmonics, which add the wrong
-// pitch classes (the 5th harmonic of A is a C#), and FFT bins are already
-// finer than a semitone from ~200 Hz up.
-const MIN_HZ = 75
-const MAX_HZ = 1500
-
-// Spectral peaks more than this far below the loudest one are noise floor.
-const PEAK_RANGE_DB = 40
-
-// Approximate note transcription, a cheap stand-in for Mauch & Dixon's NNLS
-// chroma (ISMIR 2010): a peak at an integer multiple (2–8) of a lower peak
-// that is not much weaker (within HARMONIC_LEVEL_DB) is taken as that note's
-// overtone. Overtones that add a different pitch class (3rd, 5th, 6th, 7th
-// harmonic: fifth, major third, fifth, minor seventh) count only
-// OVERTONE_WEIGHT in the chroma; octave harmonics fold onto their root anyway.
-const MAX_HARMONIC = 8
-const HARMONIC_TOLERANCE_CENTS = 35
-const HARMONIC_LEVEL_DB = 20
-const OVERTONE_WEIGHT = 0.25
-
-// A chord needs at least this many distinct pitch classes among the peaks that
-// are not overtones. Without it a single bright note — whose 3rd and 5th
-// harmonics spell its own major triad — is named as a chord.
-const MIN_NOTES = 3
-
-// Below this cosine similarity nothing is named. 0.8 left real strums unnamed
-// half the time (muted strings, partial voicings); 0.6 gained 10 points majmin
-// on the benchmark while single notes stay rejected by MIN_NOTES.
-const MIN_SCORE = 0.6
-
-interface Peak {
-	hz: number
-	magnitude: number
-}
-
-/**
- * Local maxima of a dB magnitude spectrum (as AnalyserNode.getFloatFrequencyData
- * returns it) inside the analysis band, with parabolic interpolation of the
- * peak frequency so low notes land on the right semitone despite coarse bins.
- */
-function spectralPeaks(spectrumDb: Float32Array, binHz: number): Peak[] {
-	const first = Math.max(1, Math.floor(MIN_HZ / binHz))
-	const last = Math.min(spectrumDb.length - 2, Math.ceil(MAX_HZ / binHz))
-	let loudest = -Infinity
-	for (let i = first; i <= last; i++) loudest = Math.max(loudest, spectrumDb[i])
-
-	const peaks: Peak[] = []
-	for (let i = first; i <= last; i++) {
-		const [a, b, c] = [spectrumDb[i - 1], spectrumDb[i], spectrumDb[i + 1]]
-		if (b <= a || b < c || b < loudest - PEAK_RANGE_DB) continue
-		const denominator = a - 2 * b + c
-		const offset = denominator === 0 ? 0 : (0.5 * (a - c)) / denominator
-		peaks.push({ hz: (i + offset) * binHz, magnitude: 10 ** (b / 20) })
-	}
-	return peaks
-}
-
-/** Harmonic number (2..MAX_HARMONIC) of `peak` over some lower peak, or 1 if none. */
-function harmonicNumber(peak: Peak, peaks: Peak[]): number {
-	for (const lower of peaks) {
-		if (lower.hz >= peak.hz || 20 * Math.log10(peak.magnitude / lower.magnitude) > HARMONIC_LEVEL_DB) continue
-		const h = Math.round(peak.hz / lower.hz)
-		if (h >= 2 && h <= MAX_HARMONIC && Math.abs(1200 * Math.log2(peak.hz / (lower.hz * h))) < HARMONIC_TOLERANCE_CENTS) {
-			return h
-		}
-	}
-	return 1
-}
-
-function pitchClassOf(hz: number): { pitchClass: number; inTune: number } {
-	const midi = 69 + 12 * Math.log2(hz / 440)
-	const nearest = Math.round(midi)
-	// Peaks between two semitones (noise, inharmonic partials) count less.
-	return { pitchClass: ((nearest % 12) + 12) % 12, inTune: Math.cos(Math.PI * (midi - nearest)) ** 2 }
-}
-
 export interface ChordAnalysis {
-	/** 12-bin chroma (C..B), scaled so the strongest bin is 1; all zeros if silent. */
+	/** 12-bin learned chroma (C..B), chance that each pitch class sounds, in [0, 1]. */
 	chroma: number[]
 	/** Best-matching chord, or null when no chord is clearly being played. */
 	chord: ChordMatch | null
 }
 
-export function recognizeChord(spectrumDb: Float32Array, binHz: number): ChordAnalysis {
-	const chroma = new Array<number>(12).fill(0)
-	const played = new Set<number>()
-	const peaks = spectralPeaks(spectrumDb, binHz)
-	const loudest = Math.max(0, ...peaks.map((peak) => peak.magnitude))
-	let bass: number | null = null
+// Chord types as intervals above the root, in the model's output order.
+const CHORD_TYPES: { suffix: string; intervals: number[] }[] = [
+	{ suffix: '', intervals: [0, 4, 7] },
+	{ suffix: 'm', intervals: [0, 3, 7] },
+	{ suffix: '7', intervals: [0, 4, 7, 10] },
+	{ suffix: 'm7', intervals: [0, 3, 7, 10] },
+	{ suffix: 'maj7', intervals: [0, 4, 7, 11] },
+	{ suffix: '9', intervals: [0, 4, 7, 10, 2] },
+	{ suffix: 'sus2', intervals: [0, 2, 7] },
+	{ suffix: 'sus4', intervals: [0, 5, 7] },
+]
+// Log-odds added to each type before the softmax: a prior correction. The
+// synthetic training takes play every type equally often, while 9 chords are
+// rare in real playing, and a bright string's overtones spell a 9th (the
+// fifth's 3rd harmonic) and a major 7th (the third's 3rd, the fifth's 5th),
+// so the model leans to 9 and maj7. On held-out recordings these offsets
+// move every score by < 1 point (scripts/chord-train.py --val); they keep
+// the dominant-7th voicings of scripts/chord-check.ts from reading as 9ths.
+const TYPE_BIAS = [0, 0, 0, 0, -1, -1.75, 0, 0]
+const TYPES = CHORD_TYPES.length
+const CLASSES = 12 * TYPES + 1
+const NONE = 12 * TYPES
 
-	for (const peak of peaks) {
-		const h = harmonicNumber(peak, peaks)
-		const { pitchClass, inTune } = pitchClassOf(peak.hz)
-		if (h === 1 && inTune > 0.5) {
-			played.add(pitchClass)
-			// Peaks come in rising frequency, so the first loud enough one is the bass.
-			if (bass === null && 20 * Math.log10(peak.magnitude / loudest) > -BASS_RANGE_DB) bass = pitchClass
+// --- log-frequency front end -------------------------------------------------
+
+// 3 bins per semitone, the CQT resolution of Basic Pitch and of NNLS chroma.
+// MIDI 24 is the sub-harmonic of the lowest analysed note (C2, MIDI 36); 316
+// bins reach the 7th harmonic of the highest one (B6, MIDI 95).
+export const LOG_LOW_MIDI = 24
+export const LOG_BINS_PER_SEMITONE = 3
+export const LOG_BINS = 316
+// dB below the loudest fundamental-range bin mapped to 0. Level-invariant
+// (the input can be 36 dB quieter unplugged) and roughly a log compression,
+// as standard in chroma features (Müller, FMP §3.1).
+const LOG_RANGE_DB = 60
+const LOG_NORM_FROM = (36 - LOG_LOW_MIDI) * LOG_BINS_PER_SEMITONE
+const LOG_NORM_TO = (97 - LOG_LOW_MIDI) * LOG_BINS_PER_SEMITONE
+
+let logTable: { binHz: number; length: number; a4: number; lo: Int32Array; hi: Int32Array; at: Float64Array } | null = null
+
+/**
+ * Log-frequency spectrum in [0, 1]: each bin takes the loudest FFT bin within
+ * ±1/6 semitone of its centre, or the interpolated value where FFT bins are
+ * coarser than that (below ~250 Hz at 2.7 Hz per bin). Bins sit on the
+ * semitones of the tuning reference `a4` (the tuner's A4 calibration), so the
+ * model names a guitar tuned to A = 432 Hz the same as one tuned to 440.
+ */
+export function logSpectrum(spectrumDb: Float32Array, binHz: number, a4 = 440, out = new Float32Array(LOG_BINS)): Float32Array {
+	if (!logTable || logTable.binHz !== binHz || logTable.length !== spectrumDb.length || logTable.a4 !== a4) {
+		const lo = new Int32Array(LOG_BINS)
+		const hi = new Int32Array(LOG_BINS)
+		const at = new Float64Array(LOG_BINS)
+		for (let j = 0; j < LOG_BINS; j++) {
+			const k = (a4 * 2 ** ((LOG_LOW_MIDI + j / LOG_BINS_PER_SEMITONE - 69) / 12)) / binHz
+			at[j] = Math.min(k, spectrumDb.length - 2)
+			lo[j] = Math.ceil(k * 2 ** (-1 / 72))
+			hi[j] = Math.min(spectrumDb.length - 1, Math.floor(k * 2 ** (1 / 72)))
 		}
-		const octaveOfRoot = (h & (h - 1)) === 0 // 1, 2, 4, 8
-		chroma[pitchClass] += peak.magnitude * inTune * (octaveOfRoot ? 1 : OVERTONE_WEIGHT)
+		logTable = { binHz, length: spectrumDb.length, a4, lo, hi, at }
 	}
-
-	const max = Math.max(...chroma)
-	const normalized = max > 0 ? chroma.map((value) => value / max) : chroma
-	return { chroma: normalized, chord: played.size >= MIN_NOTES ? matchChord(normalized, bass) : null }
+	const { lo, hi, at } = logTable
+	for (let j = 0; j < LOG_BINS; j++) {
+		const i = Math.floor(at[j])
+		let db = spectrumDb[i] + (at[j] - i) * (spectrumDb[i + 1] - spectrumDb[i])
+		for (let b = lo[j]; b <= hi[j]; b++) db = Math.max(db, spectrumDb[b])
+		out[j] = Number.isFinite(db) ? db : -200
+	}
+	let ref = -Infinity
+	for (let j = LOG_NORM_FROM; j < LOG_NORM_TO; j++) ref = Math.max(ref, out[j])
+	// Digital silence (an empty analyser) has nothing to normalise to.
+	if (!(ref > -180)) return out.fill(0)
+	for (let j = 0; j < LOG_BINS; j++) out[j] = Math.min(1, Math.max(0, 1 + (out[j] - ref) / LOG_RANGE_DB))
+	return out
 }
 
-/** Best-matching chord for a chroma vector, or null when nothing fits well. */
-function matchChord(chroma: number[], bass: number | null): ChordMatch | null {
-	const compressed = chroma.map((value) => value ** CHROMA_EXPONENT)
-	const norm = Math.hypot(...compressed)
-	if (norm === 0) return null
+// --- model -------------------------------------------------------------------
 
-	let best: ChordMatch | null = null
-	let bestRank = -Infinity
-	for (let root = 0; root < 12; root++) {
-		for (const { suffix, intervals, penalty } of CHORD_TYPES) {
-			let dot = 0
-			for (const interval of intervals) dot += compressed[(root + interval) % 12]
-			// Cosine with a binary template: dot / (|chroma| * sqrt(#notes)).
-			const score = dot / (norm * Math.sqrt(intervals.length))
-			const rank = score + (root === bass ? BASS_BONUS : 0) - penalty
-			if (rank > bestRank) {
-				bestRank = rank
-				best = {
-					name: PITCH_CLASSES[root] + suffix,
-					notes: intervals.map((interval) => PITCH_CLASSES[(root + interval) % 12]),
-					score,
+const LOW_NOTE = 36
+const NOTES = 60
+const OCTAVES = NOTES / 12
+const FINE = NOTES * LOG_BINS_PER_SEMITONE
+const FIRST = (LOW_NOTE - LOG_LOW_MIDI) * LOG_BINS_PER_SEMITONE
+// Sub-harmonics 1/5..1/2 show whether a peak is the 3rd, 4th or 5th harmonic
+// of a lower note (an overtone, not a played note).
+const HARMONICS = [1 / 5, 1 / 4, 1 / 3, 1 / 2, 1, 2, 3, 4, 5, 6, 7]
+const OFFSETS = HARMONICS.map((h) => Math.round(LOG_BINS_PER_SEMITONE * 12 * Math.log2(h)))
+const [C1, , K1] = M.SHAPE.conv1_weight
+const [C2, , K2] = M.SHAPE.conv2_weight
+const [C3, , K3] = M.SHAPE.conv3_weight
+const HIDDEN = M.SHAPE.head1_weight[0]
+const HEAD_IN = M.SHAPE.head1_weight[1]
+const NONE_HIDDEN = M.SHAPE.none1_weight[0]
+
+/** 1-D convolution + ReLU over `length` positions, zero padding, as torch.nn.Conv1d. */
+function conv(input: Float32Array, cin: number, length: number, weight: Float32Array, bias: Float32Array, cout: number, k: number, stride: number, pad: number, out: Float32Array) {
+	const outLength = Math.floor((length + 2 * pad - k) / stride) + 1
+	for (let o = 0; o < cout; o++) {
+		for (let t = 0; t < outLength; t++) {
+			let sum = bias[o]
+			const start = t * stride - pad
+			for (let c = 0; c < cin; c++) {
+				const w = (o * cin + c) * k
+				const row = c * length
+				for (let i = 0; i < k; i++) {
+					const x = start + i
+					if (x >= 0 && x < length) sum += weight[w + i] * input[row + x]
 				}
 			}
+			out[o * outLength + t] = sum > 0 ? sum : 0
 		}
 	}
-	return best && best.score >= MIN_SCORE ? best : null
+}
+
+// Scratch buffers, reused every frame (the detection loop runs at 60 Hz).
+const logBuffer = new Float32Array(LOG_BINS)
+const stacked = new Float32Array(HARMONICS.length * FINE)
+const hidden1 = new Float32Array(C1 * FINE)
+const hidden2 = new Float32Array(C2 * NOTES)
+const hidden3 = new Float32Array(C3 * NOTES)
+const pooled = new Float32Array(C3 * 12)
+const headInput = new Float32Array(HEAD_IN)
+const headHidden = new Float32Array(HIDDEN)
+const logits = new Float64Array(CLASSES)
+
+/** Log-probabilities of the 97 classes (root * 8 + type, then "no chord") and the chroma. */
+function classify(spectrumDb: Float32Array, binHz: number, a4: number): { logp: Float64Array; chroma: number[] } {
+	const v = logSpectrum(spectrumDb, binHz, a4, logBuffer)
+	OFFSETS.forEach((offset, h) => {
+		for (let t = 0; t < FINE; t++) {
+			const j = FIRST + t + offset
+			stacked[h * FINE + t] = j >= 0 && j < LOG_BINS ? v[j] : 0
+		}
+	})
+	conv(stacked, HARMONICS.length, FINE, M.conv1_weight, M.conv1_bias, C1, K1, 1, (K1 - 1) / 2, hidden1)
+	conv(hidden1, C1, FINE, M.conv2_weight, M.conv2_bias, C2, K2, LOG_BINS_PER_SEMITONE, 1, hidden2)
+	conv(hidden2, C2, NOTES, M.conv3_weight, M.conv3_bias, C3, K3, 1, (K3 - 1) / 2, hidden3)
+
+	const p = new Float64Array(NOTES)
+	for (let n = 0; n < NOTES; n++) {
+		let sum = M.salience_bias[0] + M.note_bias[n]
+		for (let c = 0; c < C3; c++) sum += M.salience_weight[c] * hidden3[c * NOTES + n]
+		p[n] = 1 / (1 + Math.exp(-sum))
+	}
+	const chroma = new Array<number>(12).fill(1)
+	const bass = new Array<number>(12).fill(0)
+	let below = 1
+	let total = 0
+	let peak = 0
+	for (let n = 0; n < NOTES; n++) {
+		chroma[n % 12] *= 1 - p[n]
+		bass[n % 12] += p[n] * below
+		below *= 1 - p[n]
+		total += p[n]
+		peak = Math.max(peak, p[n])
+	}
+	for (let pc = 0; pc < 12; pc++) chroma[pc] = 1 - chroma[pc]
+	for (let c = 0; c < C3; c++) {
+		for (let pc = 0; pc < 12; pc++) {
+			let max = 0
+			for (let o = 0; o < OCTAVES; o++) max = Math.max(max, hidden3[c * NOTES + o * 12 + pc])
+			pooled[c * 12 + pc] = max
+		}
+	}
+
+	for (let root = 0; root < 12; root++) {
+		for (let i = 0; i < 12; i++) {
+			const pc = (root + i) % 12
+			headInput[i] = chroma[pc]
+			headInput[12 + i] = bass[pc]
+			for (let c = 0; c < C3 && HEAD_IN > 24; c++) headInput[24 + c * 12 + i] = pooled[c * 12 + pc]
+		}
+		for (let h = 0; h < HIDDEN; h++) {
+			let sum = M.head1_bias[h]
+			for (let i = 0; i < HEAD_IN; i++) sum += M.head1_weight[h * HEAD_IN + i] * headInput[i]
+			headHidden[h] = sum > 0 ? sum : 0
+		}
+		for (let q = 0; q < TYPES; q++) {
+			let sum = M.head2_bias[q]
+			for (let h = 0; h < HIDDEN; h++) sum += M.head2_weight[q * HIDDEN + h] * headHidden[h]
+			logits[root * TYPES + q] = sum + TYPE_BIAS[q]
+		}
+	}
+	const stats = [...[...chroma].sort((a, b) => b - a), ...[...bass].sort((a, b) => b - a), total, peak]
+	let none = M.none2_bias[0]
+	for (let h = 0; h < NONE_HIDDEN; h++) {
+		let sum = M.none1_bias[h]
+		for (let i = 0; i < stats.length; i++) sum += M.none1_weight[h * stats.length + i] * stats[i]
+		if (sum > 0) none += M.none2_weight[h] * sum
+	}
+	logits[NONE] = none
+
+	let max = -Infinity
+	for (let k = 0; k < CLASSES; k++) max = Math.max(max, logits[k])
+	let z = 0
+	for (let k = 0; k < CLASSES; k++) z += Math.exp(logits[k] - max)
+	const logp = new Float64Array(CLASSES)
+	for (let k = 0; k < CLASSES; k++) logp[k] = logits[k] - max - Math.log(z)
+	return { logp, chroma }
+}
+
+function matchOf(k: number, probability: number): ChordMatch | null {
+	if (k === NONE) return null
+	const root = Math.floor(k / TYPES)
+	const { suffix, intervals } = CHORD_TYPES[k % TYPES]
+	return { name: PITCH_CLASSES[root] + suffix, notes: intervals.map((i) => PITCH_CLASSES[(root + i) % 12]), score: probability }
+}
+
+/** Most likely chord in this one frame, no smoothing over time; `a4` is the tuning reference in Hz. */
+export function recognizeChord(spectrumDb: Float32Array, binHz: number, a4 = 440): ChordAnalysis {
+	const { logp, chroma } = classify(spectrumDb, binHz, a4)
+	let best = 0
+	for (let k = 1; k < CLASSES; k++) if (logp[k] > logp[best]) best = k
+	return { chroma, chord: matchOf(best, Math.exp(logp[best])) }
+}
+
+// --- smoothing over time ------------------------------------------------------
+
+// HMM with a uniform chance of leaving the current chord, run as online
+// forward filtering. Time-based, so the app's 60 Hz frames and the
+// benchmark's 10 Hz ones behave alike: the switch chance grows with the frame
+// gap, and each frame's evidence is tempered by its share of REFERENCE_MS
+// (consecutive analyser frames overlap and are far from independent).
+// NONE_BIAS (log units) is taken off "no chord" before smoothing: a quarter
+// of the training frames are single-note lines and silence, so the model
+// says "no chord" too readily under a real strum's decay; a fixed offset is
+// the usual prior correction of hybrid NN-HMMs (Bourlard & Morgan,
+// "Connectionist Speech Recognition", 1994, posteriors / priors).
+// Tuned on held-out tune-split data (scripts/chord-train.py --val: GuitarSet
+// player 01 and half the IDMT progressions, the model trained on the rest):
+// see bench/README.md.
+const SWITCH_PER_SECOND = 3.6
+const EVIDENCE_POWER = 1.5
+const NONE_BIAS = 1.5
+const REFERENCE_MS = 100
+
+let belief: Float64Array | null = null
+let lastMs = 0
+
+/** Forgets the chord being tracked (call when the input goes silent). */
+export function resetChordTracking() {
+	belief = null
+}
+
+/** recognizeChord smoothed over time: call once per analyser frame with its timestamp. */
+export function trackChord(spectrumDb: Float32Array, binHz: number, timeMs: number, a4 = 440): ChordAnalysis {
+	const { logp, chroma } = classify(spectrumDb, binHz, a4)
+	const dt = belief ? Math.min(timeMs - lastMs, 1000) : REFERENCE_MS
+	lastMs = timeMs
+	const prior = belief ?? new Float64Array(CLASSES).fill(1 / CLASSES)
+	const stay = Math.exp((-SWITCH_PER_SECOND * dt) / 1000)
+	const power = (EVIDENCE_POWER * dt) / REFERENCE_MS
+	logp[NONE] -= NONE_BIAS
+	let max = -Infinity
+	for (let k = 0; k < CLASSES; k++) max = Math.max(max, logp[k])
+	const next = new Float64Array(CLASSES)
+	let sum = 0
+	for (let k = 0; k < CLASSES; k++) {
+		next[k] = Math.exp(power * (logp[k] - max)) * (stay * prior[k] + (1 - stay) / CLASSES)
+		sum += next[k]
+	}
+	let best = 0
+	for (let k = 0; k < CLASSES; k++) {
+		next[k] /= sum
+		if (next[k] > next[best]) best = k
+	}
+	belief = next
+	return { chroma, chord: matchOf(best, next[best]) }
 }
