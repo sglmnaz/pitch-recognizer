@@ -3723,6 +3723,13 @@ a.btn {
 	}
 }
 
+/* Four diagrams in one row of a narrow phone would be ~54–66 px: two rows of two. */
+@media (max-width: 440px) {
+	.changes-shapes[data-n='4'] {
+		grid-template-columns: repeat(2, minmax(0, 100px));
+	}
+}
+
 @media (min-width: 960px) {
 	#view-trainer.trainer--changes:not([hidden]) {
 		grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);

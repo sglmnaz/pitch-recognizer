@@ -41,21 +41,34 @@ export function validSequence(value: unknown): string[] {
 // A chord counts once the recognizer has named it for STABLE_MS: long enough
 // that a strum's attack (and a metronome click) passing through other chord
 // names is not a change, short enough that a fast change still lands.
+// TODO: ~60–80 ms once the HMM chord tracker lands (it smooths by itself).
 export const STABLE_MS = 150
 // Gaps shorter than this inside a run are bridged: a frame or two of another
 // name (the relative minor, "no chord" while the spectrum refills) must not
 // restart the clock of a chord that is still ringing. Four frames at 60 fps.
 export const FLICKER_MS = 70
+// A run that takes over from a steady chord with less than this of anything
+// else (silence, other names) between them is a direct flip, what a held C
+// does when the recognizer swaps it for Am (they share two notes). Measured
+// from the first frame that left the old chord, so any frame rate works.
+const GAP_MS = 40
+// A strum's attack this long before a run starts still makes it a played
+// chord: the recognizer names a chord a few hundred ms after its strum.
+const ATTACK_LEAD_MS = 500
 
 export interface Onset {
 	symbol: string
 	/** When the run started, not when it became stable: the in-time judge needs the strum's time. */
 	at: number
+	/** Played, not a flip: a gap or another name came between it and the
+	 * previous chord, or a strum was heard. Only fresh onsets are changes. */
+	fresh: boolean
 }
 
 export interface Stabilizer {
-	/** One frame: the chord heard (null = none). Returns the run's onset on the frame it becomes stable, once per run. */
-	feed(heard: string | null, now: number): Onset | null
+	/** One frame: the chord heard (null = none), and whether a strum's attack
+	 * was heard. Returns the run's onset on the frame it becomes stable, once per run. */
+	feed(heard: string | null, now: number, attack?: boolean): Onset | null
 	/** The chord heard steadily right now, or null. */
 	current(): string | null
 }
@@ -65,33 +78,47 @@ export function createStabilizer(): Stabilizer {
 	let since = 0
 	let seen = -Infinity
 	let stable = false
+	let direct = false
+	let lastAttack = -Infinity
+	// Whether the last frame was the run's chord, and when the frames stopped being it.
+	let onRun = true
+	let gapStart = 0
 	// What has been heard instead during a gap, and since when: when the gap
 	// outlasts FLICKER_MS it becomes the run, dated from its first frame.
 	let challenger: string | null = null
 	let challengerSince = 0
 
 	return {
-		feed(heard, now) {
+		feed(heard, now, attack = false) {
+			if (attack) lastAttack = now
 			if (heard === symbol) {
 				seen = now
 				challenger = null
+				onRun = true
 			} else {
+				if (onRun) {
+					gapStart = now
+					onRun = false
+				}
 				if (heard !== challenger) {
 					challenger = heard
 					challengerSince = now
 				}
 				if (now - seen > FLICKER_MS) {
+					direct = stable && symbol !== null && challengerSince - gapStart < GAP_MS
 					symbol = challenger
 					since = challengerSince
 					seen = now
 					stable = false
 					challenger = null
+					// This frame is the new run's (the challenger is what was heard).
+					onRun = true
 				}
 			}
 			// Measured to the last frame it was heard: the bridge over a gap does not make a blip longer.
 			if (symbol === null || stable || seen - since < STABLE_MS) return null
 			stable = true
-			return { symbol, at: since }
+			return { symbol, at: since, fresh: !direct || lastAttack >= since - ATTACK_LEAD_MS }
 		},
 		current: () => (stable ? symbol : null),
 	}
@@ -99,9 +126,14 @@ export function createStabilizer(): Stabilizer {
 
 /* One-minute changes --------------------------------------------------------- */
 
+// After a counted change nothing counts for this long: a recognizer flipping
+// back and forth around one strum is not two changes. That allows ~150
+// changes a minute, far past anyone's pace between two open chords.
+export const REFRACTORY_MS = 400
+
 export interface ChangeCounter {
 	/** A newly stable chord: 'start' for the first chord of the sequence heard, 'change' for a counted change. */
-	onChord(symbol: string): 'start' | 'change' | null
+	onChord(onset: Onset): 'start' | 'change' | null
 	readonly count: number
 	/** The chord being played (null before the first one). */
 	readonly at: string | null
@@ -112,22 +144,26 @@ export interface ChangeCounter {
 /**
  * Counts changes around the sequence: the first chord of it heard is where
  * the player starts (any of them, a pair has no first), then only the next
- * chord in order counts. Wrong chords and re-strums of the same one do nothing.
+ * chord in order counts, and only when played (a fresh onset) at least
+ * REFRACTORY_MS after the last one. Wrong chords and re-strums do nothing.
  */
 export function createChangeCounter(sequence: string[]): ChangeCounter {
 	let index: number | null = null
 	let count = 0
+	let lastAt = -Infinity
 	return {
-		onChord(symbol) {
+		onChord({ symbol, at, fresh }) {
 			if (index === null) {
 				const i = sequence.indexOf(symbol)
 				if (i < 0) return null
 				index = i
+				lastAt = at
 				return 'start'
 			}
 			const next = (index + 1) % sequence.length
-			if (symbol !== sequence[next]) return null
+			if (symbol !== sequence[next] || !fresh || at - lastAt < REFRACTORY_MS) return null
 			index = next
+			lastAt = at
 			count++
 			return 'change'
 		},
@@ -145,11 +181,12 @@ export function createChangeCounter(sequence: string[]): ChangeCounter {
 
 export type Mark = 'hit' | 'early' | 'late' | 'miss'
 
-// On time = within HIT_MS of the downbeat, and never more than a quarter of
-// the slot (at 160 BPM, one beat per chord, that is ±94 ms). Recognition
-// jitter is a frame or two plus the spectrum's refill, so tighter than
-// ±200 ms at slow tempos would mark clean changes late.
+// On time = within HIT_MS of the downbeat; at fast tempos a quarter of the
+// slot, but never under HIT_FLOOR_MS. Recognition jitter is a frame or two
+// plus the spectrum's refill, so a tighter window marks clean changes late
+// (at 160 BPM, one beat per chord, a quarter slot would be ±94 ms).
 export const HIT_MS = 200
+export const HIT_FLOOR_MS = 120
 
 /**
  * Judges one change: `onsets` are the times the slot's target chord started
@@ -157,7 +194,7 @@ export const HIT_MS = 200
  * those within half a slot count; the first one decides.
  */
 export function judge(downbeat: number, slotMs: number, onsets: number[]): Mark {
-	const hit = Math.min(HIT_MS, slotMs / 4)
+	const hit = Math.max(HIT_FLOOR_MS, Math.min(HIT_MS, slotMs / 4))
 	const inSlot = onsets.filter((t) => t >= downbeat - slotMs / 2 && t < downbeat + slotMs / 2)
 	if (!inSlot.length) return 'miss'
 	const dt = Math.min(...inSlot) - downbeat

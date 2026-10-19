@@ -12,6 +12,7 @@ import {
 	judge,
 	loadRecord,
 	recordKey,
+	REFRACTORY_MS,
 	saveSession,
 	STABLE_MS,
 	validSequence,
@@ -26,34 +27,38 @@ function check(label: string, ok: boolean, detail = '') {
 
 const FRAME = 1000 / 60
 
-/** A stream as [symbol, duration ms] segments, played at 60 fps. */
-type Segments = [string | null, number][]
+/** A stream as [symbol, duration ms, strummed?] segments at 60 fps; a strummed one starts with an attack. */
+type Segments = [string | null, number, boolean?][]
 
-function frames(segments: Segments): [string | null, number][] {
-	const out: [string | null, number][] = []
+function frames(segments: Segments, frame = FRAME): [string | null, number, boolean][] {
+	const out: [string | null, number, boolean][] = []
 	let t = 0
-	for (const [symbol, ms] of segments) {
+	for (const [symbol, ms, strum = false] of segments) {
 		const end = t + ms
-		for (; t < end; t += FRAME) out.push([symbol, t])
+		let first = true
+		for (; t < end; t += frame, first = false) out.push([symbol, t, strum && first])
 	}
 	return out
 }
 
-function onsetsOf(segments: Segments): Onset[] {
+function onsetsOf(segments: Segments, frame = FRAME): Onset[] {
 	const stabilizer = createStabilizer()
 	const out: Onset[] = []
-	for (const [symbol, t] of frames(segments)) {
-		const onset = stabilizer.feed(symbol, t)
+	for (const [symbol, t, attack] of frames(segments, frame)) {
+		const onset = stabilizer.feed(symbol, t, attack)
 		if (onset) out.push(onset)
 	}
 	return out
 }
 
-function countOf(sequence: string[], segments: Segments): number {
+function countOf(sequence: string[], segments: Segments, frame = FRAME): number {
 	const counter = createChangeCounter(sequence)
-	for (const onset of onsetsOf(segments)) counter.onChord(onset.symbol)
+	for (const onset of onsetsOf(segments, frame)) counter.onChord(onset)
 	return counter.count
 }
+
+/** Strummed chords back to back, no silence between. */
+const strums = (symbols: string[], ms: number): Segments => symbols.map((s) => [s, ms, true])
 
 /* Stability ------------------------------------------------------------ */
 {
@@ -81,6 +86,13 @@ function countOf(sequence: string[], segments: Segments): number {
 	check('current() names the steady chord', stabilizer.current() === 'A')
 	for (const [, t] of frames([[null, 200]])) stabilizer.feed(null, 400 + t)
 	check('current() clears after silence', stabilizer.current() === null)
+
+	const flip = onsetsOf([['C', 600, true], ['Am', 600]])
+	check('a direct flip of a held chord is not fresh', flip.length === 2 && !flip[1].fresh, JSON.stringify(flip))
+	const gapped = onsetsOf([['C', 600, true], [null, 120], ['Am', 600]])
+	check('a chord after a gap is fresh', gapped.length === 2 && gapped[1].fresh)
+	const strummed = onsetsOf(strums(['C', 'Am'], 600))
+	check('a strummed chord is fresh even straight after another', strummed[1]?.fresh === true)
 }
 
 /* Counting --------------------------------------------------------------- */
@@ -91,32 +103,48 @@ function countOf(sequence: string[], segments: Segments): number {
 	check('G C G C… with gaps: 10 changes', countOf(pair, changes) === 10, String(countOf(pair, changes)))
 
 	// Starting on the second chord of a pair is fine.
-	check('a pair can start on either chord', countOf(pair, [['C', 500], ['G', 500], ['C', 500]]) === 2)
+	check('a pair can start on either chord', countOf(pair, strums(['C', 'G', 'C'], 500)) === 2)
 
-	// Fast changes, no silence between: 250 ms per chord still counts.
-	const fast: Segments = []
-	for (let i = 0; i < 21; i++) fast.push([i % 2 ? 'C' : 'G', 250])
-	check('fast changes (250 ms per chord) all count', countOf(pair, fast) === 20, String(countOf(pair, fast)))
+	// Fast changes, no silence between: 450 ms per chord still counts.
+	const fast = strums(Array.from({ length: 21 }, (_, i) => (i % 2 ? 'C' : 'G')), 450)
+	check('fast changes (450 ms per chord) all count', countOf(pair, fast) === 20, String(countOf(pair, fast)))
+
+	// Faster than the refractory time: never more than one change per REFRACTORY_MS.
+	const frantic = strums(Array.from({ length: 41 }, (_, i) => (i % 2 ? 'C' : 'G')), 250)
+	const franticCount = countOf(pair, frantic)
+	check('changes faster than the refractory time are capped', franticCount <= (40 * 250) / REFRACTORY_MS && franticCount > 0, String(franticCount))
 
 	// Too fast to be stable (100 ms per chord) counts nothing.
 	const blur: Segments = []
-	for (let i = 0; i < 20; i++) blur.push([i % 2 ? 'C' : 'G', 100])
+	for (let i = 0; i < 20; i++) blur.push([i % 2 ? 'C' : 'G', 100, true])
 	check('a blur under the stability time counts nothing', countOf(pair, blur) === 0)
 
 	// Re-strumming the same chord, wrong chords in between: not changes.
 	check(
 		're-strums and wrong chords do not count',
-		countOf(pair, [['G', 500], [null, 200], ['G', 500], ['Em', 500], ['G', 500], ['C', 500]]) === 1
+		countOf(pair, [['G', 500, true], [null, 200], ['G', 500, true], ['Em', 500, true], ['G', 500, true], ['C', 500, true]]) === 1
 	)
+
+	// Phantom changes: a held C the recognizer keeps flipping to Am and back.
+	const phantom: Segments = [['C', 700, true]]
+	for (let i = 0; i < 6; i++) phantom.push([i % 2 ? 'C' : 'Am', 500])
+	check('a held chord flipping C <-> Am counts nothing', countOf(['C', 'Am'], phantom) === 0, String(countOf(['C', 'Am'], phantom)))
+	// A phone drawing 30 fps (33 ms frames) or a 50 ms timer: still flips, not changes.
+	for (const ms of [33, 50]) check(`flips at ${ms} ms frames count nothing`, countOf(['C', 'Am'], phantom, ms) === 0, String(countOf(['C', 'Am'], phantom, ms)))
+	const strummed30 = strums(Array.from({ length: 11 }, (_, i) => (i % 2 ? 'Am' : 'C')), 600)
+	check('strummed changes at 33 ms frames count', countOf(['C', 'Am'], strummed30, 33) === 10, String(countOf(['C', 'Am'], strummed30, 33)))
+	// A real change, then the recognizer briefly flips back: one change, not three.
+	const backFlip: Segments = [['C', 800, true], ['Am', 200, true], ['C', 200], ['Am', 800]]
+	check('a flip back right after a change is not counted', countOf(['C', 'Am'], backFlip) === 1, String(countOf(['C', 'Am'], backFlip)))
 
 	// Sequences go in order: C G Am F; F straight after C is not a change.
 	const seq = ['C', 'G', 'Am', 'F']
-	check('a sequence counts in order', countOf(seq, [['C', 400], ['G', 400], ['Am', 400], ['F', 400], ['C', 400]]) === 4)
-	check('out of order is not counted', countOf(seq, [['C', 400], ['F', 400], ['Am', 400]]) === 0)
+	check('a sequence counts in order', countOf(seq, strums(['C', 'G', 'Am', 'F', 'C'], 450)) === 4)
+	check('out of order is not counted', countOf(seq, strums(['C', 'F', 'Am'], 450)) === 0)
 
 	const counter = createChangeCounter(seq)
 	check('before starting, the target is the first chord', counter.target() === 'C' && counter.at === null)
-	counter.onChord('Am')
+	counter.onChord({ symbol: 'Am', at: 0, fresh: true })
 	check('starting mid-sequence targets the next one', counter.target() === 'F' && counter.at === 'Am')
 }
 
@@ -130,14 +158,14 @@ function countOf(sequence: string[], segments: Segments): number {
 	check('no onset is a miss', judge(10_000, slot, []) === 'miss')
 	check('an onset past half the slot belongs to the next downbeat: miss', judge(10_000, slot, [11_100]) === 'miss')
 	check('the first onset decides (a later re-strum does not rescue it)', judge(10_000, slot, [10_900, 10_500]) === 'late')
-	// At 160 BPM, 1 beat per chord (375 ms), the hit window shrinks to a quarter slot.
-	check('fast tempo: 120 ms off is late', judge(10_000, 375, [10_120]) === 'late')
-	check('fast tempo: 60 ms off is a hit', judge(10_000, 375, [10_060]) === 'hit')
+	// At 160 BPM, 1 beat per chord (375 ms), a quarter slot is 94 ms: the window floors at 120.
+	check('fast tempo: 100 ms off is still a hit', judge(10_000, 375, [10_100]) === 'hit')
+	check('fast tempo: 150 ms off is late', judge(10_000, 375, [10_150]) === 'late')
 
 	// Late-change stream: the player changes 450 ms after each downbeat.
 	const downbeats = [2000, 4000, 6000, 8000]
-	const lateStream: Segments = [['G', 2450]]
-	for (let i = 1; i < downbeats.length + 1; i++) lateStream.push([i % 2 ? 'C' : 'G', 2000])
+	const lateStream: Segments = [['G', 2450, true]]
+	for (let i = 1; i < downbeats.length + 1; i++) lateStream.push([i % 2 ? 'C' : 'G', 2000, true])
 	const onsets = onsetsOf(lateStream)
 	const marks = downbeats.map((d, i) => judge(d, 2000, onsets.filter((o) => o.symbol === (i % 2 ? 'G' : 'C')).map((o) => o.at)))
 	check('a stream of late changes is marked late', marks.every((m) => m === 'late'), marks.join(' '))

@@ -19,8 +19,10 @@ import type { View } from './view'
  * Changes.CHANGE_CHORDS (a PITCH_CLASSES root + a chord-theory symbol: 'C',
  * 'Am', 'G7'), `rootPc` 0–11 (C = 0), `type` the symbol after the root ('',
  * 'm', '7'), `confidence` 0–1 when the recognizer has one; null = no chord.
- * Called once per mic frame. ts/chords.ts is being replaced by a stateful
- * tracker: swapping recognizers is a change to this function only.
+ * Called once per mic frame with the frame's time. ts/chords.ts is being
+ * replaced by a stateful tracker (createChordTracker().track(spectrumDb,
+ * binHz, timeMs, a4)): swapping recognizers touches heardChord, resetHeard
+ * and RECOGNITION_LATENCY_MS only.
  */
 export interface HeardChord {
 	symbol: string
@@ -30,10 +32,13 @@ export interface HeardChord {
 }
 
 // ?debug: chords fed by hand from the console (the mic is often unavailable
-// where the UI is tested). undefined = off, null = "no chord".
+// where the UI is tested). undefined = off, null = "no chord". Each fed
+// chord counts as strummed once.
 let fake: string | null | undefined
+let fakeStrum = false
 
-export function heardChord(): HeardChord | null {
+export function heardChord(now: number): HeardChord | null {
+	void now // the tracker's timeMs; recognizeChord looks at one frame only
 	if (fake !== undefined) {
 		const root = fake?.match(/^[A-G][#b]?/)?.[0]
 		return fake && root ? { symbol: fake, rootPc: PITCH_CLASSES.indexOf(root), type: fake.slice(root.length) } : null
@@ -48,12 +53,28 @@ export function heardChord(): HeardChord | null {
 	return { symbol: chord.name, rootPc: PITCH_CLASSES.indexOf(root), type: chord.name.slice(root.length), confidence: chord.score }
 }
 
+/** Forgets what the recognizer was following, so a new session starts clean. */
+export function resetHeard() {
+	// TODO: tracker.reset() once createChordTracker lands; recognizeChord keeps no state.
+}
+
+/** A strum's attack this frame (the pitch pipeline's onset detector): what tells a played chord from a recognizer flip. */
+function strummed(): boolean {
+	if (fake !== undefined) {
+		const strum = fakeStrum
+		fakeStrum = false
+		return strum
+	}
+	return Microphone.getStats().reason === 'attack'
+}
+
 /* View --------------------------------------------------------------------- */
 
 // The recognizer names a chord this long after it was strummed (its 370 ms
 // spectrum has to fill with the new chord, smoothed 0.8 per frame), so an
 // onset is dated this much earlier before it is judged against a downbeat.
 // Calibration knob: raise it if clean changes read late on real guitars.
+// TODO: ~283 ms once the HMM chord tracker lands (its measured latency).
 const RECOGNITION_LATENCY_MS = 150
 // From a chord's (backdated) onset to the frame it is confirmed stable.
 const CONFIRM_MS = RECOGNITION_LATENCY_MS + Changes.STABLE_MS + Changes.FLICKER_MS
@@ -101,7 +122,7 @@ export function createChangesView(root: HTMLElement): View {
 
 	let phase: Phase = 'idle'
 	// Frozen at Start: the popover may change settings mid-session.
-	let session = { mode: 'minute' as 'minute' | 'time', sequence: [] as string[], seconds: 60, beats: 4, bpm: 60, speedUp: false }
+	let session = { mode: 'minute' as 'minute' | 'time', sequence: [] as string[], seconds: 60, beats: 4, bpm: 60, speedUp: false, countIn: true }
 	let stabilizer = Changes.createStabilizer()
 	let counter = Changes.createChangeCounter([])
 	let goAt = 0
@@ -113,7 +134,10 @@ export function createChangesView(root: HTMLElement): View {
 	let pending: { downbeat: number; slotMs: number; target: string }[] = []
 	let onsets: Changes.Onset[] = []
 	let clean = 0
+	// A speed-up waits for the next chord's first beat, so a slot never changes tempo halfway.
+	let pendingBpm = 0
 	let clicking = false
+	const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)')
 	// Readings arrive every frame while the mic runs and reset() runs when it stops.
 	let micLive = false
 	let wakeLock: WakeLockSentinel | null = null
@@ -151,6 +175,8 @@ export function createChangesView(root: HTMLElement): View {
 		})
 		shapesBox.replaceChildren(...shapes.map((shape) => shape.figure))
 		shapesBox.style.setProperty('--n', String(Math.max(2, shapes.length)))
+		// Four across a narrow phone are ~54 px: the stylesheet wraps them 2 × 2.
+		shapesBox.dataset.n = String(shapes.length)
 	}
 
 	function markTargetShape(symbol: string | null) {
@@ -291,6 +317,8 @@ export function createChangesView(root: HTMLElement): View {
 	}
 
 	function flash() {
+		// The count and the strip already say it; reduced motion gets no flash.
+		if (reducedMotion.matches) return
 		stage.classList.remove('changes-stage--flash')
 		// Restart the animation on every counted change.
 		void stage.offsetWidth
@@ -346,12 +374,22 @@ export function createChangesView(root: HTMLElement): View {
 			return
 		}
 		const s = Settings.get()
-		session = { mode: s.changesMode, sequence: [...selection()], seconds: s.changesDuration, beats: s.changesBeats, bpm: s.changesBpm, speedUp: s.changesSpeedUp }
+		session = {
+			mode: s.changesMode,
+			sequence: [...selection()],
+			seconds: s.changesDuration,
+			beats: s.changesBeats,
+			bpm: s.changesBpm,
+			speedUp: s.changesSpeedUp,
+			countIn: s.changesCountIn,
+		}
+		resetHeard()
 		counter = Changes.createChangeCounter(session.sequence)
 		marks = []
 		pending = []
 		onsets = []
 		clean = 0
+		pendingBpm = 0
 		slot = -1
 		lastAnnounce = 0
 		result.hidden = true
@@ -365,8 +403,8 @@ export function createChangesView(root: HTMLElement): View {
 			countValue.textContent = '0'
 			countLabel.textContent = 'changes'
 			clock.textContent = clockText(session.seconds * 1000)
-			goAt = now + (s.changesCountIn ? COUNT_IN_S * 1000 : 0)
-			phase = s.changesCountIn ? 'countin' : 'running'
+			goAt = now + (session.countIn ? COUNT_IN_S * 1000 : 0)
+			phase = session.countIn ? 'countin' : 'running'
 			if (phase === 'running') begin(now)
 			else announce(`Get ready on ${session.sequence[0]}`, true)
 		} else {
@@ -385,7 +423,7 @@ export function createChangesView(root: HTMLElement): View {
 			Metronome.setTempo(session.bpm)
 			Metronome.start()
 			clicking = true
-			phase = s.changesCountIn ? 'countin' : 'running'
+			phase = session.countIn ? 'countin' : 'running'
 			setTarget(session.sequence[0], `then ${session.sequence[1]}`)
 			announce(`Play ${session.sequence[0]} on the first beat`, true)
 		}
@@ -398,7 +436,7 @@ export function createChangesView(root: HTMLElement): View {
 		phase = 'running'
 		endsAt = now + session.seconds * 1000
 		const ringing = stabilizer.current()
-		if (ringing) counter.onChord(ringing)
+		if (ringing) counter.onChord({ symbol: ringing, at: now, fresh: true })
 		showCounterTarget()
 		announce('Go', true)
 	}
@@ -417,16 +455,28 @@ export function createChangesView(root: HTMLElement): View {
 		phase = 'idle'
 		if (!wasTime && finished) {
 			const count = counter.count
-			const before = Changes.saveSession(session.sequence, session.seconds, count)
+			// Nothing heard (mic too far, wrong chords) is not a session worth a place in the history.
+			const before = count ? Changes.saveSession(session.sequence, session.seconds, count) : Changes.loadRecord(session.sequence, session.seconds)
 			const delta = count - before.best
-			const verdict = !before.history.length ? 'First session' : delta > 0 ? `New best, +${delta}` : delta === 0 ? 'Ties your best' : `${delta} from your best`
+			const verdict = !count
+				? 'No changes heard, not saved'
+				: !before.history.length
+					? 'First session'
+					: delta > 0
+						? `New best, +${delta}`
+						: delta === 0
+							? 'Ties your best'
+							: `${delta} from your best`
 			showResult(String(count), count === 1 ? 'change' : 'changes', [verdict, `Best ${Math.max(before.best, count)}`])
 			announce(`Time. ${count} changes. ${verdict}.`, true)
+			status.textContent = ''
 		} else if (wasTime && marks.length) {
 			const pct = Changes.accuracy(marks)
 			const n = (m: Changes.Mark) => marks.filter((x) => x === m).length
 			showResult(`${pct}%`, 'on time', [`${n('hit')} of ${marks.length} changes`, `${n('late')} late · ${n('early')} early · ${n('miss')} missed`, `Ended at ${Metronome.getState().bpm || session.bpm} BPM`])
 			announce(`${pct} percent on time, ${n('hit')} of ${marks.length} changes.`, true)
+			// Stopped by the page, not the player: say why under the result.
+			status.textContent = reason
 		} else {
 			result.hidden = true
 			status.textContent = reason || (wasTime ? 'Stopped.' : 'Stopped. Sessions count only when the time runs out.')
@@ -461,15 +511,17 @@ export function createChangesView(root: HTMLElement): View {
 		startButton.click()
 	})
 
+	// Hidden page or locked screen: the mic and the timers stall, so no count
+	// or mark from here on would mean anything. End it rather than pause it.
 	document.addEventListener('visibilitychange', () => {
-		if (!document.hidden && isRunning()) holdScreen()
+		if (document.hidden && isRunning()) finish(false, 'Stopped: the page was hidden.')
 	})
 
 	/* In time: downbeats from the metronome ---------------------------------- */
 	Metronome.onBeat((event) => {
 		if (!clicking || event.sub !== 0) return
 		const now = performance.now()
-		const lead = Settings.get().changesCountIn ? COUNT_IN_BEATS : 0
+		const lead = session.countIn ? COUNT_IN_BEATS : 0
 		const beat = event.bar * session.beats + event.beat
 		if (beat < lead) {
 			target.textContent = String(lead - beat)
@@ -479,6 +531,12 @@ export function createChangesView(root: HTMLElement): View {
 		}
 		phase = 'running'
 		if ((beat - lead) % session.beats) return
+		if (pendingBpm) {
+			// Takes effect from the next beat line: this chord's first beat is already scheduled.
+			Metronome.setTempo(pendingBpm)
+			announce(`Two clean passes. Up to ${pendingBpm} BPM.`, true)
+			pendingBpm = 0
+		}
 		slot = (beat - lead) / session.beats
 		const seq = session.sequence
 		const current = seq[slot % seq.length]
@@ -503,18 +561,15 @@ export function createChangesView(root: HTMLElement): View {
 			if (!session.speedUp) continue
 			const step = Changes.afterMark(clean, mark, session.sequence.length)
 			clean = step.clean
-			const bpm = Metronome.getState().bpm
-			if (step.speedUp && bpm < Changes.MAX_BPM) {
-				Metronome.setTempo(Math.min(Changes.MAX_BPM, bpm + Changes.SPEED_STEP))
-				announce(`Two clean passes. Up to ${Metronome.getState().bpm} BPM.`, true)
-			}
+			const bpm = pendingBpm || Metronome.getState().bpm
+			if (step.speedUp && bpm < Changes.MAX_BPM) pendingBpm = Math.min(Changes.MAX_BPM, bpm + Changes.SPEED_STEP)
 		}
 	}
 
 	/* Per frame ----------------------------------------------------------------- */
 	function frame() {
 		const now = performance.now()
-		const onset = stabilizer.feed(heardChord()?.symbol ?? null, now)
+		const onset = stabilizer.feed(heardChord(now)?.symbol ?? null, now, strummed())
 		showHeard(stabilizer.current())
 		if (session.mode === 'minute' && phase === 'countin') {
 			if (now >= goAt) begin(now)
@@ -525,7 +580,7 @@ export function createChangesView(root: HTMLElement): View {
 			}
 		} else if (session.mode === 'minute' && phase === 'running') {
 			if (onset) {
-				const outcome = counter.onChord(onset.symbol)
+				const outcome = counter.onChord(onset)
 				if (outcome) showCounterTarget()
 				if (outcome === 'change') {
 					countValue.textContent = String(counter.count)
@@ -537,14 +592,16 @@ export function createChangesView(root: HTMLElement): View {
 			clock.textContent = clockText(left)
 			if (left <= 0) finish(true)
 		} else if (session.mode === 'time' && isRunning()) {
-			if (onset) onsets.push({ symbol: onset.symbol, at: onset.at - RECOGNITION_LATENCY_MS })
+			// Flips of a ringing chord (not fresh) are not changes here either.
+			if (onset?.fresh) onsets.push({ ...onset, at: onset.at - RECOGNITION_LATENCY_MS })
 			onsets = onsets.filter((o) => now - o.at < ONSET_KEEP_MS)
 			judgeDue(now)
 		}
 	}
 
-	// ?debug: window.pluckChanges.hear('G') feeds that chord as if heard (null =
-	// silence), driving frames itself while the mic is off; .off() returns to the mic.
+	// ?debug: window.pluckChanges.hear('G') feeds that chord as if strummed
+	// (null = silence; hear('Am', false) = the recognizer flipping a ringing
+	// chord), driving frames itself while the mic is off; .off() returns to the mic.
 	// A timer, not rAF: rAF stalls in a hidden or embedded test pane.
 	if (new URLSearchParams(location.search).has('debug')) {
 		let loop = 0
@@ -555,8 +612,9 @@ export function createChangesView(root: HTMLElement): View {
 			loop = window.setTimeout(tick, 16)
 		}
 		;(window as unknown as { pluckChanges: object }).pluckChanges = {
-			hear(symbol: string | null) {
+			hear(symbol: string | null, strum = true) {
 				fake = symbol
+				fakeStrum = strum && symbol !== null
 				if (!loop) tick()
 			},
 			off() {
@@ -588,6 +646,7 @@ export function createChangesView(root: HTMLElement): View {
 		// The mic stopped, the exercise or the tab changed: a session cannot go on.
 		reset() {
 			micLive = false
+			resetHeard()
 			stabilizer = Changes.createStabilizer()
 			showHeard(null)
 			if (isRunning()) finish(false, 'Stopped: the microphone went off.')
