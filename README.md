@@ -152,8 +152,10 @@ ts/
                         tuner, chords (+ chord-library), scales (+ harmony,
                         circle, progression-player), trainer (+ ear, changes,
                         changes.session, changes.recognizer), metronome, settings
-  styles/               tokens.css / style.css (Geist tokens, light + dark /
-                        layout and components), fonts/
+  styles/               main.css (entry: layers, imports, breakpoints),
+                        tokens.css (palette x mode, three tiers), base.css,
+                        layout.css, components/*.css, fonts/; each tab's CSS
+                        sits in its feature folder, the neck's in ui/
 scripts/                Self-checks, benchmark, chord-model training data
 bench/                  Benchmark notes and results
 tests/visual/           Playwright visual regression suite and its baselines

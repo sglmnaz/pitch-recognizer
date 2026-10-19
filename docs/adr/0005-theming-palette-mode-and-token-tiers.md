@@ -2,7 +2,19 @@
 
 ## Status
 
-Proposed (planned; not implemented)
+Accepted, implemented: `ts/styles/tokens.css` holds the three tiers (primitive
+colour scales; semantic roles per mode in `:root, [data-mode='light']` and
+`[data-mode='dark']`; component tokens, the derived ones declared on every
+`[data-mode]` so a forced subtree re-resolves them). `<html>` carries
+`data-theme="default"` and `data-mode`; the fretboard board and the trainer
+staff force a mode with their own `data-mode` and keep the palette.
+`ts/ui/theme.ts` owns the `THEMES` registry (id, label, theme-color per mode),
+the stored choice (`pitch-recognizer:mode`, `pitch-recognizer:palette`; the old
+`theme` key is migrated on first load) and `<meta name="theme-color">`. The
+inline head script reads the same keys before first paint. A palette picker
+appears in Settings only with more than one palette. A visual-suite test injects
+a palette at runtime and checks tokens, components and a forced subtree follow
+it. How to add one: DESIGN.md.
 
 ## Context
 
@@ -19,7 +31,7 @@ with a local `data-theme`, which shows the mechanism scales to subtrees.
 
 Split the two axes and tier the tokens:
 
-- **Palette** (`data-theme`, e.g. `geist`): which hues the app uses.
+- **Palette** (`data-theme`, `default` today): which hues the app uses.
 - **Mode** (`data-mode`: `light` / `dark`, resolved from the setting or
   `prefers-color-scheme` before first paint as today): how they map to light
   and dark.

@@ -10,6 +10,43 @@ overridable under Settings > Appearance (persisted to `localStorage`). Scene: a 
 a desk, sometimes in a bright room, sometimes practising at night. Neither lighting
 condition is the canonical one, so neither theme is the default; the system decides.
 
+A theme is a **palette** (`data-theme` on `<html>`, only `default` today) shown
+in a **mode** (`data-mode`: `light` / `dark`). Tokens come in three tiers in
+`ts/styles/tokens.css`: primitives (raw scales: `--gray-*`, `--blue-*`,
+`--teal-*`, `--stone-*`, `--green-*`, `--orange-*`), semantic roles per mode
+(`--bg`, `--surface`, `--fg`, `--accent`, `--success`, ...) and component tokens
+(`--root-*` / `--tone-*` / `--note-*` degree colours, `--board-*`, `--staff-*`,
+`--shadow-*`). Components read only semantic and component tokens. Any subtree
+can force a mode with its own `data-mode` (the fretboard's board theme, the
+trainer's light staff); it keeps the active palette. Details: docs/adr/0005.
+
+### How to add a theme
+
+1. One CSS block at the end of `ts/styles/tokens.css`, overriding the semantic
+   tokens (and any primitives or component tokens it needs) for both modes.
+   The descendant selectors make forced-mode subtrees follow the palette too:
+
+   ```css
+   [data-theme='ocean'][data-mode='light'],
+   [data-theme='ocean'] [data-mode='light'] {
+   	--accent: #0a7ea4;
+   	--accent-hover: #086a8a;
+   	/* ...every role that differs */
+   }
+
+   [data-theme='ocean'][data-mode='dark'],
+   [data-theme='ocean'] [data-mode='dark'] {
+   	--accent: #4cc3e6;
+   	--accent-hover: #74d2ee;
+   }
+   ```
+
+2. One entry in `THEMES` in `ts/ui/theme.ts` (id, label, and the `--bg` of
+   each mode as `themeColor`, for the browser chrome), and the id in the
+   allow-list of the inline script in `index.html`.
+
+With more than one entry, Settings > Appearance shows a Palette picker by itself.
+
 ## Color
 
 Near-monochrome, the Geist signature. Neutrals carry a faint cool tint (~hue 220,

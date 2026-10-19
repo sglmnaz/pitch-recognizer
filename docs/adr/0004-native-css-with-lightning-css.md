@@ -2,7 +2,11 @@
 
 ## Status
 
-Accepted (implementation in a later phase)
+Accepted, implemented: `css.transformer` / `build.cssMinify` are
+`lightningcss`, targets from `browserslist` in package.json (iOS / Safari 16.2+,
+the floor set by `color-mix()` with custom properties; current Chrome, Edge,
+Firefox). The stylesheet is split under `ts/styles/main.css` into `@layer`ed
+files with nesting.
 
 ## Context
 
