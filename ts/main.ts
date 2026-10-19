@@ -1,6 +1,7 @@
 import './styles/style.css'
 import * as Microphone from './core/microphone'
 import * as Sound from './core/sound'
+import { clamp } from './core/math'
 import { createTrainerView } from './features/trainer/trainer.view'
 import { createTunerView } from './features/tuner/tuner.view'
 import { createChordsView } from './features/chords/chords.view'
@@ -193,7 +194,7 @@ function drawWaveform(voiced: boolean) {
 		const gain = Math.min(noiseCap, WAVE_TARGET / Math.max(wavePeak, 1e-9))
 		for (let x = 0; x <= width; x++) {
 			const sample = data[start + Math.floor((x / width) * (WAVE_SAMPLES - 1))]
-			const y = height / 2 - Math.max(-1, Math.min(1, sample * gain)) * (height / 2 - ctx.lineWidth)
+			const y = height / 2 - clamp(sample * gain, -1, 1) * (height / 2 - ctx.lineWidth)
 			if (x === 0) ctx.moveTo(x, y)
 			else ctx.lineTo(x, y)
 		}

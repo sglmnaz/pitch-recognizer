@@ -1,5 +1,6 @@
 import * as Metronome from '../../core/metronome'
 import * as Settings from '../../core/settings'
+import { clamp } from '../../core/math'
 import type { View } from '../../ui/view'
 import { bindSegmented, onBareKey, scoped } from '../../ui/dom'
 import { reducedMotion } from '../../ui/media'
@@ -36,8 +37,6 @@ const tempoName = (bpm: number) => TEMPO_NAMES.find(([limit]) => bpm < limit)![1
 
 // Tapping a beat dot cycles normal → accent → mute.
 const NEXT_ACCENT: Metronome.Accent[] = [1, 2, 0]
-
-const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value))
 
 export function createMetronomeView(root: HTMLElement): View {
 	const { $, $$ } = scoped(root)

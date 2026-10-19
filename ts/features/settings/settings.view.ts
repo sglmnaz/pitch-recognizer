@@ -1,4 +1,5 @@
 import * as Settings from '../../core/settings'
+import { clamp } from '../../core/math'
 import { INTERVALS, QUALITIES } from '../../music/ear'
 import type { View } from '../../ui/view'
 import { subscribeVisible } from '../../ui/dom'
@@ -67,7 +68,7 @@ export function createSettingsView(root: HTMLElement, from: () => string | null)
 				// A typed number can be empty or out of range: clamp it, or put the
 				// stored value back.
 				if (Number.isNaN(value) || input.value === '') return sync()
-				value = Math.min(Number(input.max), Math.max(Number(input.min), value))
+				value = clamp(value, Number(input.min), Number(input.max))
 			}
 			Settings.update({ [input.dataset.setting!]: value } as Partial<Settings.Settings>)
 		})
