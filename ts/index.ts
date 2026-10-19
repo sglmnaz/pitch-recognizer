@@ -4,6 +4,7 @@ import { createTrainerView } from './views/trainer'
 import { createTunerView } from './views/tuner'
 import { createChordsView } from './views/chords'
 import { createScalesView } from './views/scales'
+import { createMetronomeView } from './views/metronome'
 import { createSettingsPanel } from './views/settings-panel'
 import type { View } from './views/view'
 
@@ -39,6 +40,8 @@ const views: Record<string, { view: View; section: HTMLElement }> = {
 	tuner: { view: createTunerView(byId('view-tuner')), section: byId('view-tuner') },
 	chords: { view: createChordsView(byId('view-chords')), section: byId('view-chords') },
 	scales: { view: scalesView, section: byId('view-scales') },
+	// No microphone use: it has no .readout, so the shared #mic block hides there.
+	metronome: { view: createMetronomeView(byId('view-metronome')), section: byId('view-metronome') },
 }
 
 let currentName = 'tuner'
@@ -99,7 +102,7 @@ function activate(name: string) {
 		button.setAttribute('aria-selected', String(button.dataset.tab === name))
 	}
 
-	// Settings exist for the Trainer and Scales only; show that tab's section.
+	// Settings exist for the Trainer, Scales and Metronome only; show that tab's section.
 	const sections = settingsPanel.querySelectorAll<HTMLElement>('[data-for]')
 	sections.forEach((section) => (section.hidden = section.dataset.for !== name))
 	const hasSettings = [...sections].some((section) => !section.hidden)

@@ -1,0 +1,274 @@
+import * as Metronome from '../metronome'
+import * as Settings from '../settings'
+import type { View } from './view'
+
+const MAX_BEATS = 12
+// Taps further apart than this start a new measurement; the average covers the
+// last TAP_COUNT taps so one sloppy tap fades out instead of ruining the tempo.
+const TAP_RESET_MS = 2000
+const TAP_COUNT = 6
+// Holding − / + repeats after HOLD_DELAY_MS, every REPEAT_MS; after SPEED_UP
+// repeats it jumps 5 at a time, so 30 → 300 does not take half a minute.
+const HOLD_DELAY_MS = 400
+const REPEAT_MS = 70
+const SPEED_UP = 20
+
+// Conventional boundaries (BPM) between the tempo names.
+const TEMPO_NAMES: [number, string][] = [
+	[66, 'Largo'],
+	[76, 'Adagio'],
+	[108, 'Andante'],
+	[120, 'Moderato'],
+	[168, 'Allegro'],
+	[Infinity, 'Presto'],
+]
+const tempoName = (bpm: number) => TEMPO_NAMES.find(([limit]) => bpm < limit)![1]
+
+// Tapping a beat dot cycles normal → accent → mute.
+const NEXT_ACCENT: Metronome.Accent[] = [1, 2, 0]
+
+const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value))
+
+export function createMetronomeView(root: HTMLElement): View {
+	const $ = <T extends Element>(selector: string) => root.querySelector<T>(selector)!
+	const bpmValue = $<HTMLElement>('.metro-bpm__value')
+	const name = $<HTMLElement>('.metro-name')
+	const dotsBox = $<HTMLElement>('.metro-dots')
+	const slider = $<HTMLInputElement>('.metro-slider')
+	const startButton = $<HTMLButtonElement>('[data-action="start"]')
+	const tapButton = $<HTMLButtonElement>('[data-action="tap"]')
+	const beatsValue = $<HTMLElement>('[data-value="beats"]')
+	const unitButtons = Array.from(root.querySelectorAll<HTMLButtonElement>('[data-unit]'))
+	const subButtons = Array.from(root.querySelectorAll<HTMLButtonElement>('[data-sub]'))
+	const accentFirst = $<HTMLInputElement>('[data-action="accent-first"]')
+	const trainerSwitch = $<HTMLInputElement>('[data-action="trainer"]')
+	const trainerDesc = $<HTMLElement>('.metro-row__desc')
+	const progress = $<HTMLElement>('.metro-progress')
+	const progressFill = $<HTMLElement>('.metro-progress__bar span')
+	const progressText = $<HTMLElement>('.metro-progress__text')
+	const flash = $<HTMLElement>('.metro-flash')
+
+	let dots: HTMLButtonElement[] = []
+	let lit: HTMLButtonElement | null = null
+	let barInStep = 0
+	let taps: number[] = []
+	let wakeLock: WakeLockSentinel | null = null
+
+	/* Tempo ----------------------------------------------------------------- */
+	/** The one way the user changes tempo: engine first, then the stored setting. */
+	function setBpm(bpm: number) {
+		bpm = clamp(Math.round(bpm), Metronome.MIN_BPM, Metronome.MAX_BPM)
+		Metronome.setTempo(bpm)
+		Settings.update({ metroBpm: bpm })
+	}
+	const nudge = (by: number) => setBpm(Metronome.getState().bpm + by)
+
+	slider.addEventListener('input', () => setBpm(Number(slider.value)))
+
+	/** Pointer-down acts at once (no 300 ms touch delay, and timing taps matter);
+	 * `click` with detail 0 is the keyboard. Holding repeats. */
+	function onPress(button: HTMLElement, action: (repeats: number) => void, repeat = false) {
+		let delay = 0
+		let ticker = 0
+		const release = () => {
+			clearTimeout(delay)
+			clearInterval(ticker)
+		}
+		button.addEventListener('pointerdown', (event) => {
+			if (event.button !== 0) return
+			release()
+			action(0)
+			if (!repeat) return
+			delay = setTimeout(() => {
+				let repeats = 0
+				ticker = setInterval(() => action(++repeats), REPEAT_MS) as unknown as number
+			}, HOLD_DELAY_MS) as unknown as number
+		})
+		for (const type of ['pointerup', 'pointerleave', 'pointercancel']) button.addEventListener(type, release)
+		button.addEventListener('click', (event) => {
+			if (event.detail === 0) action(0)
+		})
+		// A long press must not open the context menu on touch screens.
+		button.addEventListener('contextmenu', (event) => event.preventDefault())
+	}
+
+	for (const button of root.querySelectorAll<HTMLButtonElement>('[data-tempo]')) {
+		const direction = Number(button.dataset.tempo)
+		onPress(button, (repeats) => nudge(direction * (repeats > SPEED_UP ? 5 : 1)), true)
+	}
+
+	onPress(tapButton, () => {
+		const now = performance.now()
+		if (taps.length && now - taps[taps.length - 1] > TAP_RESET_MS) taps = []
+		taps = [...taps, now].slice(-TAP_COUNT)
+		if (taps.length >= 2) setBpm((60000 * (taps.length - 1)) / (taps[taps.length - 1] - taps[0]))
+	})
+
+	/* Time signature, accents, subdivision ---------------------------------- */
+	for (const button of root.querySelectorAll<HTMLButtonElement>('[data-beats]')) {
+		const direction = Number(button.dataset.beats)
+		onPress(button, () => Settings.update({ metroBeats: clamp(Settings.get().metroBeats + direction, 1, MAX_BEATS) }), true)
+	}
+	unitButtons.forEach((button) => button.addEventListener('click', () => Settings.update({ metroUnit: Number(button.dataset.unit) })))
+	subButtons.forEach((button) => button.addEventListener('click', () => Settings.update({ metroSubdivision: Number(button.dataset.sub) })))
+
+	function setAccent(beat: number, accent: number) {
+		const accents = [...Settings.get().metroAccents]
+		accents[beat] = accent
+		Settings.update({ metroAccents: accents })
+	}
+	accentFirst.addEventListener('change', () => setAccent(0, accentFirst.checked ? 2 : 1))
+
+	function buildDots(beats: number) {
+		dots = Array.from({ length: beats }, (_, beat) => {
+			const dot = document.createElement('button')
+			dot.type = 'button'
+			dot.className = 'metro-dot'
+			dot.textContent = String(beat + 1)
+			dot.addEventListener('click', () => setAccent(beat, NEXT_ACCENT[Settings.get().metroAccents[beat] ?? 1]))
+			return dot
+		})
+		lit = null
+		dotsBox.replaceChildren(...dots)
+		// Two even rows once a single row would make the dots too small to tap.
+		dotsBox.style.setProperty('--per-row', String(beats > 8 ? Math.ceil(beats / 2) : beats))
+	}
+
+	/* Run / stop ------------------------------------------------------------ */
+	async function holdScreen() {
+		// A sleeping phone silences the page; ask the screen to stay on while it clicks.
+		try {
+			wakeLock = (await navigator.wakeLock?.request('screen')) ?? null
+		} catch {
+			// Refused (low battery, unsupported): the metronome still runs.
+		}
+	}
+
+	function run() {
+		Metronome.start()
+		barInStep = 0
+		holdScreen()
+		sync()
+	}
+
+	function halt() {
+		if (!Metronome.getState().running) return
+		Metronome.stop()
+		void wakeLock?.release()
+		wakeLock = null
+		lit?.classList.remove('metro-dot--lit')
+		lit = null
+		barInStep = 0
+		sync()
+	}
+
+	const toggle = () => (Metronome.getState().running ? halt() : run())
+	startButton.addEventListener('click', toggle)
+
+	// The wake lock is dropped when the page is hidden; take it again on return.
+	document.addEventListener('visibilitychange', () => {
+		if (!document.hidden && Metronome.getState().running && !wakeLock) holdScreen()
+	})
+
+	document.addEventListener('keydown', (event) => {
+		if (root.hidden || event.code !== 'Space' || event.repeat) return
+		// Buttons and switches act on Space themselves; selects use it to open.
+		const target = event.target as Element
+		if (target.closest?.('button, select, textarea') || (target instanceof HTMLInputElement && target.type === 'checkbox')) return
+		event.preventDefault()
+		toggle()
+	})
+
+	// Leaving the tab stops the clicks: nothing else on screen could stop them,
+	// and the tuner's microphone would hear them.
+	new MutationObserver(() => root.hidden && halt()).observe(root, { attributes: true, attributeFilter: ['hidden'] })
+
+	/* Beats ----------------------------------------------------------------- */
+	function showBpm(bpm: number) {
+		bpmValue.textContent = String(bpm)
+		slider.value = String(bpm)
+		const { metroBeats, metroUnit } = Settings.get()
+		name.textContent = `${tempoName(bpm)} · ${metroBeats}/${metroUnit}`
+	}
+
+	Metronome.onBeat((event) => {
+		if (root.hidden) return
+		showBpm(event.bpm)
+		if (event.sub !== 0) return
+		lit?.classList.remove('metro-dot--lit')
+		lit = dots[event.beat] ?? null
+		lit?.classList.add('metro-dot--lit')
+		if (event.beat === 0) {
+			barInStep = event.bar % Settings.get().metroTrainerBars
+			if (Settings.get().metroFlash) flash.animate([{ opacity: 0.22 }, { opacity: 0 }], { duration: 320, easing: 'ease-out' })
+		}
+		renderTrainer()
+	})
+
+	/* Speed trainer ---------------------------------------------------------- */
+	trainerSwitch.addEventListener('change', () => Settings.update({ metroTrainerOn: trainerSwitch.checked }))
+
+	function renderTrainer() {
+		const { metroTrainerOn: on, metroTrainerStep: step, metroTrainerBars: bars, metroTrainerTarget: target, metroBpm: start } = Settings.get()
+		trainerDesc.textContent = `+${step} BPM every ${bars} ${bars === 1 ? 'bar' : 'bars'}, up to ${target}`
+		progress.hidden = !on
+		if (!on) return
+		const { running, bpm } = Metronome.getState()
+		const span = target - start
+		progressFill.style.width = `${span > 0 ? clamp(((bpm - start) / span) * 100, 0, 100) : 0}%`
+		progressText.textContent =
+			span <= 0
+				? `Set a target above ${start} BPM in settings`
+				: !running
+					? `Starts at ${start} BPM`
+					: bpm >= target
+						? `Target reached · ${target} BPM`
+						: `${bpm} → ${target} BPM${bars > 1 ? ` · bar ${barInStep + 1} of ${bars}` : ''}`
+	}
+
+	/* Rendering from settings ----------------------------------------------- */
+	function sync() {
+		const s = Settings.get()
+		const accents = s.metroAccents as Metronome.Accent[]
+		Metronome.configure({
+			beats: s.metroBeats,
+			accents,
+			subdivision: s.metroSubdivision,
+			sound: s.metroSound,
+			volume: s.metroVolume,
+			trainer: { enabled: s.metroTrainerOn, step: s.metroTrainerStep, bars: s.metroTrainerBars, target: s.metroTrainerTarget },
+		})
+
+		if (dots.length !== s.metroBeats) buildDots(s.metroBeats)
+		const labels = ['muted', 'normal', 'accent']
+		dots.forEach((dot, beat) => {
+			const accent = accents[beat] ?? 1
+			dot.dataset.accent = String(accent)
+			dot.setAttribute('aria-label', `Beat ${beat + 1}, ${labels[accent]}. Tap to change`)
+		})
+		accentFirst.checked = accents[0] === 2
+
+		showBpm(Metronome.getState().bpm)
+		beatsValue.textContent = String(s.metroBeats)
+		unitButtons.forEach((button) => button.setAttribute('aria-pressed', String(Number(button.dataset.unit) === s.metroUnit)))
+		subButtons.forEach((button) => button.setAttribute('aria-pressed', String(Number(button.dataset.sub) === s.metroSubdivision)))
+		trainerSwitch.checked = s.metroTrainerOn
+		renderTrainer()
+
+		const running = Metronome.getState().running
+		startButton.textContent = running ? 'Stop' : 'Start'
+		startButton.classList.toggle('btn--solid', !running)
+	}
+
+	Metronome.setTempo(Settings.get().metroBpm)
+	Settings.subscribe(sync)
+	sync()
+
+	return {
+		onActivate: sync,
+		// No microphone here; stopping on leaving the tab is the MutationObserver's job
+		// (reset() also runs when the mic is stopped or blocked, which must not stop the clicks).
+		onReading() {},
+		reset() {},
+	}
+}

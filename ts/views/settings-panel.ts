@@ -5,10 +5,11 @@ import * as Settings from '../settings'
  * and the All/None shortcuts. Keeps the controls in sync with stored settings.
  */
 export function createSettingsPanel(root: HTMLElement) {
-	// Checkbox switches store booleans, sliders numbers, selects their value.
+	// Checkbox switches store booleans, sliders numbers, selects their value
+	// (a number when marked data-number).
 	const switches = Array.from(root.querySelectorAll<HTMLInputElement | HTMLSelectElement>('[data-setting]'))
 	const valueOf = (input: HTMLInputElement | HTMLSelectElement) =>
-		input.type === 'checkbox' ? (input as HTMLInputElement).checked : input.type === 'range' ? Number(input.value) : input.value
+		input.type === 'checkbox' ? (input as HTMLInputElement).checked : input.type === 'range' || 'number' in input.dataset ? Number(input.value) : input.value
 	const chips = root.querySelector<HTMLElement>('#noteChips')!
 
 	for (const input of switches) {

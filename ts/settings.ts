@@ -19,6 +19,27 @@ export interface Settings {
 	scaleDegrees: number[]
 	/** Fret size multiplier, 0.5–1.5: height when vertical, width when horizontal. */
 	fretSize: number
+
+	/* Metronome */
+	/** Tempo, 30–300 BPM. */
+	metroBpm: number
+	/** Beats per bar (1–12) and the note value that gets the beat (4 or 8). */
+	metroBeats: number
+	metroUnit: number
+	/** Level per beat, 12 slots (a shorter bar uses the first ones): 0 mute, 1 normal, 2 accent. */
+	metroAccents: number[]
+	/** Clicks per beat: 1 none, 2 eighths, 3 triplets, 4 sixteenths. */
+	metroSubdivision: number
+	metroSound: 'click' | 'wood' | 'beep'
+	/** 0–1. */
+	metroVolume: number
+	/** Flash the screen on beat 1. */
+	metroFlash: boolean
+	/** Speed trainer: +step BPM every `bars` bars until `target`. */
+	metroTrainerOn: boolean
+	metroTrainerStep: number
+	metroTrainerBars: number
+	metroTrainerTarget: number
 }
 
 const STORAGE_KEY = 'pitch-recognizer:settings'
@@ -33,6 +54,18 @@ const defaults: Settings = {
 	scaleLabels: 'notes',
 	scaleDegrees: [1, 3, 5],
 	fretSize: 1,
+	metroBpm: 100,
+	metroBeats: 4,
+	metroUnit: 4,
+	metroAccents: [2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+	metroSubdivision: 1,
+	metroSound: 'click',
+	metroVolume: 0.8,
+	metroFlash: false,
+	metroTrainerOn: false,
+	metroTrainerStep: 5,
+	metroTrainerBars: 4,
+	metroTrainerTarget: 160,
 }
 
 const listeners = new Set<() => void>()
