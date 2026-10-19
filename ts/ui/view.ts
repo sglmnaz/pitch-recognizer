@@ -10,7 +10,8 @@ export interface View {
 	reset(): void
 	/**
 	 * False while the view has no use for the microphone (Metronome, the
-	 * Trainer's Chords exercise): index.ts turns it off there and back on after.
+	 * Trainer's Chords exercise): ts/ui/mic-block.ts turns it off there and back on
+	 * after. A view whose answer changes calls micNeedChanged().
 	 * Omitted = true.
 	 */
 	wantsMic?(): boolean

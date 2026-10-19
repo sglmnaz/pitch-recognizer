@@ -15,13 +15,13 @@ const CHORD_CONFIRM_MS = 150
 const SILENCE_RESET_MS = 300
 const tracker = withSilenceReset({ track: trackChord, reset: resetChordTracking }, SILENCE_RESET_MS)
 
-/** `onMicNeed` tells index.ts that wantsMic() changed: only Listen uses the mic. */
-export function createChordsView(root: HTMLElement, onMicNeed: () => void): View {
+/** Only Listen uses the mic (the modes call micNeedChanged on a switch). */
+export function createChordsView(root: HTMLElement): View {
 	const name = root.querySelector<HTMLButtonElement>('.readout__note')!
 	const sub = root.querySelector<HTMLElement>('.readout__sub')!
 	const chromaRow = root.querySelector<HTMLElement>('.chroma')!
 	// Listen / Library / Identify switch; the shown chord opens in the Library.
-	const modes = createChordModes(root, onMicNeed)
+	const modes = createChordModes(root)
 	name.addEventListener('click', () => shown && modes.openChord(shown))
 
 	const bins = PITCH_CLASSES.map((pitchClass) => {

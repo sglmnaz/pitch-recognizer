@@ -7,6 +7,7 @@ import type { PitchReading } from '../../core/microphone'
 import type { View } from '../../ui/view'
 import { bindSegmented } from '../../ui/dom'
 import { createReadout } from '../../ui/readout'
+import { micNeedChanged } from '../../ui/mic-block'
 import { createEarView } from './ear.view'
 import { createChangesView } from './changes.view'
 
@@ -14,9 +15,9 @@ import { createChangesView } from './changes.view'
  * Four exercises behind one segmented control: Notes (match the note on the
  * staff with the mic), the ear drills Intervals / Chords (ts/features/trainer/ear.view.ts) and
  * Changes, chord-change drills played into the mic (ts/features/trainer/changes.view.ts).
- * `onMicNeed` tells index.ts that wantsMic() changed: Chords has no use for it.
+ * Switching exercises calls micNeedChanged(): Chords has no use for the mic.
  */
-export function createTrainerView(root: HTMLElement, onMicNeed: () => void): View {
+export function createTrainerView(root: HTMLElement): View {
 	const staff = root.querySelector<HTMLElement>('#staff')!
 	const promptHint = root.querySelector<HTMLElement>('.prompt__hint')!
 	const promptNote = root.querySelector<HTMLElement>('.prompt__note')!
@@ -172,7 +173,7 @@ export function createTrainerView(root: HTMLElement, onMicNeed: () => void): Vie
 	Settings.subscribe(() => {
 		if (Settings.get().earSing === sing) return
 		sing = Settings.get().earSing
-		onMicNeed()
+		micNeedChanged()
 	})
 
 	const showExercise = bindSegmented(root.querySelector('.trainer-mode')!, 'data-exercise', (value) => {
@@ -183,7 +184,7 @@ export function createTrainerView(root: HTMLElement, onMicNeed: () => void): Vie
 		Sound.stopAll()
 		Settings.update({ trainerExercise: ex })
 		applyExercise()
-		onMicNeed()
+		micNeedChanged()
 		active().onActivate()
 	})
 

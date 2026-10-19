@@ -14,6 +14,7 @@ import { degreeMap, degreeRole, pitchClassOf, ROOTS, STRINGS } from '../../music
 import { OPEN_CHORD_EVENT } from '../../ui/events'
 import { noteChip, resultButton } from '../../ui/note-chip'
 import { bindSegmented, liveRegion, scoped, setPressed, svgEl } from '../../ui/dom'
+import { micNeedChanged } from '../../ui/mic-block'
 
 // ponytail: the 8 best shapes; the generator has dozens, add "more" if asked.
 const VOICINGS = 8
@@ -46,8 +47,8 @@ const capitalized = (text: string) => text[0].toUpperCase() + text.slice(1)
 /** Strings low to high, all at once or one by one (the Play as setting). */
 const play = (midis: number[]) => Sound.strum(midis, { step: Settings.get().chordPlay === 'arpeggio' ? ARPEGGIO_S : STRUM_S })
 
-/** `onMicNeed` tells index.ts that listening() changed: only Listen uses the mic. */
-export function createChordModes(root: HTMLElement, onMicNeed: () => void): ChordModes {
+/** A switch calls micNeedChanged(): only Listen uses the mic. */
+export function createChordModes(root: HTMLElement): ChordModes {
 	const { $ } = scoped(root)
 	const listenParts = [$<HTMLElement>(':scope > .readout'), $<HTMLElement>(':scope > .hint')]
 	const library = $<HTMLElement>('.chord-library')
@@ -59,7 +60,7 @@ export function createChordModes(root: HTMLElement, onMicNeed: () => void): Chor
 		if (next !== mode) Sound.stopAll()
 		mode = next
 		if (Settings.get().chordsMode !== next) Settings.update({ chordsMode: next })
-		onMicNeed()
+		micNeedChanged()
 		show()
 	}
 	const showMode = bindSegmented(root, 'data-chords-mode', (value) => setMode(value as Mode))
@@ -67,7 +68,7 @@ export function createChordModes(root: HTMLElement, onMicNeed: () => void): Chor
 	function show() {
 		root.dataset.mode = mode
 		showMode(mode)
-		// The shared #mic block follows wantsMic (index.ts).
+		// The shared #mic block follows wantsMic (ts/ui/mic-block.ts).
 		for (const part of listenParts) part.hidden = mode !== 'listen'
 		library.hidden = mode !== 'library'
 		identify.hidden = mode !== 'identify'

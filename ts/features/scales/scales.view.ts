@@ -25,6 +25,7 @@ import type { View } from '../../ui/view'
 import { bindSegmented, scoped, setPressed, whenVisible } from '../../ui/dom'
 import { phone } from '../../ui/media'
 import { noteChip, resultButton } from '../../ui/note-chip'
+import { micState, onMicChange, setListening } from '../../ui/mic-block'
 
 // ponytail: results capped; a couple of marked notes already narrow it to a
 // screenful, add paging if someone wants to browse all ~150 for a single note.
@@ -37,15 +38,8 @@ const ADD_HOLD_MS = 200
 
 type Mode = 'explore' | 'identify'
 type Shown = { rootPc: number; type: ScaleType }
-export type MicState = 'off' | 'waiting' | 'listening' | 'blocked'
-
-/** The mic is owned by index.ts; the view only asks for it and shows its state. */
-export interface MicControl {
-	state(): MicState
-	listen(on: boolean): void
-}
-
-export function createScalesView(root: HTMLElement, mic: MicControl): View & { syncMic(): void } {
+// The mic is owned by ts/ui/mic-block.ts; the view only asks for it and shows its state.
+export function createScalesView(root: HTMLElement): View {
 	const { $ } = scoped(root)
 	const explorePickers = $<HTMLElement>('.scales-explore')
 	const identifyPickers = $<HTMLElement>('.scales-identify')
@@ -169,13 +163,13 @@ export function createScalesView(root: HTMLElement, mic: MicControl): View & { s
 	// Explore: the toggle is the mic itself. Identify: it adds notes by ear,
 	// turning the mic on if needed (and leaves it on when switched off).
 	micButton.addEventListener('click', () => {
-		const listening = mic.state() === 'listening'
+		const listening = micState() === 'listening'
 		if (mode === 'explore') {
 			if (listening) clearHeard()
-			return mic.listen(!listening)
+			return setListening(!listening)
 		}
 		addByEar = !(addByEar && listening)
-		if (addByEar && !listening) mic.listen(true)
+		if (addByEar && !listening) setListening(true)
 		syncMic()
 	})
 
@@ -198,8 +192,10 @@ export function createScalesView(root: HTMLElement, mic: MicControl): View & { s
 	window.addEventListener('resize', redraw)
 
 	/* Mic toggle ---------------------------------------------------------- */
+	// Mirrors the shared mic every time its state is shown.
+	onMicChange(() => syncMic())
 	function syncMic() {
-		const state = mic.state()
+		const state = micState()
 		const listening = state === 'listening'
 		const on = mode === 'explore' ? listening : addByEar && listening
 		micLabel.textContent = mode === 'explore' ? 'Listen' : 'Play to mark'
@@ -448,7 +444,6 @@ export function createScalesView(root: HTMLElement, mic: MicControl): View & { s
 
 	return {
 		onActivate: render,
-		syncMic,
 
 		reset() {
 			stopPlaying()
