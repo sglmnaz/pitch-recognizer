@@ -5,6 +5,7 @@
 // that shows a neck follows them alike.
 import * as Settings from '../core/settings'
 import { FRETS, ROOTS, STRINGS } from '../music/scales'
+import { phone } from './media'
 
 /** root / tone / note: the degree palette; marked: solid (Identify, off any
  * shown scale); optional: a dashed outline (e.g. a chord tone you may drop). */
@@ -125,8 +126,6 @@ function windowGeometry(from: number, frets: number) {
 	const halfCell = (fret: number) => (fret === 0 ? open / 2 : size / 2)
 	return { length: fretAt(from + frets - 1) + 6, open, fretAt, noteAlong, halfCell }
 }
-
-const phone = matchMedia('(max-width: 600px)')
 
 // Labels and names come from callers: keep them text inside the markup.
 const esc = (text: string) => text.replace(/[&<>"]/g, (ch) => `&#${ch.charCodeAt(0)};`)

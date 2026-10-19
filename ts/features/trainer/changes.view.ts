@@ -12,6 +12,7 @@ import { chordShapes, voicingSpec } from '../../music/chord-shapes'
 import { createFretboard, type Fretboard } from '../../ui/fretboard'
 import type { View } from '../../ui/view'
 import { bindSegmented, liveRegion, onBareKey, scoped } from '../../ui/dom'
+import { reducedMotion } from '../../ui/media'
 
 /* Chord adapter ------------------------------------------------------------ */
 
@@ -156,7 +157,6 @@ export function createChangesView(root: HTMLElement): View {
 	let clicking = false
 	// performance.now() of the last click heard (Metronome.onBeat fires then).
 	let lastClickAt = -Infinity
-	const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)')
 	// Readings arrive every frame while the mic runs and reset() runs when it stops.
 	let micLive = false
 	let wakeLock: WakeLockSentinel | null = null

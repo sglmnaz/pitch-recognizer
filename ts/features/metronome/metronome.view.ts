@@ -2,6 +2,7 @@ import * as Metronome from '../../core/metronome'
 import * as Settings from '../../core/settings'
 import type { View } from '../../ui/view'
 import { bindSegmented, onBareKey, scoped } from '../../ui/dom'
+import { reducedMotion } from '../../ui/media'
 
 const MAX_BEATS = 12
 // Taps further apart than this start a new measurement; the average covers the
@@ -66,7 +67,6 @@ export function createMetronomeView(root: HTMLElement): View {
 	let owned = false
 	let dragging = false
 	let userTempoAt = 0
-	const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)')
 
 	/* Tempo ----------------------------------------------------------------- */
 	/** The one way the user changes tempo: engine first, then the stored setting. */

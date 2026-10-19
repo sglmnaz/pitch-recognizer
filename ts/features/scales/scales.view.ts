@@ -23,6 +23,7 @@ import {
 } from '../../music/scales'
 import type { View } from '../../ui/view'
 import { bindSegmented, scoped, setPressed, whenVisible } from '../../ui/dom'
+import { phone } from '../../ui/media'
 
 // ponytail: results capped; a couple of marked notes already narrow it to a
 // screenful, add paging if someone wants to browse all ~150 for a single note.
@@ -67,7 +68,6 @@ export function createScalesView(root: HTMLElement, mic: MicControl): View & { s
 	const micLabel = $<HTMLElement>('.mic-toggle__label')
 	const hint = $<HTMLElement>('.neck-hint')
 	const results = $<HTMLElement>('.scale-results')
-	const phone = matchMedia('(max-width: 600px)')
 	const legend = $<HTMLElement>('.neck-legend')
 	const legendRoot = $<HTMLElement>('.neck-legend__root')
 	const legendTone = $<HTMLElement>('.neck-legend__tone')
