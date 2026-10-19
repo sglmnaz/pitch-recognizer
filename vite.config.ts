@@ -8,7 +8,15 @@ import { VitePWA } from 'vite-plugin-pwa'
 const browsers = browserslist()
 // Vite's Lightning CSS minifier reads esbuild-style build.cssTarget, not
 // css.lightningcss.targets, so the same list is mirrored there.
-const esbuildName: Record<string, string> = { chrome: 'chrome', and_chr: 'chrome', edge: 'edge', firefox: 'firefox', and_ff: 'firefox', safari: 'safari', ios_saf: 'ios' }
+const esbuildName: Record<string, string> = {
+	chrome: 'chrome',
+	and_chr: 'chrome',
+	edge: 'edge',
+	firefox: 'firefox',
+	and_ff: 'firefox',
+	safari: 'safari',
+	ios_saf: 'ios',
+}
 const cssTarget = browsers.flatMap((b) => {
 	const [name, version] = b.split(' ')
 	return name in esbuildName ? [esbuildName[name] + version.split('-')[0]] : []
