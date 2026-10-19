@@ -11,6 +11,7 @@ import { chordShapes, shapeString, voicingSpec, type Voicing } from '../../music
 import { CHORD_GROUPS, keysOf, matchNotes, parseChordSymbol, ROOT_LABELS, shapeNotes, voicingCaption } from '../../music/chord-library'
 import { degreeMap, degreeRole, pitchClassOf, ROOTS, STRINGS } from '../../music/scales'
 import { OPEN_CHORD_EVENT } from '../../ui/events'
+import { noteChip, resultButton } from '../../ui/note-chip'
 import { bindSegmented, liveRegion, scoped, setPressed, svgEl } from '../../ui/dom'
 
 // ponytail: the 8 best shapes; the generator has dozens, add "more" if asked.
@@ -216,14 +217,7 @@ export function createChordModes(root: HTMLElement, onMicNeed: () => void): Chor
 				const degree = chord.degrees[i]
 				const role = degreeRole(degree)
 				chip.className = `scale-note chord-note${role === 'note' ? '' : ` scale-note--${role}`}`
-				const name = document.createElement('span')
-				name.className = 'scale-note__name'
-				name.textContent = note
-				const deg = document.createElement('span')
-				deg.className = 'scale-note__degree'
-				deg.textContent = degree
-				chip.append(name, deg)
-				return chip
+				return noteChip(chip, note, degree)
 			})
 		)
 		const keys = keysOf(rootPc, type)
@@ -333,21 +327,13 @@ export function createChordModes(root: HTMLElement, onMicNeed: () => void): Chor
 		if (!matches.length) return results.replaceChildren(message(pcs.size < 2 ? 'Mark at least two different notes.' : 'No chord found. Is the root marked?'))
 		results.replaceChildren(
 			...matches.slice(0, RESULTS).map((match) => {
-				const button = document.createElement('button')
-				button.type = 'button'
-				button.className = 'scale-result chord-result'
-				button.title = 'Open in the Library'
-				const symbol = document.createElement('span')
-				symbol.className = 'chord-result__symbol'
-				symbol.textContent = match.symbol
 				const diff = matchNotes(match, pcs)
-				const extra = document.createElement('span')
-				extra.className = 'scale-result__extra'
-				extra.textContent = diff.length ? diff.join(' · ') : 'exact'
-				const full = document.createElement('span')
-				full.className = 'scale-result__notes'
-				full.textContent = `${match.root} ${match.type.name}${match.bass ? ` over ${match.bass}` : ''} · ${match.notes.join(' ')}`
-				button.append(symbol, extra, full)
+				const button = resultButton('scale-result chord-result', [
+					['chord-result__symbol', match.symbol],
+					['scale-result__extra', diff.length ? diff.join(' · ') : 'exact'],
+					['scale-result__notes', `${match.root} ${match.type.name}${match.bass ? ` over ${match.bass}` : ''} · ${match.notes.join(' ')}`],
+				])
+				button.title = 'Open in the Library'
 				button.addEventListener('click', () => openChord(match.symbol))
 				const item = document.createElement('li')
 				item.append(button)

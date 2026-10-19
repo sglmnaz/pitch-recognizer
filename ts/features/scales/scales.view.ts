@@ -24,6 +24,7 @@ import {
 import type { View } from '../../ui/view'
 import { bindSegmented, scoped, setPressed, whenVisible } from '../../ui/dom'
 import { phone } from '../../ui/media'
+import { noteChip, resultButton } from '../../ui/note-chip'
 
 // ponytail: results capped; a couple of marked notes already narrow it to a
 // screenful, add paging if someone wants to browse all ~150 for a single note.
@@ -296,13 +297,7 @@ export function createScalesView(root: HTMLElement, mic: MicControl): View & { s
 				chip.setAttribute('aria-pressed', String(on))
 				if (on) chip.classList.add(i === 0 ? 'scale-note--root' : 'scale-note--tone')
 				chip.title = on ? 'Tap to stop colouring this degree' : 'Tap to colour this degree on the neck'
-				const note = document.createElement('span')
-				note.className = 'scale-note__name'
-				note.textContent = spelled.notes[i]
-				const deg = document.createElement('span')
-				deg.className = 'scale-note__degree'
-				deg.textContent = degree
-				chip.append(note, deg)
+				noteChip(chip, spelled.notes[i], degree)
 				chip.addEventListener('click', () => {
 					const n = degreeNumber(degree)
 					const degrees = new Set(Settings.get().scaleDegrees)
@@ -321,20 +316,12 @@ export function createScalesView(root: HTMLElement, mic: MicControl): View & { s
 		if (marked.size === 0) return
 		for (const match of matches.slice(0, MAX_RESULTS)) {
 			const isSelected = selected?.rootPc === match.rootPc && selected.type === match.type
-			const button = document.createElement('button')
-			button.type = 'button'
-			button.className = 'scale-result'
+			const button = resultButton('scale-result', [
+				['scale-result__title', scaleTitle(match.root, match.type)],
+				['scale-result__extra', match.extra === 0 ? 'exact' : `+${match.extra}`],
+				['scale-result__notes', match.notes.join(' ')],
+			])
 			button.setAttribute('aria-pressed', String(isSelected))
-			const title = document.createElement('span')
-			title.className = 'scale-result__title'
-			title.textContent = scaleTitle(match.root, match.type)
-			const notes = document.createElement('span')
-			notes.className = 'scale-result__notes'
-			notes.textContent = match.notes.join(' ')
-			const extra = document.createElement('span')
-			extra.className = 'scale-result__extra'
-			extra.textContent = match.extra === 0 ? 'exact' : `+${match.extra}`
-			button.append(title, extra, notes)
 			button.addEventListener('click', () => {
 				selected = isSelected ? null : { rootPc: match.rootPc, type: match.type }
 				stopPlaying()
