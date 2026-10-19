@@ -38,6 +38,9 @@ export function createEarView(root: HTMLElement): View {
 	let autoTimer = 0
 	// Sung answer: the note being held and since when.
 	let hold: { midi: number; since: number } | null = null
+	// Readings arrive every frame while the mic runs and reset() runs when it
+	// stops, so this tracks whether a sung answer is possible at all.
+	let micLive = false
 
 	const exercise = () => Settings.get().trainerExercise as Ear.Exercise
 	const enabled = () => (exercise() === 'intervals' ? Settings.get().earIntervals : Settings.get().earChords)
@@ -126,9 +129,9 @@ export function createEarView(root: HTMLElement): View {
 		const prefix = q?.exercise === 'intervals' ? `${DIRECTION_TEXT[q.direction]}. ` : 'Strummed. '
 		if (text) hint.textContent = text
 		else if (!played) hint.textContent = `${prefix}Press Play to hear it.`
-		else if (q?.exercise === 'intervals') {
+		else if (q?.exercise === 'intervals' && micLive) {
 			hint.textContent = `${prefix}Tap the answer, or sing or play the ${q.direction === 'harmonic' ? 'upper' : 'second'} note.`
-		} else hint.textContent = `${prefix}Tap its quality.`
+		} else hint.textContent = `${prefix}${q?.exercise === 'intervals' ? 'Tap the interval.' : 'Tap its quality.'}`
 	}
 
 	function showQuestion() {
@@ -142,7 +145,10 @@ export function createEarView(root: HTMLElement): View {
 		const q = question()
 		if (!q) return
 		const { notes, gain } = Ear.playback(q, id ?? q.id, Settings.get().earGap)
-		for (const note of notes) Sound.play(note.midi, note.at, gain)
+		// A replay replaces what is still sounding instead of stacking on it, and
+		// the mic ignores the whole note (its tail could otherwise answer).
+		Sound.stopAll()
+		for (const note of notes) Sound.play(note.midi, note.at, gain, Sound.NOTE_MS)
 		hold = null
 		if (!played) {
 			played = true
@@ -195,7 +201,10 @@ export function createEarView(root: HTMLElement): View {
 		updateScoreboard()
 		renderStats()
 		if (correct && Settings.get().earAutoAdvance) {
-			autoTimer = window.setTimeout(() => startRound(true), AUTO_ADVANCE_MS)
+			autoTimer = window.setTimeout(() => {
+				// The user may have left the tab or switched exercise meanwhile.
+				if (!root.hidden && !panel.hidden && exercise() === ex) startRound(true)
+			}, AUTO_ADVANCE_MS)
 		} else {
 			nextButton.focus()
 		}
@@ -218,15 +227,17 @@ export function createEarView(root: HTMLElement): View {
 	// direction: ask afresh, but do not play while the user is in the popover.
 	Settings.subscribe(() => {
 		if (shown === null || shown !== exercise() || root.hidden) return
+		// A decided round keeps its right/wrong marks; the next round picks the
+		// change up (startRound re-renders the answers).
+		if (Ear.getSession(shown).answered) return
 		renderAnswers()
 		const q = question()
 		const { earDirection } = Settings.get()
-		const session = Ear.getSession(shown)
 		const stale =
 			!q ||
 			!Ear.pool(shown, enabled()).includes(q.id) ||
 			(shown === 'intervals' && earDirection !== 'mixed' && q.direction !== earDirection)
-		if (stale && !session.answered) startRound(false)
+		if (stale) startRound(false)
 	})
 
 	return {
@@ -242,11 +253,17 @@ export function createEarView(root: HTMLElement): View {
 		},
 
 		reset() {
+			clearTimeout(autoTimer)
 			hold = null
+			micLive = false
 			showHint()
 		},
 
 		onReading(reading: PitchReading | null) {
+			if (!micLive) {
+				micLive = true
+				showHint()
+			}
 			const q = question()
 			// Sung answers: intervals only, once heard, before answering, and never
 			// while the speaker may still be what the mic hears.
@@ -266,9 +283,10 @@ export function createEarView(root: HTMLElement): View {
 				return
 			}
 			if (now - hold.since < HOLD_MS) return
-			const id = Ear.intervalOfAnswer(q, midi)
-			// The reference itself (or anything past an octave) is no answer; keep
-			// the hold so it is not re-judged every HOLD_MS while it rings on.
+			const id = Ear.intervalOfAnswer(q, midi, enabled())
+			// The reference's pitch class, or an interval that is not a button, is
+			// no answer (and not a wrong one); keep the hold so it is not re-judged
+			// every HOLD_MS while it rings on.
 			if (id) onAnswer(id)
 			else hold.since = Infinity
 		},

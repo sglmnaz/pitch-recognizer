@@ -115,7 +115,12 @@ export function createSettingsPanel(root: HTMLElement) {
 	function syncEarChips() {
 		for (const container of earChips) {
 			const enabled = Settings.get()[container.dataset.chips as 'earIntervals' | 'earChords']
-			for (const chip of container.children) chip.setAttribute('aria-pressed', String(enabled.includes(chip.textContent!)))
+			for (const chip of container.children) {
+				const on = enabled.includes(chip.textContent!)
+				chip.setAttribute('aria-pressed', String(on))
+				// The last one on stays on (see the click handler): say so.
+				chip.setAttribute('aria-disabled', String(on && enabled.length === 1))
+			}
 		}
 	}
 

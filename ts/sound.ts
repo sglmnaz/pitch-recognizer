@@ -5,6 +5,8 @@ import { frequencyOfMidi } from './notes'
 import * as Settings from './settings'
 
 const DURATION_S = 1.6
+/** How long a plucked note lasts, for callers that must not hear any of it (ear training). */
+export const NOTE_MS = DURATION_S * 1000
 // Energy kept per trip round the string; with the two-tap average below,
 // highs die first and low strings ring longer, like steel strings.
 const DECAY = 0.996
@@ -18,6 +20,8 @@ const RING_MS = 900
 let ctx: AudioContext | null = null
 const buffers = new Map<number, AudioBuffer>()
 let ringingUntil = 0
+// Notes still sounding, so stopAll() can cut them (a replay must not stack copies).
+const voices = new Set<{ source: AudioBufferSourceNode; gain: GainNode }>()
 // The buffers are tuned to this A4; a calibration change drops them.
 let bufferA4 = 440
 
@@ -43,8 +47,12 @@ function pluck(context: AudioContext, midi: number): AudioBuffer {
 	return buffer
 }
 
-/** Plays a MIDI note `delay` seconds from now; `volume` < 1 for notes that ring together (a chord). */
-export function play(midi: number, delay = 0, volume = 1) {
+/**
+ * Plays a MIDI note `delay` seconds from now; `volume` < 1 for notes that ring
+ * together (a chord). `ringMs`: how long after its onset the mic should ignore
+ * what it hears; the default covers the loud part, NOTE_MS the whole note.
+ */
+export function play(midi: number, delay = 0, volume = 1, ringMs = RING_MS) {
 	ctx ??= new AudioContext()
 	if (ctx.state === 'suspended') ctx.resume()
 	const { a4 } = Settings.get()
@@ -56,14 +64,28 @@ export function play(midi: number, delay = 0, volume = 1) {
 	if (!buffer) buffers.set(midi, (buffer = pluck(ctx, midi)))
 	const source = ctx.createBufferSource()
 	source.buffer = buffer
-	if (volume === 1) source.connect(ctx.destination)
-	else {
-		const gain = ctx.createGain()
-		gain.gain.value = volume
-		source.connect(gain).connect(ctx.destination)
-	}
+	const gain = ctx.createGain()
+	gain.gain.value = volume
+	source.connect(gain).connect(ctx.destination)
+	const voice = { source, gain }
+	voices.add(voice)
+	source.onended = () => voices.delete(voice)
 	source.start(ctx.currentTime + delay)
-	ringingUntil = Math.max(ringingUntil, performance.now() + delay * 1000 + RING_MS)
+	ringingUntil = Math.max(ringingUntil, performance.now() + delay * 1000 + ringMs)
+}
+
+/** Fades out (20 ms, no click) every plucked note still sounding or scheduled. */
+export function stopAll() {
+	if (!ctx) return
+	const now = ctx.currentTime
+	for (const { source, gain } of voices) {
+		gain.gain.cancelScheduledValues(now)
+		gain.gain.setValueAtTime(gain.gain.value, now)
+		gain.gain.linearRampToValueAtTime(0, now + 0.02)
+		// A note scheduled for later must not start at all; stop() before start time does that.
+		source.stop(now + 0.03)
+	}
+	voices.clear()
 }
 
 /** True while a synth note may still be audible to the microphone. */

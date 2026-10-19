@@ -119,9 +119,11 @@ check('a pool of one repeats instead of hanging', makeQuestion('intervals', ['P5
 	const up: Question = { exercise: 'intervals', id: 'P5', root: 48, direction: 'up' }
 	check('sung G3 over C3 ascending = P5', intervalOfAnswer(up, 55) === 'P5')
 	check('sung C3 itself = no interval', intervalOfAnswer(up, 48) === null)
-	check('sung below the reference ascending = no interval', intervalOfAnswer(up, 45) === null)
+	check('sung C2 / C5 (the reference, octaves off) = no interval', intervalOfAnswer(up, 36) === null && intervalOfAnswer(up, 72) === null)
+	check('sung G2 under C3 (low voice) folds to P5', intervalOfAnswer(up, 43) === 'P5')
 	check('descending: sung A3 under C4 = m3', intervalOfAnswer({ ...up, root: 60, direction: 'down' }, 57) === 'm3')
-	check('octave counts, a 9th does not', intervalOfAnswer(up, 60) === 'P8' && intervalOfAnswer(up, 62) === null)
+	check('octave counts, a 9th folds to M2', intervalOfAnswer(up, 60) === 'P8' && intervalOfAnswer(up, 62) === 'M2')
+	check('an interval outside the enabled pool is no answer', intervalOfAnswer(up, 55, ['m3', 'M3']) === null && intervalOfAnswer(up, 52, ['m3', 'M3']) === 'M3')
 }
 
 // Scoring: first answer counts, later ones audition; stats weakest first.

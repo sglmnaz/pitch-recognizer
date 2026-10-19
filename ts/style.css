@@ -2530,15 +2530,26 @@ label.metro-row {
 		max-width: none;
 	}
 
+	/* 44 px tap targets (the buttons themselves, not counting the track). */
 	.trainer-mode button {
-		min-height: 38px;
+		min-height: 44px;
 	}
 
 	.ear__play,
+	.ear__next,
 	.settings__section[data-for='trainer'] .chip,
 	.settings__section[data-for='trainer'] .select {
 		height: 44px;
 	}
+
+	/* Six across is ~41 px wide in a phone popover; three rows of four are not. */
+	.chips--6 {
+		grid-template-columns: repeat(4, 1fr);
+	}
+}
+
+.chip[aria-disabled='true'] {
+	cursor: not-allowed;
 }
 
 /* Desktop: the question on the left, the session summary (and the mic, for

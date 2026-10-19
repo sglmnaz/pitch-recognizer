@@ -142,11 +142,16 @@ export function playback(question: Question, id: string, gapS: number): Playback
 /**
  * The interval a sung or played answer names: the distance from the reference
  * (the first note) to `midi` in the question's direction (harmonic: up from
- * the lower note). Null when it is not one of the twelve.
+ * the lower note). A voice an octave off (a low voice under a high question,
+ * or past the octave) is folded back; the reference's own pitch class names
+ * nothing. Null too when the interval is not in `enabled`: a held note that
+ * is not one of the buttons is more likely a stray than an answer.
  */
-export function intervalOfAnswer(question: Question, midi: number): string | null {
-	const semitones = question.direction === 'down' ? question.root - midi : midi - question.root
-	return INTERVALS.find((i) => i.semitones === semitones)?.id ?? null
+export function intervalOfAnswer(question: Question, midi: number, enabled: readonly string[] = DEFAULT_INTERVALS): string | null {
+	const distance = question.direction === 'down' ? question.root - midi : midi - question.root
+	const semitones = distance >= 1 && distance <= 12 ? distance : ((distance % 12) + 12) % 12
+	const id = INTERVALS.find((i) => i.semitones === semitones)?.id ?? null
+	return id && pool('intervals', enabled).includes(id) ? id : null
 }
 
 /* Session: score, streak, best (persisted), per-answer stats ----------------- */

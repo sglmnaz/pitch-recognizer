@@ -101,9 +101,11 @@ export function createTrainerView(root: HTMLElement, onMicNeed: () => void): Vie
 
 	// React to settings changes: keep the target valid against the new pool and
 	// re-apply the staff theme. Only re-render the prompt when the target moved.
+	// Only while Notes is on screen: an ear-training setting must not rebuild
+	// VexFlow into a hidden staff. onActivate catches up on the way back.
 	Settings.subscribe(() => {
 		applyStaffTheme()
-		if (!started) return
+		if (!started || Settings.get().trainerExercise !== 'notes') return
 		const previous = Game.getState().target
 		Game.revalidateTarget()
 		showTarget()
@@ -114,6 +116,10 @@ export function createTrainerView(root: HTMLElement, onMicNeed: () => void): Vie
 
 	const notes: View = {
 		onActivate() {
+			if (started) {
+				Game.revalidateTarget()
+				showTarget()
+			}
 			ensureStarted()
 			updateScoreboard()
 			applyStaffTheme()
