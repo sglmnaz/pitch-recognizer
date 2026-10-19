@@ -46,7 +46,8 @@ export function bindSegmented(container: ParentNode, attr: string, onPick: (valu
  * unless the call is `force`d (starts, ends, results).
  */
 export function liveRegion(el: HTMLElement, { throttleMs = 0, dedupe = false } = {}) {
-	let last = 0
+	// -Infinity, not 0: the first announcement must pass even within throttleMs of page load.
+	let last = Number.NEGATIVE_INFINITY
 	return (text: string, force = false) => {
 		if (dedupe && el.textContent === text) return
 		const now = performance.now()
@@ -59,9 +60,10 @@ export function liveRegion(el: HTMLElement, { throttleMs = 0, dedupe = false } =
 /**
  * A page-wide shortcut: `handler` runs (default prevented) for `keys` ('Space'
  * by code, any other by key) only while every element in `roots` is shown,
- * the focus is on the bare page (or a target `allow` accepts) and no
- * modifier or auto-repeat is involved: Space and Enter keep their own
- * meaning in buttons, fields and selects.
+ * the focus is on the bare page (or a target `allow` accepts) and neither
+ * Ctrl, Alt, Meta nor auto-repeat is involved (Shift is allowed, as before):
+ * Space and Enter keep their own meaning in buttons, fields and selects.
+ * Each root must carry `hidden` itself: hidden ancestors are not checked.
  */
 export function onBareKey(roots: HTMLElement[], keys: string[], handler: (event: KeyboardEvent) => void, allow?: (target: EventTarget) => boolean) {
 	document.addEventListener('keydown', (event) => {
