@@ -182,9 +182,7 @@ export function keyName(rootPc: number, type: ScaleType): string {
 	const key = keyOf(rootPc, type)
 	if (!key) return ''
 	const signature = signatureName(CIRCLE[circleIndex(key.pc, key.family)].accidentals)
-	return key.mode
-		? `${spellScale(ROOTS[mod12(rootPc)], type).root} ${type.name} · parent ${keyTitle(key)}, ${signature}`
-		: `${keyTitle(key)}, ${signature}`
+	return key.mode ? `${spellScale(ROOTS[mod12(rootPc)], type).root} ${type.name} · parent ${keyTitle(key)}, ${signature}` : `${keyTitle(key)}, ${signature}`
 }
 
 /** 2 → '2 sharps', -1 → '1 flat', 0 → 'no sharps or flats'. */

@@ -408,8 +408,7 @@ function processFrame(input: Float32Array, sampleRate: number, now: number): Pit
 
 	const [rawPitch, clarity] = findPitch(input, sampleRate)
 	const pitch = clarity >= SUSTAIN_CLARITY ? correctOctaveUp(input, sampleRate, rawPitch) : rawPitch
-	const sustaining =
-		filteredValue !== null && Math.abs(1200 * Math.log2(pitch / filteredValue)) < SUSTAIN_CENTS
+	const sustaining = filteredValue !== null && Math.abs(1200 * Math.log2(pitch / filteredValue)) < SUSTAIN_CENTS
 	const voiced = clarity >= MIN_CLARITY || (sustaining && clarity >= SUSTAIN_CLARITY)
 	stats.clarity = clarity
 
@@ -441,8 +440,7 @@ function learnNoise(volume: number, dt: number) {
 	// Digital silence (the stream has not delivered audio yet) says nothing about
 	// the room, and a zero floor would never rise again.
 	if (volume <= 1e-5) return
-	noiseFloor =
-		noiseFloor === null || volume < noiseFloor ? volume : Math.min(volume, noiseFloor * NOISE_FLOOR_RISE ** dt)
+	noiseFloor = noiseFloor === null || volume < noiseFloor ? volume : Math.min(volume, noiseFloor * NOISE_FLOOR_RISE ** dt)
 }
 
 // The last reading while within the dropout hold, otherwise silence.

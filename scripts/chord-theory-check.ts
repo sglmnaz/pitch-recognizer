@@ -81,7 +81,10 @@ check(
 	symbols('A', 'Harmonic minor', 'seventh') === 'AmMaj7 Bm7b5 Cmaj7#5 Dm7 E7 Fmaj7 G#dim7',
 	symbols('A', 'Harmonic minor', 'seventh')
 )
-check('A harmonic minor V and vii°7', numerals('A', 'Harmonic minor', 'seventh').split(' ')[4] === 'V7' && numerals('A', 'Harmonic minor', 'seventh').endsWith('vii°7'))
+check(
+	'A harmonic minor V and vii°7',
+	numerals('A', 'Harmonic minor', 'seventh').split(' ')[4] === 'V7' && numerals('A', 'Harmonic minor', 'seventh').endsWith('vii°7')
+)
 check('D Dorian numerals', numerals('D', 'Dorian', 'triad') === 'i ii bIII IV v vi° bVII', numerals('D', 'Dorian', 'triad'))
 check('G Mixolydian V is minor', numerals('G', 'Mixolydian', 'triad').split(' ')[4] === 'v')
 check('Pentatonic has no diatonic chords', chordsOfScale(0, scale('Minor pentatonic')).length === 0)
@@ -110,7 +113,11 @@ const SHAPES: [string, string, string][] = [
 	['A', 'sus4', 'x02230'],
 ]
 const TOP = 3
-const fingerString = (v: Voicing) => [...v.fingers].reverse().map((f, i) => (v.frets[v.frets.length - 1 - i] > 0 ? f : '-')).join('')
+const fingerString = (v: Voicing) =>
+	[...v.fingers]
+		.reverse()
+		.map((f, i) => (v.frets[v.frets.length - 1 - i] > 0 ? f : '-'))
+		.join('')
 for (const [root, symbol, shape] of SHAPES) {
 	const voicings = chordShapes(pitchClassOf(root), type(symbol), { limit: 8 })
 	const rank = voicings.findIndex((v) => shapeString(v) === shape)
@@ -120,13 +127,20 @@ for (const [root, symbol, shape] of SHAPES) {
 
 const by = (root: string, symbol: string, shape: string) => chordShapes(pitchClassOf(root), type(symbol), { limit: 20 }).find((v) => shapeString(v) === shape)
 const f = by('F', '', '133211')
-check('F 133211: barre on fret 1 across all strings, fingers 134211', f?.barre?.fret === 1 && f.barre.from === 0 && f.barre.to === 5 && fingerString(f) === '134211', f ? fingerString(f) : 'missing')
+check(
+	'F 133211: barre on fret 1 across all strings, fingers 134211',
+	f?.barre?.fret === 1 && f.barre.from === 0 && f.barre.to === 5 && fingerString(f) === '134211',
+	f ? fingerString(f) : 'missing'
+)
 const bm = by('B', 'm', 'x24432')
 check('Bm x24432: barre on fret 2, fingers -13421', bm?.barre?.fret === 2 && fingerString(bm) === '-13421', bm ? fingerString(bm) : 'missing')
 const c = by('C', '', 'x32010')
 check('C x32010: fingers -32-1-, no barre', c?.barre === null && fingerString(c) === '-32-1-', c ? fingerString(c) : 'missing')
 check('C major top shape has the root in the bass', !chordShapes(0, type(''))[0].inversion)
-check('Inversions only when asked', chordShapes(0, type(''), { limit: 50 }).every((v) => !v.inversion) && chordShapes(0, type(''), { limit: 200, inversions: true }).some((v) => v.inversion))
+check(
+	'Inversions only when asked',
+	chordShapes(0, type(''), { limit: 50 }).every((v) => !v.inversion) && chordShapes(0, type(''), { limit: 200, inversions: true }).some((v) => v.inversion)
+)
 const allFingers = CHORD_TYPES.flatMap((t) => chordShapes(0, t, { limit: 20 })).every((v) => new Set(v.fingers.filter((x) => x > 0)).size <= 4)
 check('Every voicing uses at most 4 fingers', allFingers)
 const spanOk = CHORD_TYPES.flatMap((t) => chordShapes(7, t, { limit: 20 })).every((v) => {
@@ -143,7 +157,14 @@ check('Drop D: D5 000xxx among the top shapes', d5.slice(0, 3).includes('000xxx'
 
 // Diagram windows: a shape with an open string starts at the nut.
 const from = (root: string, symbol: string, shape: string) => by(root, symbol, shape)?.from
-check('Diagram windows: A7, Am, C, Bm start at the nut, D7 x57575 at 5', from('A', '7', 'x02020') === 1 && from('A', 'm', 'x02210') === 1 && from('C', '', 'x32010') === 1 && from('B', 'm', 'x24432') === 1 && from('D', '7', 'x57575') === 5)
+check(
+	'Diagram windows: A7, Am, C, Bm start at the nut, D7 x57575 at 5',
+	from('A', '7', 'x02020') === 1 &&
+		from('A', 'm', 'x02210') === 1 &&
+		from('C', '', 'x32010') === 1 &&
+		from('B', 'm', 'x24432') === 1 &&
+		from('D', '7', 'x57575') === 5
+)
 const openFits = CHORD_TYPES.flatMap((t) => chordShapes(4, t, { limit: 50 })).every((v) => !v.frets.includes(0) || v.high <= 4)
 check('Shapes with an open string fit frets 1-4', openFits)
 check('chordShapes is cached', chordShapes(0, type(''))[0] === chordShapes(0, type(''), { limit: 3 })[0])
@@ -159,7 +180,10 @@ check(
 	cSpec.dots.map((d) => `${d.role}:${d.label}:${d.finger}`).join(' ')
 )
 const d7Spec = voicingSpec(by('D', '7', 'x57575')!, pitchClassOf('D'), type('7'), { labels: 'notes' })
-check('voicingSpec D7 x57575: barre, window from 5, note labels', d7Spec.barres!.length === 1 && d7Spec.window!.from === 5 && d7Spec.dots.some((d) => d.label === 'F#'))
+check(
+	'voicingSpec D7 x57575: barre, window from 5, note labels',
+	d7Spec.barres!.length === 1 && d7Spec.window!.from === 5 && d7Spec.dots.some((d) => d.label === 'F#')
+)
 
 // Whatever the generator voices, the identifier names (an 11 without its 3rd, a 13 without its 9th).
 const unnamed = CHORD_TYPES.flatMap((t) =>

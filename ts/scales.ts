@@ -79,8 +79,7 @@ export function spellFrom(root: string, type: ScaleType): string[] {
 }
 
 // Fewest accidentals wins; a double sharp/flat costs as much as several.
-const cost = (notes: string[]) =>
-	notes.reduce((sum, n) => sum + (n.length - 1) + (n.length > 2 ? 10 : 0), 0)
+const cost = (notes: string[]) => notes.reduce((sum, n) => sum + (n.length - 1) + (n.length > 2 ? 10 : 0), 0)
 
 /** Spelled scale. `root` may be swapped for its enharmonic when that reads simpler. */
 export function spellScale(root: string, type: ScaleType): { root: string; notes: string[] } {
@@ -144,8 +143,7 @@ export function identifyScales(marked: Set<number>, bassPc?: number): ScaleMatch
 	return matches.sort((a, b) => a.rank - b.rank)
 }
 
-export const scaleTitle = (root: string, type: ScaleType) =>
-	`${root} ${type.name}${type.aka ? ` · ${type.aka}` : ''}`
+export const scaleTitle = (root: string, type: ScaleType) => `${root} ${type.name}${type.aka ? ` · ${type.aka}` : ''}`
 
 /* Degrees, positions, playback runs ------------------------------------- */
 

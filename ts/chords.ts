@@ -147,7 +147,18 @@ const HARMONICS = [1 / 5, 1 / 4, 1 / 3, 1 / 2, 1, 2, 3, 4, 5, 6, 7]
 const OFFSETS = HARMONICS.map((h) => Math.round(LOG_BINS_PER_SEMITONE * 12 * Math.log2(h)))
 
 /** 1-D convolution + ReLU over `length` positions, zero padding, as torch.nn.Conv1d. */
-function conv(input: Float32Array, cin: number, length: number, weight: Float32Array, bias: Float32Array, cout: number, k: number, stride: number, pad: number, out: Float32Array) {
+function conv(
+	input: Float32Array,
+	cin: number,
+	length: number,
+	weight: Float32Array,
+	bias: Float32Array,
+	cout: number,
+	k: number,
+	stride: number,
+	pad: number,
+	out: Float32Array
+) {
 	const outLength = Math.floor((length + 2 * pad - k) / stride) + 1
 	for (let o = 0; o < cout; o++) {
 		for (let t = 0; t < outLength; t++) {
@@ -173,7 +184,16 @@ function networkOf(M: Model) {
 	const [C3, , K3] = M.SHAPE.conv3_weight
 	const [HIDDEN, HEAD_IN] = M.SHAPE.head1_weight
 	return {
-		M, C1, K1, C2, K2, C3, K3, HIDDEN, HEAD_IN, NONE_HIDDEN: M.SHAPE.none1_weight[0],
+		M,
+		C1,
+		K1,
+		C2,
+		K2,
+		C3,
+		K3,
+		HIDDEN,
+		HEAD_IN,
+		NONE_HIDDEN: M.SHAPE.none1_weight[0],
 		logBuffer: new Float32Array(LOG_BINS),
 		stacked: new Float32Array(HARMONICS.length * FINE),
 		hidden1: new Float32Array(C1 * FINE),
@@ -229,7 +249,8 @@ function classify(spectrumDb: Float32Array, binHz: number, a4: number): { logp: 
 		loadChordModel().catch(() => {})
 		return null
 	}
-	const { M, C1, K1, C2, K2, C3, K3, HIDDEN, HEAD_IN, NONE_HIDDEN, logBuffer, stacked, hidden1, hidden2, hidden3, pooled, headInput, headHidden, logits } = network
+	const { M, C1, K1, C2, K2, C3, K3, HIDDEN, HEAD_IN, NONE_HIDDEN, logBuffer, stacked, hidden1, hidden2, hidden3, pooled, headInput, headHidden, logits } =
+		network
 	const v = logSpectrum(spectrumDb, binHz, a4, logBuffer)
 	OFFSETS.forEach((offset, h) => {
 		for (let t = 0; t < FINE; t++) {

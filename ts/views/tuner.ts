@@ -37,9 +37,7 @@ export function createTunerView(root: HTMLElement): View {
 	tuningSelect.add(new Option('Chromatic', CHROMATIC))
 	TUNINGS.forEach((tuning) => tuningSelect.add(new Option(tuning.name, tuning.id)))
 	tuningSelect.addEventListener('change', () =>
-		Settings.update(
-			tuningSelect.value === CHROMATIC ? { tunerMode: 'chromatic' } : { tuning: tuningById(tuningSelect.value).id, tunerMode: 'guitar' }
-		)
+		Settings.update(tuningSelect.value === CHROMATIC ? { tunerMode: 'chromatic' } : { tuning: tuningById(tuningSelect.value).id, tunerMode: 'guitar' })
 	)
 
 	stringsRow.addEventListener('click', (event) => {

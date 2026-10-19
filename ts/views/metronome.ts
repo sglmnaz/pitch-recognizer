@@ -292,9 +292,10 @@ export function createMetronomeView(root: HTMLElement): View {
 		bars: { key: 'metroTrainerBars', min: 1, max: 16, by: 1 },
 		target: { key: 'metroTrainerTarget', min: Metronome.MIN_BPM, max: Metronome.MAX_BPM, by: 5 },
 	} as const
-	const trainerValues = Object.fromEntries(
-		Object.keys(TRAINER_LIMITS).map((name) => [name, $<HTMLElement>(`[data-value="${name}"]`)]),
-	) as Record<keyof typeof TRAINER_LIMITS, HTMLElement>
+	const trainerValues = Object.fromEntries(Object.keys(TRAINER_LIMITS).map((name) => [name, $<HTMLElement>(`[data-value="${name}"]`)])) as Record<
+		keyof typeof TRAINER_LIMITS,
+		HTMLElement
+	>
 
 	trainerSwitch.addEventListener('change', () => {
 		const on = trainerSwitch.checked
@@ -315,7 +316,7 @@ export function createMetronomeView(root: HTMLElement): View {
 				const snapped = direction > 0 ? Math.floor(current / limits.by) * limits.by : Math.ceil(current / limits.by) * limits.by
 				Settings.update({ [limits.key]: clamp(snapped + direction * limits.by, limits.min, limits.max) })
 			},
-			true,
+			true
 		)
 	}
 
@@ -349,14 +350,15 @@ export function createMetronomeView(root: HTMLElement): View {
 		// The engine is shared with the Trainer's Changes exercise, which sets its
 		// own meter: configure it only from this tab, or while its own clicks run
 		// (Settings changes the sound and volume of a running metronome).
-		if (!root.hidden || owned) Metronome.configure({
-			beats: s.metroBeats,
-			accents,
-			subdivision: s.metroSubdivision,
-			sound: s.metroSound,
-			volume: s.metroVolume,
-			trainer: { enabled: s.metroTrainerOn, step: s.metroTrainerStep, bars: s.metroTrainerBars, target: s.metroTrainerTarget },
-		})
+		if (!root.hidden || owned)
+			Metronome.configure({
+				beats: s.metroBeats,
+				accents,
+				subdivision: s.metroSubdivision,
+				sound: s.metroSound,
+				volume: s.metroVolume,
+				trainer: { enabled: s.metroTrainerOn, step: s.metroTrainerStep, bars: s.metroTrainerBars, target: s.metroTrainerTarget },
+			})
 
 		if (dots.length !== s.metroBeats) buildDots(s.metroBeats)
 		const labels = ['muted', 'normal', 'accent']

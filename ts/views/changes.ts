@@ -495,7 +495,11 @@ export function createChangesView(root: HTMLElement): View {
 		} else if (wasTime && marks.length) {
 			const pct = Changes.accuracy(marks)
 			const n = (m: Changes.Mark) => marks.filter((x) => x === m).length
-			showResult(`${pct}%`, 'on time', [`${n('hit')} of ${marks.length} changes`, `${n('late')} late · ${n('early')} early · ${n('miss')} missed`, `Ended at ${Metronome.getState().bpm || session.bpm} BPM`])
+			showResult(`${pct}%`, 'on time', [
+				`${n('hit')} of ${marks.length} changes`,
+				`${n('late')} late · ${n('early')} early · ${n('miss')} missed`,
+				`Ended at ${Metronome.getState().bpm || session.bpm} BPM`,
+			])
 			announce(`${pct} percent on time, ${n('hit')} of ${marks.length} changes.`, true)
 			// Stopped by the page, not the player: say why under the result.
 			status.textContent = reason

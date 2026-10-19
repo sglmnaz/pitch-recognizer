@@ -71,7 +71,9 @@ button {
 	padding: 6px 12px;
 	border-radius: 4px;
 	cursor: pointer;
-	transition: color var(--dur) var(--ease), background var(--dur) var(--ease);
+	transition:
+		color var(--dur) var(--ease),
+		background var(--dur) var(--ease);
 }
 
 .tab svg {
@@ -219,7 +221,10 @@ button {
 	background: var(--surface);
 	color: var(--fg);
 	box-shadow: var(--shadow-border);
-	transition: background var(--dur) var(--ease), color var(--dur) var(--ease), opacity var(--dur) var(--ease);
+	transition:
+		background var(--dur) var(--ease),
+		color var(--dur) var(--ease),
+		opacity var(--dur) var(--ease);
 }
 
 .btn:hover:not(:disabled) {
@@ -368,7 +373,9 @@ button {
 .readout {
 	padding: 28px 20px 24px;
 	text-align: center;
-	transition: background var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
+	transition:
+		background var(--dur) var(--ease),
+		box-shadow var(--dur) var(--ease);
 }
 
 .readout--locked {
@@ -412,7 +419,9 @@ button {
 	background: var(--border-strong);
 	transform: scaleY(0);
 	transform-origin: bottom;
-	transition: transform 80ms linear, background var(--dur) var(--ease);
+	transition:
+		transform 80ms linear,
+		background var(--dur) var(--ease);
 }
 
 .chroma__bin--tone .chroma__bar {
@@ -504,7 +513,9 @@ button {
 	border-radius: 2px;
 	background: var(--fg);
 	transform: translateX(-50%);
-	transition: left 80ms linear, background var(--dur) var(--ease);
+	transition:
+		left 80ms linear,
+		background var(--dur) var(--ease);
 }
 
 .readout--locked .meter__needle {
@@ -601,7 +612,9 @@ button {
 	padding: 3px 8px;
 	border-radius: var(--radius-sm);
 	cursor: pointer;
-	transition: color var(--dur) var(--ease), background var(--dur) var(--ease);
+	transition:
+		color var(--dur) var(--ease),
+		background var(--dur) var(--ease);
 }
 
 .link-btn:hover {
@@ -700,7 +713,9 @@ button {
 	font-weight: 500;
 	cursor: pointer;
 	box-shadow: var(--shadow-border);
-	transition: color var(--dur) var(--ease), background var(--dur) var(--ease);
+	transition:
+		color var(--dur) var(--ease),
+		background var(--dur) var(--ease);
 }
 
 .chip:hover {
@@ -755,7 +770,9 @@ button {
 	border-radius: 4px;
 	cursor: pointer;
 	white-space: nowrap;
-	transition: color var(--dur) var(--ease), background var(--dur) var(--ease);
+	transition:
+		color var(--dur) var(--ease),
+		background var(--dur) var(--ease);
 }
 
 .segmented button:hover {
@@ -886,7 +903,9 @@ button {
 	font-family: var(--font-mono);
 	cursor: pointer;
 	box-shadow: var(--shadow-border);
-	transition: background var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
+	transition:
+		background var(--dur) var(--ease),
+		box-shadow var(--dur) var(--ease);
 }
 
 .scale-note:hover {
@@ -1332,7 +1351,10 @@ button {
 	font-weight: 500;
 	cursor: pointer;
 	box-shadow: var(--shadow-border);
-	transition: color var(--dur) var(--ease), background var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
+	transition:
+		color var(--dur) var(--ease),
+		background var(--dur) var(--ease),
+		box-shadow var(--dur) var(--ease);
 }
 
 .mic-toggle svg {
@@ -1720,7 +1742,10 @@ button {
 	cursor: pointer;
 	touch-action: manipulation;
 	-webkit-tap-highlight-color: transparent;
-	transition: color var(--dur) var(--ease), background var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
+	transition:
+		color var(--dur) var(--ease),
+		background var(--dur) var(--ease),
+		box-shadow var(--dur) var(--ease);
 }
 
 .string-chip:hover {
@@ -1872,7 +1897,6 @@ button {
 		min-height: 44px;
 	}
 }
-
 
 /* Metronome (ts/views/metronome.ts) ---------------------------------------- */
 /* Six tabs: on phones the labels shrink and the tabs drop their side padding
@@ -2429,7 +2453,10 @@ label.metro-row {
 	color: var(--fg);
 	box-shadow: var(--shadow-border);
 	cursor: pointer;
-	transition: background var(--dur) var(--ease), box-shadow var(--dur) var(--ease), opacity var(--dur) var(--ease);
+	transition:
+		background var(--dur) var(--ease),
+		box-shadow var(--dur) var(--ease),
+		opacity var(--dur) var(--ease);
 }
 
 .ear-answer:hover:not(:disabled) {
@@ -2689,7 +2716,9 @@ label.metro-row {
 	white-space: nowrap;
 	cursor: pointer;
 	box-shadow: var(--shadow-border);
-	transition: color var(--dur) var(--ease), background var(--dur) var(--ease);
+	transition:
+		color var(--dur) var(--ease),
+		background var(--dur) var(--ease);
 }
 
 .chord-root:hover {
@@ -2892,8 +2921,6 @@ label.metro-row {
 	}
 }
 
-
-
 @media (min-width: 960px) {
 	#view-chords:not([hidden]) {
 		grid-template-areas:
@@ -3071,14 +3098,18 @@ label.metro-row {
 	background: var(--surface);
 	color: var(--fg);
 	font-family: var(--font-mono);
-	box-shadow: inset 0 3px 0 var(--quality), var(--shadow-border);
+	box-shadow:
+		inset 0 3px 0 var(--quality),
+		var(--shadow-border);
 }
 
 .harmony-chord {
 	min-height: 52px;
 	padding: 8px 4px 6px;
 	cursor: pointer;
-	transition: background var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
+	transition:
+		background var(--dur) var(--ease),
+		box-shadow var(--dur) var(--ease);
 }
 
 .harmony-chord:hover {
@@ -3087,7 +3118,9 @@ label.metro-row {
 
 .harmony-chord[aria-pressed='true'] {
 	background: var(--surface-2);
-	box-shadow: inset 0 3px 0 var(--quality), 0 0 0 1px var(--accent);
+	box-shadow:
+		inset 0 3px 0 var(--quality),
+		0 0 0 1px var(--accent);
 }
 
 .harmony-chord__numeral {
@@ -3240,7 +3273,9 @@ a.btn {
 	min-height: 40px;
 	padding: 6px 2px 4px;
 	background: var(--surface-2);
-	transition: background var(--dur) var(--ease), color var(--dur) var(--ease);
+	transition:
+		background var(--dur) var(--ease),
+		color var(--dur) var(--ease);
 }
 
 .progression__chord .harmony-chord__symbol {
@@ -3392,7 +3427,9 @@ a.btn {
 	font-weight: 500;
 	cursor: pointer;
 	box-shadow: var(--shadow-border);
-	transition: color var(--dur) var(--ease), background var(--dur) var(--ease);
+	transition:
+		color var(--dur) var(--ease),
+		background var(--dur) var(--ease);
 }
 
 .chord-fits__scale:hover {
@@ -3557,7 +3594,9 @@ a.btn {
 
 @keyframes changes-flash {
 	from {
-		box-shadow: 0 0 0 2px var(--success), var(--shadow-sm);
+		box-shadow:
+			0 0 0 2px var(--success),
+			var(--shadow-sm);
 		background: var(--success-bg);
 	}
 }

@@ -68,7 +68,13 @@ const strums = (symbols: string[], ms: number): Segments => symbols.map((s) => [
 	check('single-frame flicker does not split a held chord', flickered.length === 1, JSON.stringify(flickered))
 
 	// Stray names shorter than STABLE_MS (a strum's attack, a click) never count.
-	const blips = onsetsOf([[null, 300], ['D', STABLE_MS - 40], [null, 300], ['Am', STABLE_MS - 15], [null, 300]])
+	const blips = onsetsOf([
+		[null, 300],
+		['D', STABLE_MS - 40],
+		[null, 300],
+		['Am', STABLE_MS - 15],
+		[null, 300],
+	])
 	check('blips under the stability time are ignored', blips.length === 0, JSON.stringify(blips))
 
 	// Alternating chord / no-chord frames (an unsteady recognizer) still holds the chord.
@@ -82,9 +88,16 @@ const strums = (symbols: string[], ms: number): Segments => symbols.map((s) => [
 	for (const [, t] of frames([[null, 200]])) stabilizer.feed(null, 400 + t)
 	check('current() clears after silence', stabilizer.current() === null)
 
-	const flip = onsetsOf([['C', 600, true], ['Am', 600]])
+	const flip = onsetsOf([
+		['C', 600, true],
+		['Am', 600],
+	])
 	check('a direct flip of a held chord is not fresh', flip.length === 2 && !flip[1].fresh, JSON.stringify(flip))
-	const gapped = onsetsOf([['C', 600, true], [null, 120], ['Am', 600]])
+	const gapped = onsetsOf([
+		['C', 600, true],
+		[null, 120],
+		['Am', 600],
+	])
 	check('a chord after a gap is fresh', gapped.length === 2 && gapped[1].fresh)
 	const strummed = onsetsOf(strums(['C', 'Am'], 600))
 	check('a strummed chord is fresh even straight after another', strummed[1]?.fresh === true)
@@ -101,11 +114,17 @@ const strums = (symbols: string[], ms: number): Segments => symbols.map((s) => [
 	check('a pair can start on either chord', countOf(pair, strums(['C', 'G', 'C'], 500)) === 2)
 
 	// Fast changes, no silence between: 450 ms per chord still counts.
-	const fast = strums(Array.from({ length: 21 }, (_, i) => (i % 2 ? 'C' : 'G')), 450)
+	const fast = strums(
+		Array.from({ length: 21 }, (_, i) => (i % 2 ? 'C' : 'G')),
+		450
+	)
 	check('fast changes (450 ms per chord) all count', countOf(pair, fast) === 20, String(countOf(pair, fast)))
 
 	// Faster than the refractory time: never more than one change per REFRACTORY_MS.
-	const frantic = strums(Array.from({ length: 41 }, (_, i) => (i % 2 ? 'C' : 'G')), 250)
+	const frantic = strums(
+		Array.from({ length: 41 }, (_, i) => (i % 2 ? 'C' : 'G')),
+		250
+	)
 	const franticCount = countOf(pair, frantic)
 	check('changes faster than the refractory time are capped', franticCount <= (40 * 250) / REFRACTORY_MS && franticCount > 0, String(franticCount))
 
@@ -114,12 +133,26 @@ const strums = (symbols: string[], ms: number): Segments => symbols.map((s) => [
 	for (let i = 0; i < 20; i++) blur.push([i % 2 ? 'C' : 'G', STABLE_MS - 20, true])
 	check('a blur under the stability time counts nothing', countOf(pair, blur) === 0)
 	// The HMM tracker's names are steady: a chord named for a little over STABLE_MS is a chord.
-	check('a chord named just past the stability time is stable', onsetsOf([[null, 200], ['D', STABLE_MS + 20], [null, 200]]).length === 1)
+	check(
+		'a chord named just past the stability time is stable',
+		onsetsOf([
+			[null, 200],
+			['D', STABLE_MS + 20],
+			[null, 200],
+		]).length === 1
+	)
 
 	// Re-strumming the same chord, wrong chords in between: not changes.
 	check(
 		're-strums and wrong chords do not count',
-		countOf(pair, [['G', 500, true], [null, 200], ['G', 500, true], ['Em', 500, true], ['G', 500, true], ['C', 500, true]]) === 1
+		countOf(pair, [
+			['G', 500, true],
+			[null, 200],
+			['G', 500, true],
+			['Em', 500, true],
+			['G', 500, true],
+			['C', 500, true],
+		]) === 1
 	)
 
 	// Phantom changes: a held C the recognizer keeps flipping to Am and back.
@@ -128,10 +161,18 @@ const strums = (symbols: string[], ms: number): Segments => symbols.map((s) => [
 	check('a held chord flipping C <-> Am counts nothing', countOf(['C', 'Am'], phantom) === 0, String(countOf(['C', 'Am'], phantom)))
 	// A phone drawing 30 fps (33 ms frames) or a 50 ms timer: still flips, not changes.
 	for (const ms of [33, 50]) check(`flips at ${ms} ms frames count nothing`, countOf(['C', 'Am'], phantom, ms) === 0, String(countOf(['C', 'Am'], phantom, ms)))
-	const strummed30 = strums(Array.from({ length: 11 }, (_, i) => (i % 2 ? 'Am' : 'C')), 600)
+	const strummed30 = strums(
+		Array.from({ length: 11 }, (_, i) => (i % 2 ? 'Am' : 'C')),
+		600
+	)
 	check('strummed changes at 33 ms frames count', countOf(['C', 'Am'], strummed30, 33) === 10, String(countOf(['C', 'Am'], strummed30, 33)))
 	// A real change, then the recognizer briefly flips back: one change, not three.
-	const backFlip: Segments = [['C', 800, true], ['Am', 200, true], ['C', 200], ['Am', 800]]
+	const backFlip: Segments = [
+		['C', 800, true],
+		['Am', 200, true],
+		['C', 200],
+		['Am', 800],
+	]
 	check('a flip back right after a change is not counted', countOf(['C', 'Am'], backFlip) === 1, String(countOf(['C', 'Am'], backFlip)))
 
 	// Sequences go in order: C G Am F; F straight after C is not a change.
@@ -164,8 +205,18 @@ const strums = (symbols: string[], ms: number): Segments => symbols.map((s) => [
 	const lateStream: Segments = [['G', 2450, true]]
 	for (let i = 1; i < downbeats.length + 1; i++) lateStream.push([i % 2 ? 'C' : 'G', 2000, true])
 	const onsets = onsetsOf(lateStream)
-	const marks = downbeats.map((d, i) => judge(d, 2000, onsets.filter((o) => o.symbol === (i % 2 ? 'G' : 'C')).map((o) => o.at)))
-	check('a stream of late changes is marked late', marks.every((m) => m === 'late'), marks.join(' '))
+	const marks = downbeats.map((d, i) =>
+		judge(
+			d,
+			2000,
+			onsets.filter((o) => o.symbol === (i % 2 ? 'G' : 'C')).map((o) => o.at)
+		)
+	)
+	check(
+		'a stream of late changes is marked late',
+		marks.every((m) => m === 'late'),
+		marks.join(' ')
+	)
 	check('accuracy of all-late is 0 %', accuracy(marks) === 0)
 	check('accuracy counts hits', accuracy(['hit', 'late', 'hit', 'miss']) === 50)
 

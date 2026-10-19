@@ -77,8 +77,7 @@ export interface Question {
 	direction: Direction
 }
 
-export const labelOf = (exercise: Exercise, id: string) =>
-	(exercise === 'intervals' ? INTERVALS : QUALITIES).find((item) => item.id === id)?.name ?? id
+export const labelOf = (exercise: Exercise, id: string) => (exercise === 'intervals' ? INTERVALS : QUALITIES).find((item) => item.id === id)?.name ?? id
 
 /** The enabled ids that still exist, in table order; all defaults if none survive. */
 export function pool(exercise: Exercise, enabled: readonly string[]): string[] {
@@ -204,12 +203,7 @@ const sessions: Record<Exercise, Session> = { intervals: newSession('intervals')
 export const getSession = (exercise: Exercise): Readonly<Session> => sessions[exercise]
 
 /** Starts the next round of `exercise`. */
-export function next(
-	exercise: Exercise,
-	enabled: readonly string[],
-	direction: Direction | 'mixed',
-	rng: () => number = Math.random
-): Question {
+export function next(exercise: Exercise, enabled: readonly string[], direction: Direction | 'mixed', rng: () => number = Math.random): Question {
 	const session = sessions[exercise]
 	session.question = makeQuestion(exercise, enabled, direction, session.question, rng)
 	session.answered = false

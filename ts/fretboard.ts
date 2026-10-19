@@ -111,9 +111,7 @@ const CHORD = { spacing: 20, fret: 26, open: 22, r: 8.5, margin: 34, edge: 18, f
  * real (narrowing) spacing, or equal spacing. */
 function geometry(length: number, open: number, equal = false) {
 	const scale = (length - open - 6) / (1 - 2 ** (-FRETS / 12))
-	const fretAt = equal
-		? (n: number) => open + (n * (length - open - 6)) / FRETS
-		: (n: number) => open + scale * (1 - 2 ** (-n / 12))
+	const fretAt = equal ? (n: number) => open + (n * (length - open - 6)) / FRETS : (n: number) => open + scale * (1 - 2 ** (-n / 12))
 	const noteAlong = (fret: number) => (fret === 0 ? open / 2 : (fretAt(fret - 1) + fretAt(fret)) / 2)
 	const halfCell = (fret: number) => (fret === 0 ? open / 2 : (fretAt(fret) - fretAt(fret - 1)) / 2)
 	return { length, open, fretAt, noteAlong, halfCell }
@@ -147,9 +145,7 @@ export function createFretboard(svg: SVGSVGElement, board: HTMLElement | null, o
 		return `${leftHanded}|${fretboardTheme}|${fretboardVertical}|${fretSize}`
 	}
 	let drawnLook = ''
-	const unsubscribe = options.autoRender
-		? Settings.subscribe(() => lastSpec && lookOf() !== drawnLook && render(lastSpec))
-		: () => {}
+	const unsubscribe = options.autoRender ? Settings.subscribe(() => lastSpec && lookOf() !== drawnLook && render(lastSpec)) : () => {}
 	const interactive = Boolean(options.onTap)
 
 	// Taps (and Enter/Space on a focused note). A tap that re-renders the neck
@@ -281,7 +277,9 @@ export function createFretboard(svg: SVGSVGElement, board: HTMLElement | null, o
 		if (first === 1) parts.push(`<line class="neck__nut" ${line(top, -out, top, last + out)}/>`)
 		else parts.push(`<line class="neck__fret" ${line(top, -out, top, last + out)}/>`)
 		// Thicker toward the low E, like real gauges (.010–.046): 0.7 to 2.4.
-		tuning.forEach((_, s) => parts.push(`<line class="neck__string" style="stroke-width:${0.7 + s * 0.34}" ${line(top, s, win ? fretAt(lastFret) : g.length, s)}/>`))
+		tuning.forEach((_, s) =>
+			parts.push(`<line class="neck__string" style="stroke-width:${0.7 + s * 0.34}" ${line(top, s, win ? fretAt(lastFret) : g.length, s)}/>`)
+		)
 		if (box) {
 			const from = box[0] === 0 ? 2 : fretAt(box[0] - 1) + 1
 			const to = fretAt(box[1]) - 1

@@ -165,7 +165,13 @@ const NUMERAL_SUFFIX: Record<string, string> = {
 }
 // Stacked thirds only: a 6 chord has the same notes as some m7 and must not
 // name a diatonic seventh.
-const TERTIAN = CHORD_TYPES.filter((t) => ['1 3 5', '1 3 5 7'].includes(degreesOf(t).map((d) => d.replace(/[#b]/g, '')).join(' ')))
+const TERTIAN = CHORD_TYPES.filter((t) =>
+	['1 3 5', '1 3 5 7'].includes(
+		degreesOf(t)
+			.map((d) => d.replace(/[#b]/g, ''))
+			.join(' ')
+	)
+)
 
 function diatonic(notes: string[], semitones: number[], degree: string, picks: number[]): DiatonicChord | null {
 	const intervals = picks.map((j) => mod12(semitones[j] - semitones[picks[0]])).join(' ')

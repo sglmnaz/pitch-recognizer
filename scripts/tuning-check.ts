@@ -46,11 +46,19 @@ check('getClosestNote default is 440-based', at440.note === 'A4' && near(at440.f
 const at432 = getClosestNote(432, 432)
 check('432 Hz is exactly A4 when A4 = 432', at432.note === 'A4' && near(centsBetween(432, at432.frequency), 0, 1e-9))
 const stale = getClosestNote(432)
-check('432 Hz against A4 = 440 is A4, -31.8 cents', stale.note === 'A4' && near(centsBetween(432, stale.frequency), -31.77, 0.05), centsBetween(432, stale.frequency).toFixed(2))
+check(
+	'432 Hz against A4 = 440 is A4, -31.8 cents',
+	stale.note === 'A4' && near(centsBetween(432, stale.frequency), -31.77, 0.05),
+	centsBetween(432, stale.frequency).toFixed(2)
+)
 const b415 = getClosestNote(415, 415)
 check('Baroque 415: 415 Hz is A4, 0 cents', b415.note === 'A4' && near(centsBetween(415, b415.frequency), 0, 1e-9))
 const flat = getClosestNote(415)
-check('415 Hz at A4 = 440 is G#4, -1.27 cents', flat.note === 'G#4/Ab4' && near(centsBetween(415, flat.frequency), -1.27, 0.05), centsBetween(415, flat.frequency).toFixed(2))
+check(
+	'415 Hz at A4 = 440 is G#4, -1.27 cents',
+	flat.note === 'G#4/Ab4' && near(centsBetween(415, flat.frequency), -1.27, 0.05),
+	centsBetween(415, flat.frequency).toFixed(2)
+)
 // The table's own frequencies still name themselves at 440.
 const sameNames = ['E2', 'A2', 'D3', 'G3', 'B3', 'E4', 'C5'].every((n) => {
 	const f = frequencyOfMidi(midiOfName(n), 440)
@@ -71,7 +79,11 @@ check('E4 is the high string, not the low one', pick(329.63).index === 5)
 check('B2 sits nearer A2 than D3 (cents, not Hz)', pick(123.47).index === 1 && near(pick(123.47).cents, 200, 0.1), pick(123.47).cents.toFixed(1))
 // Drop D: a low E (82.41) is two semitones sharp of the low D target.
 const dropD = tuningStrings(tuningById('drop-d'), 440)
-check('Drop D: a standard low E reads +200 cents on string 6', pick(82.41, dropD).index === 0 && near(pick(82.41, dropD).cents, 200, 0.2), pick(82.41, dropD).cents.toFixed(1))
+check(
+	'Drop D: a standard low E reads +200 cents on string 6',
+	pick(82.41, dropD).index === 0 && near(pick(82.41, dropD).cents, 200, 0.2),
+	pick(82.41, dropD).cents.toFixed(1)
+)
 check('Drop D: D2 (73.42) is in tune on string 6', pick(73.42, dropD).index === 0 && Math.abs(pick(73.42, dropD).cents) < 0.1)
 // Duplicate pitch classes: Open C has C2 and C3; an octave error must not be hidden.
 const openC = tuningStrings(tuningById('open-c'), 440)

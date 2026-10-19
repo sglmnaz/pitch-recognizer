@@ -31,9 +31,31 @@ const NOTE_SPAN_S = 0.1
 // onto m7 (same root and third); power chords, diminished and augmented have
 // no app type and are left out of the chord loss.
 const TYPE_OF: Record<string, number> = {
-	maj: 0, maj6: 0, min: 1, min6: 1, '7': 2, '11': 2, '13': 2, '75b': 2, '713b': 2, '913': 2, '1113': 2,
-	min7: 3, hdim7: 3, min9: 3, min11: 3, min13: 3, min75b: 3, maj7: 4, maj9: 4, maj13: 4, maj79: 4,
-	'9': 5, sus2: 6, sus9: 6, sus4: 7,
+	maj: 0,
+	maj6: 0,
+	min: 1,
+	min6: 1,
+	'7': 2,
+	'11': 2,
+	'13': 2,
+	'75b': 2,
+	'713b': 2,
+	'913': 2,
+	'1113': 2,
+	min7: 3,
+	hdim7: 3,
+	min9: 3,
+	min11: 3,
+	min13: 3,
+	min75b: 3,
+	maj7: 4,
+	maj9: 4,
+	maj13: 4,
+	maj79: 4,
+	'9': 5,
+	sus2: 6,
+	sus9: 6,
+	sus4: 7,
 }
 const classOf = (chord: Chord) => (chord === null ? N_CLASS : chord.quality in TYPE_OF ? chord.root * 8 + TYPE_OF[chord.quality] : UNKNOWN)
 
@@ -49,34 +71,43 @@ interface Labelled {
 const GUITARSET = 'bench/data/guitarset'
 
 function guitarSet(): Labelled[] {
-	return readdirSync(join(GUITARSET, 'annotation'))
-		// The split is decided from the file name, so test-split annotations are never opened.
-		.filter((file) => file.endsWith('.jams') && splitOf(`guitarset/${file.replace('.jams', '')}`) === 'tune')
-		.sort()
-		.map((file) => {
-			const jams = JSON.parse(readFileSync(join(GUITARSET, 'annotation', file), 'utf8'))
-			const base = file.replace('.jams', '')
-			const [instructed, performed] = jams.annotations.filter((a: { namespace: string }) => a.namespace === 'chord')
-			const segments = (a: { data: { time: number; duration: number; value: string }[] }) =>
-				a.data.map((d) => ({ start: d.time, end: d.time + d.duration, value: parseHarte(d.value) }))
-			const notes = jams.annotations
-				.filter((a: { namespace: string }) => a.namespace === 'note_midi')
-				.flatMap((a: { data: { time: number; duration: number; value: number }[] }) =>
-					a.data.map((d) => ({ start: d.time, end: d.time + d.duration, midi: Math.round(d.value) })),
-				)
-			return {
-				id: `guitarset/${base}`,
-				load: () => decode(join(GUITARSET, 'audio_mono-mic', `${base}_mic.wav`), SAMPLE_RATE),
-				instr: segments(instructed),
-				perf: segments(performed),
-				notes,
-				solo: base.endsWith('_solo'),
-			}
-		})
+	return (
+		readdirSync(join(GUITARSET, 'annotation'))
+			// The split is decided from the file name, so test-split annotations are never opened.
+			.filter((file) => file.endsWith('.jams') && splitOf(`guitarset/${file.replace('.jams', '')}`) === 'tune')
+			.sort()
+			.map((file) => {
+				const jams = JSON.parse(readFileSync(join(GUITARSET, 'annotation', file), 'utf8'))
+				const base = file.replace('.jams', '')
+				const [instructed, performed] = jams.annotations.filter((a: { namespace: string }) => a.namespace === 'chord')
+				const segments = (a: { data: { time: number; duration: number; value: string }[] }) =>
+					a.data.map((d) => ({ start: d.time, end: d.time + d.duration, value: parseHarte(d.value) }))
+				const notes = jams.annotations
+					.filter((a: { namespace: string }) => a.namespace === 'note_midi')
+					.flatMap((a: { data: { time: number; duration: number; value: number }[] }) =>
+						a.data.map((d) => ({ start: d.time, end: d.time + d.duration, midi: Math.round(d.value) }))
+					)
+				return {
+					id: `guitarset/${base}`,
+					load: () => decode(join(GUITARSET, 'audio_mono-mic', `${base}_mic.wav`), SAMPLE_RATE),
+					instr: segments(instructed),
+					perf: segments(performed),
+					notes,
+					solo: base.endsWith('_solo'),
+				}
+			})
+	)
 }
 
 function idmt(): Labelled[] {
-	return idmtChords((id) => splitOf(id) === 'tune').map((item) => ({ id: item.id, load: item.load, instr: item.segments, perf: item.segments, notes: null, solo: false }))
+	return idmtChords((id) => splitOf(id) === 'tune').map((item) => ({
+		id: item.id,
+		load: item.load,
+		instr: item.segments,
+		perf: item.segments,
+		notes: null,
+		solo: false,
+	}))
 }
 
 // --- synthetic strums ----------------------------------------------------------
@@ -278,6 +309,9 @@ CONDITIONS.forEach((condition, c) => {
 	writeFileSync(`${base}.ref`, Int16Array.from(ref))
 	writeFileSync(`${base}.seg`, Int32Array.from(seg))
 	writeFileSync(`${base}.item`, Int16Array.from(itemOf))
-	writeFileSync(`${base}.meta.json`, JSON.stringify({ frames: instr.length, bins: LOG_BINS, notes: NOTES, lowNote: LOW_NOTE, qualities, items: items.map((x) => x.id) }))
+	writeFileSync(
+		`${base}.meta.json`,
+		JSON.stringify({ frames: instr.length, bins: LOG_BINS, notes: NOTES, lowNote: LOW_NOTE, qualities, items: items.map((x) => x.id) })
+	)
 	console.log(`${condition.name}: ${instr.length} frames written`)
 })

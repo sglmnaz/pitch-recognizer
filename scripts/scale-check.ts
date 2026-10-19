@@ -44,7 +44,10 @@ const titles = (matches: ReturnType<typeof identifyScales>) => matches.map((m) =
 
 // C E G B, played from C: C major first (exact 7-note fit, root in the bass).
 const cmaj7 = titles(identifyScales(pcs('C', 'E', 'G', 'B'), pitchClassOf('C')))
-check('C E G B includes C Major, G Major, E Natural minor', ['C Major', 'G Major', 'E Natural minor'].every((t) => cmaj7.includes(t)))
+check(
+	'C E G B includes C Major, G Major, E Natural minor',
+	['C Major', 'G Major', 'E Natural minor'].every((t) => cmaj7.includes(t))
+)
 check('C E G B ranks C Major above other 7-note scales', cmaj7.indexOf('C Major') < cmaj7.indexOf('G Major'), cmaj7.slice(0, 5).join(', '))
 check('C E G B excludes C Natural minor', !cmaj7.includes('C Natural minor'))
 
@@ -78,7 +81,11 @@ check('E major box 1 is the open position', eBoxes[0] === '0-3', eBoxes.join(' '
 
 // The neck runs to fret 22; every box of every scale fits on it.
 check('Neck has 22 frets, top note D6', FRETS === 22 && midiAt(0, FRETS) === 86)
-const allFit = SCALE_TYPES.every((t) => Array.from({ length: 12 }, (_, pc) => positionWindows(pc, t)).flat().every(([lo, hi]) => lo >= 0 && hi <= FRETS))
+const allFit = SCALE_TYPES.every((t) =>
+	Array.from({ length: 12 }, (_, pc) => positionWindows(pc, t))
+		.flat()
+		.every(([lo, hi]) => lo >= 0 && hi <= FRETS)
+)
 check('All position boxes fit frets 0-22', allFit)
 
 // Playback runs.

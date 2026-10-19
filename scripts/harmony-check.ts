@@ -49,7 +49,9 @@ check('whole tone has no chord source', chordSource(scale('Whole tone')) === nul
 const sourceless = SCALE_TYPES.flatMap((t) => {
 	const source = chordSource(t)
 	if (!source) return []
-	return Array.from({ length: 12 }, (_, pc) => pc).filter((pc) => chordsOfScale(pc, source).length !== 7).map((pc) => `${pc} ${t.name}`)
+	return Array.from({ length: 12 }, (_, pc) => pc)
+		.filter((pc) => chordsOfScale(pc, source).length !== 7)
+		.map((pc) => `${pc} ${t.name}`)
 })
 check('every chord source has 7 diatonic chords in every key', sourceless.length === 0, sourceless.join(', '))
 
@@ -97,7 +99,12 @@ for (const [name, root, expected] of RESOLVED) {
 	const got = symbols(name, root)
 	check(`${name} in ${root}`, got === expected, got)
 }
-check('Andalusian E chord is E G# B', resolveProgression(PROGRESSIONS.find((p) => p.name === 'Andalusian')!, 9).at(-1)!.notes.join(' ') === 'E G# B')
+check(
+	'Andalusian E chord is E G# B',
+	resolveProgression(PROGRESSIONS.find((p) => p.name === 'Andalusian')!, 9)
+		.at(-1)!
+		.notes.join(' ') === 'E G# B'
+)
 
 // Every numeral in every key lands on the pitch class its degree says (the
 // resolver takes the key's own note, so a chromatic numeral would fail here).
@@ -121,8 +128,14 @@ check('Mixolydian gets only the 12-bar blues', names('Mixolydian').join(', ') ==
 
 /* Circle of fifths -------------------------------------------------------- */
 check('12 keys', CIRCLE.length === 12)
-check('a fifth apart', CIRCLE.every((k, i) => k.majorPc === mod12(i * 7)))
-check('relative minors a minor third below', CIRCLE.every((k) => k.minorPc === mod12(k.majorPc - 3)))
+check(
+	'a fifth apart',
+	CIRCLE.every((k, i) => k.majorPc === mod12(i * 7))
+)
+check(
+	'relative minors a minor third below',
+	CIRCLE.every((k) => k.minorPc === mod12(k.majorPc - 3))
+)
 check('C has no accidentals', CIRCLE[0].accidentals === 0)
 check('A major has 3 sharps', CIRCLE.find((k) => k.major === 'A')!.accidentals === 3)
 check('Eb major has 3 flats', CIRCLE.find((k) => k.major === 'Eb')!.accidentals === -3)
@@ -135,24 +148,50 @@ const at = (root: string, name: string) => {
 	const key = keyOf(pitchClassOf(root), scale(name))
 	return key && circleIndex(key.pc, key.family)
 }
-for (const [root, name] of [['D', 'Dorian'], ['E', 'Phrygian'], ['F', 'Lydian'], ['G', 'Mixolydian'], ['B', 'Locrian'], ['C', 'Major'], ['A', 'Natural minor'], ['A', 'Harmonic minor']])
+for (const [root, name] of [
+	['D', 'Dorian'],
+	['E', 'Phrygian'],
+	['F', 'Lydian'],
+	['G', 'Mixolydian'],
+	['B', 'Locrian'],
+	['C', 'Major'],
+	['A', 'Natural minor'],
+	['A', 'Harmonic minor'],
+])
 	check(`${root} ${name} sits at C / Am`, at(root, name) === 0, String(at(root, name)))
 check('A Dorian sits at G', at('A', 'Dorian') === 1)
 check('whole tone has no key', keyOf(0, scale('Whole tone')) === null)
-check('key name of D Dorian', keyName(pitchClassOf('D'), scale('Dorian')) === 'D Dorian · parent C major, no sharps or flats', keyName(pitchClassOf('D'), scale('Dorian')))
+check(
+	'key name of D Dorian',
+	keyName(pitchClassOf('D'), scale('Dorian')) === 'D Dorian · parent C major, no sharps or flats',
+	keyName(pitchClassOf('D'), scale('Dorian'))
+)
 check('key name of E minor', keyName(pitchClassOf('E'), scale('Natural minor')) === 'E minor, 1 sharp', keyName(pitchClassOf('E'), scale('Natural minor')))
-check('key name of Eb Mixolydian', keyName(pitchClassOf('Eb'), scale('Mixolydian')) === 'Eb Mixolydian · parent Ab major, 4 flats', keyName(pitchClassOf('Eb'), scale('Mixolydian')))
+check(
+	'key name of Eb Mixolydian',
+	keyName(pitchClassOf('Eb'), scale('Mixolydian')) === 'Eb Mixolydian · parent Ab major, 4 flats',
+	keyName(pitchClassOf('Eb'), scale('Mixolydian'))
+)
 check('signature names', [signatureName(0), signatureName(1), signatureName(-3)].join(', ') === 'no sharps or flats, 1 sharp, 3 flats')
 
 /* Scales for a chord ------------------------------------------------------ */
 const fits = (...notes: string[]) => scalesForChord(new Set(notes.map(pitchClassOf)), pitchClassOf(notes[0])).map((m) => scaleTitle(m.root, m.type))
 const cMajor = fits('C', 'E', 'G')
 check('C major fits C major first', cMajor[0] === 'C Major · Ionian', cMajor.join(', '))
-check('C major fits its modes, then G, F, the minors', cMajor.slice(0, 7).join(', ') === 'C Major · Ionian, C Mixolydian, C Lydian, G Major · Ionian, F Major · Ionian, E Natural minor · Aeolian, D Natural minor · Aeolian', cMajor.join(', '))
+check(
+	'C major fits its modes, then G, F, the minors',
+	cMajor.slice(0, 7).join(', ') ===
+		'C Major · Ionian, C Mixolydian, C Lydian, G Major · Ionian, F Major · Ionian, E Natural minor · Aeolian, D Natural minor · Aeolian',
+	cMajor.join(', ')
+)
 check('only seven-note scales', !cMajor.some((t) => t.includes('pentatonic')))
 check('at most 8', cMajor.length === 8)
 const e7 = fits('E', 'G#', 'B', 'D')
-check('E7 fits A harmonic minor', e7.some((t) => t === 'A Harmonic minor'), e7.join(', '))
+check(
+	'E7 fits A harmonic minor',
+	e7.some((t) => t === 'A Harmonic minor'),
+	e7.join(', ')
+)
 const e7Pcs = new Set(['E', 'G#', 'B', 'D'].map(pitchClassOf))
 const holds = scalesForChord(e7Pcs, pitchClassOf('E')).every((m) => [...e7Pcs].every((pc) => pitchClassesOf(m.rootPc, m.type).has(pc)))
 check('every fit holds every chord tone', holds)

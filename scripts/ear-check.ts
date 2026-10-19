@@ -41,7 +41,10 @@ check('12 intervals, m2..P8 in order', INTERVALS.map((i) => i.semitones).join(',
 for (const q of QUALITIES) {
 	check(`${q.id}: voicing has exactly the formula's pitch classes`, pcs(q.voicing) === pcs(q.formula), `${pcs(q.voicing)} vs ${pcs(q.formula)}`)
 	check(`${q.id}: voicing rises, root in the bass`, q.voicing[0] === 0 && q.voicing.every((s, i) => i === 0 || s > q.voicing[i - 1]))
-	check(`${q.id}: 4–6 strings, top within E5 from the highest root`, q.voicing.length >= 4 && q.voicing.length <= 6 && CHORD_ROOT_HIGH + q.voicing.at(-1)! <= E5)
+	check(
+		`${q.id}: 4–6 strings, top within E5 from the highest root`,
+		q.voicing.length >= 4 && q.voicing.length <= 6 && CHORD_ROOT_HIGH + q.voicing.at(-1)! <= E5
+	)
 }
 check('chord roots start at E2', CHORD_ROOT_LOW === E2)
 
@@ -93,7 +96,10 @@ for (const direction of ['up', 'down', 'harmonic', 'mixed'] as const) {
 	check('chords: draws only from the enabled pool', [...seen].sort().join() === 'dim,m,maj')
 }
 
-check('a pool of one repeats instead of hanging', makeQuestion('intervals', ['P5'], 'up', { exercise: 'intervals', id: 'P5', root: 50, direction: 'up' }).id === 'P5')
+check(
+	'a pool of one repeats instead of hanging',
+	makeQuestion('intervals', ['P5'], 'up', { exercise: 'intervals', id: 'P5', root: 50, direction: 'up' }).id === 'P5'
+)
 
 // Playback timing.
 {
@@ -105,7 +111,10 @@ check('a pool of one repeats instead of hanging', makeQuestion('intervals', ['P5
 	const harmonic = playback({ ...up, direction: 'harmonic' }, 'M3', 0.75)
 	check('harmonic: both at once, quieter', harmonic.notes.every((n) => n.at === 0) && harmonic.gain < 1)
 	const chord = playback({ exercise: 'chords', id: 'maj', root: E2, direction: 'up' }, 'maj', 0.75)
-	check('E major strummed low to high, 30 ms apart', chord.notes.map((n) => n.midi).join() === '40,47,52,56,59,64' && chord.notes.every((n, i) => Math.abs(n.at - i * STRUM_S) < 1e-9))
+	check(
+		'E major strummed low to high, 30 ms apart',
+		chord.notes.map((n) => n.midi).join() === '40,47,52,56,59,64' && chord.notes.every((n, i) => Math.abs(n.at - i * STRUM_S) < 1e-9)
+	)
 	check('six strings sum without clipping on average', chord.gain * Math.sqrt(chord.notes.length) <= 1 + 1e-9)
 }
 

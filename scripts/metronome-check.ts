@@ -71,10 +71,23 @@ session(4.2, () => {
 	Metronome.setTempo(120)
 })
 check('120 BPM: a click every 0.5 s', clicks.length >= 8 && clicks.every((c, i) => i === 0 || near(c.at - clicks[i - 1].at, 0.5)))
-check('every click was scheduled before its time', clicks.every((c) => c.at > c.scheduledAt))
-check('accent pattern 2 1 1 1', heard.slice(0, 8).map((e) => e.accent).join('') === '21112111')
+check(
+	'every click was scheduled before its time',
+	clicks.every((c) => c.at > c.scheduledAt)
+)
+check(
+	'accent pattern 2 1 1 1',
+	heard
+		.slice(0, 8)
+		.map((e) => e.accent)
+		.join('') === '21112111'
+)
 check('beats count 0-3, bar advances', heard[4].beat === 0 && heard[4].bar === 1 && heard[3].beat === 3)
-check('events fire within 75 ms of being heard', late.every((l) => l >= 0 && l < 0.075), `max ${Math.max(...late).toFixed(3)} s`)
+check(
+	'events fire within 75 ms of being heard',
+	late.every((l) => l >= 0 && l < 0.075),
+	`max ${Math.max(...late).toFixed(3)} s`
+)
 check('stop() cuts the scheduled clicks off', disconnected > 0 && !Metronome.getState().running)
 
 /* Subdivisions: triplets at 60 BPM = a click every 1/3 s ------------------ */
@@ -83,14 +96,26 @@ session(3, () => {
 	Metronome.setTempo(60)
 })
 check('triplets: 3 clicks per beat, 1/3 s apart', clicks.length >= 8 && clicks.slice(1, 8).every((c, i) => near(c.at - clicks[i].at, 1 / 3)))
-check('sub index runs 0 1 2', heard.slice(0, 6).map((e) => e.sub).join('') === '012012')
+check(
+	'sub index runs 0 1 2',
+	heard
+		.slice(0, 6)
+		.map((e) => e.sub)
+		.join('') === '012012'
+)
 
 /* Mute: a muted beat is silent but still reported ------------------------- */
 session(2.1, () => {
 	Metronome.configure({ subdivision: 1, accents: [2, 0, 1, 1] })
 	Metronome.setTempo(120)
 })
-check('muted beat is reported', heard.slice(0, 4).map((e) => e.accent).join('') === '2011')
+check(
+	'muted beat is reported',
+	heard
+		.slice(0, 4)
+		.map((e) => e.accent)
+		.join('') === '2011'
+)
 check('muted beat makes no click (1 s gap after beat 1)', near(clicks[1].at - clicks[0].at, 1))
 
 /* Speed trainer: +5 BPM every 2 bars up to 110 -------------------------- */
@@ -98,7 +123,11 @@ session(30, () => {
 	Metronome.configure({ beats: 2, accents: [2, 1], trainer: { enabled: true, step: 5, bars: 2, target: 110 } })
 	Metronome.setTempo(100)
 })
-const perBar = heard.filter((e) => e.beat === 0).slice(0, 8).map((e) => e.bpm).join(' ')
+const perBar = heard
+	.filter((e) => e.beat === 0)
+	.slice(0, 8)
+	.map((e) => e.bpm)
+	.join(' ')
 check('trainer: 100 100 105 105 110 110 110 110', perBar === '100 100 105 105 110 110 110 110', perBar)
 check('stop() returns to the starting tempo', Metronome.getState().bpm === 100)
 
@@ -110,7 +139,14 @@ Metronome.start()
 run(0.3)
 Metronome.configure({ beats: 2 })
 run(2)
-check('shrinking the bar mid-run wraps at the new count', heard.slice(-3).every((e) => e.beat < 2), heard.slice(-3).map((e) => e.beat).join())
+check(
+	'shrinking the bar mid-run wraps at the new count',
+	heard.slice(-3).every((e) => e.beat < 2),
+	heard
+		.slice(-3)
+		.map((e) => e.beat)
+		.join()
+)
 Metronome.stop()
 
 /* Subdivision 16ths -> none, mid-beat: no stray click, same grid ---------- */
@@ -142,7 +178,10 @@ now += 5
 tick()
 const burst = clicks.slice(before)
 check('after a 5 s stall no click is played late', burst.every((c) => c.at >= now - 0.05) && burst.length <= 2, `${burst.length} click(s)`)
-check('after the stall clicks are back on the 0.5 s grid', burst.every((c) => near(((c.at - clicks[0].at) / 0.5) % 1 || 1, 1)))
+check(
+	'after the stall clicks are back on the 0.5 s grid',
+	burst.every((c) => near(((c.at - clicks[0].at) / 0.5) % 1 || 1, 1))
+)
 Metronome.stop()
 
 finish('All metronome checks passed')

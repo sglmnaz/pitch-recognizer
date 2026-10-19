@@ -13,12 +13,21 @@ const pcs = (...names: string[]) => new Set(names.map(pitchClassOf))
 /* Picker ------------------------------------------------------------------ */
 const grouped = CHORD_GROUPS.flatMap((g) => g.types)
 check('Every chord type in exactly one group', grouped.length === CHORD_TYPES.length && new Set(grouped).size === CHORD_TYPES.length)
-check('No empty group', CHORD_GROUPS.every((g) => g.types.length > 0))
+check(
+	'No empty group',
+	CHORD_GROUPS.every((g) => g.types.length > 0)
+)
 check('Triads start with major, minor', CHORD_GROUPS[0].types[0].symbol === '' && CHORD_GROUPS[0].types[1].symbol === 'm')
-check('Root labels: 12, each naming its pitch class', ROOT_LABELS.length === 12 && ROOT_LABELS.every((l, pc) => l.split('/').every((n) => pitchClassOf(n) === pc)))
+check(
+	'Root labels: 12, each naming its pitch class',
+	ROOT_LABELS.length === 12 && ROOT_LABELS.every((l, pc) => l.split('/').every((n) => pitchClassOf(n) === pc))
+)
 
 /* In keys ----------------------------------------------------------------- */
-const keys = (root: string, symbol: string) => keysOf(pitchClassOf(root), type(symbol)).map((k) => `${k.numeral} ${k.key}`).join(', ')
+const keys = (root: string, symbol: string) =>
+	keysOf(pitchClassOf(root), type(symbol))
+		.map((k) => `${k.numeral} ${k.key}`)
+		.join(', ')
 const KEYS: [string, string, string][] = [
 	['C', '', 'I C, IV G, V F, bIII Am, bVI Em, bVII Dm'],
 	['C', '7', 'V7 F, bVII7 Dm'],
@@ -46,7 +55,10 @@ check('parse C#m7', parsed('C#m7') === '1 m7')
 check('parse Bbmaj7', parsed('Bbmaj7') === '10 maj7')
 check('parse C/E (slash bass ignored)', parsed('C/E') === '0 major')
 check('parse unknown', parsed('Cblah') === 'null' && parsed('--') === 'null' && parsed('') === 'null')
-check('Every symbol round-trips', CHORD_TYPES.every((t) => parseChordSymbol(`F#${t.symbol}`)?.type === t))
+check(
+	'Every symbol round-trips',
+	CHORD_TYPES.every((t) => parseChordSymbol(`F#${t.symbol}`)?.type === t)
+)
 
 /* Marked shapes ------------------------------------------------------------- */
 // Per string as in STRINGS (high E first): C open = x32010 → [0, 1, 0, 2, 3, -1].
@@ -82,6 +94,10 @@ const caption = (symbol: string, root: string, i = 0) => {
 check('C first voicing: 1 · x32010 | open', caption('', 'C') === '1 · x32010 | open', caption('', 'C'))
 check('F first voicing is a barre at fret 1', caption('', 'F') === '1 · 133211 | barre · fret 1', caption('', 'F'))
 const high = voicingCaption({ frets: [8, 8, 9, 10, -1, -1], barre: null, base: 8 } as Voicing, 2)
-check('No open string, no barre: 3 · x-x-10-9-8-8 | fret 8', `${high.title} | ${high.position}` === '3 · x-x-10-9-8-8 | fret 8', `${high.title} | ${high.position}`)
+check(
+	'No open string, no barre: 3 · x-x-10-9-8-8 | fret 8',
+	`${high.title} | ${high.position}` === '3 · x-x-10-9-8-8 | fret 8',
+	`${high.title} | ${high.position}`
+)
 
 finish('All chord library checks passed')

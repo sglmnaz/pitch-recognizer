@@ -341,8 +341,7 @@ export function createChordModes(root: HTMLElement, onMicNeed: () => void): Chor
 		if (status.textContent !== best) status.textContent = best
 
 		if (empty) return results.replaceChildren(message('Tap a fret on each string you play; tap it again to clear. Open strings sit left of the nut.'))
-		if (!matches.length)
-			return results.replaceChildren(message(pcs.size < 2 ? 'Mark at least two different notes.' : 'No chord found. Is the root marked?'))
+		if (!matches.length) return results.replaceChildren(message(pcs.size < 2 ? 'Mark at least two different notes.' : 'No chord found. Is the root marked?'))
 		results.replaceChildren(
 			...matches.slice(0, RESULTS).map((match) => {
 				const button = document.createElement('button')

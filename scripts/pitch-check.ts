@@ -68,7 +68,7 @@ function check(name: string, f0: number, glitch = false, level?: number, amplitu
 
 	const ok = worst < 15 && missing / judged < 0.05
 	console.log(
-		`${ok ? 'ok  ' : 'FAIL'} ${name.padEnd(14)} worst ${worst.toFixed(1).padStart(6)}¢  final ${last.toFixed(1).padStart(5)}¢  missing ${missing}/${judged}`,
+		`${ok ? 'ok  ' : 'FAIL'} ${name.padEnd(14)} worst ${worst.toFixed(1).padStart(6)}¢  final ${last.toFixed(1).padStart(5)}¢  missing ${missing}/${judged}`
 	)
 	return ok
 }
@@ -118,7 +118,12 @@ for (const level of [0.0003, 0.002, 0.02]) {
 // app's band-pass, at several levels: still never a note.
 for (const level of [0.0005, 0.003, 0.02]) {
 	stop()
-	const room = degrade(new Float32Array(SAMPLE_RATE * 6), SAMPLE_RATE, { name: 'room', highpassHz: 0, snrDb: Infinity, reverbSeconds: 0, noiseRms: level, pinkNoise: true }, 7)
+	const room = degrade(
+		new Float32Array(SAMPLE_RATE * 6),
+		SAMPLE_RATE,
+		{ name: 'room', highpassHz: 0, snrDb: Infinity, reverbSeconds: 0, noiseRms: level, pinkNoise: true },
+		7
+	)
 	const banded = appBand(room, SAMPLE_RATE)
 	let readings = 0
 	for (let end = FFT_SIZE; end <= banded.length; end += HOP) {
@@ -138,11 +143,19 @@ for (const level of [0.0005, 0.003, 0.02]) {
 		const t = i / SAMPLE_RATE - 0.5
 		let s = 0
 		for (let n = 1; n <= 12; n++) {
-			s += (Math.abs(Math.sin((n * Math.PI) / 9)) / n) * Math.exp(-t / (1.6 / (1 + 0.15 * n))) * Math.sin(2 * Math.PI * n * 82.41 * Math.sqrt(1 + 1e-4 * n * n) * t + n)
+			s +=
+				(Math.abs(Math.sin((n * Math.PI) / 9)) / n) *
+				Math.exp(-t / (1.6 / (1 + 0.15 * n))) *
+				Math.sin(2 * Math.PI * n * 82.41 * Math.sqrt(1 + 1e-4 * n * n) * t + n)
 		}
 		string[i] = 0.3 * s
 	}
-	const unplugged = degrade(string, SAMPLE_RATE, { name: 'unplugged', highpassHz: 100, snrDb: Infinity, reverbSeconds: 0.3, gainDb: -31, noiseRms: 0.0008, sourceHighpassHz: 300, pinkNoise: true }, 3)
+	const unplugged = degrade(
+		string,
+		SAMPLE_RATE,
+		{ name: 'unplugged', highpassHz: 100, snrDb: Infinity, reverbSeconds: 0.3, gainDb: -31, noiseRms: 0.0008, sourceHighpassHz: 300, pinkNoise: true },
+		3
+	)
 	const banded = appBand(unplugged, SAMPLE_RATE)
 	let correct = 0
 	for (let end = FFT_SIZE; end <= banded.length; end += HOP) {

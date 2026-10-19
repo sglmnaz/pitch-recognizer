@@ -7,7 +7,20 @@ import * as Settings from '../settings'
 import * as Sound from '../sound'
 import { chordsOfScale, identifyChords, type ChordType } from '../chord-theory'
 import { chordShapes, shapeString, voicingSpec, type Voicing } from '../chord-shapes'
-import { chordSource, CIRCLE, circleIndex, keyName, keyOf, MAJOR, MINOR, progressionsFor, resolveProgression, scalesForChord, signatureName, type KeyChord } from '../harmony'
+import {
+	chordSource,
+	CIRCLE,
+	circleIndex,
+	keyName,
+	keyOf,
+	MAJOR,
+	MINOR,
+	progressionsFor,
+	resolveProgression,
+	scalesForChord,
+	signatureName,
+	type KeyChord,
+} from '../harmony'
 import { pitchClassOf, ROOTS, scaleTitle, spellScale, STRINGS, type ScaleType } from '../scales'
 
 // A strum: low string to high, this far apart (a quick downstroke).
@@ -38,8 +51,7 @@ export interface HarmonyState {
 	marked: number[]
 }
 
-const quality = (type: ChordType) =>
-	type.formula.includes('b5') || type.formula.includes('#5') ? 'dim' : type.formula.includes('b3') ? 'minor' : 'major'
+const quality = (type: ChordType) => (type.formula.includes('b5') || type.formula.includes('#5') ? 'dim' : type.formula.includes('b3') ? 'minor' : 'major')
 
 const svgEl = (name: string, attrs: Record<string, string | number>) => {
 	const el = document.createElementNS('http://www.w3.org/2000/svg', name)
@@ -237,7 +249,8 @@ export function createHarmony(root: HTMLElement, host: HarmonyHost) {
 			)
 			const scaleName = scaleTitle(spellScale(ROOTS[rootPc], type).root, type).split(' · ')[0]
 			chordsNote.hidden = source === type
-			if (source && source !== type) chordsNote.textContent = `${scaleName} is built from ${spellScale(ROOTS[rootPc], source).root} ${source.name.toLowerCase()}: these are its chords.`
+			if (source && source !== type)
+				chordsNote.textContent = `${scaleName} is built from ${spellScale(ROOTS[rootPc], source).root} ${source.name.toLowerCase()}: these are its chords.`
 		}
 		Array.from(chordRow.children).forEach((b, i) => b.setAttribute('aria-pressed', String(i === selected)))
 		sizeButtons.forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.chordView === chordView)))
@@ -341,7 +354,11 @@ export function createHarmony(root: HTMLElement, host: HarmonyHost) {
 			const [x3, y3] = at(r0, a0)
 			const name = ring === 'major' ? key.major : `${key.minor}m`
 			const alt = ring === 'major' ? key.majorAlt : key.minorAlt && `${key.minorAlt}m`
-			const spoken = (n: string) => n.replace('#', ' sharp').replace(/^([A-G])b/, '$1 flat').replace(/m$/, '')
+			const spoken = (n: string) =>
+				n
+					.replace('#', ' sharp')
+					.replace(/^([A-G])b/, '$1 flat')
+					.replace(/m$/, '')
 			const g = svgEl('g', {
 				class: `circle__key circle__key--${ring}`,
 				role: 'button',
@@ -349,8 +366,7 @@ export function createHarmony(root: HTMLElement, host: HarmonyHost) {
 				'data-ring': ring,
 				'data-index': i,
 				'aria-label':
-					`${spoken(name)} ${ring}, ${signatureName(key.accidentals)}` +
-					(alt ? ` (${spoken(alt)} ${ring}, ${signatureName(key.accidentals - 12)})` : ''),
+					`${spoken(name)} ${ring}, ${signatureName(key.accidentals)}` + (alt ? ` (${spoken(alt)} ${ring}, ${signatureName(key.accidentals - 12)})` : ''),
 			}) as SVGGElement
 			g.append(svgEl('path', { d: `M${x0} ${y0}A${r1} ${r1} 0 0 1 ${x1} ${y1}L${x2} ${y2}A${r0} ${r0} 0 0 0 ${x3} ${y3}Z` }))
 			const [tx, ty] = at((r0 + r1) / 2, i * 30)

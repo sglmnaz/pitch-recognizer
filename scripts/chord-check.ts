@@ -77,7 +77,7 @@ function strum(midis: number[], bright = false, a4 = 440, seconds = 0.6): Float3
 		// Plucked at 1/7 of the string (|sin(kπ/7)|/k partials), or near the bridge
 		// with slowly decaying overtones for a bright, overtone-heavy timbre.
 		const partials = Array.from({ length: 10 }, (_, k) =>
-			bright ? Math.abs(Math.sin(((k + 1) * Math.PI) / 12)) / Math.sqrt(k + 1) : Math.abs(Math.sin(((k + 1) * Math.PI) / 7)) / (k + 1),
+			bright ? Math.abs(Math.sin(((k + 1) * Math.PI) / 12)) / Math.sqrt(k + 1) : Math.abs(Math.sin(((k + 1) * Math.PI) / 7)) / (k + 1)
 		)
 		const phases = partials.map(() => noise() * Math.PI)
 		for (let i = Math.round(start * SAMPLE_RATE); i < length; i++) {
@@ -135,7 +135,10 @@ for (const bright of [false, true]) {
 // calibration) still plays C and Am; at 432 Hz read against 440 the strings
 // sit 32 cents flat, at 466 Hz a whole semitone sharp.
 for (const a4 of [432, 466]) {
-	for (const [expected, midis] of [['C', [48, 52, 55, 60, 64]], ['Am', [45, 52, 57, 60, 64]]] as [string, number[]][]) {
+	for (const [expected, midis] of [
+		['C', [48, 52, 55, 60, 64]],
+		['Am', [45, 52, 57, 60, 64]],
+	] as [string, number[]][]) {
 		const match = recognizeChord(spectrumDb(strum(midis, false, a4)), binHz, a4).chord
 		if (match?.name !== expected) {
 			console.log(`FAIL A4 = ${a4} ${expected} -> ${match?.name ?? '—'}`)
@@ -147,7 +150,10 @@ for (const a4 of [432, 466]) {
 // Silence and noise are not chords.
 const quiet = new Float32Array(FFT_SIZE)
 const hiss = quiet.map(() => 0.01 * noise())
-for (const [label, signal] of [['silence', quiet], ['white noise', hiss]] as [string, Float32Array][]) {
+for (const [label, signal] of [
+	['silence', quiet],
+	['white noise', hiss],
+] as [string, Float32Array][]) {
 	const match = recognizeChord(spectrumDb(signal), binHz).chord
 	if (match) {
 		console.log(`FAIL ${label} -> ${match.name}`)
@@ -174,7 +180,12 @@ const segments = [
 	{ name: 'Am', from: cStrum.length + gap.length, to: session.length },
 ]
 /** Names per 60 Hz frame of `signal` from `tracker`, null where it is silent (not tracked). */
-function trackFrames(signal: Float32Array, track: (spectrum: Float32Array, ms: number) => string | null, reset: () => void, sounding: (end: number) => boolean) {
+function trackFrames(
+	signal: Float32Array,
+	track: (spectrum: Float32Array, ms: number) => string | null,
+	reset: () => void,
+	sounding: (end: number) => boolean
+) {
 	const state = { smoothing: 0.8 }
 	const frames: { end: number; name: string | null }[] = []
 	let silentSince: number | null = null
@@ -197,7 +208,7 @@ const sessionFrames = trackFrames(
 	session,
 	(spectrum, ms) => trackChord(spectrum, binHz, ms)?.chord?.name ?? null,
 	resetChordTracking,
-	(end) => segments.some((seg) => end > seg.from && end <= seg.to),
+	(end) => segments.some((seg) => end > seg.from && end <= seg.to)
 )
 for (const seg of segments) {
 	const inside = sessionFrames.filter((f) => f.end > seg.from && f.end <= seg.to)
@@ -218,7 +229,12 @@ for (const [label, signal] of [
 	['tracked noise', new Float32Array(Math.round(1.5 * SAMPLE_RATE)).map(() => 0.01 * noise())],
 ] as [string, Float32Array][]) {
 	const tracker = createChordTracker()
-	const frames = trackFrames(signal, (spectrum, ms) => tracker.track(spectrum, binHz, ms).chord?.name ?? null, tracker.reset, () => true)
+	const frames = trackFrames(
+		signal,
+		(spectrum, ms) => tracker.track(spectrum, binHz, ms).chord?.name ?? null,
+		tracker.reset,
+		() => true
+	)
 	const named = frames.filter((f) => f.name !== null)
 	if (named.length > 0.1 * frames.length) {
 		console.log(`FAIL ${label}: named in ${named.length}/${frames.length} frames (${named[0].name})`)

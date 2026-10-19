@@ -209,8 +209,7 @@ export function createScalesView(root: HTMLElement, mic: MicControl): View & { s
 		const listening = state === 'listening'
 		const on = mode === 'explore' ? listening : addByEar && listening
 		micLabel.textContent = mode === 'explore' ? 'Listen' : 'Play to mark'
-		micButton.title =
-			mode === 'explore' ? 'Light up the notes you play on the guitar' : 'Mark the notes you play on the guitar'
+		micButton.title = mode === 'explore' ? 'Light up the notes you play on the guitar' : 'Mark the notes you play on the guitar'
 		micButton.setAttribute('aria-pressed', String(on))
 		micButton.classList.toggle('mic-toggle--live', listening)
 		const text =
@@ -259,9 +258,7 @@ export function createScalesView(root: HTMLElement, mic: MicControl): View & { s
 		const shown = shownScale()
 		if (!shown) return
 		harmony.stop(true)
-		const midis = position
-			? positionRun(shown.rootPc, shown.type, positionWindows(shown.rootPc, shown.type)[position - 1])
-			: scaleRun(shown.rootPc, shown.type)
+		const midis = position ? positionRun(shown.rootPc, shown.type, positionWindows(shown.rootPc, shown.type)[position - 1]) : scaleRun(shown.rootPc, shown.type)
 		let step = 0
 		const tick = () => {
 			if (step >= midis.length) return stopPlaying()
@@ -383,8 +380,18 @@ export function createScalesView(root: HTMLElement, mic: MicControl): View & { s
 				const degree = chord ? (inChord ?? degrees.get(midi % 12)) : degrees.get(midi % 12)
 				if (!degree && !isMarked) continue
 				const role = chord
-					? !inChord ? 'note' : inChord === '1' ? 'root' : 'tone'
-					: !degree ? 'marked' : !highlighted(degree) ? 'note' : degree === '1' ? 'root' : 'tone'
+					? !inChord
+						? 'note'
+						: inChord === '1'
+							? 'root'
+							: 'tone'
+					: !degree
+						? 'marked'
+						: !highlighted(degree)
+							? 'note'
+							: degree === '1'
+								? 'root'
+								: 'tone'
 				const label = scaleLabels === 'none' ? '' : scaleLabels === 'intervals' && degree ? degree : name(midi)
 				dots.push({ string, fret, role, label, detail: degree, marked: isMarked, dimmed: Boolean(chord && !inChord) })
 			}
@@ -448,9 +455,7 @@ export function createScalesView(root: HTMLElement, mic: MicControl): View & { s
 		if (shown) renderStrip(shown, highlighted).notes.forEach((n) => names.set(pitchClassOf(n), n))
 		else stopPlaying()
 
-		markedText.textContent = markedPcs.size
-			? [...markedPcs].map((pc) => names.get(pc) ?? ROOTS[pc]).join(' ')
-			: 'Tap the neck to mark notes'
+		markedText.textContent = markedPcs.size ? [...markedPcs].map((pc) => names.get(pc) ?? ROOTS[pc]).join(' ') : 'Tap the neck to mark notes'
 		markedText.classList.toggle('scales-marked--empty', markedPcs.size === 0)
 		clearButton.disabled = marked.size === 0
 

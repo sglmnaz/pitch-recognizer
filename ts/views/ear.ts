@@ -239,10 +239,7 @@ export function createEarView(root: HTMLElement): View {
 		renderAnswers()
 		const q = question()
 		const { earDirection } = Settings.get()
-		const stale =
-			!q ||
-			!Ear.pool(shown, enabled()).includes(q.id) ||
-			(shown === 'intervals' && earDirection !== 'mixed' && q.direction !== earDirection)
+		const stale = !q || !Ear.pool(shown, enabled()).includes(q.id) || (shown === 'intervals' && earDirection !== 'mixed' && q.direction !== earDirection)
 		if (stale) startRound(false)
 	}
 	Settings.subscribe(() => {

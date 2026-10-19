@@ -53,8 +53,7 @@ export function createSettingsView(root: HTMLElement, from: () => string | null)
 	// Checkbox switches store booleans, sliders and number fields numbers,
 	// selects their value (a number when marked data-type="number").
 	const switches = Array.from(root.querySelectorAll<HTMLInputElement | HTMLSelectElement>('[data-setting]'))
-	const isNumeric = (input: HTMLInputElement | HTMLSelectElement) =>
-		input.type === 'range' || input.type === 'number' || input.dataset.type === 'number'
+	const isNumeric = (input: HTMLInputElement | HTMLSelectElement) => input.type === 'range' || input.type === 'number' || input.dataset.type === 'number'
 	const valueOf = (input: HTMLInputElement | HTMLSelectElement) =>
 		input.type === 'checkbox' ? (input as HTMLInputElement).checked : isNumeric(input) ? Number(input.value) : input.value
 	const chips = root.querySelector<HTMLElement>('#noteChips')!

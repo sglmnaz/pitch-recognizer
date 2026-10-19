@@ -36,8 +36,7 @@ const DEFAULT_LIMIT = 60
 // --- labels -----------------------------------------------------------------
 
 const NOTE_NAMES: Record<string, number> = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 }
-const rootOf = (letter: string, accidental = '') =>
-	(NOTE_NAMES[letter] + (accidental === '#' ? 1 : accidental === 'b' ? -1 : 0) + 12) % 12
+const rootOf = (letter: string, accidental = '') => (NOTE_NAMES[letter] + (accidental === '#' ? 1 : accidental === 'b' ? -1 : 0) + 12) % 12
 
 /** `E2`, `F#3`, `Bb3` -> MIDI number. */
 function parseNote(name: string): number | null {
@@ -149,12 +148,14 @@ function guitarSetNotes(): Item<number>[] {
 	const dir = 'bench/data/guitarset'
 	if (!existsSync(join(dir, 'audio_mono-mic'))) return []
 	const items: Item<number>[] = []
-	for (const file of readdirSync(join(dir, 'annotation')).filter((f) => f.endsWith('_solo.jams')).sort()) {
+	for (const file of readdirSync(join(dir, 'annotation'))
+		.filter((f) => f.endsWith('_solo.jams'))
+		.sort()) {
 		const jams = JSON.parse(readFileSync(join(dir, 'annotation', file), 'utf8'))
 		const notes: Segment<number>[] = jams.annotations
 			.filter((a: { namespace: string }) => a.namespace === 'note_midi')
 			.flatMap((a: { data: { time: number; duration: number; value: number }[] }) =>
-				a.data.map((d) => ({ start: d.time, end: d.time + d.duration, value: Math.round(d.value) })),
+				a.data.map((d) => ({ start: d.time, end: d.time + d.duration, value: Math.round(d.value) }))
 			)
 		const segments = notes.filter((n) => n.end - n.start >= 0.45 && !notes.some((o) => o !== n && o.start < n.end && n.start < o.end))
 		const base = file.replace('.jams', '')
@@ -201,20 +202,38 @@ function idmtNotes(): Item<number>[] {
 		const xml = readFileSync(join(dir, 'annotation', file), 'utf8')
 		const events = [...xml.matchAll(/<event>([\s\S]*?)<\/event>/g)].map(([, body]) => {
 			const field = (name: string) => new RegExp(`<${name}>([^<]*)</${name}>`).exec(body)?.[1] ?? ''
-			return { start: Number(field('onsetSec')), end: Number(field('offsetSec')), value: Number(field('pitch')), plain: ['PK', 'FS'].includes(field('excitationStyle')) && field('expressionStyle') === 'NO' }
+			return {
+				start: Number(field('onsetSec')),
+				end: Number(field('offsetSec')),
+				value: Number(field('pitch')),
+				plain: ['PK', 'FS'].includes(field('excitationStyle')) && field('expressionStyle') === 'NO',
+			}
 		})
 		const segments = events.filter((e) => e.plain && !events.some((o) => o !== e && o.start < e.end && e.start < o.end))
 		if (segments.length === 0) continue
 		const wav = join(dir, 'audio', file.replace(/\.xml$/, '.wav'))
 		// A few annotations have no matching audio file in the archive.
-		if (existsSync(wav)) items.push({ id: `idmt/${file}`, load: () => decode(wav, SAMPLE_RATE), segments: segments.map(({ start, end, value }) => ({ start, end, value })) })
+		if (existsSync(wav))
+			items.push({ id: `idmt/${file}`, load: () => decode(wav, SAMPLE_RATE), segments: segments.map(({ start, end, value }) => ({ start, end, value })) })
 	}
 	return items
 }
 
 // IDMT chord qualities -> Harte. Extended dominants (9, 13) score as 7ths;
 // power chords (5), sus and diminished qualities only count towards the root.
-const IDMT_QUALITIES: Record<string, string> = { '': 'maj', min: 'min', '7': '7', '13': '7', '79': '7', '713': '7', '7913': '7', '79b': '7', min7: 'min7', min79: 'min7', maj7: 'maj7' }
+const IDMT_QUALITIES: Record<string, string> = {
+	'': 'maj',
+	min: 'min',
+	'7': '7',
+	'13': '7',
+	'79': '7',
+	'713': '7',
+	'7913': '7',
+	'79b': '7',
+	min7: 'min7',
+	min79: 'min7',
+	maj7: 'maj7',
+}
 
 /** IDMT-SMT-Guitar dataset 4, acoustic guitar through a microphone: chord changes per beat. */
 export function idmtChords(keep: (id: string) => boolean = () => true): Item<Chord>[] {
@@ -364,13 +383,19 @@ if (import.meta.main) {
 			const iqr = quantile(score.offsets, 0.75) - quantile(score.offsets, 0.25)
 			const firstOk = quantile(score.firstCorrect, 0.5)
 			console.log(
-				`${condition.name.padEnd(13)} ${pct(score.pitchHits, score.frames)}  ${pct(score.chromaHits, score.frames)}  ${pct(score.voiced, score.frames)}  ${iqr.toFixed(1).padStart(4)}  ${firstOk.toFixed(0).padStart(5)}ms`,
+				`${condition.name.padEnd(13)} ${pct(score.pitchHits, score.frames)}  ${pct(score.chromaHits, score.frames)}  ${pct(score.voiced, score.frames)}  ${iqr.toFixed(1).padStart(4)}  ${firstOk.toFixed(0).padStart(5)}ms`
 			)
 			if (args.includes('--by-note')) {
 				const names = ['C', 'C#', 'D', 'Eb', 'E', 'F', 'F#', 'G', 'Ab', 'A', 'Bb', 'B']
 				const rows = [...score.byNote.entries()].sort((a, b) => a[0] - b[0]).filter(([, n]) => n.frames >= 20)
 				console.log(
-					'   ' + rows.map(([midi, n]) => `${names[midi % 12]}${Math.floor(midi / 12) - 1} ${pct(n.pitchHits, n.frames).trim()}${n.chromaHits > n.pitchHits ? ` (oct ${pct(n.chromaHits - n.pitchHits, n.frames).trim()})` : ''}`).join(' · '),
+					'   ' +
+						rows
+							.map(
+								([midi, n]) =>
+									`${names[midi % 12]}${Math.floor(midi / 12) - 1} ${pct(n.pitchHits, n.frames).trim()}${n.chromaHits > n.pitchHits ? ` (oct ${pct(n.chromaHits - n.pitchHits, n.frames).trim()})` : ''}`
+							)
+							.join(' · ')
 				)
 			}
 			const { offsets, firstCorrect, byNote, ...counts } = score
@@ -382,11 +407,23 @@ if (import.meta.main) {
 		const items = [...ownItems('chord', parseAppChord), ...spread(inSplit(idmtChords()), limit), ...spread(inSplit(guitarSetChords()), limit)]
 		console.log(`\nCHORDS (${split} split) — ${items.length} items (frame-level chord symbol recall, MIREX reductions)`)
 		console.log('condition       root  majmin sevenths  latency  top confusions (sevenths)')
-		const emptyScore = (): ChordScore => ({ root: { hits: 0, frames: 0 }, majmin: { hits: 0, frames: 0 }, sevenths: { hits: 0, frames: 0 }, confusions: new Map(), latencies: [] })
+		const emptyScore = (): ChordScore => ({
+			root: { hits: 0, frames: 0 },
+			majmin: { hits: 0, frames: 0 },
+			sevenths: { hits: 0, frames: 0 },
+			confusions: new Map(),
+			latencies: [],
+		})
 		const row = (label: string, score: ChordScore) => {
-			const top = [...score.confusions.entries()].sort((a, b) => b[1] - a[1]).slice(0, 3).map(([k, v]) => `${k}×${v}`).join(' ')
+			const top = [...score.confusions.entries()]
+				.sort((a, b) => b[1] - a[1])
+				.slice(0, 3)
+				.map(([k, v]) => `${k}×${v}`)
+				.join(' ')
 			const latency = quantile(score.latencies, 0.5)
-			console.log(`${label.padEnd(13)} ${pct(score.root.hits, score.root.frames)} ${pct(score.majmin.hits, score.majmin.frames)}  ${pct(score.sevenths.hits, score.sevenths.frames)}  ${latency.toFixed(0).padStart(5)}ms  ${top}`)
+			console.log(
+				`${label.padEnd(13)} ${pct(score.root.hits, score.root.frames)} ${pct(score.majmin.hits, score.majmin.frames)}  ${pct(score.sevenths.hits, score.sevenths.frames)}  ${latency.toFixed(0).padStart(5)}ms  ${top}`
+			)
 			return latency
 		}
 		for (const condition of activeConditions) {

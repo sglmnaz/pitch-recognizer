@@ -114,7 +114,18 @@ export function voicingCaption(voicing: Voicing, index: number) {
 
 /* Identify ------------------------------------------------------------------ */
 
-const ORDINAL: Record<string, string> = { '1': 'root', '2': '2nd', '3': '3rd', '4': '4th', '5': '5th', '6': '6th', '7': '7th', '9': '9th', '11': '11th', '13': '13th' }
+const ORDINAL: Record<string, string> = {
+	'1': 'root',
+	'2': '2nd',
+	'3': '3rd',
+	'4': '4th',
+	'5': '5th',
+	'6': '6th',
+	'7': '7th',
+	'9': '9th',
+	'11': '11th',
+	'13': '13th',
+}
 // A played note outside the chord, named by its interval above the root.
 const ADDED = ['1', 'b9', '9', '#9', '3', '11', '#11', '5', 'b13', '13', 'b7', '7']
 
