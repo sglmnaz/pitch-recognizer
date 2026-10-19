@@ -10,7 +10,11 @@ html {
 
 body {
 	margin: 0;
+	/* dvh = the height actually visible. On phones 100vh is the height with the
+	   browser toolbar hidden, so a page that fits would still scroll by the
+	   toolbar's height. vh stays as the fallback for older browsers. */
 	min-height: 100vh;
+	min-height: 100dvh;
 	font-family: var(--font-sans);
 	font-size: 14px;
 	line-height: 1.5;
