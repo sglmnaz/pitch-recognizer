@@ -6,6 +6,7 @@
 import * as Changes from '../../music/changes'
 import * as Metronome from '../../core/metronome'
 import * as Settings from '../../core/settings'
+import { clamp } from '../../core/math'
 import { loadChordModel } from '../../music/chords'
 import { parseChordSymbol } from '../../music/chord-library'
 import { chordShapes } from '../../music/chord-shapes'
@@ -22,7 +23,8 @@ import { clockText, createChangesSession, verdict } from './changes.session'
 const ANNOUNCE_MS = 4000
 const STRIP_MARKS = 12
 
-const MARK_GLYPH: Record<Changes.Mark, string> = { hit: '●', early: '‹', late: '›', miss: '×' }
+// Arrows point the way the change was off the beat (a legend under the strip says so).
+const MARK_GLYPH: Record<Changes.Mark, string> = { hit: '✓', early: '←', late: '→', miss: '×' }
 const MARK_TEXT: Record<Changes.Mark, string> = { hit: 'on time', early: 'early', late: 'late', miss: 'missed' }
 
 const pairLabel = (sequence: string[]) => sequence.join('–')
@@ -48,6 +50,9 @@ export function createChangesView(root: HTMLElement): View {
 	const chipsBox = $<HTMLElement>('.changes-chips')
 	const order = $<HTMLElement>('.changes-order')
 	const summary = $<HTMLElement>('.changes-summary')
+	const legend = $<HTMLElement>('.changes-legend')
+	const tempo = $<HTMLElement>('.changes-tempo')
+	const tempoValue = $<HTMLElement>('.changes-tempo__value')
 
 	// Readings arrive every frame while the mic runs and reset() runs when it stops.
 	let micLive = false
@@ -125,6 +130,11 @@ export function createChangesView(root: HTMLElement): View {
 
 	const showMode = bindSegmented(root, 'data-changes-mode', (value) => Settings.update({ changesMode: value as 'minute' | 'time' }))
 
+	// In time's tempo in 5 BPM steps, within the setting's 40–160 (Settings → Trainer → Changes has the exact field).
+	for (const button of tempo.querySelectorAll<HTMLButtonElement>('[data-changes-bpm]')) {
+		button.addEventListener('click', () => Settings.update({ changesBpm: clamp(Settings.get().changesBpm + Number(button.dataset.changesBpm), 40, 160) }))
+	}
+
 	function sparkline(history: number[], best: number): string {
 		if (history.length < 2) return ''
 		const w = 96
@@ -151,7 +161,7 @@ export function createChangesView(root: HTMLElement): View {
 		if (s.changesMode === 'time') {
 			// Numbers only in the markup. Through a speaker the mic hears the clicks too.
 			summary.innerHTML =
-				`<span>${s.changesBpm} BPM · ${s.changesBeats} ${s.changesBeats === 1 ? 'beat' : 'beats'} per chord${s.changesSpeedUp ? ' · speeds up' : ''}</span>` +
+				`<span>${s.changesBeats} ${s.changesBeats === 1 ? 'beat' : 'beats'} per chord${s.changesSpeedUp ? ' · speeds up' : ''}</span>` +
 				'<span>Headphones work best: the mic can hear the clicks.</span>'
 			return
 		}
@@ -166,6 +176,8 @@ export function createChangesView(root: HTMLElement): View {
 		const s = Settings.get()
 		const chords = selection()
 		showMode(s.changesMode)
+		tempo.hidden = s.changesMode !== 'time'
+		tempoValue.textContent = `${s.changesBpm} BPM`
 		for (const button of presetsBox.querySelectorAll<HTMLButtonElement>('[data-preset]')) {
 			button.setAttribute('aria-pressed', String(button.dataset.preset === chords.join()))
 		}
@@ -191,6 +203,7 @@ export function createChangesView(root: HTMLElement): View {
 		const s = Settings.get()
 		const chords = selection()
 		strip.hidden = s.changesMode !== 'time'
+		legend.hidden = strip.hidden
 		if (s.changesMode === 'time') {
 			clock.textContent = `${s.changesBpm} BPM`
 			countLabel.textContent = 'on time'
@@ -294,6 +307,7 @@ export function createChangesView(root: HTMLElement): View {
 		result.hidden = true
 		status.textContent = ''
 		strip.hidden = mode !== 'time'
+		legend.hidden = strip.hidden
 		renderStrip([])
 		if (mode === 'minute') {
 			countValue.textContent = '0'
@@ -384,7 +398,7 @@ export function createChangesView(root: HTMLElement): View {
 	/* Per frame ----------------------------------------------------------------- */
 	function frame() {
 		const now = performance.now()
-		if (session.frame(now, strummed(), heardChord(now)?.symbol ?? null)) finish(true)
+		if (session.frame(now, strummed(now), heardChord(now)?.symbol ?? null)) finish(true)
 	}
 
 	// ?debug: fake chords drive frames while the mic is off.

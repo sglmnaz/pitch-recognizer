@@ -530,6 +530,29 @@
 	color: var(--warning);
 }
 
+/* What the strip's marks mean, under it. */
+.changes-legend {
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: center;
+	gap: var(--space-4) var(--space-12);
+	margin: var(--space-4) 0 0;
+	font-size: var(--text-sm);
+	color: var(--fg-muted);
+
+	& .changes-mark--miss {
+		color: var(--fg-muted);
+	}
+}
+
+/* In time's tempo stepper in the setup. */
+.changes-tempo {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--space-12);
+}
+
 .changes-result {
 	margin-top: var(--space-4);
 }

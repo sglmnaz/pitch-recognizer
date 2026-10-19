@@ -49,16 +49,31 @@ export function heardChord(now: number): HeardChord | null {
 /** Forgets what the recognizer was following, so a new session (or a mic restart) starts clean. */
 export function resetHeard() {
 	tracker.reset()
+	levels = []
 }
 
-/** A strum's attack this frame (the pitch pipeline's onset detector): what tells a played chord from a recognizer flip. */
-export function strummed(): boolean {
+// The pitch pipeline's onset rule wants the level to double over its running
+// envelope: right for single notes, but a chord strummed while the previous
+// one still rings often rises less, so changes went uncounted. A rise of
+// STRUM_RISE over the quietest level of the last STRUM_WINDOW_MS counts too.
+// A held chord only decays, so it never trips this; a recognizer flip on it
+// stays a flip.
+const STRUM_RISE = 1.5
+const STRUM_WINDOW_MS = 250
+let levels: { at: number; volume: number }[] = []
+
+/** A strum's attack this frame: what tells a played chord from a recognizer flip. */
+export function strummed(now: number): boolean {
 	if (fake !== undefined) {
 		const strum = fakeStrum
 		fakeStrum = false
 		return strum
 	}
-	return Microphone.getStats().reason === 'attack'
+	const { reason, volume } = Microphone.getStats()
+	levels.push({ at: now, volume })
+	levels = levels.filter((level) => level.at >= now - STRUM_WINDOW_MS)
+	const quietest = Math.min(...levels.map((level) => level.volume))
+	return reason === 'attack' || (Microphone.isSounding() && volume > STRUM_RISE * quietest)
 }
 
 /** ?debug chords are being fed: a session may start without the mic. */

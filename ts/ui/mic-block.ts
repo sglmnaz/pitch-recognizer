@@ -1,5 +1,5 @@
 // The app's one microphone: when it listens, and the shared #mic block (live
-// waveform, Listen / Stop, status) that shows it under the active view's
+// waveform, the dot + mic + state toggle, a hint line) that shows it under the active view's
 // readout. main.ts hands it the active view (initMic) and boots it (bootMic);
 // views only signal through micNeedChanged() that their wantsMic() changed.
 // Scales, which has its own toggle, reads micState() / setListening() and
@@ -70,25 +70,29 @@ export function focusMicButton() {
 	micButton.focus()
 }
 
-function setStatus(text: string, live: boolean) {
-	status.textContent = ''
-	const dot = document.createElement('span')
-	dot.className = 'status__dot'
-	status.append(dot, document.createTextNode(text))
-	status.classList.toggle('status--live', live)
+const micLabel = micButton.querySelector<HTMLElement>('.mic-toggle__label')!
+
+/** The line under the toggle: only for what the label can't say (blocked, waiting). */
+function setHint(text: string) {
+	status.textContent = text
+	status.hidden = !text
 }
 
-// Button and status reflect three states: idle, waiting for a tap (the browser
-// holds audio until a gesture when listening starts on load), and listening.
+// The toggle reflects four states: idle, waiting for a tap (the browser holds
+// audio until a gesture when listening starts on load), listening, blocked.
 let waitingShown = false
 
 function syncMicUi() {
 	const waiting = micActive && Microphone.isSuspended()
 	waitingShown = waiting
 	const listening = micActive && !waiting
-	micButton.textContent = listening ? 'Stop' : 'Listen'
-	micButton.classList.toggle('btn--solid', !listening)
-	setStatus(listening ? 'Listening' : waiting ? 'Tap to start' : 'Idle', listening)
+	micLabel.textContent = micBlocked ? 'Blocked' : listening ? 'Listening' : waiting ? 'Tap to start' : 'Idle'
+	micButton.setAttribute('aria-pressed', String(micActive))
+	micButton.classList.toggle('mic-toggle--live', listening)
+	micButton.title = listening ? 'Stop listening' : 'Start listening'
+	setHint(
+		micBlocked ? 'The browser is blocking the microphone. Allow it in the site settings to use this.' : waiting ? 'Tap anywhere to start the microphone.' : ''
+	)
 	for (const listener of listeners) listener()
 }
 
@@ -116,7 +120,6 @@ async function startMic() {
 		() => {
 			micBlocked = true
 			stopMic()
-			setStatus('Microphone unavailable', false)
 		}
 	)
 	if (micActive) syncMicUi()

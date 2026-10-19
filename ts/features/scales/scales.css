@@ -121,55 +121,10 @@
 	filter: brightness(0.97);
 }
 
-/* Mic toggle: the Scales tab's own, clearly labelled mic control. The dot
-   turns green while the mic is actually listening, and pulses when on. */
-.mic-toggle {
+/* The Scales tab's own mic toggle (ts/styles/components/mic.css) sits at the
+   end of the neck toolbar. */
+.view--scales .mic-toggle {
 	margin-left: auto;
-	white-space: nowrap;
-	display: inline-flex;
-	align-items: center;
-	gap: 7px;
-	height: 32px;
-	padding: 0 var(--space-12);
-	border: none;
-	border-radius: var(--radius-pill);
-	background: var(--surface);
-	color: var(--fg-secondary);
-	font-size: var(--text-md);
-	font-weight: 500;
-	cursor: pointer;
-	box-shadow: var(--shadow-border);
-	transition:
-		color var(--dur) var(--ease),
-		background var(--dur) var(--ease),
-		box-shadow var(--dur) var(--ease);
-
-	&:hover {
-		color: var(--fg);
-	}
-
-	&[aria-pressed='true'] {
-		color: var(--fg);
-		background: var(--surface-2);
-		box-shadow: 0 0 0 1px var(--border-strong);
-	}
-}
-
-.mic-toggle svg {
-	width: 14px;
-	height: 14px;
-}
-
-.mic-toggle--live .status__dot {
-	background: var(--success);
-}
-
-.mic-toggle--live[aria-pressed='true'] .status__dot {
-	animation: pulse 1.8s var(--ease) infinite;
-
-	@media (prefers-reduced-motion: reduce) {
-		animation: none;
-	}
 }
 
 .scale-results {

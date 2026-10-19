@@ -49,13 +49,87 @@
 	color: var(--accent);
 }
 
-.status {
+/* Mic toggle, the same on every tab (the shared block and Scales' own): dot +
+   mic icon + state. A tap starts or stops listening. The dot turns green
+   while the mic is actually listening, and pulses when on. */
+.mic-toggle {
+	white-space: nowrap;
 	display: inline-flex;
 	align-items: center;
-	gap: var(--space-8);
+	gap: 7px;
+	height: 32px;
+	padding: 0 var(--space-12);
+	border: none;
+	border-radius: var(--radius-pill);
+	background: var(--surface);
+	color: var(--fg-secondary);
 	font-size: var(--text-md);
-	color: var(--fg-muted);
-	font-variant-numeric: tabular-nums;
+	font-weight: 500;
+	cursor: pointer;
+	box-shadow: var(--shadow-border);
+	transition:
+		color var(--dur) var(--ease),
+		background var(--dur) var(--ease),
+		box-shadow var(--dur) var(--ease);
+
+	&:hover {
+		color: var(--fg);
+	}
+
+	&[aria-pressed='true'] {
+		color: var(--fg);
+		background: var(--surface-2);
+		box-shadow: 0 0 0 1px var(--border-strong);
+	}
+
+	& svg {
+		width: 14px;
+		height: 14px;
+	}
+
+	@media (max-width: 600px) {
+		height: var(--tap);
+		padding: 0 var(--space-16);
+	}
+}
+
+/* The shared block's control: a .btn--large with mic + state. Listening shows
+   on the button itself: its outline turns the accent blue and breathes (no dot). */
+.mic-button {
+	gap: var(--space-8);
+
+	& svg {
+		width: 18px;
+		height: 18px;
+	}
+
+	& .status__dot {
+		display: none;
+	}
+
+	&.mic-toggle--live {
+		box-shadow: 0 0 0 1px var(--accent);
+		animation: mic-outline 1.8s var(--ease) infinite;
+
+		/* Reduced motion: the blue outline alone says "listening". */
+		@media (prefers-reduced-motion: reduce) {
+			animation: none;
+		}
+	}
+}
+
+@keyframes mic-outline {
+	0%,
+	100% {
+		box-shadow:
+			0 0 0 1px var(--accent),
+			0 0 0 0 color-mix(in srgb, var(--accent) 40%, transparent);
+	}
+	50% {
+		box-shadow:
+			0 0 0 1px var(--accent),
+			0 0 0 4px color-mix(in srgb, var(--accent) 18%, transparent);
+	}
 }
 
 .status__dot {
@@ -66,15 +140,25 @@
 	flex: none;
 }
 
-.status--live .status__dot {
+.mic-toggle--live .status__dot {
 	background: var(--success);
-	box-shadow: 0 0 0 0 var(--success);
+}
+
+.mic-toggle--live[aria-pressed='true'] .status__dot {
 	animation: pulse 1.8s var(--ease) infinite;
 
 	/* The green dot alone says "listening". */
 	@media (prefers-reduced-motion: reduce) {
 		animation: none;
 	}
+}
+
+/* Blocked or waiting for a tap: what the toggle's label can't say. */
+.mic-hint {
+	margin: 0;
+	font-size: var(--text-sm);
+	color: var(--fg-muted);
+	text-align: center;
 }
 
 @keyframes pulse {

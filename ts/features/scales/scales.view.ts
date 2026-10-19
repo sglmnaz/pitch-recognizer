@@ -198,7 +198,8 @@ export function createScalesView(root: HTMLElement): View {
 		const state = micState()
 		const listening = state === 'listening'
 		const on = mode === 'explore' ? listening : addByEar && listening
-		micLabel.textContent = mode === 'explore' ? 'Listen' : 'Play to mark'
+		// Same words as the shared toggle (ts/ui/mic-block.ts); Identify names what listening does there.
+		micLabel.textContent = mode === 'identify' ? 'Play to mark' : state === 'blocked' ? 'Blocked' : listening ? 'Listening' : 'Idle'
 		micButton.title = mode === 'explore' ? 'Light up the notes you play on the guitar' : 'Mark the notes you play on the guitar'
 		micButton.setAttribute('aria-pressed', String(on))
 		micButton.classList.toggle('mic-toggle--live', listening)
