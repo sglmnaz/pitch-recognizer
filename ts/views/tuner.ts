@@ -135,18 +135,21 @@ export function createTunerView(root: HTMLElement): View {
 	}
 
 	sync()
-	Settings.subscribe(sync)
+	// Hidden, onActivate syncs on the way back.
+	Settings.subscribe(() => root.hidden || sync())
 
 	return {
 		onActivate() {
+			// A tone cut short by leaving the tab may still have its timer pending.
+			endReference()
 			sync()
 			idle()
 		},
 
+		// Also runs on mic Stop, which must not cut a reference tone: it ends on
+		// its own timer, and leaving the tab stops it (index.ts activate()).
 		reset() {
-			endReference()
-			Sound.stopTone()
-			idle()
+			if (refIndex === null) idle()
 		},
 
 		onReading(reading: PitchReading | null) {
@@ -159,7 +162,7 @@ export function createTunerView(root: HTMLElement): View {
 				sub.textContent = 'Listening…'
 				announce('')
 				readout.classList.remove('readout--locked')
-						syncChips()
+				syncChips()
 				return
 			}
 

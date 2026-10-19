@@ -188,16 +188,33 @@ function networkOf(M: Model) {
 
 let network: ReturnType<typeof networkOf> | null = null
 let loading: Promise<void> | null = null
+// A failed load (offline before the chunk was cached) must not be cached
+// forever: it is retried, but at most every RETRY_MS since the trackers call
+// this every frame, and logged only once.
+const RETRY_MS = 5000
+let failedAt = -Infinity
+let failureLogged = false
 
 /**
  * Loads the weights (once). Until it resolves, recognizeChord and the trackers
  * answer "no chord" (and start the load themselves), so a caller in the rAF
- * loop simply skips frames instead of throwing.
+ * loop simply skips frames instead of throwing. Failures are logged here:
+ * callers only need to swallow the rejection.
  */
 export function loadChordModel(): Promise<void> {
-	loading ??= import('./chord-model.ts').then((M) => {
-		network = networkOf(M)
-	})
+	if (!loading && performance.now() - failedAt < RETRY_MS) return Promise.reject(new Error('chord model unavailable'))
+	loading ??= import('./chord-model.ts').then(
+		(M) => {
+			network = networkOf(M)
+		},
+		(error) => {
+			loading = null
+			failedAt = performance.now()
+			if (!failureLogged) console.error('chord model failed to load', error)
+			failureLogged = true
+			throw error
+		}
+	)
 	return loading
 }
 
@@ -209,7 +226,7 @@ export function chordModelReady(): boolean {
 /** Log-probabilities of the 97 classes (root * 8 + type, then "no chord") and the chroma; null until the model has loaded. */
 function classify(spectrumDb: Float32Array, binHz: number, a4: number): { logp: Float64Array; chroma: number[] } | null {
 	if (!network) {
-		loadChordModel().catch((error) => console.error('chord model failed to load', error))
+		loadChordModel().catch(() => {})
 		return null
 	}
 	const { M, C1, K1, C2, K2, C3, K3, HIDDEN, HEAD_IN, NONE_HIDDEN, logBuffer, stacked, hidden1, hidden2, hidden3, pooled, headInput, headHidden, logits } = network

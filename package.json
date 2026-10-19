@@ -17,6 +17,7 @@
 		"check:chord-library": "node scripts/chord-library-check.ts",
 		"check:harmony": "node scripts/harmony-check.ts",
 		"check:changes": "node scripts/changes-check.ts",
+		"check:settings": "node scripts/settings-check.ts",
 		"bench": "node scripts/bench.ts"
 	},
 	"keywords": [

@@ -31,14 +31,14 @@
 		<header class="topbar">
 			<!-- On phones this bar is docked to the bottom, within thumb reach (style.css). -->
 			<nav class="tabs" role="tablist">
-				<button class="tab" role="tab" data-tab="tuner" aria-selected="true">
+				<button class="tab" role="tab" id="tab-tuner" aria-controls="view-tuner" data-tab="tuner" aria-selected="true">
 					<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
 						<path d="m12 14 4-4" />
 						<path d="M3.34 19a10 10 0 1 1 17.32 0" />
 					</svg>
 					<span class="tab__label">Tuner</span>
 				</button>
-				<button class="tab" role="tab" data-tab="chords" aria-selected="false">
+				<button class="tab" role="tab" id="tab-chords" aria-controls="view-chords" data-tab="chords" aria-selected="false">
 					<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
 						<path d="M9 18V5l12-2v13" />
 						<circle cx="6" cy="18" r="3" />
@@ -46,7 +46,7 @@
 					</svg>
 					<span class="tab__label">Chords</span>
 				</button>
-				<button class="tab" role="tab" data-tab="scales" aria-selected="false">
+				<button class="tab" role="tab" id="tab-scales" aria-controls="view-scales" data-tab="scales" aria-selected="false">
 					<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
 						<path d="M5 21v-5" />
 						<path d="M10 21v-9" />
@@ -55,21 +55,21 @@
 					</svg>
 					<span class="tab__label">Scales</span>
 				</button>
-				<button class="tab" role="tab" data-tab="trainer" aria-selected="false">
+				<button class="tab" role="tab" id="tab-trainer" aria-controls="view-trainer" data-tab="trainer" aria-selected="false">
 					<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
 						<path d="M6 8.5a6.5 6.5 0 1 1 13 0c0 6-6 6-6 10a3.5 3.5 0 1 1-7 0" />
 						<path d="M15 8.5a2.5 2.5 0 0 0-5 0v1a2 2 0 1 1 0 4" />
 					</svg>
 					<span class="tab__label">Trainer</span>
 				</button>
-				<button class="tab" role="tab" data-tab="metronome" aria-selected="false">
+				<button class="tab" role="tab" id="tab-metronome" aria-controls="view-metronome" data-tab="metronome" aria-selected="false">
 					<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
 						<path d="M9 3h6l4 18H5z" />
 						<path d="m12 17 4-8" />
 					</svg>
 					<span class="tab__label">Metronome</span>
 				</button>
-				<button class="tab" role="tab" data-tab="settings" aria-selected="false">
+				<button class="tab" role="tab" id="tab-settings" aria-controls="view-settings" data-tab="settings" aria-selected="false">
 					<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
 						<circle cx="12" cy="12" r="3" />
 						<path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
@@ -80,7 +80,7 @@
 		</header>
 
 		<!-- Trainer ------------------------------------------------------- -->
-		<section class="view" id="view-trainer" role="tabpanel" hidden>
+		<section class="view" id="view-trainer" role="tabpanel" aria-labelledby="tab-trainer" hidden>
 			<div class="segmented trainer-mode" role="group" aria-label="Exercise">
 				<button type="button" data-exercise="notes" aria-pressed="true">Notes</button>
 				<button type="button" data-exercise="intervals" aria-pressed="false">Intervals</button>
@@ -202,7 +202,7 @@
 		</section>
 
 		<!-- Tuner --------------------------------------------------------- -->
-		<section class="view" id="view-tuner" role="tabpanel">
+		<section class="view" id="view-tuner" role="tabpanel" aria-labelledby="tab-tuner">
 			<!-- Tuning picker + mode; options and chips are filled by ts/views/tuner.ts. -->
 			<div class="tuner-head">
 				<select class="select tuner-tuning" aria-label="Tuning"></select>
@@ -233,7 +233,7 @@
 		</section>
 
 		<!-- Chords ------------------------------------------------------- -->
-		<section class="view" id="view-chords" role="tabpanel" hidden>
+		<section class="view" id="view-chords" role="tabpanel" aria-labelledby="tab-chords" hidden>
 			<!-- Sub-views: Listen (the recognizer, ts/views/chords.ts), Library and
 			     Identify (ts/views/chord-library.ts). -->
 			<div class="segmented chords-modes" role="group" aria-label="Chords mode">
@@ -248,7 +248,7 @@
 				<!-- Live pitch-class profile; chord tones highlight. Filled by ts/views/chords.ts. -->
 				<div class="chroma" aria-hidden="true"></div>
 			</div>
-			<p class="hint">Strum and let it ring. Recognizes major, minor, 7th, 9th and sus chords.</p>
+			<p class="hint">Strum and let it ring. Recognizes major, minor, 7, m7, maj7, 9, sus2 and sus4 chords.</p>
 
 			<div class="chord-library" hidden>
 				<div class="chord-pick">
@@ -294,7 +294,7 @@
 		</section>
 
 		<!-- Scales: explorer + identifier on one fretboard (ts/views/scales.ts). -->
-		<section class="view view--scales" id="view-scales" role="tabpanel" hidden>
+		<section class="view view--scales" id="view-scales" role="tabpanel" aria-labelledby="tab-scales" hidden>
 			<div class="scales-header">
 				<div class="segmented segmented--small" role="group" aria-label="Mode">
 					<button type="button" data-mode="explore" aria-pressed="true">Explore</button>
@@ -437,7 +437,7 @@
 		</section>
 
 		<!-- Metronome: engine in ts/metronome.ts, view in ts/views/metronome.ts. -->
-		<section class="view view--metronome" id="view-metronome" role="tabpanel" hidden>
+		<section class="view view--metronome" id="view-metronome" role="tabpanel" aria-labelledby="tab-metronome" hidden>
 			<div class="metro-flash" aria-hidden="true"></div>
 
 			<div class="panel metro-hero">
@@ -534,7 +534,7 @@
 
 		<!-- Settings: its own tab (ts/views/settings-panel.ts). One group per tab, in tab
 		     order; entering it scrolls to the group of the tab the user came from. -->
-		<section class="view view--settings" id="view-settings" role="tabpanel" aria-label="Settings" hidden>
+		<section class="view view--settings" id="view-settings" role="tabpanel" aria-labelledby="tab-settings" hidden>
 			<section class="settings-group" data-group="appearance">
 				<h2 class="settings-group__title">Appearance</h2>
 				<div class="panel settings-card">

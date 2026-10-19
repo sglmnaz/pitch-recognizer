@@ -450,13 +450,29 @@ function held(now: number): PitchReading | null {
 	return lastReading && now - lastReadingAt <= DROPOUT_HOLD_MS ? lastReading : null
 }
 
+// stop() bumps it. A start() still waiting for getUserMedia then finds it
+// changed and drops what it got: a Stop pressed during the permission prompt
+// wins, and a later start cannot leak a second context and rAF loop.
+let generation = 0
+// True from start() until stop(), including while getUserMedia is pending.
+let running = false
+
 async function start(onReading: ReadingCallback, onError: ErrorCallback) {
+	// Idempotent: a second start while live (or starting) would run two loops.
+	if (running) return
+	running = true
+	const startedAt = generation
 	try {
 		// Disable the browser voice-processing chain: it is tuned for speech and
 		// distorts the steady tones we want to measure.
-		stream = await navigator.mediaDevices.getUserMedia({
+		const captured = await navigator.mediaDevices.getUserMedia({
 			audio: { echoCancellation: false, autoGainControl: false, noiseSuppression: false },
 		})
+		if (generation !== startedAt) {
+			captured.getTracks().forEach((track) => track.stop())
+			return
+		}
+		stream = captured
 
 		audioContext = new AudioContext()
 		const source = audioContext.createMediaStreamSource(stream)
@@ -503,12 +519,17 @@ async function start(onReading: ReadingCallback, onError: ErrorCallback) {
 
 		rafId = requestAnimationFrame(tick)
 	} catch (error) {
+		// A start already cancelled by stop() has nobody to tell.
+		if (generation !== startedAt) return
 		console.error('Error accessing microphone:', error)
+		running = false
 		onError(error)
 	}
 }
 
 function stop() {
+	generation++
+	running = false
 	if (rafId !== null) {
 		cancelAnimationFrame(rafId)
 		rafId = null

@@ -140,7 +140,16 @@ export function createFretboard(svg: SVGSVGElement, board: HTMLElement | null, o
 	let playing: number | null = null
 	let laidOut = ''
 	let lastSpec: NeckSpec | null = null
-	const unsubscribe = options.autoRender ? Settings.subscribe(() => lastSpec && render(lastSpec)) : () => {}
+	// Only these settings change how a given spec is drawn; every other one
+	// (metronome volume, a trainer option…) must not redraw a page of diagrams.
+	const lookOf = () => {
+		const { leftHanded, fretboardTheme, fretboardVertical, fretSize } = Settings.get()
+		return `${leftHanded}|${fretboardTheme}|${fretboardVertical}|${fretSize}`
+	}
+	let drawnLook = ''
+	const unsubscribe = options.autoRender
+		? Settings.subscribe(() => lastSpec && lookOf() !== drawnLook && render(lastSpec))
+		: () => {}
 	const interactive = Boolean(options.onTap)
 
 	// Taps (and Enter/Space on a focused note). A tap that re-renders the neck
@@ -176,6 +185,7 @@ export function createFretboard(svg: SVGSVGElement, board: HTMLElement | null, o
 
 	function render(spec: NeckSpec, length?: number) {
 		lastSpec = spec
+		drawnLook = lookOf()
 		const { fretboardVertical, fretSize: size, fretboardTheme, leftHanded } = Settings.get()
 		const win = spec.window
 		const vertical = win ? win.vertical !== false : fretboardVertical

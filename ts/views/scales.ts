@@ -157,6 +157,7 @@ export function createScalesView(root: HTMLElement, mic: MicControl): View & { s
 		button.addEventListener('click', () => {
 			mode = button.dataset.mode as Mode
 			stopPlaying()
+			Sound.stopAll()
 			render()
 		})
 	)
@@ -173,7 +174,10 @@ export function createScalesView(root: HTMLElement, mic: MicControl): View & { s
 	// turning the mic on if needed (and leaves it on when switched off).
 	micButton.addEventListener('click', () => {
 		const listening = mic.state() === 'listening'
-		if (mode === 'explore') return mic.listen(!listening)
+		if (mode === 'explore') {
+			if (listening) clearHeard()
+			return mic.listen(!listening)
+		}
 		addByEar = !(addByEar && listening)
 		if (addByEar && !listening) mic.listen(true)
 		syncMic()
@@ -190,11 +194,12 @@ export function createScalesView(root: HTMLElement, mic: MicControl): View & { s
 		render()
 	}
 
-	Settings.subscribe(render)
-	// The phone neck is sized from the board's width: redraw when that changes.
+	// Hidden, nothing to draw: onActivate renders on the way back. The phone
+	// neck is sized from the board's width: redraw when that changes too.
 	const redraw = () => {
 		if (!root.hidden) render()
 	}
+	Settings.subscribe(redraw)
 	phone.addEventListener('change', redraw)
 	window.addEventListener('resize', redraw)
 
@@ -268,6 +273,13 @@ export function createScalesView(root: HTMLElement, mic: MicControl): View & { s
 		playLabel.textContent = 'Stop'
 		playButton.title = 'Stop'
 		tick()
+	}
+
+	/** Forgets the note heard from the mic (it stopped, or the tab is left). */
+	function clearHeard() {
+		heardMidi = null
+		addedMidi = null
+		applyLit()
 	}
 
 	// The note being played back lights inside the box only; the note heard
@@ -456,9 +468,7 @@ export function createScalesView(root: HTMLElement, mic: MicControl): View & { s
 		reset() {
 			stopPlaying()
 			setMenuOpen(false)
-			heardMidi = null
-			addedMidi = null
-			applyLit()
+			clearHeard()
 		},
 
 		onReading(reading) {

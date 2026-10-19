@@ -175,11 +175,13 @@ export function createSettingsView(root: HTMLElement, from: () => string | null)
 		syncA4Notes()
 	}
 
-	Settings.subscribe(sync)
+	// Hidden, onActivate syncs on the way back.
+	Settings.subscribe(() => root.hidden || sync())
 	sync()
 
 	return {
 		onActivate() {
+			sync()
 			const tab = from()
 			if (tab) root.querySelector(`[data-group="${tab}"]`)?.scrollIntoView({ block: 'start' })
 		},

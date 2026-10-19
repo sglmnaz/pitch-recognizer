@@ -1,5 +1,6 @@
 import './style.css'
 import * as Microphone from './microphone'
+import * as Sound from './sound'
 import { createTrainerView } from './views/trainer'
 import { createTunerView } from './views/tuner'
 import { createChordsView } from './views/chords'
@@ -24,7 +25,9 @@ const tabButtons = Array.from(document.querySelectorAll<HTMLButtonElement>('[dat
 const scalesView = createScalesView(byId('view-scales'), {
 	state: () => (micBlocked ? 'blocked' : !micActive ? 'off' : Microphone.isSuspended() ? 'waiting' : 'listening'),
 	listen: (on) => {
-		if (!on) stopMic()
+		// Its own toggle only stops listening: a progression or Play scale keeps
+		// playing (the view clears what it heard itself).
+		if (!on) stopMic(false)
 		else if (!micActive) startMic()
 		else resumeMic()
 	},
@@ -78,6 +81,9 @@ function syncMicNeed() {
 function activate(name: string) {
 	if (!views[name]) name = 'tuner'
 	views[currentName].view.reset()
+	// Nothing the last tab played keeps sounding into the next (or into its mic).
+	Sound.stopAll()
+	Sound.stopTone()
 	currentName = name
 	if (name !== 'settings') lastTab = name
 
@@ -229,12 +235,14 @@ async function startMic() {
 	if (micActive) syncMicUi()
 }
 
-function stopMic() {
+// `resetView`: clear the view's readout state (a frozen last note, a trainer
+// hold). The Tuner's reset keeps a reference tone playing on mic Stop.
+function stopMic(resetView = true) {
 	micActive = false
 	Microphone.stop()
 	syncMicUi()
 	drawWaveform(false)
-	views[currentName].view.reset()
+	if (resetView) views[currentName].view.reset()
 }
 
 async function resumeMic() {

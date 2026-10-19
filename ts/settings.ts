@@ -1,7 +1,8 @@
-import { possibleFrequencies, possibleFrequenciesWithoutAccidentals, type NoteInfo } from './notes'
-import { clampA4, tuningById } from './tuning'
-import { DEFAULT_INTERVALS, DEFAULT_QUALITIES, pool } from './ear'
-import * as Changes from './changes'
+// Extensions so `npm run check:settings` (plain Node) can import this too.
+import { possibleFrequencies, possibleFrequenciesWithoutAccidentals, type NoteInfo } from './notes.ts'
+import { clampA4, tuningById } from './tuning.ts'
+import { DEFAULT_INTERVALS, DEFAULT_QUALITIES, pool } from './ear.ts'
+import * as Changes from './changes.ts'
 
 export interface Settings {
 	/** Add sharps/flats to the pool of possible target notes. */
@@ -168,38 +169,102 @@ const listeners = new Set<() => void>()
 let settings: Settings = load()
 
 /** A stored choice, or the first (the default) when it is not one of them.
- * A declaration, not a const: `settings = load()` runs above it. */
-function oneOf<T extends string>(value: unknown, options: T[]): T {
+ * Declarations, not consts: `settings = load()` runs above them. */
+function oneOf<T extends string | number>(value: unknown, options: T[]): T {
 	return options.includes(value as T) ? (value as T) : options[0]
 }
 
-function load(): Settings {
+/** A finite number within min…max (rounded when `whole`), else `fallback`. */
+function clamp(value: unknown, min: number, max: number, fallback: number, whole = false): number {
+	if (typeof value !== 'number' || !Number.isFinite(value)) return fallback
+	return Math.min(max, Math.max(min, whole ? Math.round(value) : value))
+}
+
+function bool(value: unknown, fallback: boolean): boolean {
+	return typeof value === 'boolean' ? value : fallback
+}
+
+function strings(value: unknown): string[] {
+	return Array.isArray(value) ? value.filter((v): v is string => typeof v === 'string') : []
+}
+
+/**
+ * Stored values can be stale, from an older version or hand-edited: every key
+ * is rebuilt from the defaults and validated (enums by oneOf, default first;
+ * numbers clamped), so an unknown or old key is dropped and a corrupt value
+ * falls back instead of reaching a view. Exported for `npm run check:settings`.
+ */
+export function load(): Settings {
+	let s: Record<string, unknown> = {}
 	try {
-		const stored = localStorage.getItem(STORAGE_KEY)
-		const merged: Settings = stored ? { ...defaults, ...JSON.parse(stored) } : { ...defaults }
-		// Stored values can be stale or hand-edited: keep the tuner's and the
-		// ear trainer's inputs valid (unknown ids dropped, nothing left = defaults).
-		return {
-			...merged,
-			a4: clampA4(merged.a4),
-			tuning: tuningById(merged.tuning).id,
-			trainerExercise: ['notes', 'intervals', 'chords', 'changes'].includes(merged.trainerExercise) ? merged.trainerExercise : 'notes',
-			earIntervals: pool('intervals', Array.isArray(merged.earIntervals) ? merged.earIntervals : []),
-			earChords: pool('chords', Array.isArray(merged.earChords) ? merged.earChords : []),
-			chordsMode: oneOf(merged.chordsMode, ['listen', 'library', 'identify']),
-			chordLabels: oneOf(merged.chordLabels, ['degrees', 'notes', 'fingers', 'none']),
-			chordPlay: oneOf(merged.chordPlay, ['strum', 'arpeggio']),
-			chordView: oneOf(merged.chordView, ['triads', 'sevenths']),
-			progressionBpm: Number.isFinite(Number(merged.progressionBpm)) ? Math.min(140, Math.max(60, Math.round(Number(merged.progressionBpm)))) : 80,
-			progressionLoop: merged.progressionLoop === true,
-			changesChords: Changes.validSequence(merged.changesChords),
-			changesMode: merged.changesMode === 'time' ? 'time' : 'minute',
-			changesDuration: Changes.DURATIONS.includes(merged.changesDuration) ? merged.changesDuration : defaults.changesDuration,
-			changesBpm: Math.round(Math.min(Changes.MAX_BPM, Math.max(Changes.MIN_BPM, Number(merged.changesBpm) || defaults.changesBpm))),
-			changesBeats: Changes.BEATS_PER_CHORD.includes(merged.changesBeats) ? merged.changesBeats : defaults.changesBeats,
-		}
+		const parsed: unknown = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? '{}')
+		if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) s = parsed as Record<string, unknown>
 	} catch {
-		return { ...defaults }
+		// Unavailable storage (private mode) or broken JSON: defaults.
+	}
+	const d = defaults
+	const accents = Array.isArray(s.metroAccents) ? s.metroAccents : []
+	return {
+		includeAccidentals: bool(s.includeAccidentals, d.includeAccidentals),
+		matchAnyOctave: bool(s.matchAnyOctave, d.matchAnyOctave),
+		lightStaff: bool(s.lightStaff, d.lightStaff),
+		disabledNotes: strings(s.disabledNotes),
+		fretboardTheme: oneOf(s.fretboardTheme, ['auto', 'light', 'dark']),
+		fretboardVertical: bool(s.fretboardVertical, d.fretboardVertical),
+		scaleLabels: oneOf(s.scaleLabels, ['notes', 'intervals', 'none']),
+		// Degrees 1–7, once each. An empty list is a choice (nothing coloured), not corruption.
+		scaleDegrees: Array.isArray(s.scaleDegrees)
+			? [...new Set(s.scaleDegrees.filter((n): n is number => Number.isInteger(n) && n >= 1 && n <= 7))].sort()
+			: d.scaleDegrees,
+		fretSize: clamp(s.fretSize, 0.5, 1.5, d.fretSize),
+		chordView: oneOf(s.chordView, ['triads', 'sevenths']),
+		progressionBpm: clamp(s.progressionBpm, 60, 140, d.progressionBpm, true),
+		progressionLoop: bool(s.progressionLoop, d.progressionLoop),
+
+		tuning: tuningById(typeof s.tuning === 'string' ? s.tuning : d.tuning).id,
+		tunerMode: oneOf(s.tunerMode, ['guitar', 'chromatic']),
+		a4: clampA4(typeof s.a4 === 'number' ? s.a4 : d.a4),
+		tolerance: oneOf(s.tolerance, [5, 2, 10]),
+		toneVolume: clamp(s.toneVolume, 0, 1, d.toneVolume),
+
+		metroBpm: clamp(s.metroBpm, 30, 300, d.metroBpm, true),
+		metroBeats: clamp(s.metroBeats, 1, 12, d.metroBeats, true),
+		metroUnit: oneOf(s.metroUnit, [4, 8]),
+		// Always 12 slots of 0 / 1 / 2; a missing or broken slot takes the default's.
+		metroAccents: d.metroAccents.map((fallback, i) => oneOf(accents[i], [fallback, 0, 1, 2])),
+		metroSubdivision: clamp(s.metroSubdivision, 1, 4, d.metroSubdivision, true),
+		metroSound: oneOf(s.metroSound, ['click', 'wood', 'beep']),
+		metroVolume: clamp(s.metroVolume, 0, 1, d.metroVolume),
+		metroFlash: bool(s.metroFlash, d.metroFlash),
+		metroTrainerOn: bool(s.metroTrainerOn, d.metroTrainerOn),
+		// The ranges of the steppers in ts/views/metronome.ts.
+		metroTrainerStep: clamp(s.metroTrainerStep, 1, 20, d.metroTrainerStep, true),
+		metroTrainerBars: clamp(s.metroTrainerBars, 1, 16, d.metroTrainerBars, true),
+		metroTrainerTarget: clamp(s.metroTrainerTarget, 30, 300, d.metroTrainerTarget, true),
+
+		chordsMode: oneOf(s.chordsMode, ['listen', 'library', 'identify']),
+		chordLabels: oneOf(s.chordLabels, ['degrees', 'notes', 'fingers', 'none']),
+		chordPlay: oneOf(s.chordPlay, ['strum', 'arpeggio']),
+
+		leftHanded: bool(s.leftHanded, d.leftHanded),
+
+		trainerExercise: oneOf(s.trainerExercise, ['notes', 'intervals', 'chords', 'changes']),
+		// Unknown ids dropped, nothing left = defaults.
+		earIntervals: pool('intervals', strings(s.earIntervals)),
+		earChords: pool('chords', strings(s.earChords)),
+		earDirection: oneOf(s.earDirection, ['up', 'down', 'harmonic', 'mixed']),
+		// The Note gap select's three values (Normal, Fast, Slow).
+		earGap: oneOf(s.earGap, [0.75, 0.45, 1.1]),
+		earSing: bool(s.earSing, d.earSing),
+		earAutoAdvance: bool(s.earAutoAdvance, d.earAutoAdvance),
+
+		changesChords: Changes.validSequence(s.changesChords),
+		changesMode: oneOf(s.changesMode, ['minute', 'time']),
+		changesDuration: oneOf(s.changesDuration, [d.changesDuration, ...Changes.DURATIONS]),
+		changesBpm: clamp(s.changesBpm, Changes.MIN_BPM, Changes.MAX_BPM, d.changesBpm, true),
+		changesBeats: oneOf(s.changesBeats, [d.changesBeats, ...Changes.BEATS_PER_CHORD]),
+		changesSpeedUp: bool(s.changesSpeedUp, d.changesSpeedUp),
+		changesCountIn: bool(s.changesCountIn, d.changesCountIn),
 	}
 }
 

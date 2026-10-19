@@ -1,5 +1,6 @@
 import * as Microphone from '../microphone'
 import * as Settings from '../settings'
+import * as Sound from '../sound'
 import { chordModelReady, loadChordModel, PITCH_CLASSES, resetChordTracking, trackChord } from '../chords'
 import type { View } from './view'
 import { createChordModes } from './chord-library'
@@ -68,7 +69,7 @@ export function createChordsView(root: HTMLElement, onMicNeed: () => void): View
 	return {
 		onActivate: () => {
 			// The model's weights load on first visit; frames are skipped until then.
-			loadChordModel().catch((error) => console.error('chord model failed to load', error))
+			loadChordModel().catch(() => {}) // logged once by the loader
 			idle()
 			modes.onActivate()
 		},
@@ -79,8 +80,9 @@ export function createChordsView(root: HTMLElement, onMicNeed: () => void): View
 			if (!modes.listening() || !chordModelReady()) return
 			const spectrum = Microphone.getSpectrum()
 			// Same adaptive silence gate as the tuner, so quiet sources (an
-			// unplugged electric) are analysed too.
-			const loud = Microphone.isSounding()
+			// unplugged electric) are analysed too. The app's own strums (a sound
+			// started elsewhere still ringing) count as silence, not as a chord.
+			const loud = Microphone.isSounding() && !Sound.isRinging()
 			const now = performance.now()
 			const analysis = loud && spectrum ? trackChord(spectrum.spectrumDb, spectrum.binHz, now, Settings.get().a4) : null
 			if (analysis) silentSince = null

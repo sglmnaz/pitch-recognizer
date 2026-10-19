@@ -1,6 +1,7 @@
 import * as Game from '../game'
 import * as MusicRenderer from '../music-renderer'
 import * as Settings from '../settings'
+import * as Sound from '../sound'
 import { centsBetween, getClosestNote } from '../notes'
 import type { PitchReading } from '../microphone'
 import type { View } from './view'
@@ -106,6 +107,7 @@ export function createTrainerView(root: HTMLElement, onMicNeed: () => void): Vie
 	// Only while Notes is on screen: an ear-training setting must not rebuild
 	// VexFlow into a hidden staff. onActivate catches up on the way back.
 	Settings.subscribe(() => {
+		if (root.hidden) return
 		applyStaffTheme()
 		if (!started || Settings.get().trainerExercise !== 'notes') return
 		const previous = Game.getState().target
@@ -133,6 +135,8 @@ export function createTrainerView(root: HTMLElement, onMicNeed: () => void): Vie
 		},
 
 		onReading(reading: PitchReading | null) {
+			// The app's own notes (an ear drill's last playback) are not the player.
+			if (Sound.isRinging()) reading = null
 			ensureStarted()
 			const evaluation = Game.evaluate(reading, performance.now())
 
@@ -187,6 +191,8 @@ export function createTrainerView(root: HTMLElement, onMicNeed: () => void): Vie
 			const ex = button.dataset.exercise as Settings.Settings['trainerExercise']
 			if (ex === exercise()) return
 			active().reset()
+			// An interval or chord still playing belongs to the old exercise.
+			Sound.stopAll()
 			Settings.update({ trainerExercise: ex })
 			applyExercise()
 			onMicNeed()

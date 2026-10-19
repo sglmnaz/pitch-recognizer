@@ -10,6 +10,7 @@ import { CHORD_TYPES, identifyChords, spellChord, type ChordType } from '../chor
 import { chordShapes, shapeString, voicingSpec, type Voicing } from '../chord-shapes'
 import { CHORD_GROUPS, keysOf, matchNotes, parseChordSymbol, ROOT_LABELS, shapeNotes, voicingCaption } from '../chord-library'
 import { degreeMap, degreeNumber, pitchClassOf, ROOTS, STRINGS } from '../scales'
+import { OPEN_CHORD_EVENT } from './harmony'
 
 // ponytail: the 8 best shapes; the generator has dozens, add "more" if asked.
 const VOICINGS = 8
@@ -59,6 +60,8 @@ export function createChordModes(root: HTMLElement, onMicNeed: () => void): Chor
 	let mode: Mode = Settings.get().chordsMode
 
 	function setMode(next: Mode) {
+		// A strum from the sub-view being left stops with it.
+		if (next !== mode) Sound.stopAll()
 		mode = next
 		if (Settings.get().chordsMode !== next) Settings.update({ chordsMode: next })
 		onMicNeed()
@@ -262,7 +265,7 @@ export function createChordModes(root: HTMLElement, onMicNeed: () => void): Chor
 	// Other tabs (Scales' diatonic chords) link here: they set #chords and send
 	// this event, in either order. Opening sets the state and the remembered
 	// mode, so a hash change after it lands on the Library too.
-	window.addEventListener('pluck:open-chord', (event) => {
+	window.addEventListener(OPEN_CHORD_EVENT, (event) => {
 		const symbol = (event as CustomEvent<{ symbol?: string }>).detail?.symbol
 		if (typeof symbol === 'string') openChord(symbol)
 	})

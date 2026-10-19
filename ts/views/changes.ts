@@ -98,6 +98,11 @@ const ANNOUNCE_MS = 4000
 const STRIP_MARKS = 12
 // Onsets older than this cannot fall in any slot still waiting to be judged.
 const ONSET_KEEP_MS = 10_000
+// In time: through a speaker the mic hears each click as an attack. One within
+// this of the last click heard is the click, not a strum (a chord change on the
+// beat still counts: another name came between). Calibration knob: widen it if
+// clicks still read as strums on a phone with a slow input path.
+const CLICK_MASK_MS = 40
 
 type Phase = 'idle' | 'countin' | 'running' | 'done'
 
@@ -149,6 +154,8 @@ export function createChangesView(root: HTMLElement): View {
 	// A speed-up waits for the next chord's first beat, so a slot never changes tempo halfway.
 	let pendingBpm = 0
 	let clicking = false
+	// performance.now() of the last click heard (Metronome.onBeat fires then).
+	let lastClickAt = -Infinity
 	const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)')
 	// Readings arrive every frame while the mic runs and reset() runs when it stops.
 	let micLive = false
@@ -254,7 +261,10 @@ export function createChangesView(root: HTMLElement): View {
 			return
 		}
 		if (s.changesMode === 'time') {
-			summary.textContent = `${s.changesBpm} BPM · ${s.changesBeats} ${s.changesBeats === 1 ? 'beat' : 'beats'} per chord${s.changesSpeedUp ? ' · speeds up' : ''}`
+			// Numbers only in the markup. Through a speaker the mic hears the clicks too.
+			summary.innerHTML =
+				`<span>${s.changesBpm} BPM · ${s.changesBeats} ${s.changesBeats === 1 ? 'beat' : 'beats'} per chord${s.changesSpeedUp ? ' · speeds up' : ''}</span>` +
+				'<span>Headphones work best: the mic can hear the clicks.</span>'
 			return
 		}
 		const { best, history } = Changes.loadRecord(selection(), s.changesDuration)
@@ -531,8 +541,10 @@ export function createChangesView(root: HTMLElement): View {
 
 	/* In time: downbeats from the metronome ---------------------------------- */
 	Metronome.onBeat((event) => {
-		if (!clicking || event.sub !== 0) return
+		if (!clicking) return
 		const now = performance.now()
+		lastClickAt = now
+		if (event.sub !== 0) return
 		const lead = session.countIn ? COUNT_IN_BEATS : 0
 		const beat = event.bar * session.beats + event.beat
 		if (beat < lead) {
@@ -581,7 +593,8 @@ export function createChangesView(root: HTMLElement): View {
 	/* Per frame ----------------------------------------------------------------- */
 	function frame() {
 		const now = performance.now()
-		const onset = stabilizer.feed(heardChord(now)?.symbol ?? null, now, strummed())
+		const attack = strummed() && !(clicking && Math.abs(now - lastClickAt) <= CLICK_MASK_MS)
+		const onset = stabilizer.feed(heardChord(now)?.symbol ?? null, now, attack)
 		showHeard(stabilizer.current())
 		if (session.mode === 'minute' && phase === 'countin') {
 			if (now >= goAt) begin(now)
@@ -643,6 +656,8 @@ export function createChangesView(root: HTMLElement): View {
 			result.hidden = true
 			setRunningUi(false)
 		}
+		// Hidden (e.g. edited on the Settings tab): onActivate renders and reads the record.
+		if (root.hidden) return
 		renderSetup()
 		renderIdle()
 	})
@@ -650,7 +665,7 @@ export function createChangesView(root: HTMLElement): View {
 	return {
 		onActivate() {
 			// ~100 KB of weights, loaded on first use: start now so they are ready by Start.
-			loadChordModel().catch((error) => console.error('chord model failed to load', error))
+			loadChordModel().catch(() => {}) // logged once by the loader
 			status.textContent = ''
 			renderSetup()
 			renderIdle()
