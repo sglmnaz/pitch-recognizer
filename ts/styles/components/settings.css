@@ -167,9 +167,3 @@
 		min-height: var(--tap);
 	}
 }
-
-.view--settings > .help-btn {
-	position: absolute;
-	top: 0;
-	right: 0;
-}

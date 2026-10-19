@@ -500,9 +500,3 @@ label.metro-row {
 .metro-row--wrap {
 	flex-wrap: wrap;
 }
-
-.metro-hero > .help-btn {
-	position: absolute;
-	top: 10px;
-	right: 10px;
-}

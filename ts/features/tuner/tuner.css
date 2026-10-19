@@ -119,13 +119,3 @@
 		max-width: 440px;
 	}
 }
-
-.tuner-head .help-btn {
-	width: 40px;
-	height: 40px;
-
-	@media (max-width: 600px) {
-		width: var(--tap);
-		height: var(--tap);
-	}
-}

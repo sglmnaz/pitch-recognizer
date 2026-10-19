@@ -19,7 +19,9 @@ export default defineConfig<Options>({
 	forbidOnly: !!process.env.CI,
 	reporter: [['list']],
 	expect: {
-		toHaveScreenshot: { animations: 'disabled', caret: 'hide', maxDiffPixelRatio: 0.002 },
+		// A pixel budget, not a ratio: 0.2 % of a phone screen (~600 px) let a removed
+		// icon pass unnoticed. Rendering here is deterministic, so a few pixels suffice.
+		toHaveScreenshot: { animations: 'disabled', caret: 'hide', maxDiffPixels: 20 },
 	},
 	use: {
 		baseURL: `http://localhost:${PORT}`,

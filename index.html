@@ -96,7 +96,6 @@
 					<button type="button" data-exercise="chords" aria-pressed="false">Chords</button>
 					<button type="button" data-exercise="changes" aria-pressed="false">Changes</button>
 				</div>
-				<button class="btn help-btn" type="button" data-help="trainer" aria-haspopup="dialog" aria-label="How to use the trainer"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.6 9.4a2.5 2.5 0 0 1 4.8.9c0 1.7-2.4 2.2-2.4 3.7"/><path d="M12 17.2h.01"/></svg></button>
 			</div>
 
 			<div class="panel scoreboard" data-only="notes ear">
@@ -210,6 +209,7 @@
 				</div>
 				<p class="changes-summary"></p>
 			</div>
+			<button class="help-link" type="button" data-help="trainer" aria-haspopup="dialog" aria-label="How to use the trainer"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.6 9.4a2.5 2.5 0 0 1 4.8.9c0 1.7-2.4 2.2-2.4 3.7"/><path d="M12 17.2h.01"/></svg></button>
 		</section>
 
 		<!-- Tuner --------------------------------------------------------- -->
@@ -217,7 +217,6 @@
 			<!-- Tuning picker + mode; options and chips are filled by ts/features/tuner/tuner.view.ts. -->
 			<div class="tuner-head">
 				<select class="select tuner-tuning" aria-label="Tuning"></select>
-				<button class="btn help-btn" type="button" data-help="tuner" aria-haspopup="dialog" aria-label="How to use the tuner"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.6 9.4a2.5 2.5 0 0 1 4.8.9c0 1.7-2.4 2.2-2.4 3.7"/><path d="M12 17.2h.01"/></svg></button>
 			</div>
 			<div class="panel readout">
 				<div class="readout__note readout__idle">--</div>
@@ -242,6 +241,7 @@
 				<div class="strings" role="group" aria-label="Strings, tap to hear"></div>
 			</div>
 			<p class="hint">Play one string at a time and mute the others. Unplugged electric? Hold the phone close to the strings. The readout locks green within <span class="tuner-tolerance">5</span> cents.</p>
+			<button class="help-link" type="button" data-help="tuner" aria-haspopup="dialog" aria-label="How to use the tuner"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.6 9.4a2.5 2.5 0 0 1 4.8.9c0 1.7-2.4 2.2-2.4 3.7"/><path d="M12 17.2h.01"/></svg></button>
 		</section>
 
 		<!-- Chords ------------------------------------------------------- -->
@@ -254,7 +254,6 @@
 					<button type="button" data-chords-mode="library" aria-pressed="false">Library</button>
 					<button type="button" data-chords-mode="identify" aria-pressed="false">Identify</button>
 				</div>
-				<button class="btn help-btn" type="button" data-help="chords" aria-haspopup="dialog" aria-label="How to use the chords tab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.6 9.4a2.5 2.5 0 0 1 4.8.9c0 1.7-2.4 2.2-2.4 3.7"/><path d="M12 17.2h.01"/></svg></button>
 			</div>
 			<div class="panel readout">
 				<!-- A button: the recognized chord opens in the Library. -->
@@ -306,6 +305,7 @@
 				<p class="sr-only chord-identify__status" aria-live="polite"></p>
 				<ol class="scale-results chord-results"></ol>
 			</div>
+			<button class="help-link" type="button" data-help="chords" aria-haspopup="dialog" aria-label="How to use the chords tab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.6 9.4a2.5 2.5 0 0 1 4.8.9c0 1.7-2.4 2.2-2.4 3.7"/><path d="M12 17.2h.01"/></svg></button>
 		</section>
 
 		<!-- Scales: explorer + identifier on one fretboard (ts/features/scales/scales.view.ts). -->
@@ -315,7 +315,6 @@
 					<button type="button" data-scales-mode="explore" aria-pressed="true">Explore</button>
 					<button type="button" data-scales-mode="identify" aria-pressed="false">Identify</button>
 				</div>
-				<button class="btn help-btn" type="button" data-help="scales" aria-haspopup="dialog" aria-label="How to use the scales tab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.6 9.4a2.5 2.5 0 0 1 4.8.9c0 1.7-2.4 2.2-2.4 3.7"/><path d="M12 17.2h.01"/></svg></button>
 			</div>
 			<div class="scales-header">
 				<div class="scales-pickers scales-explore">
@@ -452,6 +451,7 @@
 			</div>
 
 			<ol class="scale-results"></ol>
+			<button class="help-link" type="button" data-help="scales" aria-haspopup="dialog" aria-label="How to use the scales tab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.6 9.4a2.5 2.5 0 0 1 4.8.9c0 1.7-2.4 2.2-2.4 3.7"/><path d="M12 17.2h.01"/></svg></button>
 		</section>
 
 		<!-- Metronome: engine in ts/core/metronome.ts, view in ts/features/metronome/metronome.view.ts. -->
@@ -459,7 +459,6 @@
 			<div class="metro-flash" aria-hidden="true"></div>
 
 			<div class="panel metro-hero">
-				<button class="btn help-btn" type="button" data-help="metronome" aria-haspopup="dialog" aria-label="How to use the metronome"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.6 9.4a2.5 2.5 0 0 1 4.8.9c0 1.7-2.4 2.2-2.4 3.7"/><path d="M12 17.2h.01"/></svg></button>
 				<div class="metro-bpm">
 					<input class="metro-bpm__value" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="3" value="100" aria-label="Tempo in BPM, tap to type" />
 					<span class="metro-bpm__unit">BPM</span>
@@ -549,12 +548,12 @@
 					<div class="metro-progress__text"></div>
 				</div>
 			</div>
+			<button class="help-link" type="button" data-help="metronome" aria-haspopup="dialog" aria-label="How to use the metronome"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.6 9.4a2.5 2.5 0 0 1 4.8.9c0 1.7-2.4 2.2-2.4 3.7"/><path d="M12 17.2h.01"/></svg></button>
 		</section>
 
 		<!-- Settings: its own tab (ts/features/settings/settings.view.ts). One group per tab, in tab
 		     order; entering it scrolls to the group of the tab the user came from. -->
 		<section class="view view--settings" id="view-settings" role="tabpanel" aria-labelledby="tab-settings" hidden>
-			<button class="btn help-btn" type="button" data-help="settings" aria-haspopup="dialog" aria-label="How to use the app"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.6 9.4a2.5 2.5 0 0 1 4.8.9c0 1.7-2.4 2.2-2.4 3.7"/><path d="M12 17.2h.01"/></svg></button>
 			<section class="settings-group" data-group="appearance">
 				<h2 class="settings-group__title">Appearance</h2>
 				<div class="panel settings-card">
@@ -938,6 +937,21 @@
 							<input type="checkbox" class="switch__input" data-setting="metroFlash" />
 							<span class="switch__track"></span>
 						</label>
+					</div>
+				</div>
+			</section>
+
+			<section class="settings-group" data-group="help">
+				<h2 class="settings-group__title">Help</h2>
+				<div class="panel settings-card">
+					<div class="settings__section">
+						<button class="switch help-row" type="button" data-help="settings" aria-haspopup="dialog">
+							<span class="switch__text">
+								<span class="switch__title">Guide</span>
+								<span class="switch__desc">Microphone, settings and installing the app. Each tab has its own guide at the bottom.</span>
+							</span>
+							<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.6 9.4a2.5 2.5 0 0 1 4.8.9c0 1.7-2.4 2.2-2.4 3.7"/><path d="M12 17.2h.01"/></svg>
+						</button>
 					</div>
 				</div>
 			</section>

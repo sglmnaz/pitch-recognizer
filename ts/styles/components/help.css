@@ -1,25 +1,48 @@
-/* Guide (?) button, and the dialog it opens (ts/ui/help.ts). */
-.help-btn {
-	flex: none;
-	width: 36px;
-	height: 36px;
+/* Guide: a quiet ? icon at the end of each tab (bottom right), no button
+   chrome, and a row in Settings → Help; both open the dialog (ts/ui/help.ts). */
+.help-link {
+	/* Last even where a view reorders its blocks (Trainer → Changes uses order). */
+	order: 99;
+	align-self: flex-end;
+	grid-column: 1 / -1;
+	justify-self: end;
+	display: grid;
+	place-items: center;
+	/* Thumb-sized hit area around a small icon. */
+	width: var(--tap);
+	height: var(--tap);
+	margin: calc(var(--space-8) * -1) calc(var(--space-12) * -1) 0 0;
 	padding: 0;
-	margin-left: auto;
-	color: var(--fg-secondary);
+	border: none;
+	border-radius: 50%;
+	background: none;
+	color: var(--fg-muted);
+	cursor: pointer;
 
-	&:hover:not(:disabled) {
-		color: var(--fg);
+	&:hover {
+		color: var(--fg-secondary);
 	}
 
-	@media (max-width: 600px) {
-		width: var(--tap);
-		height: var(--tap);
+	& svg {
+		width: 18px;
+		height: 18px;
 	}
 }
 
-.help-btn svg {
-	width: 18px;
-	height: 18px;
+.help-row {
+	width: 100%;
+	border: none;
+	background: none;
+	font: inherit;
+	color: inherit;
+	text-align: left;
+
+	& > svg {
+		flex: none;
+		width: 18px;
+		height: 18px;
+		color: var(--fg-muted);
+	}
 }
 
 .help {
