@@ -1,7 +1,7 @@
 // Self-check for ts/harmony.ts: scale families, chord sources, progressions
 // spelled in every key, the circle of fifths and scales-for-a-chord. Run with
 // `npm run check:harmony`.
-import { chordsOfScale } from '../ts/chord-theory.ts'
+import { chordsOfScale } from '../ts/music/chord-theory.ts'
 import {
 	chordSource,
 	CIRCLE,
@@ -15,8 +15,8 @@ import {
 	resolveProgression,
 	scalesForChord,
 	signatureName,
-} from '../ts/harmony.ts'
-import { pitchClassesOf, pitchClassOf, SCALE_TYPES, scaleTitle, semitonesOf } from '../ts/scales.ts'
+} from '../ts/music/harmony.ts'
+import { pitchClassesOf, pitchClassOf, SCALE_TYPES, scaleTitle, semitonesOf } from '../ts/music/scales.ts'
 import { check, finish } from './check.ts'
 
 const scale = (name: string) => SCALE_TYPES.find((t) => t.name === name)!

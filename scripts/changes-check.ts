@@ -17,7 +17,7 @@ import {
 	STABLE_MS,
 	validSequence,
 	type Onset,
-} from '../ts/changes.ts'
+} from '../ts/music/changes.ts'
 import { check, finish } from './check.ts'
 
 const FRAME = 1000 / 60

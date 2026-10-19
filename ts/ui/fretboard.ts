@@ -3,8 +3,8 @@
 // numbers and open/muted markers, and reports taps. Orientation, fret size,
 // board palette and left-handedness come from the settings, so every view
 // that shows a neck follows them alike.
-import * as Settings from './settings'
-import { FRETS, ROOTS, STRINGS } from './scales'
+import * as Settings from '../core/settings'
+import { FRETS, ROOTS, STRINGS } from '../music/scales'
 
 /** root / tone / note: the degree palette; marked: solid (Identify, off any
  * shown scale); optional: a dashed outline (e.g. a chord tone you may drop). */

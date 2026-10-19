@@ -16,8 +16,8 @@
 // Datasets are local test data only: git-ignored, never bundled.
 import { existsSync, readdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { FFT_SIZE, processFrame, stop } from '../ts/microphone.ts'
-import { loadChordModel, resetChordTracking, trackChord } from '../ts/chords.ts'
+import { FFT_SIZE, processFrame, stop } from '../ts/core/microphone.ts'
+import { loadChordModel, resetChordTracking, trackChord } from '../ts/music/chords.ts'
 import { appBand, appHighpass, CONDITIONS, decode, degrade, rms, spectrumDb } from './audio.ts'
 
 export const SAMPLE_RATE = 44100

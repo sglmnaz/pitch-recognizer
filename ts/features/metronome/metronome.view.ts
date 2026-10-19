@@ -1,6 +1,6 @@
-import * as Metronome from '../metronome'
-import * as Settings from '../settings'
-import type { View } from './view'
+import * as Metronome from '../../core/metronome'
+import * as Settings from '../../core/settings'
+import type { View } from '../../ui/view'
 
 const MAX_BEATS = 12
 // Taps further apart than this start a new measurement; the average covers the

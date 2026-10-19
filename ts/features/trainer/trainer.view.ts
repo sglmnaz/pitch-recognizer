@@ -1,12 +1,12 @@
-import * as Game from '../game'
-import * as MusicRenderer from '../music-renderer'
-import * as Settings from '../settings'
-import * as Sound from '../sound'
-import { centsBetween, getClosestNote } from '../notes'
-import type { PitchReading } from '../microphone'
-import type { View } from './view'
-import { createEarView } from './ear'
-import { createChangesView } from './changes'
+import * as Game from '../../music/game'
+import * as MusicRenderer from '../../ui/music-renderer'
+import * as Settings from '../../core/settings'
+import * as Sound from '../../core/sound'
+import { centsBetween, getClosestNote } from '../../core/notes'
+import type { PitchReading } from '../../core/microphone'
+import type { View } from '../../ui/view'
+import { createEarView } from './ear.view'
+import { createChangesView } from './changes.view'
 
 const CENTS_RANGE = 50
 

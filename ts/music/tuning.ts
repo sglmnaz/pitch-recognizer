@@ -1,7 +1,7 @@
 // Pure tuner data and maths: tunings, their string frequencies for a given A4,
 // and "which string is the player on". No DOM, so scripts/tuning-check.ts runs
 // it in Node (hence the explicit .ts import).
-import { centsBetween, frequencyOfMidi } from './notes.ts'
+import { centsBetween, frequencyOfMidi } from '../core/notes.ts'
 
 export interface Tuning {
 	id: string

@@ -14,7 +14,7 @@
 // and meta.json with the quality table.
 import { mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { logSpectrum, LOG_BINS } from '../ts/chords.ts'
+import { logSpectrum, LOG_BINS } from '../ts/music/chords.ts'
 import { appHighpass, CONDITIONS, decode, degrade, spectrumDb } from './audio.ts'
 import { CHORD_FFT_SIZE, CHORD_HOP, CHORD_SMOOTHING, idmtChords, parseHarte, SAMPLE_RATE, splitOf, type Chord } from './bench.ts'
 

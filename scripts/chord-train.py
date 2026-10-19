@@ -267,7 +267,7 @@ def main():
 	ap.add_argument('--channels', type=int, default=16)
 	ap.add_argument('--no-pooled', action='store_true')
 	ap.add_argument('--conditions', default=','.join(CONDITIONS))
-	ap.add_argument('--out', default='ts/chord-model.ts')
+	ap.add_argument('--out', default='ts/music/chord-model.ts')
 	ap.add_argument('--threads', type=int, default=8)
 	ap.add_argument('--tag', default='model')
 	ap.add_argument('--load', action='store_true', help='reuse the saved --val model (HMM grid only)')

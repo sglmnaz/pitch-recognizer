@@ -2,8 +2,8 @@
 // biquad band-pass, AnalyserNode's spectrum), so scripts can run the app's
 // real detection code on recordings and synthetic signals in Node.
 import { spawnSync } from 'node:child_process'
-import { fft } from '../ts/fft.ts'
-import { HIGHPASS_HZ, HIGHPASS_STAGES, LOWPASS_HZ } from '../ts/microphone.ts'
+import { fft } from '../ts/core/fft.ts'
+import { HIGHPASS_HZ, HIGHPASS_STAGES, LOWPASS_HZ } from '../ts/core/microphone.ts'
 
 /** Decodes any audio file ffmpeg can read to mono float samples. */
 export function decode(path: string, sampleRate: number): Float32Array {

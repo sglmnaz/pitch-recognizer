@@ -1,7 +1,7 @@
 // Self-check for the tuner's pure logic: tuning tables, nearest-string
 // selection and A4 calibration. Run with `npm run check:tunings`.
-import { centsBetween, frequencyOfMidi, getClosestNote, midiOfFrequency } from '../ts/notes.ts'
-import { A4_MAX, A4_MIN, clampA4, midiOfName, nearestString, STANDARD, TUNINGS, tuningById, tuningStrings } from '../ts/tuning.ts'
+import { centsBetween, frequencyOfMidi, getClosestNote, midiOfFrequency } from '../ts/core/notes.ts'
+import { A4_MAX, A4_MIN, clampA4, midiOfName, nearestString, STANDARD, TUNINGS, tuningById, tuningStrings } from '../ts/music/tuning.ts'
 import { check, finish } from './check.ts'
 
 const near = (a: number, b: number, eps = 0.01) => Math.abs(a - b) <= eps

@@ -1,5 +1,5 @@
 import { Factory } from 'vexflow'
-import type { NoteInfo } from './notes'
+import type { NoteInfo } from '../core/notes'
 
 const STAFF_ELEMENT_ID = 'staff'
 const STAFF_WIDTH = 220

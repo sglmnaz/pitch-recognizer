@@ -2,9 +2,9 @@
 // identifier, diatonic chords and the voicing generator against chord-book
 // shapes. Run with `npm run check:chord-theory` (`-- --verbose` lists the
 // generated shapes).
-import { CHORD_TYPES, chordsOfScale, chordType, identifyChords, spellChord } from '../ts/chord-theory.ts'
-import { chordShapes, shapeString, voicingSpec, type Voicing } from '../ts/chord-shapes.ts'
-import { pitchClassOf, SCALE_TYPES, STRINGS } from '../ts/scales.ts'
+import { CHORD_TYPES, chordsOfScale, chordType, identifyChords, spellChord } from '../ts/music/chord-theory.ts'
+import { chordShapes, shapeString, voicingSpec, type Voicing } from '../ts/music/chord-shapes.ts'
+import { pitchClassOf, SCALE_TYPES, STRINGS } from '../ts/music/scales.ts'
 import { check, finish } from './check.ts'
 
 const verbose = process.argv.includes('--verbose')

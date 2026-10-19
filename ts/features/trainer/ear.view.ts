@@ -1,12 +1,12 @@
 // Trainer → Intervals / Chords: the app plays (ts/sound.ts), the user names
 // what it heard. Round logic lives in ts/ear.ts; this wires the DOM.
-import * as Ear from '../ear'
-import * as Settings from '../settings'
-import * as Sound from '../sound'
-import { HOLD_MS } from '../game'
-import { getClosestNote, midiOfFrequency } from '../notes'
-import type { PitchReading } from '../microphone'
-import type { View } from './view'
+import * as Ear from '../../music/ear'
+import * as Settings from '../../core/settings'
+import * as Sound from '../../core/sound'
+import { HOLD_MS } from '../../music/game'
+import { getClosestNote, midiOfFrequency } from '../../core/notes'
+import type { PitchReading } from '../../core/microphone'
+import type { View } from '../../ui/view'
 
 // Long enough to see the green, short enough to keep the drill moving.
 const AUTO_ADVANCE_MS = 700

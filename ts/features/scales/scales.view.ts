@@ -1,8 +1,8 @@
-import { createFretboard, type Dot } from '../fretboard'
-import { createHarmony } from './harmony'
-import * as Settings from '../settings'
-import * as Sound from '../sound'
-import { midiOfFrequency } from '../notes'
+import { createFretboard, type Dot } from '../../ui/fretboard'
+import { createHarmony } from './harmony.view'
+import * as Settings from '../../core/settings'
+import * as Sound from '../../core/sound'
+import { midiOfFrequency } from '../../core/notes'
 import {
 	degreeMap,
 	degreeNumber,
@@ -20,8 +20,8 @@ import {
 	spellScale,
 	STRINGS,
 	type ScaleType,
-} from '../scales'
-import type { View } from './view'
+} from '../../music/scales'
+import type { View } from '../../ui/view'
 
 // ponytail: results capped; a couple of marked notes already narrow it to a
 // screenful, add paging if someone wants to browse all ~150 for a single note.

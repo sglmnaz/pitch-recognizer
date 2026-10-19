@@ -13,7 +13,7 @@ import {
 	SCALE_TYPES,
 	scaleRun,
 	spellScale,
-} from '../ts/scales.ts'
+} from '../ts/music/scales.ts'
 import { check, finish } from './check.ts'
 
 const type = (name: string) => SCALE_TYPES.find((t) => t.name === name)!

@@ -16,7 +16,7 @@ import {
 	STRUM_S,
 	weakest,
 	type Question,
-} from '../ts/ear.ts'
+} from '../ts/music/ear.ts'
 import { check, finish } from './check.ts'
 
 // Deterministic generator (mulberry32) so a failure reproduces.

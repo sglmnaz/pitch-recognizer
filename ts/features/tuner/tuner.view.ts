@@ -1,9 +1,9 @@
-import { centsBetween, getClosestNote } from '../notes'
-import * as Settings from '../settings'
-import * as Sound from '../sound'
-import { nearestString, TUNINGS, tuningById, tuningStrings, type TuningString } from '../tuning'
-import type { PitchReading } from '../microphone'
-import type { View } from './view'
+import { centsBetween, getClosestNote } from '../../core/notes'
+import * as Settings from '../../core/settings'
+import * as Sound from '../../core/sound'
+import { nearestString, TUNINGS, tuningById, tuningStrings, type TuningString } from '../../music/tuning'
+import type { PitchReading } from '../../core/microphone'
+import type { View } from '../../ui/view'
 
 const CENTS_RANGE = 50
 // The tuning select's first entry: no target strings, name whatever is played.

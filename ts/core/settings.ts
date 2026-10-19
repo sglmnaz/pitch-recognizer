@@ -1,8 +1,8 @@
 // Extensions so `npm run check:settings` (plain Node) can import this too.
 import { possibleFrequencies, possibleFrequenciesWithoutAccidentals, type NoteInfo } from './notes.ts'
-import { clampA4, tuningById } from './tuning.ts'
-import { DEFAULT_INTERVALS, DEFAULT_QUALITIES, pool } from './ear.ts'
-import * as Changes from './changes.ts'
+import { clampA4, tuningById } from '../music/tuning.ts'
+import { DEFAULT_INTERVALS, DEFAULT_QUALITIES, pool } from '../music/ear.ts'
+import * as Changes from '../music/changes.ts'
 
 export interface Settings {
 	/** Add sharps/flats to the pool of possible target notes. */

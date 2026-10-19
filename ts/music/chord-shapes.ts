@@ -3,7 +3,7 @@
 // fingers (a barre counts as one), ranked by how easy and how standard it
 // is. Pure, so `npm run check:chord-theory` runs it under Node.
 import { omittable, spellChord, type ChordType } from './chord-theory.ts'
-import type { Dot, NeckSpec } from './fretboard.ts'
+import type { Dot, NeckSpec } from '../ui/fretboard.ts'
 import { degreeNumber, degreesOf, ROOTS, semitonesOf, STRINGS } from './scales.ts'
 
 export interface Voicing {

@@ -3,14 +3,14 @@
 // (mark one note per string on a neck, get the chord). Owns the Listen /
 // Library / Identify switch; ts/views/chords.ts keeps the recognizer and only
 // calls onActivate and openChord. Pure logic lives in ts/chord-library.ts.
-import { createFretboard, type Dot, type Fretboard } from '../fretboard'
-import * as Settings from '../settings'
-import * as Sound from '../sound'
-import { CHORD_TYPES, identifyChords, spellChord, type ChordType } from '../chord-theory'
-import { chordShapes, shapeString, voicingSpec, type Voicing } from '../chord-shapes'
-import { CHORD_GROUPS, keysOf, matchNotes, parseChordSymbol, ROOT_LABELS, shapeNotes, voicingCaption } from '../chord-library'
-import { degreeMap, degreeNumber, pitchClassOf, ROOTS, STRINGS } from '../scales'
-import { OPEN_CHORD_EVENT } from './harmony'
+import { createFretboard, type Dot, type Fretboard } from '../../ui/fretboard'
+import * as Settings from '../../core/settings'
+import * as Sound from '../../core/sound'
+import { CHORD_TYPES, identifyChords, spellChord, type ChordType } from '../../music/chord-theory'
+import { chordShapes, shapeString, voicingSpec, type Voicing } from '../../music/chord-shapes'
+import { CHORD_GROUPS, keysOf, matchNotes, parseChordSymbol, ROOT_LABELS, shapeNotes, voicingCaption } from '../../music/chord-library'
+import { degreeMap, degreeNumber, pitchClassOf, ROOTS, STRINGS } from '../../music/scales'
+import { OPEN_CHORD_EVENT } from '../scales/harmony.view'
 
 // ponytail: the 8 best shapes; the generator has dozens, add "more" if asked.
 const VOICINGS = 8

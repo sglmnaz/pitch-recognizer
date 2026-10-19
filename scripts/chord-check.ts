@@ -3,7 +3,7 @@
 // window, dB) and asserts recognizeChord names them, that single notes,
 // silence and noise are not named, and that the A4 reference is honoured.
 // Run with `npm run check:chords`.
-import { createChordTracker, loadChordModel, recognizeChord, resetChordTracking, trackChord } from '../ts/chords.ts'
+import { createChordTracker, loadChordModel, recognizeChord, resetChordTracking, trackChord } from '../ts/music/chords.ts'
 import { spectrumDb as analyserSpectrum } from './audio.ts'
 
 await loadChordModel()

@@ -2,11 +2,11 @@
 // progressions in its key and the circle of fifths; in Identify, the scales
 // a marked chord fits. The Scales view owns the neck: it asks chord() which
 // chord to light and redraws when told to (host.redraw).
-import { createFretboard } from '../fretboard'
-import * as Settings from '../settings'
-import * as Sound from '../sound'
-import { chordsOfScale, identifyChords, type ChordType } from '../chord-theory'
-import { chordShapes, shapeString, voicingSpec, type Voicing } from '../chord-shapes'
+import { createFretboard } from '../../ui/fretboard'
+import * as Settings from '../../core/settings'
+import * as Sound from '../../core/sound'
+import { chordsOfScale, identifyChords, type ChordType } from '../../music/chord-theory'
+import { chordShapes, shapeString, voicingSpec, type Voicing } from '../../music/chord-shapes'
 import {
 	chordSource,
 	CIRCLE,
@@ -20,8 +20,8 @@ import {
 	scalesForChord,
 	signatureName,
 	type KeyChord,
-} from '../harmony'
-import { pitchClassOf, ROOTS, scaleTitle, spellScale, STRINGS, type ScaleType } from '../scales'
+} from '../../music/harmony'
+import { pitchClassOf, ROOTS, scaleTitle, spellScale, STRINGS, type ScaleType } from '../../music/scales'
 
 // A strum: low string to high, this far apart (a quick downstroke).
 const STRUM_S = 0.025

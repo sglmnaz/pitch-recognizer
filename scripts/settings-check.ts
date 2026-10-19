@@ -7,7 +7,7 @@ let stored: string | null = null
 	getItem: () => stored,
 	setItem: () => {},
 }
-const Settings = await import('../ts/settings.ts')
+const Settings = await import('../ts/core/settings.ts')
 
 function loadFrom(value: unknown) {
 	stored = typeof value === 'string' ? value : JSON.stringify(value)

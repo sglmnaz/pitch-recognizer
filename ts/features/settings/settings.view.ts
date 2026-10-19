@@ -1,6 +1,6 @@
-import * as Settings from '../settings'
-import { INTERVALS, QUALITIES } from '../ear'
-import type { View } from './view'
+import * as Settings from '../../core/settings'
+import { INTERVALS, QUALITIES } from '../../music/ear'
+import type { View } from '../../ui/view'
 
 /* Theme: System (nothing stored: the inline script in index.html and this
    follow the device, live), or Light / Dark stored under 'theme', which that

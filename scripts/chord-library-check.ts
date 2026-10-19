@@ -1,10 +1,10 @@
 // Self-check for ts/chord-library.ts: picker grouping, keys containing a
 // chord, symbol parsing, a marked shape's notes and the match notes. Run with
 // `npm run check:chord-library`.
-import { CHORD_GROUPS, keysOf, matchNotes, parseChordSymbol, ROOT_LABELS, shapeNotes, voicingCaption } from '../ts/chord-library.ts'
-import { CHORD_TYPES, chordType, identifyChords } from '../ts/chord-theory.ts'
-import { chordShapes, type Voicing } from '../ts/chord-shapes.ts'
-import { pitchClassOf } from '../ts/scales.ts'
+import { CHORD_GROUPS, keysOf, matchNotes, parseChordSymbol, ROOT_LABELS, shapeNotes, voicingCaption } from '../ts/music/chord-library.ts'
+import { CHORD_TYPES, chordType, identifyChords } from '../ts/music/chord-theory.ts'
+import { chordShapes, type Voicing } from '../ts/music/chord-shapes.ts'
+import { pitchClassOf } from '../ts/music/scales.ts'
 import { check, finish } from './check.ts'
 
 const type = (symbol: string) => chordType(symbol)!

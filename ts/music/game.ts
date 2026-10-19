@@ -1,6 +1,6 @@
-import { centsBetween, getClosestNote, pitchClass, type NoteInfo } from './notes'
-import * as Settings from './settings'
-import type { PitchReading } from './microphone'
+import { centsBetween, getClosestNote, pitchClass, type NoteInfo } from '../core/notes'
+import * as Settings from '../core/settings'
+import type { PitchReading } from '../core/microphone'
 
 // The note must be held in tune for at least this long to win the round.
 // Long enough to rule out a passing glissando, short enough to feel responsive.

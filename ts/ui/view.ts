@@ -1,4 +1,4 @@
-import type { PitchReading } from '../microphone'
+import type { PitchReading } from '../core/microphone'
 
 /** A switchable screen that consumes microphone readings while visible. */
 export interface View {

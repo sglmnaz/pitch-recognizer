@@ -1,9 +1,9 @@
-import * as Microphone from '../microphone'
-import * as Settings from '../settings'
-import * as Sound from '../sound'
-import { chordModelReady, loadChordModel, PITCH_CLASSES, resetChordTracking, trackChord } from '../chords'
-import type { View } from './view'
-import { createChordModes } from './chord-library'
+import * as Microphone from '../../core/microphone'
+import * as Settings from '../../core/settings'
+import * as Sound from '../../core/sound'
+import { chordModelReady, loadChordModel, PITCH_CLASSES, resetChordTracking, trackChord } from '../../music/chords'
+import type { View } from '../../ui/view'
+import { createChordModes } from './chord-library.view'
 
 // A new label (chord or "none") must win for this long before it is shown.
 // trackChord's HMM already keeps a strum's attack and decay from flickering

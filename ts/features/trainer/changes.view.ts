@@ -2,15 +2,15 @@
 // clean change in 30 s – 2 min, best and history per pair) and In time
 // (change on the metronome's downbeat, each change marked). Logic lives in
 // ts/changes.ts; this wires the DOM, the mic and the metronome.
-import * as Changes from '../changes'
-import * as Metronome from '../metronome'
-import * as Microphone from '../microphone'
-import * as Settings from '../settings'
-import { createChordTracker, loadChordModel, PITCH_CLASSES } from '../chords'
-import { chordType } from '../chord-theory'
-import { chordShapes, voicingSpec } from '../chord-shapes'
-import { createFretboard, type Fretboard } from '../fretboard'
-import type { View } from './view'
+import * as Changes from '../../music/changes'
+import * as Metronome from '../../core/metronome'
+import * as Microphone from '../../core/microphone'
+import * as Settings from '../../core/settings'
+import { createChordTracker, loadChordModel, PITCH_CLASSES } from '../../music/chords'
+import { chordType } from '../../music/chord-theory'
+import { chordShapes, voicingSpec } from '../../music/chord-shapes'
+import { createFretboard, type Fretboard } from '../../ui/fretboard'
+import type { View } from '../../ui/view'
 
 /* Chord adapter ------------------------------------------------------------ */
 

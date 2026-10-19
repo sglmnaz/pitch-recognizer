@@ -2,7 +2,7 @@
 // signals through `processFrame` the way the rAF loop does and asserts the
 // readings land on the right note, with no octave errors once the attack has
 // passed. Run with `npm run check:pitch` (Node 24 strips the TS types).
-import { FFT_SIZE, processFrame, stop, type PitchReading } from '../ts/microphone.ts'
+import { FFT_SIZE, processFrame, stop, type PitchReading } from '../ts/core/microphone.ts'
 import { appBand, degrade } from './audio.ts'
 
 const SAMPLE_RATE = 44100
