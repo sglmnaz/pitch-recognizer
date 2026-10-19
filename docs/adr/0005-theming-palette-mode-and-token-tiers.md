@@ -40,7 +40,7 @@ Split the two axes and tier the tokens:
      used by components.
   2. *Semantic*: roles per palette × mode (`--fg`, `--surface`, `--accent`,
      `--success`), pointing at primitives.
-  3. *Component*: per component (`--board-wood`, `--readout-lock`), pointing at
+  3. *Component*: per component (`--board-fret`, `--root-fill`, `--note-stroke`), pointing at
      semantic tokens.
 
 Components read only tier 3 (or tier 2 for plain text and surfaces). Any

@@ -110,7 +110,7 @@ test.describe('scales', () => {
 	})
 	test('identify marked', async ({ page, open }) => {
 		await open('#scales')
-		await page.locator('.scales-mode [data-mode="identify"]').click()
+		await page.locator('.scales-mode [data-scales-mode="identify"]').click()
 		await tapCells(page, '#view-scales .neck', [
 			[0, 3],
 			[0, 5],

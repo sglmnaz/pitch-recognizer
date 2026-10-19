@@ -38,7 +38,8 @@
 	}
 
 	&::backdrop {
-		background: var(--backdrop);
+		/* A literal, not a token: before Safari 17.4 ::backdrop doesn't inherit custom properties. */
+		background: rgba(0, 0, 0, 0.5);
 	}
 }
 

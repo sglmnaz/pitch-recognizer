@@ -66,7 +66,8 @@ export function createChordModes(root: HTMLElement): ChordModes {
 	const showMode = bindSegmented(root, 'data-chords-mode', (value) => setMode(value as Mode))
 
 	function show() {
-		root.dataset.mode = mode
+		// Not data-mode: that attribute is the theme's light/dark (ts/ui/theme.ts).
+		root.dataset.chordsView = mode
 		showMode(mode)
 		// The shared #mic block follows wantsMic (ts/ui/mic-block.ts).
 		for (const part of listenParts) part.hidden = mode !== 'listen'

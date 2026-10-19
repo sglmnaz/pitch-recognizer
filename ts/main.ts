@@ -10,6 +10,7 @@ import { initHelp } from './ui/help'
 import type { View } from './ui/view'
 import { byId } from './ui/dom'
 import { bootMic, initMic, micNeedChanged } from './ui/mic-block'
+import { applyTheme } from './ui/theme'
 
 const tabButtons = Array.from(document.querySelectorAll<HTMLButtonElement>('[data-tab]'))
 
@@ -80,6 +81,9 @@ history.scrollRestoration = 'manual'
 initMic(() => views[currentName])
 
 /* Boot ------------------------------------------------------------------- */
+// The head script already set palette and mode; this migrates the old key and
+// keeps <meta theme-color> in step from here on.
+applyTheme()
 initHelp()
 activate(location.hash.replace('#', ''))
 bootMic()

@@ -369,7 +369,7 @@
 	}
 
 	/* Library and Identify lay themselves out below the switch. */
-	#view-chords:not([hidden]):is([data-mode='library'], [data-mode='identify']) {
+	#view-chords:not([hidden]):is([data-chords-view='library'], [data-chords-view='identify']) {
 		display: flex;
 		align-items: stretch;
 	}

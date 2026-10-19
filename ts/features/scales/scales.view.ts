@@ -145,7 +145,7 @@ export function createScalesView(root: HTMLElement): View {
 		if (event.key === 'Escape') setMenuOpen(false)
 	})
 
-	const showMode = bindSegmented(root, 'data-mode', (value) => {
+	const showMode = bindSegmented(root, 'data-scales-mode', (value) => {
 		mode = value as Mode
 		stopPlaying()
 		Sound.stopAll()

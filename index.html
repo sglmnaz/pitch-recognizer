@@ -14,9 +14,11 @@
 	<meta name="apple-mobile-web-app-title" content="Pluck" />
 	<script>
 		// Palette and mode before first paint, so a reload never flashes. Same
-		// keys and palette ids as ts/ui/theme.ts ('theme' is the pre-palette key
-		// of the mode, migrated there). No stored mode = follow the device.
+		// keys, palette ids and theme colours as THEMES in ts/ui/theme.ts ('theme'
+		// is the pre-palette key of the mode, migrated there). No stored mode =
+		// follow the device.
 		(function () {
+			var colors = { default: { light: '#fbfbfc', dark: '#0a0a0b' } }
 			var mode = null
 			var palette = null
 			try {
@@ -24,8 +26,10 @@
 				palette = localStorage.getItem('pitch-recognizer:palette')
 			} catch (error) {}
 			var root = document.documentElement
-			root.dataset.theme = ['default'].indexOf(palette) >= 0 ? palette : 'default'
+			root.dataset.theme = colors.hasOwnProperty(palette) ? palette : 'default'
 			root.dataset.mode = mode === 'light' || mode === 'dark' ? mode : matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+			// The browser chrome too, so light mode never starts with a dark bar.
+			document.querySelector('meta[name="theme-color"]').setAttribute('content', colors[root.dataset.theme][root.dataset.mode])
 		})()
 	</script>
 </head>
@@ -33,7 +37,7 @@
 <body>
 	<main class="app">
 		<header class="topbar">
-			<!-- On phones this bar is docked to the bottom, within thumb reach (style.css). -->
+			<!-- On phones this bar is docked to the bottom, within thumb reach (ts/styles/layout.css). -->
 			<nav class="tabs" role="tablist">
 				<button class="tab" role="tab" id="tab-tuner" aria-controls="view-tuner" data-tab="tuner" aria-selected="true">
 					<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -308,8 +312,8 @@
 		<section class="view view--scales" id="view-scales" role="tabpanel" aria-labelledby="tab-scales" hidden>
 			<div class="view-top">
 				<div class="segmented scales-mode" role="group" aria-label="Mode">
-					<button type="button" data-mode="explore" aria-pressed="true">Explore</button>
-					<button type="button" data-mode="identify" aria-pressed="false">Identify</button>
+					<button type="button" data-scales-mode="explore" aria-pressed="true">Explore</button>
+					<button type="button" data-scales-mode="identify" aria-pressed="false">Identify</button>
 				</div>
 				<button class="btn help-btn" type="button" data-help="scales" aria-haspopup="dialog" aria-label="How to use the scales tab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.6 9.4a2.5 2.5 0 0 1 4.8.9c0 1.7-2.4 2.2-2.4 3.7"/><path d="M12 17.2h.01"/></svg></button>
 			</div>
@@ -1058,7 +1062,7 @@
 		<h3>Good to know</h3>
 		<ul>
 			<li>Sound, volume and the beat-1 flash are in Settings → Metronome; it keeps playing while you adjust them.</li>
-			<li>The screen stays on while it runs; switching to another tab stops it.</li>
+			<li>The screen stays on while it runs; switching to any tab other than Settings stops it.</li>
 		</ul>
 	</template>
 

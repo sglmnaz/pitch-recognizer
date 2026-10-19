@@ -5,7 +5,8 @@ import { readString, remove, writeString } from '../core/storage'
  * data-mode="light|dark">; the inline script in index.html sets both before
  * first paint from the same keys, so a reload never flashes. Each palette is
  * one CSS block in ts/styles/tokens.css plus one entry here (DESIGN.md, "How
- * to add a theme"); the head script's allow-list must list the same ids.
+ * to add a theme"); the head script's `colors` map must list the same ids
+ * and theme colours.
  */
 
 export type Mode = 'light' | 'dark'
@@ -50,7 +51,7 @@ let palette = loadPalette()
 
 export const getMode = () => mode
 export const getPalette = () => palette
-export const resolvedMode = (): Mode => (mode === 'system' ? (systemDark.matches ? 'dark' : 'light') : mode)
+const resolvedMode = (): Mode => (mode === 'system' ? (systemDark.matches ? 'dark' : 'light') : mode)
 
 /** Applies palette and mode to the document and the browser chrome. */
 export function applyTheme() {

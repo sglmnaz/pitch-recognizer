@@ -25,7 +25,6 @@ export function createSettingsView(root: HTMLElement, from: () => string | null)
 			pressTheme()
 		})
 	}
-	Theme.applyTheme()
 	pressTheme()
 	const paletteRow = root.querySelector<HTMLElement>('[data-palette]')!
 	if (Theme.THEMES.length > 1) {

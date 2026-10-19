@@ -166,6 +166,10 @@
 
 .mic-toggle--live[aria-pressed='true'] .status__dot {
 	animation: pulse 1.8s var(--ease) infinite;
+
+	@media (prefers-reduced-motion: reduce) {
+		animation: none;
+	}
 }
 
 .scale-results {

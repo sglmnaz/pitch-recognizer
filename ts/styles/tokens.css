@@ -64,9 +64,9 @@
 	/* Minimum touch target on phones. */
 	--tap: 44px;
 
-	/* Same in both modes: the switch knob's lift, the dialog backdrop. */
+	/* Same in both modes: the switch knob's lift. (The dialog backdrop is a
+	   literal in help.css: older Safari's ::backdrop can't read tokens.) */
 	--shadow-knob: 0 1px 2px rgba(0, 0, 0, 0.2);
-	--backdrop: rgba(0, 0, 0, 0.5);
 
 	/* Vertical rhythm between the blocks of a view. Phones tighten it so a
 	   view's main interaction fits one screen above the docked tab bar. */

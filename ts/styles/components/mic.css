@@ -70,6 +70,11 @@
 	background: var(--success);
 	box-shadow: 0 0 0 0 var(--success);
 	animation: pulse 1.8s var(--ease) infinite;
+
+	/* The green dot alone says "listening". */
+	@media (prefers-reduced-motion: reduce) {
+		animation: none;
+	}
 }
 
 @keyframes pulse {

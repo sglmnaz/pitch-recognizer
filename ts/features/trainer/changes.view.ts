@@ -190,7 +190,6 @@ export function createChangesView(root: HTMLElement): View {
 	function renderIdle() {
 		const s = Settings.get()
 		const chords = selection()
-		stage.dataset.mode = s.changesMode
 		strip.hidden = s.changesMode !== 'time'
 		if (s.changesMode === 'time') {
 			clock.textContent = `${s.changesBpm} BPM`
@@ -294,7 +293,6 @@ export function createChangesView(root: HTMLElement): View {
 		resetHeard()
 		result.hidden = true
 		status.textContent = ''
-		stage.dataset.mode = mode
 		strip.hidden = mode !== 'time'
 		renderStrip([])
 		if (mode === 'minute') {

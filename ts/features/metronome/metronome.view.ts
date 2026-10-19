@@ -17,7 +17,7 @@ const HOLD_DELAY_MS = 400
 const REPEAT_MS = 70
 const SPEED_UP = 20
 
-// Beat dot tap targets: never smaller than MIN_DOT px, DOT_GAP apart (match .metro-dots in style.css).
+// Beat dot tap targets: never smaller than MIN_DOT px, DOT_GAP apart (match .metro-dots in metronome.css).
 const MIN_DOT = 44
 const DOT_GAP = 8
 

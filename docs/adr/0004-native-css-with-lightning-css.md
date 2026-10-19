@@ -26,7 +26,7 @@ would make it easier to maintain, and SCSS is the usual answer. But:
 
 ## Decision
 
-Write native CSS (nesting, custom properties, `@layer` where useful) and let
+Write native CSS (nesting, custom properties, every rule inside `@layer tokens, base, components`: unlayered CSS would beat all layers) and let
 Lightning CSS lower it for the browser targets, via Vite's
 `css.transformer: 'lightningcss'` (and `build.cssMinify: 'lightningcss'`), with
 targets from the app's browser support. No SCSS.
