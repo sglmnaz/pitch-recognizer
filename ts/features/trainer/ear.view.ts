@@ -7,6 +7,7 @@ import { HOLD_MS } from '../../music/game'
 import { getClosestNote, midiOfFrequency } from '../../core/notes'
 import type { PitchReading } from '../../core/microphone'
 import type { View } from '../../ui/view'
+import { onBareKey, subscribeVisible } from '../../ui/dom'
 
 // Long enough to see the green, short enough to keep the drill moving.
 const AUTO_ADVANCE_MS = 700
@@ -220,10 +221,7 @@ export function createEarView(root: HTMLElement): View {
 
 	// Space replays, Enter moves on (or replays while unanswered), only where
 	// those keys do nothing else: not in a button, field or the settings.
-	document.addEventListener('keydown', (event) => {
-		if (root.hidden || panel.hidden || event.repeat || event.ctrlKey || event.altKey || event.metaKey) return
-		if (event.target !== document.body || (event.code !== 'Space' && event.key !== 'Enter')) return
-		event.preventDefault()
+	onBareKey([root, panel], ['Space', 'Enter'], (event) => {
 		if (event.key === 'Enter' && Ear.getSession(exercise()).answered) startRound(true)
 		else play()
 	})
@@ -242,9 +240,7 @@ export function createEarView(root: HTMLElement): View {
 		const stale = !q || !Ear.pool(shown, enabled()).includes(q.id) || (shown === 'intervals' && earDirection !== 'mixed' && q.direction !== earDirection)
 		if (stale) startRound(false)
 	}
-	Settings.subscribe(() => {
-		if (!root.hidden) syncToSettings()
-	})
+	subscribeVisible(root, syncToSettings)
 
 	return {
 		onActivate() {

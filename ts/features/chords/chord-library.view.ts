@@ -11,6 +11,7 @@ import { chordShapes, shapeString, voicingSpec, type Voicing } from '../../music
 import { CHORD_GROUPS, keysOf, matchNotes, parseChordSymbol, ROOT_LABELS, shapeNotes, voicingCaption } from '../../music/chord-library'
 import { degreeMap, degreeNumber, pitchClassOf, ROOTS, STRINGS } from '../../music/scales'
 import { OPEN_CHORD_EVENT } from '../scales/harmony.view'
+import { bindSegmented, liveRegion, scoped, setPressed, svgEl } from '../../ui/dom'
 
 // ponytail: the 8 best shapes; the generator has dozens, add "more" if asked.
 const VOICINGS = 8
@@ -52,8 +53,7 @@ function play(midis: number[]) {
 
 /** `onMicNeed` tells index.ts that listening() changed: only Listen uses the mic. */
 export function createChordModes(root: HTMLElement, onMicNeed: () => void): ChordModes {
-	const $ = <T extends Element>(selector: string) => root.querySelector<T>(selector)!
-	const modeButtons = Array.from(root.querySelectorAll<HTMLButtonElement>('[data-chords-mode]'))
+	const { $ } = scoped(root)
 	const listenParts = [$<HTMLElement>(':scope > .readout'), $<HTMLElement>(':scope > .hint')]
 	const library = $<HTMLElement>('.chord-library')
 	const identify = $<HTMLElement>('.chord-identify')
@@ -67,11 +67,11 @@ export function createChordModes(root: HTMLElement, onMicNeed: () => void): Chor
 		onMicNeed()
 		show()
 	}
-	modeButtons.forEach((b) => b.addEventListener('click', () => setMode(b.dataset.chordsMode as Mode)))
+	const showMode = bindSegmented(root, 'data-chords-mode', (value) => setMode(value as Mode))
 
 	function show() {
 		root.dataset.mode = mode
-		modeButtons.forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.chordsMode === mode)))
+		showMode(mode)
 		// The shared #mic block follows wantsMic (index.ts).
 		for (const part of listenParts) part.hidden = mode !== 'listen'
 		library.hidden = mode !== 'library'
@@ -192,9 +192,7 @@ export function createChordModes(root: HTMLElement, onMicNeed: () => void): Chor
 				button.className = 'voicing__btn'
 				button.setAttribute('aria-label', `Play ${symbol}, ${shapeString(voicing)}, ${caption.position}`)
 				button.addEventListener('click', () => play(shapeNotes(voicing.frets).midis))
-				const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
-				svg.setAttribute('class', 'neck')
-				svg.setAttribute('aria-hidden', 'true')
+				const svg = svgEl('svg', { class: 'neck', 'aria-hidden': 'true' })
 				const title = document.createElement('span')
 				title.className = 'voicing__title'
 				title.textContent = caption.title
@@ -211,7 +209,7 @@ export function createChordModes(root: HTMLElement, onMicNeed: () => void): Chor
 
 	function renderLibrary() {
 		const chord = spellChord(ROOTS[rootPc], type)
-		rootButtons.forEach((b, pc) => b.setAttribute('aria-pressed', String(pc === rootPc)))
+		setPressed(rootButtons, (_, pc) => pc === rootPc)
 		typeSelect.value = type.symbol
 		const key = `${rootPc}|${type.symbol}`
 		if (key === builtFor) return
@@ -276,7 +274,8 @@ export function createChordModes(root: HTMLElement, onMicNeed: () => void): Chor
 	const strumButton = $<HTMLButtonElement>('[data-action="strum"]')
 	const clearButton = $<HTMLButtonElement>('[data-action="clear-shape"]')
 	const results = $<HTMLElement>('.chord-results')
-	const status = $<HTMLElement>('.chord-identify__status')
+	// Only a new best match is announced, not every redraw.
+	const announce = liveRegion($('.chord-identify__status'), { dedupe: true })
 	// Per string as in STRINGS: -1 not played (muted), else the fret. One note
 	// per string, like a real chord shape.
 	const shape = STRINGS.map(() => -1)
@@ -336,9 +335,7 @@ export function createChordModes(root: HTMLElement, onMicNeed: () => void): Chor
 		if (empty && (document.activeElement === strumButton || document.activeElement === clearButton))
 			neckSvg.querySelector<SVGGElement>('[data-s][tabindex="0"]')?.focus()
 		strumButton.disabled = clearButton.disabled = empty
-		// Only a new best match is announced, not every redraw.
-		const best = top ? `Best match: ${top.symbol}, ${top.root} ${top.type.name}${top.bass ? ` over ${top.bass}` : ''}` : ''
-		if (status.textContent !== best) status.textContent = best
+		announce(top ? `Best match: ${top.symbol}, ${top.root} ${top.type.name}${top.bass ? ` over ${top.bass}` : ''}` : '')
 
 		if (empty) return results.replaceChildren(message('Tap a fret on each string you play; tap it again to clear. Open strings sit left of the nut.'))
 		if (!matches.length) return results.replaceChildren(message(pcs.size < 2 ? 'Mark at least two different notes.' : 'No chord found. Is the root marked?'))

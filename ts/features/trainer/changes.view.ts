@@ -11,6 +11,7 @@ import { chordType } from '../../music/chord-theory'
 import { chordShapes, voicingSpec } from '../../music/chord-shapes'
 import { createFretboard, type Fretboard } from '../../ui/fretboard'
 import type { View } from '../../ui/view'
+import { bindSegmented, liveRegion, onBareKey, scoped } from '../../ui/dom'
 
 /* Chord adapter ------------------------------------------------------------ */
 
@@ -116,7 +117,7 @@ const clockText = (ms: number) => {
 }
 
 export function createChangesView(root: HTMLElement): View {
-	const $ = <T extends Element>(selector: string) => root.querySelector<T>(selector)!
+	const { $ } = scoped(root)
 	const stage = $<HTMLElement>('.changes-stage')
 	const setup = $<HTMLElement>('.changes-setup')
 	const clock = $<HTMLElement>('.changes-clock')
@@ -130,8 +131,8 @@ export function createChangesView(root: HTMLElement): View {
 	const shapesBox = $<HTMLElement>('.changes-shapes')
 	const startButton = $<HTMLButtonElement>('[data-action="changes-start"]')
 	const status = $<HTMLElement>('.changes-status')
-	const live = $<HTMLElement>('.changes-live')
-	const modeButtons = Array.from(root.querySelectorAll<HTMLButtonElement>('[data-changes-mode]'))
+	// Screen readers hear the count at most every ANNOUNCE_MS; starts, ends and results are forced.
+	const announce = liveRegion($('.changes-live'), { throttleMs: ANNOUNCE_MS })
 	const presetsBox = $<HTMLElement>('.changes-presets')
 	const chipsBox = $<HTMLElement>('.changes-chips')
 	const order = $<HTMLElement>('.changes-order')
@@ -144,7 +145,6 @@ export function createChangesView(root: HTMLElement): View {
 	let counter = Changes.createChangeCounter([])
 	let goAt = 0
 	let endsAt = 0
-	let lastAnnounce = 0
 	// In time.
 	let slot = -1
 	let marks: Changes.Mark[] = []
@@ -233,9 +233,7 @@ export function createChangesView(root: HTMLElement): View {
 		})
 	)
 
-	for (const button of modeButtons) {
-		button.addEventListener('click', () => Settings.update({ changesMode: button.dataset.changesMode as 'minute' | 'time' }))
-	}
+	const showMode = bindSegmented(root, 'data-changes-mode', (value) => Settings.update({ changesMode: value as 'minute' | 'time' }))
 
 	function sparkline(history: number[], best: number): string {
 		if (history.length < 2) return ''
@@ -277,7 +275,7 @@ export function createChangesView(root: HTMLElement): View {
 	function renderSetup() {
 		const s = Settings.get()
 		const chords = selection()
-		for (const button of modeButtons) button.setAttribute('aria-pressed', String(button.dataset.changesMode === s.changesMode))
+		showMode(s.changesMode)
 		for (const button of presetsBox.querySelectorAll<HTMLButtonElement>('[data-preset]')) {
 			button.setAttribute('aria-pressed', String(button.dataset.preset === chords.join()))
 		}
@@ -348,13 +346,6 @@ export function createChangesView(root: HTMLElement): View {
 	}
 	stage.addEventListener('animationend', () => stage.classList.remove('changes-stage--flash'))
 
-	function announce(text: string, force = false) {
-		const now = performance.now()
-		if (!force && now - lastAnnounce < ANNOUNCE_MS) return
-		lastAnnounce = now
-		live.textContent = text
-	}
-
 	function renderStrip() {
 		strip.replaceChildren(
 			...marks.slice(-STRIP_MARKS).map((mark) => {
@@ -413,7 +404,6 @@ export function createChangesView(root: HTMLElement): View {
 		clean = 0
 		pendingBpm = 0
 		slot = -1
-		lastAnnounce = 0
 		result.hidden = true
 		status.textContent = ''
 		stage.dataset.mode = session.mode
@@ -530,12 +520,7 @@ export function createChangesView(root: HTMLElement): View {
 	startButton.addEventListener('click', () => (isRunning() ? finish(false) : start()))
 
 	// Space starts and stops, only where it does nothing else (the bare page).
-	document.addEventListener('keydown', (event) => {
-		if (root.hidden || stage.hidden || event.code !== 'Space' || event.repeat || event.ctrlKey || event.altKey || event.metaKey) return
-		if (event.target !== document.body) return
-		event.preventDefault()
-		startButton.click()
-	})
+	onBareKey([root, stage], ['Space'], () => startButton.click())
 
 	// Hidden page or locked screen: the mic and the timers stall, so no count
 	// or mark from here on would mean anything. End it rather than pause it.

@@ -9,12 +9,7 @@ import { createMetronomeView } from './features/metronome/metronome.view'
 import { createSettingsView } from './features/settings/settings.view'
 import { initHelp } from './ui/help'
 import type { View } from './ui/view'
-
-function byId<T extends HTMLElement>(id: string): T {
-	const element = document.getElementById(id)
-	if (!element) throw new Error(`Missing #${id} element`)
-	return element as T
-}
+import { byId } from './ui/dom'
 
 const micButton = byId<HTMLButtonElement>('micButton')
 const status = byId('status')

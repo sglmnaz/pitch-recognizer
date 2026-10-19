@@ -22,6 +22,7 @@ import {
 	type ScaleType,
 } from '../../music/scales'
 import type { View } from '../../ui/view'
+import { bindSegmented, scoped, setPressed, whenVisible } from '../../ui/dom'
 
 // ponytail: results capped; a couple of marked notes already narrow it to a
 // screenful, add paging if someone wants to browse all ~150 for a single note.
@@ -43,8 +44,7 @@ export interface MicControl {
 }
 
 export function createScalesView(root: HTMLElement, mic: MicControl): View & { syncMic(): void } {
-	const $ = <T extends Element>(selector: string) => root.querySelector<T>(selector)!
-	const modeButtons = Array.from(root.querySelectorAll<HTMLButtonElement>('[data-mode]'))
+	const { $ } = scoped(root)
 	const explorePickers = $<HTMLElement>('.scales-explore')
 	const identifyPickers = $<HTMLElement>('.scales-identify')
 	const rootSelect = $<HTMLSelectElement>('.scales-root')
@@ -61,7 +61,6 @@ export function createScalesView(root: HTMLElement, mic: MicControl): View & { s
 	const playLabel = playButton.querySelector('span')!
 	const displayButton = $<HTMLButtonElement>('[data-action="display"]')
 	const displayMenu = $<HTMLElement>('.display__menu')
-	const labelButtons = Array.from(root.querySelectorAll<HTMLButtonElement>('[data-labels]'))
 	const positionRow = $<HTMLElement>('.scales-positions')
 	const positionChip = $<HTMLButtonElement>('.position-chip')
 	const micButton = $<HTMLButtonElement>('[data-action="mic"]')
@@ -134,9 +133,7 @@ export function createScalesView(root: HTMLElement, mic: MicControl): View & { s
 		fretboard.revealBox()
 	}
 
-	labelButtons.forEach((button) =>
-		button.addEventListener('click', () => Settings.update({ scaleLabels: button.dataset.labels as Settings.Settings['scaleLabels'] }))
-	)
+	const showLabels = bindSegmented(root, 'data-labels', (value) => Settings.update({ scaleLabels: value as Settings.Settings['scaleLabels'] }))
 
 	function setMenuOpen(open: boolean) {
 		displayMenu.hidden = !open
@@ -153,14 +150,12 @@ export function createScalesView(root: HTMLElement, mic: MicControl): View & { s
 		if (event.key === 'Escape') setMenuOpen(false)
 	})
 
-	modeButtons.forEach((button) =>
-		button.addEventListener('click', () => {
-			mode = button.dataset.mode as Mode
-			stopPlaying()
-			Sound.stopAll()
-			render()
-		})
-	)
+	const showMode = bindSegmented(root, 'data-mode', (value) => {
+		mode = value as Mode
+		stopPlaying()
+		Sound.stopAll()
+		render()
+	})
 
 	clearButton.addEventListener('click', () => {
 		marked.clear()
@@ -196,9 +191,7 @@ export function createScalesView(root: HTMLElement, mic: MicControl): View & { s
 
 	// Hidden, nothing to draw: onActivate renders on the way back. The phone
 	// neck is sized from the board's width: redraw when that changes too.
-	const redraw = () => {
-		if (!root.hidden) render()
-	}
+	const redraw = whenVisible(root, render)
 	Settings.subscribe(redraw)
 	phone.addEventListener('change', redraw)
 	window.addEventListener('resize', redraw)
@@ -428,13 +421,13 @@ export function createScalesView(root: HTMLElement, mic: MicControl): View & { s
 	function render() {
 		const { scaleDegrees, scaleLabels } = Settings.get()
 		const identify = mode === 'identify'
-		modeButtons.forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.mode === mode)))
+		showMode(mode)
 		explorePickers.hidden = identify
 		identifyPickers.hidden = !identify
 		rootSelect.value = String(rootPc)
 		typeSelect.value = String(typeIndex)
-		labelButtons.forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.labels === scaleLabels)))
-		positionButtons.forEach((b, k) => b.setAttribute('aria-pressed', String(k === position)))
+		showLabels(scaleLabels)
+		setPressed(positionButtons, (_, k) => k === position)
 
 		// Marked notes, lowest pitch first; the lowest is the likely root.
 		const markedSorted = markedMidis().sort((a, b) => a - b)

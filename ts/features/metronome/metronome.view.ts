@@ -1,6 +1,7 @@
 import * as Metronome from '../../core/metronome'
 import * as Settings from '../../core/settings'
 import type { View } from '../../ui/view'
+import { bindSegmented, onBareKey, scoped } from '../../ui/dom'
 
 const MAX_BEATS = 12
 // Taps further apart than this start a new measurement; the average covers the
@@ -38,7 +39,7 @@ const NEXT_ACCENT: Metronome.Accent[] = [1, 2, 0]
 const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value))
 
 export function createMetronomeView(root: HTMLElement): View {
-	const $ = <T extends Element>(selector: string) => root.querySelector<T>(selector)!
+	const { $, $$ } = scoped(root)
 	const bpmValue = $<HTMLInputElement>('.metro-bpm__value')
 	const name = $<HTMLElement>('.metro-name')
 	const dotsBox = $<HTMLElement>('.metro-dots')
@@ -46,8 +47,6 @@ export function createMetronomeView(root: HTMLElement): View {
 	const startButton = $<HTMLButtonElement>('[data-action="start"]')
 	const tapButton = $<HTMLButtonElement>('[data-action="tap"]')
 	const beatsValue = $<HTMLElement>('[data-value="beats"]')
-	const unitButtons = Array.from(root.querySelectorAll<HTMLButtonElement>('[data-unit]'))
-	const subButtons = Array.from(root.querySelectorAll<HTMLButtonElement>('[data-sub]'))
 	const trainerSwitch = $<HTMLInputElement>('[data-action="trainer"]')
 	const trainerDesc = $<HTMLElement>('.metro-row__desc')
 	const progress = $<HTMLElement>('.metro-progress')
@@ -110,7 +109,7 @@ export function createMetronomeView(root: HTMLElement): View {
 		button.addEventListener('contextmenu', (event) => event.preventDefault())
 	}
 
-	for (const button of root.querySelectorAll<HTMLButtonElement>('[data-tempo]')) {
+	for (const button of $$('[data-tempo]')) {
 		const by = Number(button.dataset.tempo)
 		// ±1 speeds up when held; ±10 is already the big step.
 		onPress(button, (repeats) => nudge(Math.abs(by) === 1 && repeats > SPEED_UP ? by * 5 : by), true)
@@ -146,12 +145,12 @@ export function createMetronomeView(root: HTMLElement): View {
 	})
 
 	/* Time signature, accents, subdivision ---------------------------------- */
-	for (const button of root.querySelectorAll<HTMLButtonElement>('[data-beats]')) {
+	for (const button of $$('[data-beats]')) {
 		const direction = Number(button.dataset.beats)
 		onPress(button, () => Settings.update({ metroBeats: clamp(Settings.get().metroBeats + direction, 1, MAX_BEATS) }), true)
 	}
-	unitButtons.forEach((button) => button.addEventListener('click', () => Settings.update({ metroUnit: Number(button.dataset.unit) })))
-	subButtons.forEach((button) => button.addEventListener('click', () => Settings.update({ metroSubdivision: Number(button.dataset.sub) })))
+	const showUnit = bindSegmented(root, 'data-unit', (value) => Settings.update({ metroUnit: Number(value) }))
+	const showSub = bindSegmented(root, 'data-sub', (value) => Settings.update({ metroSubdivision: Number(value) }))
 
 	function setAccent(beat: number, accent: number) {
 		const accents = [...Settings.get().metroAccents]
@@ -236,15 +235,9 @@ export function createMetronomeView(root: HTMLElement): View {
 		if (!document.hidden && owned && Metronome.getState().running && !wakeLock) holdScreen()
 	})
 
-	document.addEventListener('keydown', (event) => {
-		if (root.hidden || event.code !== 'Space' || event.repeat || event.ctrlKey || event.altKey || event.metaKey) return
-		// Only where Space does nothing else: the bare page, or the tempo slider.
-		// (Buttons, switches and selects act on Space themselves.)
-		const target = event.target
-		if (target !== document.body && !(target instanceof HTMLInputElement && target.type === 'range')) return
-		event.preventDefault()
-		toggle()
-	})
+	// Space starts and stops where it does nothing else: the bare page, or the
+	// tempo slider. (Buttons, switches and selects act on Space themselves.)
+	onBareKey([root], ['Space'], toggle, (target) => target instanceof HTMLInputElement && target.type === 'range')
 
 	// Opening another tab stops the clicks: nothing else on screen could stop
 	// them, and the tuner's microphone would hear them. Settings is the
@@ -305,7 +298,7 @@ export function createMetronomeView(root: HTMLElement): View {
 		Settings.update({ metroTrainerOn: on, metroTrainerTarget: target })
 	})
 
-	for (const button of root.querySelectorAll<HTMLButtonElement>('[data-trainer]')) {
+	for (const button of $$('[data-trainer]')) {
 		const limits = TRAINER_LIMITS[button.dataset.trainer as keyof typeof TRAINER_LIMITS]
 		const direction = Number(button.dataset.by)
 		onPress(
@@ -370,8 +363,8 @@ export function createMetronomeView(root: HTMLElement): View {
 
 		showBpm(Metronome.getState().bpm)
 		beatsValue.textContent = String(s.metroBeats)
-		unitButtons.forEach((button) => button.setAttribute('aria-pressed', String(Number(button.dataset.unit) === s.metroUnit)))
-		subButtons.forEach((button) => button.setAttribute('aria-pressed', String(Number(button.dataset.sub) === s.metroSubdivision)))
+		showUnit(s.metroUnit)
+		showSub(s.metroSubdivision)
 		trainerSwitch.checked = s.metroTrainerOn
 		renderTrainer()
 

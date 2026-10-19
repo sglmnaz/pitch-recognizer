@@ -5,6 +5,7 @@ import * as Sound from '../../core/sound'
 import { centsBetween, getClosestNote } from '../../core/notes'
 import type { PitchReading } from '../../core/microphone'
 import type { View } from '../../ui/view'
+import { bindSegmented } from '../../ui/dom'
 import { createEarView } from './ear.view'
 import { createChangesView } from './changes.view'
 
@@ -165,7 +166,6 @@ export function createTrainerView(root: HTMLElement, onMicNeed: () => void): Vie
 	/* Exercise switch ------------------------------------------------------ */
 	const ear = createEarView(root)
 	const changes = createChangesView(root)
-	const modeButtons = Array.from(root.querySelectorAll<HTMLButtonElement>('.trainer-mode [data-exercise]'))
 	const exercise = () => Settings.get().trainerExercise
 	const kindOf = (ex: string) => (ex === 'notes' || ex === 'changes' ? ex : 'ear')
 	const active = () => ({ notes, ear, changes })[kindOf(exercise())]
@@ -173,7 +173,7 @@ export function createTrainerView(root: HTMLElement, onMicNeed: () => void): Vie
 	function applyExercise() {
 		const ex = exercise()
 		const kind = kindOf(ex)
-		for (const button of modeButtons) button.setAttribute('aria-pressed', String(button.dataset.exercise === ex))
+		showExercise(ex)
 		root.classList.toggle('trainer--ear', kind === 'ear')
 		root.classList.toggle('trainer--changes', kind === 'changes')
 		for (const element of root.querySelectorAll<HTMLElement>('[data-only]')) element.hidden = !element.dataset.only!.split(' ').includes(kind)
@@ -186,19 +186,17 @@ export function createTrainerView(root: HTMLElement, onMicNeed: () => void): Vie
 		onMicNeed()
 	})
 
-	for (const button of modeButtons) {
-		button.addEventListener('click', () => {
-			const ex = button.dataset.exercise as Settings.Settings['trainerExercise']
-			if (ex === exercise()) return
-			active().reset()
-			// An interval or chord still playing belongs to the old exercise.
-			Sound.stopAll()
-			Settings.update({ trainerExercise: ex })
-			applyExercise()
-			onMicNeed()
-			active().onActivate()
-		})
-	}
+	const showExercise = bindSegmented(root.querySelector('.trainer-mode')!, 'data-exercise', (value) => {
+		const ex = value as Settings.Settings['trainerExercise']
+		if (ex === exercise()) return
+		active().reset()
+		// An interval or chord still playing belongs to the old exercise.
+		Sound.stopAll()
+		Settings.update({ trainerExercise: ex })
+		applyExercise()
+		onMicNeed()
+		active().onActivate()
+	})
 
 	return {
 		onActivate() {

@@ -4,6 +4,7 @@ import * as Sound from '../../core/sound'
 import { nearestString, TUNINGS, tuningById, tuningStrings, type TuningString } from '../../music/tuning'
 import type { PitchReading } from '../../core/microphone'
 import type { View } from '../../ui/view'
+import { liveRegion, subscribeVisible } from '../../ui/dom'
 
 const CENTS_RANGE = 50
 // The tuning select's first entry: no target strings, name whatever is played.
@@ -18,7 +19,9 @@ export function createTunerView(root: HTMLElement): View {
 	const stringsRow = root.querySelector<HTMLElement>('.strings')!
 	const tuningSelect = root.querySelector<HTMLSelectElement>('.tuner-tuning')!
 	const toleranceText = root.querySelector<HTMLElement>('.tuner-tolerance')!
-	const live = root.querySelector<HTMLElement>('.tuner-live')!
+	// Screen readers hear the note and whether it is in tune, never the
+	// 60-per-second cents: the live region only changes when one of those does.
+	const announce = liveRegion(root.querySelector<HTMLElement>('.tuner-live')!, { dedupe: true })
 
 	let strings: TuningString[] = []
 	let builtFor = ''
@@ -65,15 +68,6 @@ export function createTunerView(root: HTMLElement): View {
 
 	function syncChips() {
 		chips.forEach((chip, i) => (chip.dataset.state = i === refIndex ? 'ref' : 'idle'))
-	}
-
-	// Screen readers hear the note and whether it is in tune, never the
-	// 60-per-second cents: the live region only changes when one of those does.
-	let announced = ''
-	function announce(text: string) {
-		if (text === announced) return
-		announced = text
-		live.textContent = text
 	}
 
 	/** Reflects settings: rebuilds the strings if the tuning or A4 moved. */
@@ -134,7 +128,7 @@ export function createTunerView(root: HTMLElement): View {
 
 	sync()
 	// Hidden, onActivate syncs on the way back.
-	Settings.subscribe(() => root.hidden || sync())
+	subscribeVisible(root, sync)
 
 	return {
 		onActivate() {

@@ -1,6 +1,7 @@
 import * as Settings from '../../core/settings'
 import { INTERVALS, QUALITIES } from '../../music/ear'
 import type { View } from '../../ui/view'
+import { subscribeVisible } from '../../ui/dom'
 
 /* Theme: System (nothing stored: the inline script in index.html and this
    follow the device, live), or Light / Dark stored under 'theme', which that
@@ -175,7 +176,7 @@ export function createSettingsView(root: HTMLElement, from: () => string | null)
 	}
 
 	// Hidden, onActivate syncs on the way back.
-	Settings.subscribe(() => root.hidden || sync())
+	subscribeVisible(root, sync)
 	sync()
 
 	return {

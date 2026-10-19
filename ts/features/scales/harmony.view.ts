@@ -22,6 +22,7 @@ import {
 	type KeyChord,
 } from '../../music/harmony'
 import { pitchClassOf, ROOTS, scaleTitle, spellScale, STRINGS, type ScaleType } from '../../music/scales'
+import { bindSegmented, liveRegion, scoped, setPressed, svgEl } from '../../ui/dom'
 
 // A strum: low string to high, this far apart (a quick downstroke).
 const STRUM_S = 0.025
@@ -53,12 +54,6 @@ export interface HarmonyState {
 
 const quality = (type: ChordType) => (type.formula.includes('b5') || type.formula.includes('#5') ? 'dim' : type.formula.includes('b3') ? 'minor' : 'major')
 
-const svgEl = (name: string, attrs: Record<string, string | number>) => {
-	const el = document.createElementNS('http://www.w3.org/2000/svg', name)
-	for (const [k, v] of Object.entries(attrs)) el.setAttribute(k, String(v))
-	return el
-}
-
 // Chord symbol -> its most playable voicing (chordShapes walks ~10^5 shapes
 // the first time; every strum and redraw asks again).
 const voicings = new Map<string, Voicing | undefined>()
@@ -70,12 +65,12 @@ function voicingOf(chord: KeyChord) {
 const sig = (n: number) => (n === 0 ? '' : `${Math.abs(n)}${n > 0 ? '♯' : '♭'}`)
 
 export function createHarmony(root: HTMLElement, host: HarmonyHost) {
-	const $ = <T extends Element>(selector: string) => root.querySelector<T>(selector)!
-	const section = $<HTMLElement>('.harmony')
-	const paneButtons = Array.from(section.querySelectorAll<HTMLButtonElement>('[data-pane]'))
-	const panes = Array.from(section.querySelectorAll<HTMLElement>('[data-pane-body]'))
-	const sizeGroup = $<HTMLElement>('.harmony__size')
-	const sizeButtons = Array.from(sizeGroup.querySelectorAll<HTMLButtonElement>('[data-chord-view]'))
+	const { $ } = scoped(root)
+	const section = $('.harmony')
+	const { $$ } = scoped(section)
+	const paneButtons = $$<HTMLButtonElement>('[data-pane]')
+	const panes = $$('[data-pane-body]')
+	const sizeGroup = $('.harmony__size')
 	const chordsNote = $<HTMLElement>('.harmony__note--chords')
 	const chordRow = $<HTMLElement>('.harmony-chords')
 	const legend = $<HTMLElement>('.harmony-legend')
@@ -89,7 +84,7 @@ export function createHarmony(root: HTMLElement, host: HarmonyHost) {
 	const loopButton = $<HTMLButtonElement>('[data-action="loop"]')
 	const progList = $<HTMLElement>('.progressions')
 	const circle = $<SVGSVGElement>('.circle')
-	const live = $<HTMLElement>('.harmony__live')
+	const announce = liveRegion($('.harmony__live'))
 	const fits = $<HTMLElement>('.chord-fits')
 	const fitsChord = $<HTMLElement>('.chord-fits__chord')
 	const fitsList = $<HTMLElement>('.chord-fits__list')
@@ -120,9 +115,7 @@ export function createHarmony(root: HTMLElement, host: HarmonyHost) {
 			host.redraw()
 		})
 	)
-	sizeButtons.forEach((button) =>
-		button.addEventListener('click', () => Settings.update({ chordView: button.dataset.chordView as Settings.Settings['chordView'] }))
-	)
+	const showSize = bindSegmented(sizeGroup, 'data-chord-view', (value) => Settings.update({ chordView: value as Settings.Settings['chordView'] }))
 	loopButton.addEventListener('click', () => Settings.update({ progressionLoop: !Settings.get().progressionLoop }))
 	$<HTMLButtonElement>('[data-action="strum"]').addEventListener('click', () => {
 		if (selected === null) return
@@ -165,10 +158,6 @@ export function createHarmony(root: HTMLElement, host: HarmonyHost) {
 		for (let s = STRINGS.length - 1; s >= 0; s--) {
 			if (voicing.frets[s] >= 0) Sound.play(STRINGS[s] + voicing.frets[s], at + STRUM_S * i++, gain, Sound.NOTE_MS)
 		}
-	}
-
-	function announce(text: string) {
-		live.textContent = text
 	}
 
 	// ponytail: bars are timed with setTimeout from a fixed start (no drift,
@@ -252,8 +241,8 @@ export function createHarmony(root: HTMLElement, host: HarmonyHost) {
 			if (source && source !== type)
 				chordsNote.textContent = `${scaleName} is built from ${spellScale(ROOTS[rootPc], source).root} ${source.name.toLowerCase()}: these are its chords.`
 		}
-		Array.from(chordRow.children).forEach((b, i) => b.setAttribute('aria-pressed', String(i === selected)))
-		sizeButtons.forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.chordView === chordView)))
+		setPressed(Array.from(chordRow.children), (_, i) => i === selected)
+		showSize(chordView)
 
 		detail.hidden = selected === null
 		if (selected === null) return
