@@ -1,12 +1,12 @@
 // Trainer → Changes: chord-change drills. One-minute changes (count every
 // clean change in 30 s – 2 min, best and history per pair) and In time
 // (change on the metronome's downbeat, each change marked). Logic lives in
-// ts/music/changes.ts; this wires the DOM, the mic and the metronome.
+// ts/music/changes.ts, the recognizer seam in ./changes.recognizer.ts; this
+// wires the DOM, the mic and the metronome.
 import * as Changes from '../../music/changes'
 import * as Metronome from '../../core/metronome'
-import * as Microphone from '../../core/microphone'
 import * as Settings from '../../core/settings'
-import { createChordTracker, loadChordModel, PITCH_CLASSES, withSilenceReset } from '../../music/chords'
+import { loadChordModel } from '../../music/chords'
 import { parseChordSymbol } from '../../music/chord-library'
 import { chordShapes } from '../../music/chord-shapes'
 import { chordDiagram, type ChordDiagram } from '../../ui/chord-diagram'
@@ -14,64 +14,7 @@ import type { View } from '../../ui/view'
 import { bindSegmented, liveRegion, onBareKey, scoped } from '../../ui/dom'
 import { reducedMotion } from '../../ui/media'
 import { screenLock } from '../../ui/screen-lock'
-
-/* Chord adapter ------------------------------------------------------------ */
-
-/**
- * What the recognizer hears right now. Contract: `symbol` spelt like
- * Changes.CHANGE_CHORDS (a PITCH_CLASSES root + a chord-theory symbol: 'C',
- * 'Am', 'G7'), `rootPc` 0–11 (C = 0), `type` the symbol after the root ('',
- * 'm', '7'), `confidence` 0–1; null = no chord. Called once per mic frame
- * with the frame's time: the HMM tracker smooths over time.
- */
-export interface HeardChord {
-	symbol: string
-	rootPc: number
-	type: string
-	confidence?: number
-}
-
-// Our own tracker (ts/music/chords.ts): the Chords view's smoother never
-// shares state with it. Like the Chords view, it forgets the chord after
-// this much continuous silence.
-const SILENCE_RESET_MS = 300
-const tracker = withSilenceReset(createChordTracker(), SILENCE_RESET_MS)
-
-// ?debug: chords fed by hand from the console (the mic is often unavailable
-// where the UI is tested). undefined = off, null = "no chord". Each fed
-// chord counts as strummed once.
-let fake: string | null | undefined
-let fakeStrum = false
-
-export function heardChord(now: number): HeardChord | null {
-	if (fake !== undefined) {
-		const root = fake?.match(/^[A-G][#b]?/)?.[0]
-		return fake && root ? { symbol: fake, rootPc: PITCH_CLASSES.indexOf(root), type: fake.slice(root.length) } : null
-	}
-	// Same silence gate as the Chords view. Until the model has loaded the
-	// tracker answers "no chord" (and starts the load itself).
-	const spectrum = Microphone.getSpectrum()
-	const analysis = tracker.track(Microphone.isSounding() ? spectrum : null, now, Settings.get().a4)
-	const chord = analysis?.chord
-	if (!chord) return null
-	const root = chord.notes[0]
-	return { symbol: chord.name, rootPc: PITCH_CLASSES.indexOf(root), type: chord.name.slice(root.length), confidence: chord.score }
-}
-
-/** Forgets what the recognizer was following, so a new session (or a mic restart) starts clean. */
-export function resetHeard() {
-	tracker.reset()
-}
-
-/** A strum's attack this frame (the pitch pipeline's onset detector): what tells a played chord from a recognizer flip. */
-function strummed(): boolean {
-	if (fake !== undefined) {
-		const strum = fakeStrum
-		fakeStrum = false
-		return strum
-	}
-	return Microphone.getStats().reason === 'attack'
-}
+import { faking, heardChord, installDebugHook, resetHeard, strummed } from './changes.recognizer'
 
 /* View --------------------------------------------------------------------- */
 
@@ -358,7 +301,7 @@ export function createChangesView(root: HTMLElement): View {
 	/* Run ------------------------------------------------------------------- */
 	function start() {
 		if (!valid()) return
-		if (!micLive && fake === undefined) {
+		if (!micLive && !faking()) {
 			status.textContent = 'The microphone is off. Press Listen, then Start.'
 			document.getElementById('micButton')?.focus()
 			return
@@ -590,29 +533,10 @@ export function createChangesView(root: HTMLElement): View {
 		}
 	}
 
-	// ?debug: window.pluckChanges.hear('G') feeds that chord as if strummed
-	// (null = silence; hear('Am', false) = the recognizer flipping a ringing
-	// chord), driving frames itself while the mic is off; .off() returns to the mic.
-	// A timer, not rAF: rAF stalls in a hidden or embedded test pane.
-	if (new URLSearchParams(location.search).has('debug')) {
-		let loop = 0
-		const tick = () => {
-			loop = 0
-			if (fake === undefined) return
-			if (!micLive && !root.hidden) frame()
-			loop = window.setTimeout(tick, 16)
-		}
-		;(window as unknown as { pluckChanges: object }).pluckChanges = {
-			hear(symbol: string | null, strum = true) {
-				fake = symbol
-				fakeStrum = strum && symbol !== null
-				if (!loop) tick()
-			},
-			off() {
-				fake = undefined
-			},
-		}
-	}
+	// ?debug: fake chords drive frames while the mic is off.
+	installDebugHook(() => {
+		if (!micLive && !root.hidden) frame()
+	})
 
 	Settings.subscribe(() => {
 		if (Settings.get().trainerExercise !== 'changes' || isRunning()) return
