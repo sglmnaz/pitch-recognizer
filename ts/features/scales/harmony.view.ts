@@ -23,6 +23,7 @@ import {
 } from '../../music/harmony'
 import { pitchClassOf, ROOTS, scaleTitle, spellScale, type ScaleType } from '../../music/scales'
 import { shapeNotes } from '../../music/chord-library'
+import { OPEN_CHORD_EVENT } from '../../ui/events'
 import { bindSegmented, liveRegion, scoped, setPressed, svgEl } from '../../ui/dom'
 
 // A strum: low string to high, this far apart (a quick downstroke).
@@ -30,9 +31,6 @@ const STRUM_S = 0.025
 // Progressions: four beats a bar, one chord a bar, strummed on beats 1 and 3.
 const BEATS = 4
 const STRUM_BEATS = [0, 2]
-
-/** Chord dictionary hook: fired on window, then the hash moves to #chords. */
-export const OPEN_CHORD_EVENT = 'pluck:open-chord'
 
 type Pane = 'chords' | 'progressions' | 'circle'
 

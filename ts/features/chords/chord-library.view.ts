@@ -10,7 +10,7 @@ import { CHORD_TYPES, identifyChords, spellChord, type ChordType } from '../../m
 import { chordShapes, shapeString, voicingSpec, type Voicing } from '../../music/chord-shapes'
 import { CHORD_GROUPS, keysOf, matchNotes, parseChordSymbol, ROOT_LABELS, shapeNotes, voicingCaption } from '../../music/chord-library'
 import { degreeMap, degreeRole, pitchClassOf, ROOTS, STRINGS } from '../../music/scales'
-import { OPEN_CHORD_EVENT } from '../scales/harmony.view'
+import { OPEN_CHORD_EVENT } from '../../ui/events'
 import { bindSegmented, liveRegion, scoped, setPressed, svgEl } from '../../ui/dom'
 
 // ponytail: the 8 best shapes; the generator has dozens, add "more" if asked.
