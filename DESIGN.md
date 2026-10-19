@@ -1,7 +1,7 @@
 # Design
 
 Visual language: **Vercel Geist**, extracted from vercel.com/geist into
-`design-extract-output/` and codified as tokens in [ts/tokens.css](ts/tokens.css).
+`design-extract-output/` and codified as tokens in [ts/styles/tokens.css](ts/styles/tokens.css).
 
 ## Theme
 
@@ -32,7 +32,7 @@ semantic green for the in-tune lock. Everything else is neutral.
 ## Typography
 
 - **Geist** (sans) for UI text. **Geist Mono** for all data: note names,
-  frequencies, cents, scores. Variable woff2 self-hosted in `ts/fonts/`.
+  frequencies, cents, scores. Variable woff2 self-hosted in `ts/styles/fonts/`.
 - Body 14px. Large readout note 84px / Geist Mono / letter-spacing -0.04em.
 - Hierarchy comes from scale + weight, not color.
 

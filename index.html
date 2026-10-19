@@ -140,7 +140,7 @@
 				<button class="btn btn--block" type="button" data-action="skip">Skip note</button>
 			</div>
 
-			<!-- Ear training (ts/views/ear.ts): the app plays, the user names it. -->
+			<!-- Ear training (ts/features/trainer/ear.view.ts): the app plays, the user names it. -->
 			<div class="panel ear" data-only="ear" hidden>
 				<div class="ear__head">
 					<div class="ear__question">
@@ -167,7 +167,7 @@
 				<ol class="ear-stats__list"></ol>
 			</div>
 
-			<!-- Chord changes (ts/views/changes.ts): the player changes, the mic counts. -->
+			<!-- Chord changes (ts/features/trainer/changes.view.ts): the player changes, the mic counts. -->
 			<div class="panel changes-stage" data-only="changes" hidden>
 				<div class="changes-meta">
 					<span class="changes-clock">1:00</span>
@@ -206,7 +206,7 @@
 
 		<!-- Tuner --------------------------------------------------------- -->
 		<section class="view" id="view-tuner" role="tabpanel" aria-labelledby="tab-tuner">
-			<!-- Tuning picker + mode; options and chips are filled by ts/views/tuner.ts. -->
+			<!-- Tuning picker + mode; options and chips are filled by ts/features/tuner/tuner.view.ts. -->
 			<div class="tuner-head">
 				<select class="select tuner-tuning" aria-label="Tuning"></select>
 				<button class="btn help-btn" type="button" data-help="tuner" aria-haspopup="dialog" aria-label="How to use the tuner"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.6 9.4a2.5 2.5 0 0 1 4.8.9c0 1.7-2.4 2.2-2.4 3.7"/><path d="M12 17.2h.01"/></svg></button>
@@ -238,8 +238,8 @@
 
 		<!-- Chords ------------------------------------------------------- -->
 		<section class="view" id="view-chords" role="tabpanel" aria-labelledby="tab-chords" hidden>
-			<!-- Sub-views: Listen (the recognizer, ts/views/chords.ts), Library and
-			     Identify (ts/views/chord-library.ts). -->
+			<!-- Sub-views: Listen (the recognizer, ts/features/chords/chords.view.ts), Library and
+			     Identify (ts/features/chords/chord-library.view.ts). -->
 			<div class="view-top">
 				<div class="segmented chords-modes" role="group" aria-label="Chords mode">
 					<button type="button" data-chords-mode="listen" aria-pressed="true">Listen</button>
@@ -252,7 +252,7 @@
 				<!-- A button: the recognized chord opens in the Library. -->
 				<button type="button" class="readout__note readout__idle chord-link" disabled aria-label="No chord recognized">--</button>
 				<div class="readout__sub">Strum a chord</div>
-				<!-- Live pitch-class profile; chord tones highlight. Filled by ts/views/chords.ts. -->
+				<!-- Live pitch-class profile; chord tones highlight. Filled by ts/features/chords/chords.view.ts. -->
 				<div class="chroma" aria-hidden="true"></div>
 			</div>
 			<p class="hint">Strum and let it ring. Recognizes major, minor, 7, m7, maj7, 9, sus2 and sus4 chords.</p>
@@ -300,7 +300,7 @@
 			</div>
 		</section>
 
-		<!-- Scales: explorer + identifier on one fretboard (ts/views/scales.ts). -->
+		<!-- Scales: explorer + identifier on one fretboard (ts/features/scales/scales.view.ts). -->
 		<section class="view view--scales" id="view-scales" role="tabpanel" aria-labelledby="tab-scales" hidden>
 			<div class="view-top">
 				<div class="segmented scales-mode" role="group" aria-label="Mode">
@@ -376,7 +376,7 @@
 
 			<!-- Harmony (Explore): the scale's chords, progressions in its key, the
 			     circle of fifths. Identify: the scales a marked chord fits.
-			     ts/views/harmony.ts -->
+			     ts/features/scales/harmony.view.ts -->
 			<section class="harmony" aria-label="Harmony">
 				<div class="harmony__head">
 					<div class="segmented segmented--small harmony__tabs" role="group" aria-label="Harmony">
@@ -446,7 +446,7 @@
 			<ol class="scale-results"></ol>
 		</section>
 
-		<!-- Metronome: engine in ts/metronome.ts, view in ts/views/metronome.ts. -->
+		<!-- Metronome: engine in ts/core/metronome.ts, view in ts/features/metronome/metronome.view.ts. -->
 		<section class="view view--metronome" id="view-metronome" role="tabpanel" aria-labelledby="tab-metronome" hidden>
 			<div class="metro-flash" aria-hidden="true"></div>
 
@@ -543,7 +543,7 @@
 			</div>
 		</section>
 
-		<!-- Settings: its own tab (ts/views/settings-panel.ts). One group per tab, in tab
+		<!-- Settings: its own tab (ts/features/settings/settings.view.ts). One group per tab, in tab
 		     order; entering it scrolls to the group of the tab the user came from. -->
 		<section class="view view--settings" id="view-settings" role="tabpanel" aria-labelledby="tab-settings" hidden>
 			<button class="btn help-btn" type="button" data-help="settings" aria-haspopup="dialog" aria-label="How to use the app"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.6 9.4a2.5 2.5 0 0 1 4.8.9c0 1.7-2.4 2.2-2.4 3.7"/><path d="M12 17.2h.01"/></svg></button>
@@ -687,7 +687,7 @@
 							</span>
 							<input type="range" class="range" min="0.5" max="1.5" step="0.05" data-setting="fretSize" />
 						</label>
-						<!-- Harmony under the neck (ts/views/harmony.ts). -->
+						<!-- Harmony under the neck (ts/features/scales/harmony.view.ts). -->
 						<label class="switch">
 							<span class="switch__text">
 								<span class="switch__title">Chords shown</span>
@@ -935,7 +935,7 @@
 		</div>
 	</main>
 
-	<!-- Guide: one dialog, filled from the template of the tab whose ? was tapped (ts/help.ts). -->
+	<!-- Guide: one dialog, filled from the template of the tab whose ? was tapped (ts/ui/help.ts). -->
 	<dialog class="help" id="help" aria-labelledby="helpTitle">
 		<div class="help__head">
 			<h2 class="help__title" id="helpTitle"></h2>

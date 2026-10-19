@@ -22,7 +22,7 @@ import { appBand, appHighpass, CONDITIONS, decode, degrade, rms, spectrumDb } fr
 
 export const SAMPLE_RATE = 44100
 const HOP = Math.round(SAMPLE_RATE / 60) // one rAF frame
-// Same analyser settings as ts/microphone.ts (filters via appBand/appHighpass).
+// Same analyser settings as ts/core/microphone.ts (filters via appBand/appHighpass).
 export const CHORD_FFT_SIZE = 16384
 // Chords are scored at 10 Hz to keep runs short; AnalyserNode's 0.8 smoothing
 // per 60 Hz frame is 0.8^6 per 10 Hz step.

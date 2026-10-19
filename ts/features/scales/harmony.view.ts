@@ -158,7 +158,7 @@ export function createHarmony(root: HTMLElement, host: HarmonyHost) {
 		const voicing = voicingOf(chord)
 		if (!voicing) return
 		// Strings ringing together at 1/sqrt(n) each stay as loud as one note
-		// (ts/views/chord-library.ts); the mic ignores the whole note (NOTE_MS),
+		// (ts/features/chords/chord-library.view.ts); the mic ignores the whole note (NOTE_MS),
 		// not just its attack, or it would hear the chord as notes played.
 		const gain = 1 / Math.sqrt(voicing.frets.filter((f) => f >= 0).length)
 		let i = 0
@@ -173,7 +173,7 @@ export function createHarmony(root: HTMLElement, host: HarmonyHost) {
 
 	// ponytail: bars are timed with setTimeout from a fixed start (no drift,
 	// a few ms of jitter per bar); both strums of a bar go to the audio clock
-	// at once. Move to an AudioContext lookahead like ts/metronome.ts if the
+	// at once. Move to an AudioContext lookahead like ts/core/metronome.ts if the
 	// jitter is ever audible.
 	function playBar() {
 		if (!playing) return

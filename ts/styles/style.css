@@ -537,7 +537,7 @@ button {
 	gap: 10px;
 }
 
-/* Settings tab (ts/views/settings-panel.ts) ------------------------------- */
+/* Settings tab (ts/features/settings/settings.view.ts) ------------------------------- */
 /* A plain scrolling page: one group per tab, a heading over a card of rows. */
 .view--settings {
 	gap: 24px;
@@ -987,7 +987,7 @@ button {
 }
 
 /* Phones: the horizontal neck keeps a playable size and scrolls inside its
-   board; the vertical one is drawn to fit (ts/views/scales.ts). */
+   board; the vertical one is drawn to fit (ts/features/scales/scales.view.ts). */
 @media (max-width: 600px) {
 	.neck-board {
 		padding: 10px 6px 4px;
@@ -1013,7 +1013,7 @@ button {
 	bottom: auto;
 }
 
-/* The vertical neck gets its exact size inline from ts/views/scales.ts. */
+/* The vertical neck gets its exact size inline from ts/features/scales/scales.view.ts. */
 .neck--vertical {
 	max-width: none;
 	margin: 0 auto;
@@ -1190,7 +1190,7 @@ button {
 	stroke-width: 2.5;
 }
 
-/* Fretboard extras (ts/fretboard.ts): chord-diagram overlays ------------- */
+/* Fretboard extras (ts/ui/fretboard.ts): chord-diagram overlays ------------- */
 /* An optional tone: outline only. */
 .cell--optional circle {
 	fill: transparent;
@@ -1697,7 +1697,7 @@ button {
 }
 
 /* The meter's green band is the in-tune tolerance (--tol cents, 1 cent = 1% of
-   the track, set by ts/views/tuner.ts); yellow reaches 15 cents past it. The
+   the track, set by ts/features/tuner/tuner.view.ts); yellow reaches 15 cents past it. The
    Trainer never sets it, so its meter keeps the 5-cent band. */
 .meter__zones {
 	--tol: 5;
@@ -1859,7 +1859,7 @@ button {
 	border: 0;
 }
 
-/* "A4 = 432 Hz" where the Trainer and Scales show notes (ts/views/settings-panel.ts). */
+/* "A4 = 432 Hz" where the Trainer and Scales show notes (ts/features/settings/settings.view.ts). */
 .a4-note {
 	margin: 12px 0 0;
 	font-family: var(--font-mono);
@@ -1898,7 +1898,7 @@ button {
 	}
 }
 
-/* Metronome (ts/views/metronome.ts) ---------------------------------------- */
+/* Metronome (ts/features/metronome/metronome.view.ts) ---------------------------------------- */
 /* Six tabs: on phones the labels shrink and the tabs drop their side padding
    so "Metronome" (~56 px at 10.5 px) fits down to 360 px; narrower phones get
    icons only, the label kept for screen readers. The ellipsis is a backstop
@@ -1947,7 +1947,7 @@ button {
 	gap: var(--stack);
 }
 
-/* Beat 1 blink: a screen-sized wash that ts/views/metronome.ts animates. Under
+/* Beat 1 blink: a screen-sized wash that ts/features/metronome/metronome.view.ts animates. Under
    the docked tab bar (z-index 20) and never in the way of a tap. */
 .metro-flash {
 	position: fixed;
@@ -2037,7 +2037,7 @@ input.metro-bpm__value:focus {
 	margin: 22px 0 18px;
 }
 
-/* The button keeps the full --size as its tap target (ts/views/metronome.ts
+/* The button keeps the full --size as its tap target (ts/features/metronome/metronome.view.ts
    keeps that at 44 px or more); only the face inside shrinks, so beats read
    small without becoming hard to hit. */
 .metro-dot {
@@ -2374,7 +2374,7 @@ label.metro-row {
 	}
 }
 
-/* Trainer exercises: Notes / Intervals / Chords (ts/views/trainer.ts, ear.ts) */
+/* Trainer exercises: Notes / Intervals / Chords (ts/features/trainer/trainer.view.ts, ear.ts) */
 .trainer-mode {
 	align-self: flex-start;
 	width: 100%;
@@ -2643,7 +2643,7 @@ label.metro-row {
 	}
 }
 
-/* Chords: Listen / Library / Identify (ts/views/chord-library.ts) ---------- */
+/* Chords: Listen / Library / Identify (ts/features/chords/chord-library.view.ts) ---------- */
 .chord-library[hidden],
 .chord-identify[hidden],
 .chord-keys[hidden],
@@ -3015,7 +3015,7 @@ label.metro-row {
 	}
 }
 
-/* Scales harmony (ts/views/harmony.ts) ------------------------------------ */
+/* Scales harmony (ts/features/scales/harmony.view.ts) ------------------------------------ */
 /* Under the neck: one segmented control picks Chords, Progressions or the
    Circle, so Explore stays one neck and one row of chords until asked. */
 .harmony {
@@ -3496,7 +3496,7 @@ a.btn {
 	}
 }
 
-/* Trainer → Changes: chord-change drills (ts/views/changes.ts) ------------ */
+/* Trainer → Changes: chord-change drills (ts/features/trainer/changes.view.ts) ------------ */
 /* Phones: the stage (target, Start) first, the mic under it, the setup last;
    while running the setup is hidden. */
 .trainer--changes > .mic {
@@ -4038,7 +4038,7 @@ a.btn {
 	max-width: none;
 }
 
-/* Guide (?) button, and the dialog it opens (ts/help.ts). */
+/* Guide (?) button, and the dialog it opens (ts/ui/help.ts). */
 .help-btn {
 	flex: none;
 	width: 36px;

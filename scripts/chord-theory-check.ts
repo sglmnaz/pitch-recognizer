@@ -1,4 +1,4 @@
-// Self-check for ts/chord-theory.ts and ts/chord-shapes.ts: spelling, the
+// Self-check for ts/music/chord-theory.ts and ts/music/chord-shapes.ts: spelling, the
 // identifier, diatonic chords and the voicing generator against chord-book
 // shapes. Run with `npm run check:chord-theory` (`-- --verbose` lists the
 // generated shapes).

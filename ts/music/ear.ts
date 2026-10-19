@@ -1,5 +1,5 @@
 // Ear training (Trainer → Intervals / Chords): pure round logic. The view
-// (ts/views/trainer.ts) plays the questions with ts/sound.ts and feeds the
+// (ts/features/trainer/trainer.view.ts) plays the questions with ts/core/sound.ts and feeds the
 // answers back; nothing here touches the DOM or the audio graph, so
 // `npm run check:ear` runs it in Node.
 

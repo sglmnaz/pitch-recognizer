@@ -244,7 +244,7 @@ let stream: MediaStream | null = null
 let rafId: number | null = null
 // The latest analysis window, shared with the UI's waveform display.
 let waveform: Float32Array | null = null
-// Spectrum for chord recognition (ts/chords.ts), read on demand.
+// Spectrum for chord recognition (ts/music/chords.ts), read on demand.
 let chordAnalyser: AnalyserNode | null = null
 let chordSpectrum: Float32Array<ArrayBuffer> | null = null
 let recentFrequencies: number[] = []

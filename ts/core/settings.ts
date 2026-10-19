@@ -31,7 +31,7 @@ export interface Settings {
 	progressionLoop: boolean
 
 	/* Tuner ---------------------------------------------------------------- */
-	/** Tuning id (ts/tuning.ts). */
+	/** Tuning id (ts/music/tuning.ts). */
 	tuning: string
 	/** Chromatic: nearest note of any pitch. Guitar: cents off the nearest string of the tuning. */
 	tunerMode: 'chromatic' | 'guitar'
@@ -63,7 +63,7 @@ export interface Settings {
 	metroTrainerBars: number
 	metroTrainerTarget: number
 
-	/* Chords (ts/views/chord-library.ts) */
+	/* Chords (ts/features/chords/chord-library.view.ts) */
 	/** Sub-view of the Chords tab: live recognizer, chord dictionary, identifier. */
 	chordsMode: 'listen' | 'library' | 'identify'
 	/** What the chord diagram dots say (fingers: the finger numbers move into the dots). */
@@ -71,14 +71,14 @@ export interface Settings {
 	/** Tapping a chord: all strings at once, low to high, or one by one. */
 	chordPlay: 'strum' | 'arpeggio'
 
-	/* Fretboard (shared by every neck, ts/fretboard.ts) */
+	/* Fretboard (shared by every neck, ts/ui/fretboard.ts) */
 	/** Mirror the neck: nut on the right when horizontal, low string on the right when vertical. */
 	leftHanded: boolean
 
-	/* Trainer: ear training (ts/ear.ts) */
+	/* Trainer: ear training (ts/music/ear.ts) */
 	/** Which exercise the Trainer shows. */
 	trainerExercise: 'notes' | 'intervals' | 'chords' | 'changes'
-	/** Interval ids (ts/ear.ts INTERVALS) and chord quality ids (QUALITIES) asked. */
+	/** Interval ids (ts/music/ear.ts INTERVALS) and chord quality ids (QUALITIES) asked. */
 	earIntervals: string[]
 	earChords: string[]
 	/** How the two notes of an interval are played; mixed picks one per question. */
@@ -90,7 +90,7 @@ export interface Settings {
 	/** Move on by itself shortly after a right answer. */
 	earAutoAdvance: boolean
 
-	/* Trainer: chord changes (ts/changes.ts) */
+	/* Trainer: chord changes (ts/music/changes.ts) */
 	/** The chords changed between, in order: 2–4 of Changes.CHANGE_CHORDS (fewer only mid-selection). */
 	changesChords: string[]
 	/** One-minute changes (count them) or in time with the metronome. */
@@ -237,7 +237,7 @@ export function load(): Settings {
 		metroVolume: clamp(s.metroVolume, 0, 1, d.metroVolume),
 		metroFlash: bool(s.metroFlash, d.metroFlash),
 		metroTrainerOn: bool(s.metroTrainerOn, d.metroTrainerOn),
-		// The ranges of the steppers in ts/views/metronome.ts.
+		// The ranges of the steppers in ts/features/metronome/metronome.view.ts.
 		metroTrainerStep: clamp(s.metroTrainerStep, 1, 20, d.metroTrainerStep, true),
 		metroTrainerBars: clamp(s.metroTrainerBars, 1, 16, d.metroTrainerBars, true),
 		metroTrainerTarget: clamp(s.metroTrainerTarget, 30, 300, d.metroTrainerTarget, true),

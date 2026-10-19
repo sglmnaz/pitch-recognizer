@@ -101,7 +101,7 @@ scripts.
 
 ## How detection works
 
-**Notes** (`ts/microphone.ts`): the mic stream (browser voice processing off) is
+**Notes** (`ts/core/microphone.ts`): the mic stream (browser voice processing off) is
 band-limited to the guitar (two 70 Hz high-pass stages, 1.4 kHz low-pass) and
 analysed every animation frame with the McLeod Pitch Method, the autocorrelation
 computed from the power spectrum after subtracting the learned room noise. An
@@ -110,7 +110,7 @@ lock, a median window and a One Euro filter keep the readout steady. On the test
 split of the benchmark it reads the right note in the right octave in ~98.5 % of
 frames on clean electric recordings.
 
-**Chords** (`ts/chords.ts`): a small learned model (10.7k parameters, its weights a
+**Chords** (`ts/music/chords.ts`): a small learned model (10.7k parameters, its weights a
 separate chunk loaded on first use) turns a log-frequency, harmonically stacked
 spectrum into per-semitone salience, then chroma and bass features, and scores the
 8 chord types on all 12 roots plus "no chord"; an HMM smooths it over time.
@@ -126,28 +126,35 @@ in a new room. Details in [bench/README.md](bench/README.md).
 index.html              App shell: all markup; TS only wires it up
 vite.config.ts          Vite + PWA (manifest, Workbox precache)
 ts/
-  index.ts              Tab routing, shared mic block, mic lifecycle
-  microphone.ts         Web Audio capture + MPM pitch detection loop
-  fft.ts                FFT used by the detector
-  chords.ts             Learned chord recognizer (+ chord-model.ts weights)
-  notes.ts / tuning.ts  Note table and helpers / tuning presets
-  scales.ts             Scale formulas, fretboard constants, scale identifier
-  chord-theory.ts       Chord spelling, identifier, chords of a scale
-  chord-shapes.ts       Playable voicing generator
-  harmony.ts            Keys, progressions, circle of fifths
-  ear.ts / changes.ts   Ear-training and chord-change drill logic
-  game.ts               Notes trainer rounds and scoring
-  metronome.ts          Lookahead click engine (own AudioContext)
-  sound.ts              Plucked-string synth and reference tones
-  fretboard.ts          Shared SVG neck
-  settings.ts           Persisted, validated settings store
-  music-renderer.ts     VexFlow staff
-  tokens.css / style.css  Geist tokens (light + dark) / layout and components
-  views/                One factory per tab or sub-view (tuner, chords,
-                        chord-library, scales, harmony, trainer, ear, changes,
-                        metronome, settings-panel)
+  main.ts               Tab routing, shared mic block, mic lifecycle
+  core/                 Runtime services
+    microphone.ts       Web Audio capture + MPM pitch detection loop
+    fft.ts              FFT used by the detector
+    sound.ts            Plucked-string synth and reference tones
+    metronome.ts        Lookahead click engine (own AudioContext)
+    settings.ts         Persisted, validated settings store
+    notes.ts            Note table and helpers
+  music/                Pure music logic (the checks run it under Node)
+    chords.ts           Learned chord recognizer (+ chord-model.ts weights)
+    tuning.ts           Tuning presets
+    scales.ts           Scale formulas, fretboard constants, scale identifier
+    chord-theory.ts     Chord spelling, identifier, chords of a scale
+    chord-shapes.ts     Playable voicing generator
+    chord-library.ts    Library helpers (labels, keys, symbol parsing)
+    harmony.ts          Keys, progressions, circle of fifths
+    ear.ts / changes.ts Ear-training and chord-change drill logic
+    game.ts             Notes trainer rounds and scoring
+  ui/                   Shared UI: view.ts (the View interface), fretboard.ts
+                        (SVG neck), music-renderer.ts (VexFlow staff), help.ts
+  features/<tab>/       One folder per tab, a factory per view (*.view.ts):
+                        tuner, chords (+ chord-library), scales (+ harmony),
+                        trainer (+ ear, changes), metronome, settings
+  styles/               tokens.css / style.css (Geist tokens, light + dark /
+                        layout and components), fonts/
 scripts/                Self-checks, benchmark, chord-model training data
 bench/                  Benchmark notes and results
+tests/visual/           Playwright visual regression suite and its baselines
+docs/adr/               Architecture decision records
 ```
 
 ## Install (PWA) and deploy

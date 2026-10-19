@@ -1,4 +1,4 @@
-// Self-check for ts/changes.ts: stability, change counting, in-time judging,
+// Self-check for ts/music/changes.ts: stability, change counting, in-time judging,
 // speed-up and records, on synthetic streams of recognized chord symbols.
 // Run with `npm run check:changes`.
 import {

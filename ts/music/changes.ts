@@ -1,5 +1,5 @@
 // Chord-change trainer (Trainer → Changes): pure logic. The view
-// (ts/views/changes.ts) feeds it the chord the mic hears every frame and the
+// (ts/features/trainer/changes.view.ts) feeds it the chord the mic hears every frame and the
 // metronome's downbeats; nothing here touches the DOM or the audio graph, so
 // `npm run check:changes` runs it in Node.
 
@@ -41,7 +41,7 @@ export function validSequence(value: unknown): string[] {
 // A chord counts once the recognizer has named it for STABLE_MS: long enough
 // that a strum's attack (and a metronome click) passing through other chord
 // names is not a change, short enough that a fast change still lands. The
-// HMM tracker (ts/chords.ts) already smooths over time, so this only has to
+// HMM tracker (ts/music/chords.ts) already smooths over time, so this only has to
 // outlast a few frames of its switching (the raw per-frame recognizer
 // needed 150 ms); more would just add latency.
 export const STABLE_MS = 70

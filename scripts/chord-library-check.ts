@@ -1,4 +1,4 @@
-// Self-check for ts/chord-library.ts: picker grouping, keys containing a
+// Self-check for ts/music/chord-library.ts: picker grouping, keys containing a
 // chord, symbol parsing, a marked shape's notes and the match notes. Run with
 // `npm run check:chord-library`.
 import { CHORD_GROUPS, keysOf, matchNotes, parseChordSymbol, ROOT_LABELS, shapeNotes, voicingCaption } from '../ts/music/chord-library.ts'

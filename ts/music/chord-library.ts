@@ -1,5 +1,5 @@
 // Pure helpers for the chord Library and Identify sub-views of the Chords tab
-// (ts/views/chord-library.ts): picker labels and grouping, the keys a chord
+// (ts/features/chords/chord-library.view.ts): picker labels and grouping, the keys a chord
 // is diatonic to, symbol parsing, a marked shape's notes and how a match
 // differs from what was played. No DOM, so `npm run check:chord-library`
 // runs it under Node.

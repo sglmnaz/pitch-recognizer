@@ -52,7 +52,7 @@ export function pitchClassOf(name: string): number {
 function parseDegree(degree: string) {
 	const number = Number(degree.replace(/[#b]/g, ''))
 	const acc = [...degree].reduce((sum, ch) => sum + (ch === '#' ? 1 : ch === 'b' ? -1 : 0), 0)
-	// 9, 11, 13 (chord extensions, ts/chord-theory.ts) are 2, 4, 6 an octave up.
+	// 9, 11, 13 (chord extensions, ts/music/chord-theory.ts) are 2, 4, 6 an octave up.
 	return { number, semitones: MAJOR_STEPS[(number - 1) % 7] + 12 * Math.floor((number - 1) / 7) + acc }
 }
 
@@ -65,7 +65,7 @@ export function semitonesOf(type: ScaleType): number[] {
 }
 
 /** Each degree on its own letter from the root, e.g. F major → F G A Bb C D E.
- * Never swaps the root's spelling (ts/harmony.ts keeps a key's letters: Db
+ * Never swaps the root's spelling (ts/music/harmony.ts keeps a key's letters: Db
  * blues has Gb7, not F#7). */
 export function spellFrom(root: string, type: ScaleType): string[] {
 	const rootLetter = LETTERS.indexOf(root[0])

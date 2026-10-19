@@ -1,4 +1,4 @@
-// Self-check for ts/metronome.ts: drives the scheduler with a fake audio clock
+// Self-check for ts/core/metronome.ts: drives the scheduler with a fake audio clock
 // and a jittery timer, and checks click times, accents, subdivisions, mute and
 // the speed trainer. Run with `npm run check:metronome`.
 import * as Metronome from '../ts/core/metronome.ts'

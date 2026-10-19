@@ -1,5 +1,5 @@
-// Trainer → Intervals / Chords: the app plays (ts/sound.ts), the user names
-// what it heard. Round logic lives in ts/ear.ts; this wires the DOM.
+// Trainer → Intervals / Chords: the app plays (ts/core/sound.ts), the user names
+// what it heard. Round logic lives in ts/music/ear.ts; this wires the DOM.
 import * as Ear from '../../music/ear'
 import * as Settings from '../../core/settings'
 import * as Sound from '../../core/sound'

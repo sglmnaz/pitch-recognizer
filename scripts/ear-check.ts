@@ -1,4 +1,4 @@
-// Self-check for ts/ear.ts: tables, question generation, playback timing,
+// Self-check for ts/music/ear.ts: tables, question generation, playback timing,
 // sung answers, scoring. Run with `npm run check:ear`.
 import {
 	answer,

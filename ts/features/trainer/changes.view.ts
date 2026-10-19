@@ -1,7 +1,7 @@
 // Trainer → Changes: chord-change drills. One-minute changes (count every
 // clean change in 30 s – 2 min, best and history per pair) and In time
 // (change on the metronome's downbeat, each change marked). Logic lives in
-// ts/changes.ts; this wires the DOM, the mic and the metronome.
+// ts/music/changes.ts; this wires the DOM, the mic and the metronome.
 import * as Changes from '../../music/changes'
 import * as Metronome from '../../core/metronome'
 import * as Microphone from '../../core/microphone'
@@ -28,7 +28,7 @@ export interface HeardChord {
 	confidence?: number
 }
 
-// Our own tracker (ts/chords.ts): the Chords view's smoother never shares state with it.
+// Our own tracker (ts/music/chords.ts): the Chords view's smoother never shares state with it.
 const tracker = createChordTracker()
 // Like the Chords view: forget the tracked chord after this much continuous
 // silence (not on every silent frame, a strum's gaps are part of it), so the

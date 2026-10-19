@@ -1,8 +1,8 @@
 // The Chords tab's other two sub-views beside the live recognizer: Library
 // (pick a root and type: symbol, notes, keys, playable voicings) and Identify
 // (mark one note per string on a neck, get the chord). Owns the Listen /
-// Library / Identify switch; ts/views/chords.ts keeps the recognizer and only
-// calls onActivate and openChord. Pure logic lives in ts/chord-library.ts.
+// Library / Identify switch; ts/features/chords/chords.view.ts keeps the recognizer and only
+// calls onActivate and openChord. Pure logic lives in ts/music/chord-library.ts.
 import { createFretboard, type Dot, type Fretboard } from '../../ui/fretboard'
 import * as Settings from '../../core/settings'
 import * as Sound from '../../core/sound'
@@ -42,7 +42,7 @@ const capitalized = (text: string) => text[0].toUpperCase() + text.slice(1)
 
 /** Strings low to high, all at once or one by one (the Play as setting). A
  * new strum cuts the last one off instead of stacking on it; six strings
- * ringing together at 1/sqrt(n) each stay as loud as one note, like ts/views/ear.ts. */
+ * ringing together at 1/sqrt(n) each stay as loud as one note, like ts/features/trainer/ear.view.ts. */
 function play(midis: number[]) {
 	const step = Settings.get().chordPlay === 'arpeggio' ? ARPEGGIO_S : STRUM_S
 	const gain = 1 / Math.sqrt(Math.max(1, midis.length))

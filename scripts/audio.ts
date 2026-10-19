@@ -38,7 +38,7 @@ export function biquad(signal: Float32Array, sampleRate: number, type: 'highpass
 	return out
 }
 
-/** The app's high-pass stages (ts/microphone.ts), as Web Audio applies them. */
+/** The app's high-pass stages (ts/core/microphone.ts), as Web Audio applies them. */
 export function appHighpass(signal: Float32Array, sampleRate: number): Float32Array {
 	let out = signal
 	for (let stage = 0; stage < HIGHPASS_STAGES; stage++) out = biquad(out, sampleRate, 'highpass', HIGHPASS_HZ)

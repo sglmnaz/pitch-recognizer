@@ -9,7 +9,7 @@ import { spectrumDb as analyserSpectrum } from './audio.ts'
 await loadChordModel()
 
 const SAMPLE_RATE = 44100
-const FFT_SIZE = 16384 // must match CHORD_FFT_SIZE in ts/microphone.ts
+const FFT_SIZE = 16384 // must match CHORD_FFT_SIZE in ts/core/microphone.ts
 
 let seed = 5
 const noise = () => ((seed = (seed * 16807) % 2147483647) / 2147483647) * 2 - 1

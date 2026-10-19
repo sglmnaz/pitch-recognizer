@@ -1,5 +1,5 @@
 // Chord recognition from a magnitude spectrum with a small learned model
-// (weights in ts/chord-model.ts, trained by scripts/chord-train.py on the
+// (weights in ts/music/chord-model.ts, trained by scripts/chord-train.py on the
 // benchmark's tune split) and HMM smoothing over time. Pure functions plus the
 // smoother's state, so scripts/chord-check.ts and scripts/bench.ts run them in
 // Node on synthetic strums and recordings.

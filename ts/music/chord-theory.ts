@@ -1,7 +1,7 @@
 // Pure chord data + helpers: chord types as degree formulas, spelling, the
 // identifier and the diatonic chords of a scale. No DOM, so
 // `npm run check:chord-theory` can run it under Node. Chord types have the
-// same shape as scale types, so ts/scales.ts spells them (degreesOf,
+// same shape as scale types, so ts/music/scales.ts spells them (degreesOf,
 // semitonesOf, spellScale all accept a ChordType).
 import { degreesOf, pitchClassesOf, ROOTS, semitonesOf, spellScale, type ScaleType } from './scales.ts'
 
@@ -84,7 +84,7 @@ export interface ChordMatch extends SpelledChord {
  * fewest missing + extra notes, then the root being the bass, then how common
  * the chord is. The root must be played; at most one extra note and one
  * missing required tone. Omittable tones (the 5th, an 11's 3rd and 9th — what
- * ts/chord-shapes.ts may leave out) may all be missing at half cost each, so
+ * ts/music/chord-shapes.ts may leave out) may all be missing at half cost each, so
  * every generated voicing is recognised.
  */
 export function identifyChords(pitchClasses: Set<number>, bassPc?: number): ChordMatch[] {

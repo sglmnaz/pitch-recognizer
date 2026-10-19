@@ -12,8 +12,8 @@ const CENTS_RANGE = 50
 
 /**
  * Four exercises behind one segmented control: Notes (match the note on the
- * staff with the mic), the ear drills Intervals / Chords (ts/views/ear.ts) and
- * Changes, chord-change drills played into the mic (ts/views/changes.ts).
+ * staff with the mic), the ear drills Intervals / Chords (ts/features/trainer/ear.view.ts) and
+ * Changes, chord-change drills played into the mic (ts/features/trainer/changes.view.ts).
  * `onMicNeed` tells index.ts that wantsMic() changed: Chords has no use for it.
  */
 export function createTrainerView(root: HTMLElement, onMicNeed: () => void): View {

@@ -1,7 +1,7 @@
 # Benchmark
 
 `npm run bench` runs the app's own note and chord detection (`processFrame` from
-`ts/microphone.ts`, `trackChord` from `ts/chords.ts`) over labelled guitar
+`ts/core/microphone.ts`, `trackChord` from `ts/music/chords.ts`) over labelled guitar
 audio and reports mir_eval-style metrics, accuracy **and** response time, so
 changes can be compared on the same data. Needs `ffmpeg` on the PATH.
 
@@ -91,7 +91,7 @@ instead of ~50 cm is ~+14 dB.
 
 ## 2026-10-19: learned chord recognizer
 
-`ts/chords.ts` no longer matches templates against a hand-made chroma. Per
+`ts/music/chords.ts` no longer matches templates against a hand-made chroma. Per
 analyser frame (16384-point spectrum, unchanged): log-frequency spectrum at 3
 bins per semitone on the A4 reference → harmonic stacking (sub-harmonics 1/5–1/2
 and harmonics 1–7, as Basic Pitch's HCQT: Bittner et al., ICASSP 2022) → three
@@ -102,7 +102,7 @@ ISMIR 2010 — and of the deep chroma extractor — Korzeniowski & Widmer, ISMIR
 by one MLP shared by all 12 roots → softmax over 12 × 8 types + "no chord" →
 HMM forward filtering with a uniform switch rate (no lag; Cho & Bello, IEEE/ACM
 TASLP 2014: enforcing continuity is what matters). 10.7k parameters, weights in
-`ts/chord-model.ts` (~94 KB, 39 KB gzipped, its own chunk loaded on the first
+`ts/music/chord-model.ts` (~94 KB, 39 KB gzipped, its own chunk loaded on the first
 visit to Chords, not at start-up). Per frame 0.56–0.59 ms in Node 24 on the dev
 desktop (logSpectrum 0.02 ms of it), so it runs on every rAF frame (no frame
 skipping; the HMM is time-based and would handle it).
@@ -112,7 +112,7 @@ Training (tune split only — test-split audio is never read):
 ```
 node scripts/chord-data.ts --out <dir>              # GuitarSet 00-01 + IDMT "fast", 5 conditions
 node scripts/chord-data.ts --out <dir> --synth 160  # synthetic strums, every chord type equally often
-python scripts/chord-train.py --data <dir> --synth --labels perf          # -> ts/chord-model.ts
+python scripts/chord-train.py --data <dir> --synth --labels perf          # -> ts/music/chord-model.ts
 python scripts/chord-train.py --data <dir> --synth --labels perf --val    # hold out GuitarSet 01 + half of IDMT
 ```
 

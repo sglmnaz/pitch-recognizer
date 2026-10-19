@@ -1,4 +1,4 @@
-// Self-check for ts/scales.ts: spellings and identifier results. Run with
+// Self-check for ts/music/scales.ts: spellings and identifier results. Run with
 // `npm run check:scales`.
 import {
 	degreeMap,

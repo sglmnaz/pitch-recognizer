@@ -1,4 +1,4 @@
-// Self-check for ts/harmony.ts: scale families, chord sources, progressions
+// Self-check for ts/music/harmony.ts: scale families, chord sources, progressions
 // spelled in every key, the circle of fifths and scales-for-a-chord. Run with
 // `npm run check:harmony`.
 import { chordsOfScale } from '../ts/music/chord-theory.ts'

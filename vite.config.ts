@@ -2,7 +2,7 @@ import { defineConfig } from 'vite'
 import { VitePWA } from 'vite-plugin-pwa'
 
 // Vite serves the project root as-is and uses index.html as the entry point.
-// `index.html` references `ts/index.ts` directly, so there is no separate
+// `index.html` references `ts/main.ts` directly, so there is no separate
 // compile step the way Webpack required.
 export default defineConfig({
 	server: {
