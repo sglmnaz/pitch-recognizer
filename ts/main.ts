@@ -17,7 +17,7 @@ const tabButtons = Array.from(document.querySelectorAll<HTMLButtonElement>('[dat
 // (ts/ui/mic-block.ts). Built first, as it always was.
 const scalesView = createScalesView(byId('view-scales'))
 
-const views: Record<string, { view: View; section: HTMLElement }> = {
+const tabs = {
 	// Switching between its exercises changes whether it needs the mic.
 	trainer: { view: createTrainerView(byId('view-trainer')), section: byId('view-trainer') },
 	tuner: { view: createTunerView(byId('view-tuner')), section: byId('view-tuner') },
@@ -28,7 +28,8 @@ const views: Record<string, { view: View; section: HTMLElement }> = {
 	metronome: { view: createMetronomeView(byId('view-metronome')), section: byId('view-metronome') },
 	// Opens at the group of the tab the user came from. No mic (wantsMic false).
 	settings: { view: createSettingsView(byId('view-settings'), () => lastTab), section: byId('view-settings') },
-}
+} satisfies Record<string, { view: View; section: HTMLElement }>
+const views: Record<string, { view: View; section: HTMLElement }> = tabs
 
 let currentName = 'tuner'
 // The last tab shown other than Settings: the group Settings scrolls to on
@@ -38,6 +39,10 @@ let lastTab: string | null = null
 /* View routing ----------------------------------------------------------- */
 function activate(name: string) {
 	if (!views[name]) name = 'tuner'
+	// Opening another tab stops the metronome's clicks: nothing else on screen
+	// could stop them, and the tuner's microphone would hear them. Settings is
+	// the exception: it has no mic, and a sound or volume change there must be heard.
+	if (name !== 'metronome' && name !== 'settings') tabs.metronome.view.stop()
 	views[currentName].view.reset()
 	// Nothing the last tab played keeps sounding into the next (or into its mic).
 	Sound.stopAll()

@@ -39,7 +39,7 @@ const tempoName = (bpm: number) => TEMPO_NAMES.find(([limit]) => bpm < limit)![1
 // Tapping a beat dot cycles normal → accent → mute.
 const NEXT_ACCENT: Metronome.Accent[] = [1, 2, 0]
 
-export function createMetronomeView(root: HTMLElement): View {
+export function createMetronomeView(root: HTMLElement): View & { stop(): void } {
 	const { $, $$ } = scoped(root)
 	const bpmValue = $<HTMLInputElement>('.metro-bpm__value')
 	const name = $<HTMLElement>('.metro-name')
@@ -217,14 +217,6 @@ export function createMetronomeView(root: HTMLElement): View {
 	// tempo slider. (Buttons, switches and selects act on Space themselves.)
 	onBareKey([root], ['Space'], toggle, (target) => target instanceof HTMLInputElement && target.type === 'range')
 
-	// Opening another tab stops the clicks: nothing else on screen could stop
-	// them, and the tuner's microphone would hear them. Settings is the
-	// exception: it has no mic, and a sound or volume change there must be heard.
-	window.addEventListener('hashchange', () => {
-		const tab = location.hash.replace('#', '')
-		if (tab !== 'metronome' && tab !== 'settings') halt()
-	})
-
 	/* Beats ----------------------------------------------------------------- */
 	function showBpm(bpm: number, force = false) {
 		// Never overwrite what the user is typing.
@@ -361,10 +353,12 @@ export function createMetronomeView(root: HTMLElement): View {
 			if (!Metronome.getState().running) Metronome.setTempo(Settings.get().metroBpm)
 			sync()
 		},
-		// No microphone here; stopping on leaving the tab is the hashchange listener's job
-		// (reset() also runs when the mic is stopped or blocked, which must not stop the clicks).
+		// No microphone here; stopping on leaving the tab is stop()'s job, called by
+		// main.ts (reset() also runs when the mic is stopped or blocked, which must not stop the clicks).
 		onReading() {},
 		reset() {},
 		wantsMic: () => false,
+		/** Stops clicks this tab started (the Changes drill's are not its own). */
+		stop: halt,
 	}
 }
