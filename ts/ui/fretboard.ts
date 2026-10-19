@@ -73,7 +73,7 @@ export interface Fretboard {
 	light(heard: number | null, playing?: number | null): void
 	/** Brings the position box into view (page scroll when vertical, board scroll when horizontal). */
 	revealBox(): void
-	/** Stops the autoRender subscription. */
+	/** Stops the autoRender subscription and the tap listeners. */
 	destroy(): void
 }
 
@@ -157,12 +157,20 @@ export function createFretboard(svg: SVGSVGElement, board: HTMLElement | null, o
 		options.onTap(string, fret, Number(cell.dataset.midi))
 		if (!cell.isConnected) svg.querySelector<SVGGElement>(`[data-s="${string}"][data-f="${fret}"]`)?.focus()
 	}
-	svg.addEventListener('click', (event) => onCell(event.target))
-	svg.addEventListener('keydown', (event) => {
-		if (event.key !== 'Enter' && event.key !== ' ') return
-		event.preventDefault()
-		onCell(event.target)
-	})
+	// One controller for the board's listeners: destroy() drops them with the
+	// subscription, so a board rebuilt on the same svg never stacks handlers.
+	const listeners = new AbortController()
+	const { signal } = listeners
+	svg.addEventListener('click', (event) => onCell(event.target), { signal })
+	svg.addEventListener(
+		'keydown',
+		(event) => {
+			if (event.key !== 'Enter' && event.key !== ' ') return
+			event.preventDefault()
+			onCell(event.target)
+		},
+		{ signal }
+	)
 
 	// Equal frets: stretch the screen's 0–15 to the full 0–22 neck.
 	function fillLength() {
@@ -378,6 +386,9 @@ export function createFretboard(svg: SVGSVGElement, board: HTMLElement | null, o
 			}
 		},
 
-		destroy: unsubscribe,
+		destroy() {
+			unsubscribe()
+			listeners.abort()
+		},
 	}
 }

@@ -8,8 +8,8 @@ import * as Microphone from '../../core/microphone'
 import * as Settings from '../../core/settings'
 import { createChordTracker, loadChordModel, PITCH_CLASSES, withSilenceReset } from '../../music/chords'
 import { parseChordSymbol } from '../../music/chord-library'
-import { chordShapes, voicingSpec } from '../../music/chord-shapes'
-import { createFretboard, type Fretboard } from '../../ui/fretboard'
+import { chordShapes } from '../../music/chord-shapes'
+import { chordDiagram, type ChordDiagram } from '../../ui/chord-diagram'
 import type { View } from '../../ui/view'
 import { bindSegmented, liveRegion, onBareKey, scoped } from '../../ui/dom'
 import { reducedMotion } from '../../ui/media'
@@ -158,30 +158,31 @@ export function createChangesView(root: HTMLElement): View {
 	const isRunning = () => phase === 'countin' || phase === 'running'
 
 	/* Chord diagrams ------------------------------------------------------- */
-	let shapes: { symbol: string; figure: HTMLElement; board: Fretboard }[] = []
+	let shapes: { symbol: string; figure: HTMLElement; diagram: ChordDiagram }[] = []
 	let shapesKey = ''
 
 	function renderShapes(sequence: string[]) {
 		const key = sequence.join()
 		if (key === shapesKey) return
 		shapesKey = key
-		for (const shape of shapes) shape.board.destroy()
+		for (const shape of shapes) shape.diagram.destroy()
 		shapes = sequence.map((symbol) => {
 			// The setting only holds Changes.CHANGE_CHORDS, all parseable.
 			const { rootPc, type } = parseChordSymbol(symbol)!
 			const figure = document.createElement('figure')
 			figure.className = 'changes-shape'
-			const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
-			svg.classList.add('neck')
+			// autoRender: redrawn when left-handed or the board theme changes. Three
+			// or four across a phone are too small for degree labels: plain dots.
+			const diagram = chordDiagram(rootPc, type, chordShapes(rootPc, type, { limit: 1 })[0], {
+				autoRender: true,
+				labels: sequence.length > 2 ? 'none' : 'degrees',
+				fingers: false,
+			})
 			const caption = document.createElement('figcaption')
 			caption.textContent = symbol
-			figure.append(svg, caption)
-			// autoRender: redrawn when left-handed or the board theme changes.
-			const board = createFretboard(svg, null, { autoRender: true })
-			const voicing = chordShapes(rootPc, type, { limit: 1 })[0]
-			// Three or four across a phone are too small for degree labels: plain dots.
-			if (voicing) board.render(voicingSpec(voicing, rootPc, type, { fingers: false, labels: sequence.length > 2 ? 'none' : 'degrees' }))
-			return { symbol, figure, board }
+			figure.append(diagram.el, caption)
+			diagram.render()
+			return { symbol, figure, diagram }
 		})
 		shapesBox.replaceChildren(...shapes.map((shape) => shape.figure))
 		shapesBox.style.setProperty('--n', String(Math.max(2, shapes.length)))

@@ -18,7 +18,7 @@ export function byId<T extends HTMLElement>(id: string): T {
 }
 
 /** An SVG element with its attributes, set in the order given. */
-export function svgEl(name: string, attrs: Record<string, string | number>) {
+export function svgEl<K extends keyof SVGElementTagNameMap>(name: K, attrs: Record<string, string | number>): SVGElementTagNameMap[K] {
 	const el = document.createElementNS('http://www.w3.org/2000/svg', name)
 	for (const [k, v] of Object.entries(attrs)) el.setAttribute(k, String(v))
 	return el

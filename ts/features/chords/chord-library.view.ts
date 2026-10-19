@@ -3,11 +3,12 @@
 // (mark one note per string on a neck, get the chord). Owns the Listen /
 // Library / Identify switch; ts/features/chords/chords.view.ts keeps the recognizer and only
 // calls onActivate and openChord. Pure logic lives in ts/music/chord-library.ts.
-import { createFretboard, type Dot, type Fretboard } from '../../ui/fretboard'
+import { createFretboard, type Dot } from '../../ui/fretboard'
+import { chordDiagram, type ChordDiagram } from '../../ui/chord-diagram'
 import * as Settings from '../../core/settings'
 import * as Sound from '../../core/sound'
 import { CHORD_TYPES, identifyChords, spellChord, type ChordType } from '../../music/chord-theory'
-import { chordShapes, shapeString, voicingSpec, type Voicing } from '../../music/chord-shapes'
+import { chordShapes, shapeString } from '../../music/chord-shapes'
 import { CHORD_GROUPS, keysOf, matchNotes, parseChordSymbol, ROOT_LABELS, shapeNotes, voicingCaption } from '../../music/chord-library'
 import { degreeMap, degreeRole, pitchClassOf, ROOTS, STRINGS } from '../../music/scales'
 import { OPEN_CHORD_EVENT } from '../../ui/events'
@@ -107,8 +108,9 @@ export function createChordModes(root: HTMLElement, onMicNeed: () => void): Chor
 	let rootPc = 0
 	let type: ChordType = CHORD_TYPES[0]
 	let builtFor = ''
-	// Diagrams drawn so far; dropped (destroy) when the chord changes.
-	let drawn: { board: Fretboard; voicing: Voicing }[] = []
+	// The chord's diagrams, and those drawn so far; dropped (destroy) when the chord changes.
+	let diagrams: ChordDiagram[] = []
+	let drawn: ChordDiagram[] = []
 
 	const rootButtons = ROOT_LABELS.map((label, pc) => {
 		const button = document.createElement('button')
@@ -135,17 +137,6 @@ export function createChordModes(root: HTMLElement, onMicNeed: () => void): Chor
 		renderLibrary()
 	})
 
-	// Fingers: the numbers move into the dots, so the row under the diagram goes.
-	function specOf(voicing: Voicing) {
-		const labels = Settings.get().chordLabels
-		const spec = voicingSpec(voicing, rootPc, type, {
-			labels: labels === 'fingers' ? 'none' : labels,
-			fingers: labels !== 'fingers',
-		})
-		if (labels === 'fingers') for (const dot of spec.dots) dot.label = voicing.fingers[dot.string] ? String(voicing.fingers[dot.string]) : ''
-		return spec
-	}
-
 	// A page holds 8 diagrams of ~150 elements each: draw them as they scroll in.
 	const observer = new IntersectionObserver(
 		(entries) => {
@@ -155,10 +146,9 @@ export function createChordModes(root: HTMLElement, onMicNeed: () => void): Chor
 				const card = entry.target as HTMLElement
 				// A record queued before the chord changed: that card is gone.
 				if (!card.isConnected) continue
-				const voicing = chordShapes(rootPc, type, { limit: VOICINGS })[Number(card.dataset.index)]
-				const board = createFretboard(card.querySelector('svg')!, null)
-				board.render(specOf(voicing))
-				drawn.push({ board, voicing })
+				const diagram = diagrams[Number(card.dataset.index)]
+				diagram.render()
+				drawn.push(diagram)
 			}
 		},
 		{ rootMargin: '200px 0px' }
@@ -166,14 +156,21 @@ export function createChordModes(root: HTMLElement, onMicNeed: () => void): Chor
 
 	function redrawDiagrams() {
 		staleDiagrams = false
-		for (const { board, voicing } of drawn) board.render(specOf(voicing))
+		for (const diagram of drawn) diagram.render()
 	}
 
 	function buildVoicings(symbol: string) {
 		observer.disconnect()
-		drawn.forEach(({ board }) => board.destroy())
+		diagrams.forEach((diagram) => diagram.destroy())
 		drawn = []
 		const voicings = chordShapes(rootPc, type, { limit: VOICINGS })
+		// Labels per the setting, read at every draw.
+		diagrams = voicings.map((voicing) =>
+			chordDiagram(rootPc, type, voicing, {
+				svg: svgEl('svg', { class: 'neck', 'aria-hidden': 'true' }),
+				labels: () => Settings.get().chordLabels,
+			})
+		)
 		noVoicings.hidden = voicings.length > 0
 		voicingList.replaceChildren(
 			...voicings.map((voicing, i) => {
@@ -186,14 +183,13 @@ export function createChordModes(root: HTMLElement, onMicNeed: () => void): Chor
 				button.className = 'voicing__btn'
 				button.setAttribute('aria-label', `Play ${symbol}, ${shapeString(voicing)}, ${caption.position}`)
 				button.addEventListener('click', () => play(shapeNotes(voicing.frets).midis))
-				const svg = svgEl('svg', { class: 'neck', 'aria-hidden': 'true' })
 				const title = document.createElement('span')
 				title.className = 'voicing__title'
 				title.textContent = caption.title
 				const position = document.createElement('span')
 				position.className = 'voicing__pos'
 				position.textContent = caption.position
-				button.append(svg, title, position)
+				button.append(diagrams[i].el, title, position)
 				item.append(button)
 				observer.observe(item)
 				return item

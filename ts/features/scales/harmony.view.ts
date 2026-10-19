@@ -350,7 +350,7 @@ export function createHarmony(root: HTMLElement, host: HarmonyHost) {
 				'data-ring': ring,
 				'data-index': i,
 				'aria-label': `${spoken(name)} ${ring}, ${signatureName(key.accidentals)}${alt ? ` (${spoken(alt)} ${ring}, ${signatureName(key.accidentals - 12)})` : ''}`,
-			}) as SVGGElement
+			})
 			g.append(svgEl('path', { d: `M${x0} ${y0}A${r1} ${r1} 0 0 1 ${x1} ${y1}L${x2} ${y2}A${r0} ${r0} 0 0 0 ${x3} ${y3}Z` }))
 			const [tx, ty] = at((r0 + r1) / 2, i * 30)
 			const label = svgEl('text', { x: tx, y: ty + (ring === 'major' ? -6 : 0) })
