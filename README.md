@@ -78,6 +78,17 @@ on failure):
 | `check:changes` | chord-change drill: stabilizer, change counter, in-time judging, records |
 | `check:settings` | the settings loader against corrupt and stale stored values |
 
+Visual regression ([Playwright](https://playwright.dev/), Chromium only; once:
+`npx playwright install chromium`): `npm run test:visual` builds the app, serves
+the production build on port 4179 and compares every tab and sub-mode at 375×812,
+768×1024 and 1280×800 in light and dark against the baselines in
+`tests/visual/__screenshots__/`, plus a few behaviour checks (hash routing,
+settings after a reload, help dialog, metronome Start / Stop). The microphone is
+always refused and `Math.random` seeded, so every run renders the same. After an
+intended visual change, `npm run test:visual:update` rewrites the baselines:
+review the changed PNGs before committing them. The baselines were generated on
+Windows; another OS rasterizes fonts differently, so regenerate them there.
+
 `npm run bench` scores note and chord detection on labelled guitar datasets
 (downloaded locally, never bundled; needs `ffmpeg`). See
 [bench/README.md](bench/README.md).
