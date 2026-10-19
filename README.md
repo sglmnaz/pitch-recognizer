@@ -62,7 +62,9 @@ npm run preview   # serve the production build
 ```
 
 Self-checks (no test framework; each prints `ok` / `FAIL` lines and exits non-zero
-on failure):
+on failure, through the shared `scripts/check.ts`). `npm run check` runs them all
+in turn and stops at the first failure; `npm run typecheck` type-checks `ts/` and,
+with `tsconfig.scripts.json`, the Node-side `scripts/` and `tests/`:
 
 | Script | Checks |
 |---|---|

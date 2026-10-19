@@ -7,6 +7,8 @@
 		"dev": "vite",
 		"build": "tsc --noEmit && vite build",
 		"preview": "vite preview",
+		"typecheck": "tsc -p tsconfig.json && tsc -p tsconfig.scripts.json",
+		"check": "npm run check:pitch && npm run check:chords && npm run check:scales && npm run check:tunings && npm run check:metronome && npm run check:chord-theory && npm run check:ear && npm run check:chord-library && npm run check:harmony && npm run check:changes && npm run check:settings",
 		"check:pitch": "node scripts/pitch-check.ts",
 		"check:chords": "node scripts/chord-check.ts",
 		"check:scales": "node scripts/scale-check.ts",
@@ -37,6 +39,7 @@
 	},
 	"devDependencies": {
 		"@playwright/test": "^1.64.1",
+		"@types/node": "^24.19.2",
 		"typescript": "^5.9.3",
 		"vite": "^5.4.21",
 		"vite-plugin-pwa": "^1.3.0"

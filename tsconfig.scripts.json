@@ -1,0 +1,12 @@
+{
+	// Node-side code: the self-checks, the benchmark and the visual tests. Node 24
+	// runs the scripts' TypeScript directly (type stripping), so they import the
+	// pure app modules with explicit .ts extensions; this only type-checks them.
+	"extends": "./tsconfig.json",
+	"compilerOptions": {
+		"target": "ES2022",
+		"lib": ["ES2023", "DOM", "DOM.Iterable"],
+		"types": ["node"]
+	},
+	"include": ["scripts", "tests", "playwright.config.ts"]
+}

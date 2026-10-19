@@ -2,12 +2,8 @@
 // selection and A4 calibration. Run with `npm run check:tunings`.
 import { centsBetween, frequencyOfMidi, getClosestNote, midiOfFrequency } from '../ts/notes.ts'
 import { A4_MAX, A4_MIN, clampA4, midiOfName, nearestString, STANDARD, TUNINGS, tuningById, tuningStrings } from '../ts/tuning.ts'
+import { check, finish } from './check.ts'
 
-let failures = 0
-function check(label: string, ok: boolean, detail = '') {
-	console.log(`${ok ? 'ok  ' : 'FAIL'} ${label}${detail ? ` — ${detail}` : ''}`)
-	if (!ok) failures++
-}
 const near = (a: number, b: number, eps = 0.01) => Math.abs(a - b) <= eps
 
 /* Tables ------------------------------------------------------------------- */
@@ -83,8 +79,4 @@ check('Open C: 130.81 Hz is the C3 string, not C2', pick(130.81, openC).index ==
 check('Calibrated strings follow A4: A2 at A4=432 is 108', near(tuningStrings(STANDARD, 432)[1].frequency, 108, 0.01))
 check('tuning at A4=432 reads its own pitch as 0 cents', Math.abs(pick(tuningStrings(STANDARD, 432)[3].frequency, tuningStrings(STANDARD, 432)).cents) < 1e-9)
 
-if (failures) {
-	console.log(`\n${failures} check(s) failed`)
-	process.exit(1)
-}
-console.log('\nall tuning checks passed')
+finish('all tuning checks passed')

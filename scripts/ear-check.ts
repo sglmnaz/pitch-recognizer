@@ -17,12 +17,7 @@ import {
 	weakest,
 	type Question,
 } from '../ts/ear.ts'
-
-let failures = 0
-function check(label: string, ok: boolean, detail = '') {
-	console.log(`${ok ? 'ok  ' : 'FAIL'} ${label}${detail ? ` — ${detail}` : ''}`)
-	if (!ok) failures++
-}
+import { check, finish } from './check.ts'
 
 // Deterministic generator (mulberry32) so a failure reproduces.
 function rng(seed: number) {
@@ -146,5 +141,4 @@ check('a pool of one repeats instead of hanging', makeQuestion('intervals', ['P5
 	check('chords session is separate', getSession('chords').score === 0)
 }
 
-console.log(failures ? `\n${failures} check(s) failed` : '\nall ear checks passed')
-process.exit(failures ? 1 : 0)
+finish('all ear checks passed')

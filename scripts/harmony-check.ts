@@ -17,12 +17,7 @@ import {
 	signatureName,
 } from '../ts/harmony.ts'
 import { pitchClassesOf, pitchClassOf, SCALE_TYPES, scaleTitle, semitonesOf } from '../ts/scales.ts'
-
-let failures = 0
-function check(label: string, ok: boolean, detail = '') {
-	console.log(`${ok ? 'ok  ' : 'FAIL'} ${label}${detail ? ` — ${detail}` : ''}`)
-	if (!ok) failures++
-}
+import { check, finish } from './check.ts'
 
 const scale = (name: string) => SCALE_TYPES.find((t) => t.name === name)!
 const mod12 = (n: number) => ((n % 12) + 12) % 12
@@ -162,8 +157,4 @@ const e7Pcs = new Set(['E', 'G#', 'B', 'D'].map(pitchClassOf))
 const holds = scalesForChord(e7Pcs, pitchClassOf('E')).every((m) => [...e7Pcs].every((pc) => pitchClassesOf(m.rootPc, m.type).has(pc)))
 check('every fit holds every chord tone', holds)
 
-if (failures) {
-	console.error(`\n${failures} check(s) failed`)
-	process.exit(1)
-}
-console.log('\nAll harmony checks passed')
+finish('All harmony checks passed')

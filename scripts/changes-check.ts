@@ -18,12 +18,7 @@ import {
 	validSequence,
 	type Onset,
 } from '../ts/changes.ts'
-
-let failures = 0
-function check(label: string, ok: boolean, detail = '') {
-	console.log(`${ok ? 'ok  ' : 'FAIL'} ${label}${detail ? ` — ${detail}` : ''}`)
-	if (!ok) failures++
-}
+import { check, finish } from './check.ts'
 
 const FRAME = 1000 / 60
 
@@ -215,8 +210,4 @@ const strums = (symbols: string[], ms: number): Segments => symbols.map((s) => [
 	check('corrupt storage reads as no record', loadRecord(['A', 'D'], 60).best === 0)
 }
 
-if (failures) {
-	console.error(`\n${failures} check(s) failed`)
-	process.exit(1)
-}
-console.log('\nAll changes checks passed')
+finish('All changes checks passed')

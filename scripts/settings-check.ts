@@ -1,18 +1,13 @@
 // Self-check for the settings loader: corrupt, stale or hand-edited stored
 // values must come back valid. Run with `npm run check:settings`.
 // localStorage is stubbed before the store is imported (it loads on import).
+import { check, finish } from './check.ts'
 let stored: string | null = null
 ;(globalThis as { localStorage?: unknown }).localStorage = {
 	getItem: () => stored,
 	setItem: () => {},
 }
 const Settings = await import('../ts/settings.ts')
-
-let failures = 0
-function check(label: string, ok: boolean, detail = '') {
-	console.log(`${ok ? 'ok  ' : 'FAIL'} ${label}${detail ? ` — ${detail}` : ''}`)
-	if (!ok) failures++
-}
 
 function loadFrom(value: unknown) {
 	stored = typeof value === 'string' ? value : JSON.stringify(value)
@@ -74,8 +69,4 @@ check('disabledNotes: strings only', same(corrupt.disabledNotes, ['C4']))
 const good = loadFrom({ tunerMode: 'chromatic', tolerance: 2, metroBpm: 72, metroUnit: 8, earGap: 1.1, fretSize: 1.25, metroAccents: [2, 0, 1, 1, 2, 1, 1, 1, 1, 1, 1, 1] })
 check('valid values are kept', good.tunerMode === 'chromatic' && good.tolerance === 2 && good.metroBpm === 72 && good.metroUnit === 8 && good.earGap === 1.1 && good.fretSize === 1.25 && good.metroAccents[1] === 0)
 
-if (failures) {
-	console.log(`\n${failures} check(s) failed`)
-	process.exit(1)
-}
-console.log('\nall settings checks passed')
+finish('all settings checks passed')

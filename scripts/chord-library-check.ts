@@ -5,12 +5,7 @@ import { CHORD_GROUPS, keysOf, matchNotes, parseChordSymbol, ROOT_LABELS, shapeN
 import { CHORD_TYPES, chordType, identifyChords } from '../ts/chord-theory.ts'
 import { chordShapes, type Voicing } from '../ts/chord-shapes.ts'
 import { pitchClassOf } from '../ts/scales.ts'
-
-let failures = 0
-function check(label: string, ok: boolean, detail = '') {
-	console.log(`${ok ? 'ok  ' : 'FAIL'} ${label}${detail ? ` — ${detail}` : ''}`)
-	if (!ok) failures++
-}
+import { check, finish } from './check.ts'
 
 const type = (symbol: string) => chordType(symbol)!
 const pcs = (...names: string[]) => new Set(names.map(pitchClassOf))
@@ -89,8 +84,4 @@ check('F first voicing is a barre at fret 1', caption('', 'F') === '1 · 133211 
 const high = voicingCaption({ frets: [8, 8, 9, 10, -1, -1], barre: null, base: 8 } as Voicing, 2)
 check('No open string, no barre: 3 · x-x-10-9-8-8 | fret 8', `${high.title} | ${high.position}` === '3 · x-x-10-9-8-8 | fret 8', `${high.title} | ${high.position}`)
 
-if (failures) {
-	console.error(`\n${failures} check(s) failed`)
-	process.exit(1)
-}
-console.log('\nAll chord library checks passed')
+finish('All chord library checks passed')

@@ -5,13 +5,9 @@
 import { CHORD_TYPES, chordsOfScale, chordType, identifyChords, spellChord } from '../ts/chord-theory.ts'
 import { chordShapes, shapeString, voicingSpec, type Voicing } from '../ts/chord-shapes.ts'
 import { pitchClassOf, SCALE_TYPES, STRINGS } from '../ts/scales.ts'
+import { check, finish } from './check.ts'
 
 const verbose = process.argv.includes('--verbose')
-let failures = 0
-function check(label: string, ok: boolean, detail = '') {
-	console.log(`${ok ? 'ok  ' : 'FAIL'} ${label}${detail ? ` — ${detail}` : ''}`)
-	if (!ok) failures++
-}
 
 const type = (symbol: string) => chordType(symbol)!
 const scale = (name: string) => SCALE_TYPES.find((t) => t.name === name)!
@@ -178,8 +174,4 @@ check('identifyChords names every generated voicing', unnamed.length === 0, unna
 // A 7-note scale whose stacked thirds include a chord the table cannot name: no half answer.
 check('Non-tertian 7-note scale gives []', chordsOfScale(0, { name: 'Double harmonic', formula: '1 b2 3 4 5 b6 7' }).length === 0)
 
-if (failures) {
-	console.error(`\n${failures} check(s) failed`)
-	process.exit(1)
-}
-console.log('\nAll chord theory checks passed')
+finish('All chord theory checks passed')

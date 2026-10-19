@@ -14,12 +14,7 @@ import {
 	scaleRun,
 	spellScale,
 } from '../ts/scales.ts'
-
-let failures = 0
-function check(label: string, ok: boolean, detail = '') {
-	console.log(`${ok ? 'ok  ' : 'FAIL'} ${label}${detail ? ` — ${detail}` : ''}`)
-	if (!ok) failures++
-}
+import { check, finish } from './check.ts'
 
 const type = (name: string) => SCALE_TYPES.find((t) => t.name === name)!
 const spelled = (root: string, name: string) => {
@@ -91,8 +86,4 @@ const box1 = positionRun(pitchClassOf('A'), type('Minor pentatonic'), [4, 8])
 check('A minor pentatonic box 1 plays 12 notes from A2', box1.length === 12 && box1[0] === 45 && box1[11] === 72, box1.join(' '))
 check('C major run: C3 up to C4', scaleRun(pitchClassOf('C'), type('Major')).join(' ') === '48 50 52 53 55 57 59 60')
 
-if (failures) {
-	console.error(`\n${failures} check(s) failed`)
-	process.exit(1)
-}
-console.log('\nAll scale checks passed')
+finish('All scale checks passed')

@@ -2,12 +2,7 @@
 // and a jittery timer, and checks click times, accents, subdivisions, mute and
 // the speed trainer. Run with `npm run check:metronome`.
 import * as Metronome from '../ts/metronome.ts'
-
-let failures = 0
-function check(label: string, ok: boolean, detail = '') {
-	console.log(`${ok ? 'ok  ' : 'FAIL'} ${label}${detail ? ` — ${detail}` : ''}`)
-	if (!ok) failures++
-}
+import { check, finish } from './check.ts'
 
 /* Fake Web Audio + browser bits ------------------------------------------- */
 const clicks: { at: number; scheduledAt: number }[] = []
@@ -150,8 +145,4 @@ check('after a 5 s stall no click is played late', burst.every((c) => c.at >= no
 check('after the stall clicks are back on the 0.5 s grid', burst.every((c) => near(((c.at - clicks[0].at) / 0.5) % 1 || 1, 1)))
 Metronome.stop()
 
-if (failures) {
-	console.error(`\n${failures} check(s) failed`)
-	process.exit(1)
-}
-console.log('\nAll metronome checks passed')
+finish('All metronome checks passed')
