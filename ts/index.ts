@@ -7,6 +7,7 @@ import { createChordsView } from './views/chords'
 import { createScalesView } from './views/scales'
 import { createMetronomeView } from './views/metronome'
 import { createSettingsView } from './views/settings-panel'
+import { initHelp } from './help'
 import type { View } from './views/view'
 
 function byId<T extends HTMLElement>(id: string): T {
@@ -326,6 +327,7 @@ if (DEBUG) {
 }
 
 /* Boot ------------------------------------------------------------------- */
+initHelp()
 activate(location.hash.replace('#', ''))
 drawWaveform(false)
 // Listen by default: a tuner that is not listening just looks broken. (Not

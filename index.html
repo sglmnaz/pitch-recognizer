@@ -81,11 +81,14 @@
 
 		<!-- Trainer ------------------------------------------------------- -->
 		<section class="view" id="view-trainer" role="tabpanel" aria-labelledby="tab-trainer" hidden>
-			<div class="segmented trainer-mode" role="group" aria-label="Exercise">
-				<button type="button" data-exercise="notes" aria-pressed="true">Notes</button>
-				<button type="button" data-exercise="intervals" aria-pressed="false">Intervals</button>
-				<button type="button" data-exercise="chords" aria-pressed="false">Chords</button>
-				<button type="button" data-exercise="changes" aria-pressed="false">Changes</button>
+			<div class="view-top">
+				<div class="segmented trainer-mode" role="group" aria-label="Exercise">
+					<button type="button" data-exercise="notes" aria-pressed="true">Notes</button>
+					<button type="button" data-exercise="intervals" aria-pressed="false">Intervals</button>
+					<button type="button" data-exercise="chords" aria-pressed="false">Chords</button>
+					<button type="button" data-exercise="changes" aria-pressed="false">Changes</button>
+				</div>
+				<button class="btn help-btn" type="button" data-help="trainer" aria-haspopup="dialog" aria-label="How to use the trainer"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.6 9.4a2.5 2.5 0 0 1 4.8.9c0 1.7-2.4 2.2-2.4 3.7"/><path d="M12 17.2h.01"/></svg></button>
 			</div>
 
 			<div class="panel scoreboard" data-only="notes ear">
@@ -206,6 +209,7 @@
 			<!-- Tuning picker + mode; options and chips are filled by ts/views/tuner.ts. -->
 			<div class="tuner-head">
 				<select class="select tuner-tuning" aria-label="Tuning"></select>
+				<button class="btn help-btn" type="button" data-help="tuner" aria-haspopup="dialog" aria-label="How to use the tuner"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.6 9.4a2.5 2.5 0 0 1 4.8.9c0 1.7-2.4 2.2-2.4 3.7"/><path d="M12 17.2h.01"/></svg></button>
 			</div>
 			<div class="panel readout">
 				<div class="readout__note readout__idle">--</div>
@@ -236,10 +240,13 @@
 		<section class="view" id="view-chords" role="tabpanel" aria-labelledby="tab-chords" hidden>
 			<!-- Sub-views: Listen (the recognizer, ts/views/chords.ts), Library and
 			     Identify (ts/views/chord-library.ts). -->
-			<div class="segmented chords-modes" role="group" aria-label="Chords mode">
-				<button type="button" data-chords-mode="listen" aria-pressed="true">Listen</button>
-				<button type="button" data-chords-mode="library" aria-pressed="false">Library</button>
-				<button type="button" data-chords-mode="identify" aria-pressed="false">Identify</button>
+			<div class="view-top">
+				<div class="segmented chords-modes" role="group" aria-label="Chords mode">
+					<button type="button" data-chords-mode="listen" aria-pressed="true">Listen</button>
+					<button type="button" data-chords-mode="library" aria-pressed="false">Library</button>
+					<button type="button" data-chords-mode="identify" aria-pressed="false">Identify</button>
+				</div>
+				<button class="btn help-btn" type="button" data-help="chords" aria-haspopup="dialog" aria-label="How to use the chords tab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.6 9.4a2.5 2.5 0 0 1 4.8.9c0 1.7-2.4 2.2-2.4 3.7"/><path d="M12 17.2h.01"/></svg></button>
 			</div>
 			<div class="panel readout">
 				<!-- A button: the recognized chord opens in the Library. -->
@@ -295,11 +302,14 @@
 
 		<!-- Scales: explorer + identifier on one fretboard (ts/views/scales.ts). -->
 		<section class="view view--scales" id="view-scales" role="tabpanel" aria-labelledby="tab-scales" hidden>
-			<div class="scales-header">
-				<div class="segmented segmented--small" role="group" aria-label="Mode">
+			<div class="view-top">
+				<div class="segmented scales-mode" role="group" aria-label="Mode">
 					<button type="button" data-mode="explore" aria-pressed="true">Explore</button>
 					<button type="button" data-mode="identify" aria-pressed="false">Identify</button>
 				</div>
+				<button class="btn help-btn" type="button" data-help="scales" aria-haspopup="dialog" aria-label="How to use the scales tab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.6 9.4a2.5 2.5 0 0 1 4.8.9c0 1.7-2.4 2.2-2.4 3.7"/><path d="M12 17.2h.01"/></svg></button>
+			</div>
+			<div class="scales-header">
 				<div class="scales-pickers scales-explore">
 					<select class="select select--small scales-root" aria-label="Root"></select>
 					<select class="select select--small scales-type" aria-label="Scale"></select>
@@ -441,6 +451,7 @@
 			<div class="metro-flash" aria-hidden="true"></div>
 
 			<div class="panel metro-hero">
+				<button class="btn help-btn" type="button" data-help="metronome" aria-haspopup="dialog" aria-label="How to use the metronome"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.6 9.4a2.5 2.5 0 0 1 4.8.9c0 1.7-2.4 2.2-2.4 3.7"/><path d="M12 17.2h.01"/></svg></button>
 				<div class="metro-bpm">
 					<input class="metro-bpm__value" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="3" value="100" aria-label="Tempo in BPM, tap to type" />
 					<span class="metro-bpm__unit">BPM</span>
@@ -535,6 +546,7 @@
 		<!-- Settings: its own tab (ts/views/settings-panel.ts). One group per tab, in tab
 		     order; entering it scrolls to the group of the tab the user came from. -->
 		<section class="view view--settings" id="view-settings" role="tabpanel" aria-labelledby="tab-settings" hidden>
+			<button class="btn help-btn" type="button" data-help="settings" aria-haspopup="dialog" aria-label="How to use the app"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.6 9.4a2.5 2.5 0 0 1 4.8.9c0 1.7-2.4 2.2-2.4 3.7"/><path d="M12 17.2h.01"/></svg></button>
 			<section class="settings-group" data-group="appearance">
 				<h2 class="settings-group__title">Appearance</h2>
 				<div class="panel settings-card">
@@ -922,6 +934,137 @@
 			<span class="status" id="status"></span>
 		</div>
 	</main>
+
+	<!-- Guide: one dialog, filled from the template of the tab whose ? was tapped (ts/help.ts). -->
+	<dialog class="help" id="help" aria-labelledby="helpTitle">
+		<div class="help__head">
+			<h2 class="help__title" id="helpTitle"></h2>
+			<button class="btn help__close" type="button" aria-label="Close the guide">
+				<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>
+			</button>
+		</div>
+		<div class="help__body"></div>
+	</dialog>
+
+	<template id="help-tuner" data-title="Tuner">
+		<h3>Tune a string</h3>
+		<ul>
+			<li>Pick your tuning at the top (Standard, Drop D, DADGAD…), or <b>Chromatic</b> to name any note.</li>
+			<li>Play one string at a time and let it ring; mute the others.</li>
+			<li>Needle left of centre: the string is <b>flat</b>, tighten it. Right: <b>sharp</b>, loosen it.</li>
+			<li>The readout turns green when the string is within the tolerance (±5 cents by default).</li>
+		</ul>
+		<h3>Good to know</h3>
+		<ul>
+			<li>With a tuning selected the reading is always against the nearest string of that tuning, so a string that is far off still points at its target note.</li>
+			<li>Tap a string button to hear its reference note.</li>
+			<li>Electric guitar without an amp: hold the phone about 10 cm from the strings, in a quiet room.</li>
+			<li>Concert pitch (A4), tolerance and tone volume are in Settings → Tuner.</li>
+		</ul>
+	</template>
+
+	<template id="help-chords" data-title="Chords">
+		<h3>Listen</h3>
+		<ul>
+			<li>Strum a chord on all its strings and let it ring: the name appears once it is steady.</li>
+			<li>Recognizes major, minor, 7, m7, maj7, 9, sus2 and sus4. Single notes are not named.</li>
+			<li>Tap the chord name to open it in the Library.</li>
+		</ul>
+		<h3>Library</h3>
+		<ul>
+			<li>Choose a root and a chord type to see its notes, degrees and the keys it belongs to (with the roman numeral).</li>
+			<li>Below are the easiest voicings: tap a diagram to hear it.</li>
+			<li>Dot labels (degrees, notes, fingers) and strum or arpeggio are in Settings → Chords.</li>
+		</ul>
+		<h3>Identify</h3>
+		<ul>
+			<li>Tap one fret per string on the neck; the column before the nut is the open string. Tap again to clear. Unmarked strings count as muted.</li>
+			<li>Matching chords update as you tap; tap a result to open it in the Library. Strum plays your shape.</li>
+		</ul>
+	</template>
+
+	<template id="help-scales" data-title="Scales">
+		<h3>Explore</h3>
+		<ul>
+			<li>Pick a root and a scale: the neck shows every note, coloured by degree (root, 3rd and 5th, the rest).</li>
+			<li>Tap the degree chips to choose which degrees are coloured.</li>
+			<li>▶ plays the scale; tap any note on the neck to hear it.</li>
+			<li>The sliders button opens the display options: note names or intervals, positions 1–5, neck size.</li>
+			<li>Listen lights up the note you play on your guitar.</li>
+		</ul>
+		<h3>Chords, progressions, circle</h3>
+		<ul>
+			<li><b>Chords</b>: the chords built on each degree, with roman numerals. Tap one to hear it and see its notes on the neck.</li>
+			<li><b>Progressions</b>: common progressions in this key. Play and Loop; the tempo is in Settings → Scales.</li>
+			<li><b>Circle</b>: the circle of fifths. Tap a key to switch to it.</li>
+		</ul>
+		<h3>Identify</h3>
+		<ul>
+			<li>Tap notes on the neck, or play them with the mic on: the list shows the scales that contain them. Tap one to explore it.</li>
+			<li>If the notes form a chord, you also see which scales fit that chord.</li>
+		</ul>
+	</template>
+
+	<template id="help-trainer" data-title="Trainer">
+		<h3>Notes</h3>
+		<ul>
+			<li>A note appears on the staff: play or sing it and hold it until it counts. Skip moves on.</li>
+			<li>Which notes, accidentals and any-octave matching are in Settings → Trainer.</li>
+		</ul>
+		<h3>Intervals and Chords</h3>
+		<ul>
+			<li>Press Play, listen, then tap the interval (or the chord type) you heard.</li>
+			<li>A wrong answer shows the right one; then tap any button to hear what it sounds like.</li>
+			<li>Keyboard: <kbd>Space</kbd> replays, <kbd>Enter</kbd> goes to the next question.</li>
+			<li>To answer intervals by singing, turn on <b>Answer by singing</b> in Settings (headphones recommended).</li>
+		</ul>
+		<h3>Changes</h3>
+		<ul>
+			<li>Pick a pair of chords (or up to four) and press Start with the mic on.</li>
+			<li><b>One minute</b>: switch back and forth as fast as you can; every clean change counts. Beat your best.</li>
+			<li><b>In time</b>: change on the metronome's beat; each change is marked hit, early, late or missed. Headphones work best.</li>
+		</ul>
+	</template>
+
+	<template id="help-metronome" data-title="Metronome">
+		<h3>Tempo</h3>
+		<ul>
+			<li>Drag the slider, use − / + (hold to repeat) and −10 / +10, tap the number to type a tempo, or tap <b>Tap</b> in time.</li>
+			<li><kbd>Space</kbd> starts and stops.</li>
+		</ul>
+		<h3>Beats</h3>
+		<ul>
+			<li>Tap a beat dot to cycle it: normal, accent, muted.</li>
+			<li>Time sets the beats per bar and the beat note; Subdivision adds 8ths, triplets or 16ths.</li>
+		</ul>
+		<h3>Speed trainer</h3>
+		<ul>
+			<li>Turn it on and set how much to raise the tempo, every how many bars, and up to which tempo. It starts from the current tempo.</li>
+		</ul>
+		<h3>Good to know</h3>
+		<ul>
+			<li>Sound, volume and the beat-1 flash are in Settings → Metronome; it keeps playing while you adjust them.</li>
+			<li>The screen stays on while it runs; switching to another tab stops it.</li>
+		</ul>
+	</template>
+
+	<template id="help-settings" data-title="Pluck">
+		<h3>Settings</h3>
+		<ul>
+			<li>Grouped by tab; opening Settings from a tab jumps to that tab's group.</li>
+			<li>Appearance: light, dark or follow the device. Fretboard: board colours and left-handed mode for every neck and chord diagram.</li>
+			<li>Concert pitch (A4) under Tuner applies to every tab that names notes.</li>
+		</ul>
+		<h3>Microphone</h3>
+		<ul>
+			<li>Pluck listens through the microphone: allow it when the browser asks. If you blocked it, re-enable it in the browser's site settings.</li>
+			<li>Tabs that don't need it (Metronome, Settings, chord Library…) turn it off; it comes back when you return.</li>
+		</ul>
+		<h3>Install</h3>
+		<ul>
+			<li>Add Pluck to your home screen for a full-screen app that also works offline.</li>
+		</ul>
+	</template>
 
 	<script type="module" src="/ts/index.ts"></script>
 </body>
