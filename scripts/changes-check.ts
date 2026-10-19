@@ -18,6 +18,7 @@ import {
 	validSequence,
 	type Onset,
 } from '../ts/music/changes.ts'
+import { createChangesSession, type MetronomeControl, RECOGNITION_LATENCY_MS, type SessionUi, verdict } from '../ts/features/trainer/changes.session.ts'
 import { check, finish } from './check.ts'
 
 const FRAME = 1000 / 60
@@ -259,6 +260,115 @@ const strums = (symbols: string[], ms: number): Segments => symbols.map((s) => [
 	check('history keeps the last few sessions', long.history.length === HISTORY && long.best === 25)
 	store.set(recordKey(['A', 'D']), '{oops')
 	check('corrupt storage reads as no record', loadRecord(['A', 'D'], 60).best === 0)
+}
+
+/* Session state machine (ts/features/trainer/changes.session.ts) ------------- */
+{
+	/** A session with a recording UI and a fake metronome (tempo, running). */
+	function harness() {
+		const events: [string, unknown][] = []
+		const metro = { bpm: 0, running: false }
+		const ui: SessionUi = {
+			heard() {},
+			countIn: (left) => void events.push(['countIn', left]),
+			target: (symbol) => void events.push(['target', symbol]),
+			clock() {},
+			counted: (count) => void events.push(['counted', count]),
+			marked: (marks) => void events.push(['marked', marks[marks.length - 1]]),
+			announce: (text) => void events.push(['announce', text]),
+		}
+		const metronome: MetronomeControl = {
+			configure() {},
+			setTempo(bpm) {
+				metro.bpm = bpm
+			},
+			start() {
+				metro.running = true
+			},
+			stop() {
+				metro.running = false
+			},
+			getState: () => ({ running: metro.running, bpm: metro.bpm, bar: 0, beat: 0 }),
+		}
+		const of = (kind: string) => events.filter((e) => e[0] === kind).map((e) => e[1])
+		return { session: createChangesSession(ui, metronome), metro, of }
+	}
+
+	// One-minute, 30 s on D–A: D rings through the 3 s count-in, then A, D, A strummed a second apart.
+	{
+		const { session, metro, of } = harness()
+		session.start({ mode: 'minute', sequence: ['D', 'A'], seconds: 30, beats: 4, bpm: 60, speedUp: false, countIn: true, volume: 1 }, 0)
+		let endedAt = -1
+		for (const [symbol, t, strum] of frames([
+			['D', 4000, true],
+			['A', 1000, true],
+			['D', 1000, true],
+			['A', 1000, true],
+			[null, 27000],
+		])) {
+			if (endedAt < 0 && session.frame(t, strum, symbol)) endedAt = t
+		}
+		check('one-minute: count-in shows 3, 2, 1', [...new Set(of('countIn'))].join() === '3,2,1', [...new Set(of('countIn'))].join())
+		check('one-minute: "Get ready", then "Go"', of('announce').slice(0, 2).join() === 'Get ready on D,Go', of('announce').join(' | '))
+		check('one-minute: the ringing D starts it, three changes counted', of('counted').join() === '1,2,3', of('counted').join())
+		check('one-minute: time is up 30 s after the count-in', endedAt >= 33_000 && endedAt < 33_000 + FRAME + 1, String(endedAt))
+		const result = session.end(true)
+		check(
+			'one-minute: the result is the count, the metronome untouched',
+			result?.mode === 'minute' && result.count === 3 && session.phase() === 'done' && metro.bpm === 0
+		)
+	}
+
+	check('verdict: nothing heard', verdict(0, { best: 4, history: [4] }) === 'No changes heard, not saved')
+	check('verdict: first session', verdict(3, { best: 0, history: [] }) === 'First session')
+	check(
+		'verdict: best, tie, behind',
+		verdict(7, { best: 5, history: [5] }) === 'New best, +2' &&
+			verdict(5, { best: 5, history: [5] }) === 'Ties your best' &&
+			verdict(3, { best: 5, history: [5] }) === '-2 from your best'
+	)
+
+	/**
+	 * In time, G–C at 120 BPM, 2 beats a chord, 4 count-in clicks: the player
+	 * changes on every downbeat and strums `strumOffset` ms after it; the
+	 * recognizer names the chord RECOGNITION_LATENCY_MS later, straight from
+	 * the last one (no gap), so only the strum makes it a change.
+	 */
+	function inTime(strumOffset: number, ms = 12_000) {
+		const h = harness()
+		h.session.start({ mode: 'time', sequence: ['G', 'C'], seconds: 60, beats: 2, bpm: 120, speedUp: true, countIn: true, volume: 1 }, 0)
+		const downbeats: number[] = []
+		let nextClick = 0
+		let index = 0
+		for (let t = 0; t < ms; t += FRAME) {
+			for (; nextClick <= t; index++, nextClick += 60_000 / h.metro.bpm) {
+				h.session.beat({ time: 0, bar: Math.floor(index / 2), beat: index % 2, sub: 0, accent: 1, bpm: h.metro.bpm }, nextClick)
+				if (index >= 4 && index % 2 === 0) downbeats.push(nextClick)
+			}
+			const named = downbeats.filter((d) => d + RECOGNITION_LATENCY_MS <= t).length
+			const strum = downbeats.some((d) => d + strumOffset > t - FRAME && d + strumOffset <= t)
+			h.session.frame(t, strum, named ? ['G', 'C'][(named - 1) % 2] : 'G')
+		}
+		return h
+	}
+
+	{
+		const { session, metro, of } = inTime(100)
+		const marks = of('marked')
+		check('in time: started the metronome at the session tempo', metro.running && of('countIn').join() === '4,3,2,1', of('countIn').join())
+		check('in time: strummed changes on the downbeat are hits', marks.length >= 6 && marks.every((m) => m === 'hit'), marks.join(' '))
+		check(
+			'in time: two clean passes speed it up on a downbeat',
+			metro.bpm > 120 && of('announce').includes('Two clean passes. Up to 125 BPM.'),
+			String(metro.bpm)
+		)
+		const result = session.end(false)
+		check('in time: ending stops the clicks and reports the tempo', !metro.running && result?.mode === 'time' && result.bpm === metro.bpm)
+	}
+	{
+		const marks = inTime(0).of('marked')
+		check('in time: a strum on a click is the click, so the change is a flip', marks.length >= 6 && marks.every((m) => m === 'miss'), marks.join(' '))
+	}
 }
 
 finish('All changes checks passed')
