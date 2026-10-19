@@ -4,7 +4,7 @@
 // is. Pure, so `npm run check:chord-theory` runs it under Node.
 import { omittable, spellChord, type ChordType } from './chord-theory.ts'
 import type { Dot, NeckSpec } from '../ui/fretboard.ts'
-import { degreeNumber, degreesOf, ROOTS, semitonesOf, STRINGS } from './scales.ts'
+import { degreeRole, degreesOf, ROOTS, semitonesOf, STRINGS } from './scales.ts'
 
 export interface Voicing {
 	/** Per string as in `STRINGS` (0 = highest): -1 muted, 0 open, else the fret. */
@@ -248,11 +248,10 @@ export function voicingSpec(voicing: Voicing, rootPc: number, type: ChordType, o
 		if (fret <= 0) return
 		const i = indexOf(tuning[string] + fret)
 		const degree = chord.degrees[i]
-		const n = degreeNumber(degree)
 		dots.push({
 			string,
 			fret,
-			role: degree === '1' ? 'root' : n === 3 || n === 5 ? 'tone' : 'note',
+			role: degreeRole(degree),
 			label: labels === 'degrees' ? degree : labels === 'notes' ? chord.notes[i] : '',
 			detail: degree,
 			finger: fingers && voicing.fingers[string] ? voicing.fingers[string] : undefined,

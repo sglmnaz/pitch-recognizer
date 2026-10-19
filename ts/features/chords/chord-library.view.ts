@@ -9,7 +9,7 @@ import * as Sound from '../../core/sound'
 import { CHORD_TYPES, identifyChords, spellChord, type ChordType } from '../../music/chord-theory'
 import { chordShapes, shapeString, voicingSpec, type Voicing } from '../../music/chord-shapes'
 import { CHORD_GROUPS, keysOf, matchNotes, parseChordSymbol, ROOT_LABELS, shapeNotes, voicingCaption } from '../../music/chord-library'
-import { degreeMap, degreeNumber, pitchClassOf, ROOTS, STRINGS } from '../../music/scales'
+import { degreeMap, degreeRole, pitchClassOf, ROOTS, STRINGS } from '../../music/scales'
 import { OPEN_CHORD_EVENT } from '../scales/harmony.view'
 import { bindSegmented, liveRegion, scoped, setPressed, svgEl } from '../../ui/dom'
 
@@ -214,8 +214,8 @@ export function createChordModes(root: HTMLElement, onMicNeed: () => void): Chor
 				const chip = document.createElement('span')
 				chip.setAttribute('role', 'listitem')
 				const degree = chord.degrees[i]
-				const n = degreeNumber(degree)
-				chip.className = `scale-note chord-note${degree === '1' ? ' scale-note--root' : n === 3 || n === 5 ? ' scale-note--tone' : ''}`
+				const role = degreeRole(degree)
+				chip.className = `scale-note chord-note${role === 'note' ? '' : ` scale-note--${role}`}`
 				const name = document.createElement('span')
 				name.className = 'scale-note__name'
 				name.textContent = note
@@ -315,8 +315,7 @@ export function createChordModes(root: HTMLElement, onMicNeed: () => void): Chor
 			if (fret < 0) return []
 			const midi = STRINGS[string] + fret
 			const degree = degrees.get(midi % 12)
-			const n = degree ? degreeNumber(degree) : 0
-			const role = !degree ? 'marked' : degree === '1' ? 'root' : n === 3 || n === 5 ? 'tone' : 'note'
+			const role = degree ? degreeRole(degree) : 'marked'
 			return [{ string, fret, role, label: name(midi), detail: degree, marked: true }]
 		})
 		neck.render({ dots, noteName: name, toggles: true, label: 'Fretboard: tap one note per string, again to clear it' })

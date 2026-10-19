@@ -150,6 +150,12 @@ export const scaleTitle = (root: string, type: ScaleType) => `${root} ${type.nam
 /** `b3` → 3, `#4` → 4: the degree chip a note belongs to. */
 export const degreeNumber = (degree: string) => Number(degree.replace(/[#b]/g, ''))
 
+/** A chord degree's colour: the root, the 3rd / 5th (any flavour), the rest. */
+export function degreeRole(degree: string): 'root' | 'tone' | 'note' {
+	const n = degreeNumber(degree)
+	return degree === '1' ? 'root' : n === 3 || n === 5 ? 'tone' : 'note'
+}
+
 /** Pitch class → degree as spelled in the scale (`b3`, `b7` in minor). */
 export function degreeMap(rootPc: number, type: ScaleType): Map<number, string> {
 	const degrees = degreesOf(type)
