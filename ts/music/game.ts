@@ -1,6 +1,7 @@
 import { centsBetween, getClosestNote, pitchClass, type NoteInfo } from '../core/notes'
 import * as Settings from '../core/settings'
 import type { PitchReading } from '../core/microphone'
+import { readString, writeString } from '../core/storage'
 
 // The note must be held in tune for at least this long to win the round.
 // Long enough to rule out a passing glissando, short enough to feel responsive.
@@ -27,20 +28,13 @@ export interface GameState {
 // The best streak persists across sessions; score and streak are per-session.
 const BEST_KEY = 'pitch-recognizer:best'
 
+// Storage may be unavailable (private mode): best then stays in memory.
 function loadBest(): number {
-	try {
-		return Number(localStorage.getItem(BEST_KEY)) || 0
-	} catch {
-		return 0
-	}
+	return Number(readString(BEST_KEY)) || 0
 }
 
 function saveBest(value: number) {
-	try {
-		localStorage.setItem(BEST_KEY, String(value))
-	} catch {
-		// Storage may be unavailable (private mode); best stays in memory.
-	}
+	writeString(BEST_KEY, String(value))
 }
 
 let target: NoteInfo

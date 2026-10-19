@@ -2,6 +2,7 @@
 // (ts/features/trainer/changes.view.ts) feeds it the chord the mic hears every frame and the
 // metronome's downbeats; nothing here touches the DOM or the audio graph, so
 // `npm run check:changes` runs it in Node.
+import { readJSON, writeJSON } from '../core/storage.ts'
 
 /** Open chords a beginner changes between, spelt as the recognizer names them. */
 export const CHANGE_CHORDS = ['C', 'G', 'D', 'A', 'E', 'Am', 'Em', 'Dm', 'F', 'A7', 'D7', 'E7', 'G7']
@@ -233,14 +234,10 @@ export interface ChangeRecord {
 }
 
 // Stored per session length: 30 s and 2 min counts do not compete with 60 s.
+// No storage (private mode, Node) or a hand-edited value: no record.
 function readAll(sequence: string[]): { [seconds: string]: unknown } {
-	try {
-		const all = JSON.parse(localStorage.getItem(recordKey(sequence)) ?? '{}')
-		return all && typeof all === 'object' && !Array.isArray(all) ? all : {}
-	} catch {
-		// No storage (private mode, Node) or a hand-edited value: no record.
-		return {}
-	}
+	const all = readJSON(recordKey(sequence), {})
+	return all && typeof all === 'object' && !Array.isArray(all) ? (all as { [seconds: string]: unknown }) : {}
 }
 
 export function loadRecord(sequence: string[], seconds: number): ChangeRecord {
@@ -254,10 +251,7 @@ export function saveSession(sequence: string[], seconds: number, count: number):
 	const before = loadRecord(sequence, seconds)
 	const all = readAll(sequence)
 	all[seconds] = { best: Math.max(before.best, count), history: [...before.history, count].slice(-HISTORY) }
-	try {
-		localStorage.setItem(recordKey(sequence), JSON.stringify(all))
-	} catch {
-		// Storage unavailable: the result still shows, it just is not kept.
-	}
+	// Storage unavailable: the result still shows, it just is not kept.
+	writeJSON(recordKey(sequence), all)
 	return before
 }

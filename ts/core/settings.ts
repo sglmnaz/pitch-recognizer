@@ -3,6 +3,7 @@ import { possibleFrequencies, possibleFrequenciesWithoutAccidentals, type NoteIn
 import { clampA4, tuningById } from '../music/tuning.ts'
 import { DEFAULT_INTERVALS, DEFAULT_QUALITIES, pool } from '../music/ear.ts'
 import * as Changes from '../music/changes.ts'
+import { readJSON, writeJSON } from './storage.ts'
 
 export interface Settings {
 	/** Add sharps/flats to the pool of possible target notes. */
@@ -195,13 +196,9 @@ function strings(value: unknown): string[] {
  * falls back instead of reaching a view. Exported for `npm run check:settings`.
  */
 export function load(): Settings {
-	let s: Record<string, unknown> = {}
-	try {
-		const parsed: unknown = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? '{}')
-		if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) s = parsed as Record<string, unknown>
-	} catch {
-		// Unavailable storage (private mode) or broken JSON: defaults.
-	}
+	// Unavailable storage (private mode) or broken JSON: defaults.
+	const parsed = readJSON(STORAGE_KEY, {})
+	const s = (parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : {}) as Record<string, unknown>
 	const d = defaults
 	const accents = Array.isArray(s.metroAccents) ? s.metroAccents : []
 	return {
@@ -268,12 +265,9 @@ export function load(): Settings {
 	}
 }
 
+// Storage may be unavailable (private mode): settings then stay in memory.
 function persist() {
-	try {
-		localStorage.setItem(STORAGE_KEY, JSON.stringify(settings))
-	} catch {
-		// Storage may be unavailable (private mode); settings stay in memory.
-	}
+	writeJSON(STORAGE_KEY, settings)
 }
 
 export function get(): Readonly<Settings> {

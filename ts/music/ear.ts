@@ -2,6 +2,7 @@
 // (ts/features/trainer/trainer.view.ts) plays the questions with ts/core/sound.ts and feeds the
 // answers back; nothing here touches the DOM or the audio graph, so
 // `npm run check:ear` runs it in Node.
+import { readString, writeString } from '../core/storage.ts'
 
 export type Exercise = 'intervals' | 'chords'
 export type Direction = 'up' | 'down' | 'harmonic'
@@ -173,20 +174,13 @@ interface Session {
 // Same pattern as game.ts: the best streak survives sessions, the rest does not.
 const bestKey = (exercise: Exercise) => `pitch-recognizer:best:${exercise}`
 
+// Storage may be unavailable (private mode, Node): best then stays in memory.
 function loadBest(exercise: Exercise): number {
-	try {
-		return Number(localStorage.getItem(bestKey(exercise))) || 0
-	} catch {
-		return 0
-	}
+	return Number(readString(bestKey(exercise))) || 0
 }
 
 function saveBest(exercise: Exercise, value: number) {
-	try {
-		localStorage.setItem(bestKey(exercise), String(value))
-	} catch {
-		// Storage may be unavailable (private mode, Node); best stays in memory.
-	}
+	writeString(bestKey(exercise), String(value))
 }
 
 const newSession = (exercise: Exercise): Session => ({
