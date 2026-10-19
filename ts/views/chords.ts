@@ -1,6 +1,7 @@
 import * as Microphone from '../microphone'
 import { PITCH_CLASSES, recognizeChord } from '../chords'
 import type { View } from './view'
+import { createChordModes } from './chord-library'
 
 // A new label (chord or "none") must win for this long before it is shown, so
 // a strum's attack and decay do not flicker through other chords.
@@ -10,6 +11,9 @@ export function createChordsView(root: HTMLElement): View {
 	const name = root.querySelector<HTMLElement>('.readout__note')!
 	const sub = root.querySelector<HTMLElement>('.readout__sub')!
 	const chromaRow = root.querySelector<HTMLElement>('.chroma')!
+	// Listen / Library / Identify switch; the shown chord opens in the Library.
+	const modes = createChordModes(root)
+	name.addEventListener('click', () => shown && modes.openChord(shown))
 
 	const bins = PITCH_CLASSES.map((pitchClass) => {
 		const bin = document.createElement('div')
@@ -49,7 +53,10 @@ export function createChordsView(root: HTMLElement): View {
 	}
 
 	return {
-		onActivate: () => idle(),
+		onActivate: () => {
+			idle()
+			modes.onActivate()
+		},
 		reset: () => idle(),
 
 		onReading() {

@@ -55,7 +55,7 @@ function bassString(frets: number[]) {
 }
 
 /** Low string first, as chord books write them: C → x32010; frets past 9 get dashes (x-10-12-12-12-10). */
-export function shapeString(voicing: Voicing): string {
+export function shapeString(voicing: Pick<Voicing, 'frets'>): string {
 	const frets = [...voicing.frets].reverse().map((f) => (f < 0 ? 'x' : String(f)))
 	return frets.join(voicing.frets.some((f) => f > 9) ? '-' : '')
 }

@@ -55,6 +55,14 @@ export interface Settings {
 	metroTrainerBars: number
 	metroTrainerTarget: number
 
+	/* Chords (ts/views/chord-library.ts) */
+	/** Sub-view of the Chords tab: live recognizer, chord dictionary, identifier. */
+	chordsMode: 'listen' | 'library' | 'identify'
+	/** What the chord diagram dots say (fingers: the finger numbers move into the dots). */
+	chordLabels: 'degrees' | 'notes' | 'fingers' | 'none'
+	/** Tapping a chord: all strings at once, low to high, or one by one. */
+	chordPlay: 'strum' | 'arpeggio'
+
 	/* Fretboard (shared by every neck, ts/fretboard.ts) */
 	/** Mirror the neck: nut on the right when horizontal, low string on the right when vertical. */
 	leftHanded: boolean
@@ -102,6 +110,10 @@ const defaults: Settings = {
 	metroTrainerStep: 5,
 	metroTrainerBars: 4,
 	metroTrainerTarget: 160,
+
+	chordsMode: 'listen',
+	chordLabels: 'degrees',
+	chordPlay: 'strum',
 
 	/* Fretboard */
 	leftHanded: false,

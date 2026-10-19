@@ -122,7 +122,7 @@ function activate(name: string) {
 		button.setAttribute('aria-selected', String(button.dataset.tab === name))
 	}
 
-	// Settings exist for the Tuner, Scales, Trainer and Metronome; show that tab's section.
+	// Settings exist for the Tuner, Chords, Scales, Trainer and Metronome; show that tab's section.
 	const sections = settingsPanel.querySelectorAll<HTMLElement>('[data-for]')
 	sections.forEach((section) => (section.hidden = section.dataset.for !== name))
 	const hasSettings = [...sections].some((section) => !section.hidden)

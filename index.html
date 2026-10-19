@@ -116,6 +116,50 @@
 				</label>
 			</div>
 
+			<div class="settings__section" data-for="chords">
+				<label class="switch">
+					<span class="switch__text">
+						<span class="switch__title">Diagram labels</span>
+						<span class="switch__desc">What the dots on a chord diagram say</span>
+					</span>
+					<select class="select select--small" data-setting="chordLabels">
+						<option value="degrees">Degrees</option>
+						<option value="notes">Notes</option>
+						<option value="fingers">Fingers</option>
+						<option value="none">None</option>
+					</select>
+				</label>
+				<label class="switch">
+					<span class="switch__text">
+						<span class="switch__title">Play as</span>
+						<span class="switch__desc">Tapping a chord strums it or picks each string</span>
+					</span>
+					<select class="select select--small" data-setting="chordPlay">
+						<option value="strum">Strum</option>
+						<option value="arpeggio">Arpeggio</option>
+					</select>
+				</label>
+				<label class="switch">
+					<span class="switch__text">
+						<span class="switch__title">Fretboard theme</span>
+						<span class="switch__desc">Light or dark, whatever the app theme</span>
+					</span>
+					<select class="select select--small" data-setting="fretboardTheme">
+						<option value="auto">Auto</option>
+						<option value="light">Light</option>
+						<option value="dark">Dark</option>
+					</select>
+				</label>
+				<label class="switch">
+					<span class="switch__text">
+						<span class="switch__title">Left-handed</span>
+						<span class="switch__desc">Mirror the diagrams and the neck</span>
+					</span>
+					<input type="checkbox" class="switch__input" data-setting="leftHanded" />
+					<span class="switch__track"></span>
+				</label>
+			</div>
+
 			<div class="settings__section" data-for="scales">
 				<label class="switch">
 					<span class="switch__text">
@@ -459,13 +503,63 @@
 
 		<!-- Chords ------------------------------------------------------- -->
 		<section class="view" id="view-chords" role="tabpanel" hidden>
+			<!-- Sub-views: Listen (the recognizer, ts/views/chords.ts), Library and
+			     Identify (ts/views/chord-library.ts). -->
+			<div class="segmented chords-modes" role="group" aria-label="Chords mode">
+				<button type="button" data-chords-mode="listen" aria-pressed="true">Listen</button>
+				<button type="button" data-chords-mode="library" aria-pressed="false">Library</button>
+				<button type="button" data-chords-mode="identify" aria-pressed="false">Identify</button>
+			</div>
 			<div class="panel readout">
-				<div class="readout__note readout__idle">--</div>
+				<!-- A button: the recognized chord opens in the Library. -->
+				<button type="button" class="readout__note readout__idle chord-link" title="Open in the Library">--</button>
 				<div class="readout__sub">Strum a chord</div>
 				<!-- Live pitch-class profile; chord tones highlight. Filled by ts/views/chords.ts. -->
 				<div class="chroma" aria-hidden="true"></div>
 			</div>
 			<p class="hint">Strum and let it ring. Recognizes major, minor, 7th, 9th and sus chords.</p>
+
+			<div class="chord-library" hidden>
+				<div class="chord-pick">
+					<div class="chord-roots" role="group" aria-label="Root"></div>
+					<select class="select chord-type" aria-label="Chord type"></select>
+				</div>
+				<div class="chord-info">
+					<h2 class="chord-info__symbol"></h2>
+					<p class="chord-info__name"></p>
+					<!-- Notes over their degrees, coloured like the dots. -->
+					<div class="chord-info__notes" role="list" aria-label="Notes"></div>
+					<div class="chord-keys">
+						<span class="panel__label">In keys</span>
+						<ul class="chord-keys__list"></ul>
+					</div>
+				</div>
+				<div class="chord-voicings">
+					<ol class="voicings" aria-label="Voicings, tap one to hear it"></ol>
+					<p class="hint voicings__empty" hidden>No playable voicing within four frets.</p>
+				</div>
+			</div>
+
+			<div class="chord-identify" hidden>
+				<div class="neck-card">
+					<div class="neck-board">
+						<svg class="neck" xmlns="http://www.w3.org/2000/svg"></svg>
+					</div>
+					<div class="neck-toolbar">
+						<span class="chord-shape" aria-label="Marked shape, low string first"></span>
+						<button class="btn btn--small" type="button" data-action="strum" title="Strum the marked shape">
+							<svg viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true">
+								<path d="M7 4v16l13-8z" />
+							</svg>
+							<span>Strum</span>
+						</button>
+						<button class="btn btn--small" type="button" data-action="clear-shape">Clear</button>
+					</div>
+				</div>
+				<!-- Announces the best match; the list itself would read out in full on every tap. -->
+				<p class="sr-only chord-identify__status" aria-live="polite"></p>
+				<ol class="scale-results chord-results"></ol>
+			</div>
 		</section>
 
 		<!-- Scales: explorer + identifier on one fretboard (ts/views/scales.ts). -->
