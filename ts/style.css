@@ -1792,3 +1792,66 @@ button {
 		font-size: 19px;
 	}
 }
+
+/* Tuner follow-ups: screen-reader text, A4 note, 44 px touch targets ------- */
+.sr-only {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	margin: -1px;
+	padding: 0;
+	overflow: hidden;
+	clip: rect(0 0 0 0);
+	white-space: nowrap;
+	border: 0;
+}
+
+/* "A4 = 432 Hz" where the Trainer and Scales show notes (ts/views/settings-panel.ts). */
+.a4-note {
+	margin: 12px 0 0;
+	font-family: var(--font-mono);
+	font-size: 11px;
+	color: var(--fg-muted);
+	text-align: center;
+}
+
+.a4-note[hidden] {
+	display: none;
+}
+
+.scale-info .a4-note {
+	margin: 0;
+	text-align: inherit;
+}
+
+/* Phones: every tuner control reaches 44 px (the segmented control's 3 px
+   padding makes its buttons 38). Desktop keeps the compact sizes. */
+@media (max-width: 600px) {
+	.tuner-tuning {
+		height: 44px;
+	}
+
+	.tuner-mode button {
+		min-height: 38px;
+	}
+
+	.settings__section[data-for='tuner'] .input,
+	.settings__section[data-for='tuner'] .select {
+		height: 44px;
+	}
+
+	.settings__presets .link-btn {
+		min-width: 44px;
+		min-height: 44px;
+	}
+
+	.settings__section[data-for='tuner'] .range {
+		height: 44px;
+	}
+}
+
+@media (max-width: 380px) {
+	.tuner-mode button {
+		padding: 0 10px;
+	}
+}

@@ -33,6 +33,7 @@ export function createTunerView(root: HTMLElement): View {
 	const tuningSelect = root.querySelector<HTMLSelectElement>('.tuner-tuning')!
 	const modeButtons = Array.from(root.querySelectorAll<HTMLButtonElement>('[data-tuner-mode]'))
 	const toleranceText = root.querySelector<HTMLElement>('.tuner-tolerance')!
+	const live = root.querySelector<HTMLElement>('.tuner-live')!
 
 	let strings: TuningString[] = []
 	let builtFor = ''
@@ -78,7 +79,7 @@ export function createTunerView(root: HTMLElement): View {
 			chip.type = 'button'
 			chip.className = 'string-chip'
 			chip.dataset.state = 'idle'
-			chip.setAttribute('aria-label', `${string.name}${string.octave}, hear reference tone`)
+			chip.setAttribute('aria-label', chipLabel(string, 'idle', false))
 			chip.innerHTML = `<span class="string-chip__note">${string.name}<sub>${string.octave}</sub></span>${CHECK}`
 			return chip
 		})
@@ -95,12 +96,29 @@ export function createTunerView(root: HTMLElement): View {
 			const state: ChipState = i === refIndex ? 'ref' : i === active ? (locked ? 'locked' : 'active') : 'idle'
 			const done = tuned.has(i)
 			// Writes only on change: this runs every frame.
+			const changed = shown[i].state !== state || shown[i].tuned !== done
 			if (shown[i].state !== state) chip.dataset.state = shown[i].state = state
 			if (shown[i].tuned !== done) {
 				shown[i].tuned = done
 				chip.toggleAttribute('data-tuned', done)
 			}
+			// The check icon is decorative: the state goes in the name.
+			if (changed) chip.setAttribute('aria-label', chipLabel(strings[i], state, done))
 		})
+	}
+
+	function chipLabel(string: TuningString, state: ChipState, done: boolean) {
+		const status = state === 'ref' ? 'playing' : state === 'locked' ? 'in tune' : done ? 'tuned' : state === 'active' ? 'being played' : ''
+		return `${string.name}${string.octave}, hear reference tone${status ? `, ${status}` : ''}`
+	}
+
+	// Screen readers hear the note and whether it is in tune, never the
+	// 60-per-second cents: the live region only changes when one of those does.
+	let announced = ''
+	function announce(text: string) {
+		if (text === announced) return
+		announced = text
+		live.textContent = text
 	}
 
 	/** Reflects settings: rebuilds the strings if the tuning or A4 moved. */
@@ -109,10 +127,14 @@ export function createTunerView(root: HTMLElement): View {
 		const key = `${tuning}@${a4}`
 		if (key !== builtFor) {
 			builtFor = key
-			// New targets: yesterday's checks no longer mean anything.
+			// New targets: yesterday's checks no longer mean anything, and a
+			// reference tone still ringing is at the old pitch.
 			tuned.clear()
+			const wasPlaying = refIndex !== null
 			endReference()
+			Sound.stopTone()
 			build()
+			if (wasPlaying) idle()
 		}
 		tuningSelect.value = tuningById(tuning).id
 		modeButtons.forEach((button) => button.setAttribute('aria-pressed', String(button.dataset.tunerMode === tunerMode)))
@@ -130,6 +152,7 @@ export function createTunerView(root: HTMLElement): View {
 		note.classList.remove('readout__idle')
 		note.textContent = `${string.name}${string.octave}`
 		sub.textContent = `Reference · ${string.frequency.toFixed(1)} Hz`
+		announce(`Playing ${string.name}${string.octave}`)
 		needle.style.left = '50%'
 		readout.classList.remove('readout--locked')
 		syncChips(-1, false)
@@ -151,6 +174,7 @@ export function createTunerView(root: HTMLElement): View {
 		note.textContent = '--'
 		note.classList.add('readout__idle')
 		sub.textContent = 'Play a note to begin'
+		announce('')
 		needle.style.left = '50%'
 		readout.classList.remove('readout--locked')
 		lockIndex = -1
@@ -197,6 +221,7 @@ export function createTunerView(root: HTMLElement): View {
 				note.textContent = '--'
 				note.classList.add('readout__idle')
 				sub.textContent = 'Listening…'
+				announce('')
 				readout.classList.remove('readout--locked')
 				lockIndex = -1
 				syncChips(-1, false)
@@ -234,7 +259,9 @@ export function createTunerView(root: HTMLElement): View {
 			const clamped = Math.max(-CENTS_RANGE, Math.min(CENTS_RANGE, cents))
 			needle.style.left = `${50 + (clamped / CENTS_RANGE) * 50}%`
 
-			readout.classList.toggle('readout--locked', Math.abs(cents) <= tolerance)
+			const inTune = Math.abs(cents) <= tolerance
+			readout.classList.toggle('readout--locked', inTune)
+			announce(inTune ? `${label}, in tune` : label)
 		},
 	}
 }

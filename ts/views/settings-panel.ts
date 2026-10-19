@@ -75,9 +75,21 @@ export function createSettingsPanel(root: HTMLElement) {
 		}
 	}
 
+	// A4 is set in the Tuner's settings but moves the Trainer and Scales too:
+	// say so where they show notes, so a stray 432 is never a mystery.
+	const a4Notes = Array.from(document.querySelectorAll<HTMLElement>('.a4-note'))
+	function syncA4Notes() {
+		const { a4 } = Settings.get()
+		for (const note of a4Notes) {
+			note.hidden = a4 === 440
+			note.textContent = `A4 = ${a4} Hz`
+		}
+	}
+
 	function sync() {
 		syncSwitches()
 		renderChips()
+		syncA4Notes()
 	}
 
 	Settings.subscribe(sync)

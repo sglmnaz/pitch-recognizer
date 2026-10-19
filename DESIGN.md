@@ -49,10 +49,10 @@ for genuinely floating surfaces.
 - **Buttons**: 36px tall, 6px radius. Primary is the solid near-black (or
   near-white in dark); secondary is surface + hairline border.
 - **Readout panel**: the shared note/frequency/cents display. Gains a green border
-  and green note color when locked within 5 cents.
+  and green note color when locked within the in-tune tolerance (±2, ±5 or ±10 cents; default ±5).
 - **Cents meter**: horizontal scale -50..+50 with a center tick and a needle that
   eases (80ms linear) to the deviation. Colored tuning zones sit on the track:
-  a soft green band in the centre (in tune, ~±5 cents) flanked by soft yellow
+  a soft green band in the centre (in tune, the tolerance setting, default ±5 cents) flanked by soft yellow
   (close), fading to neutral at the edges. Zone colors are theme-token mixes so
   they stay muted in both light and dark.
 - **Settings popover**: gear-triggered floating panel (border + `--shadow-md`,

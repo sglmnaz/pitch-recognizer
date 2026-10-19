@@ -35,7 +35,7 @@ Open the **settings** menu (gear icon) to:
 
 **Tuner:** play any note. The readout shows the nearest note, frequency in Hz, and
 cents deviation. The meter has a green centre zone (in tune) flanked by yellow
-(close); the readout locks green when you are within 5 cents.
+(close); the readout locks green when you are within the in-tune tolerance (±2, ±5 or ±10 cents in Settings, default ±5). Pick a tuning (Standard, Drop D, DADGAD, open tunings…) and Guitar mode to read cents off the nearest string, tap a string chip to hear its reference tone, and set A4 (415–466 Hz) in Settings.
 
 ## Install (PWA)
 

@@ -74,13 +74,13 @@
 				<div class="switch switch--wrap">
 					<span class="switch__text">
 						<span class="switch__title">A4 reference</span>
-						<span class="switch__desc">Concert pitch, for tuner and trainer</span>
+						<span class="switch__desc">Concert pitch for Tuner, Trainer, Scales and Chords</span>
 					</span>
 					<span class="number">
-						<input type="number" class="input" min="415" max="466" step="0.1" inputmode="decimal" data-setting="a4" aria-label="A4 in Hz" />
+						<input type="number" class="input" min="415" max="466" step="0.1" inputmode="decimal" data-setting="a4" aria-label="A4 frequency in Hz, number field" />
 						<span class="number__unit">Hz</span>
 					</span>
-					<input type="range" class="range switch__wide" min="415" max="466" step="1" data-setting="a4" aria-label="A4 in Hz" />
+					<input type="range" class="range switch__wide" min="415" max="466" step="1" data-setting="a4" aria-label="A4 frequency, slider" />
 					<span class="switch__wide settings__presets">
 						<button class="link-btn" type="button" data-set="a4:415">415</button>
 						<button class="link-btn" type="button" data-set="a4:432">432</button>
@@ -220,6 +220,7 @@
 					</div>
 					<div class="meter__labels"><span>-50</span><span>0</span><span>+50</span></div>
 				</div>
+				<p class="a4-note" hidden></p>
 			</div>
 
 			<div class="controls">
@@ -240,6 +241,8 @@
 			<div class="panel readout">
 				<div class="readout__note readout__idle">--</div>
 				<div class="readout__sub">Play a note to begin</div>
+				<!-- Screen-reader announcement: only changes with the note or the in-tune state. -->
+				<span class="sr-only tuner-live" aria-live="polite"></span>
 				<div class="meter">
 					<div class="meter__scale">
 						<div class="meter__zones"></div>
@@ -292,6 +295,7 @@
 				<h2 class="scale-info__title"></h2>
 				<!-- Degree strip; tapping a degree toggles its colour on the neck. -->
 				<div class="scale-info__notes" role="group" aria-label="Scale degrees, tap to colour"></div>
+				<p class="a4-note" hidden></p>
 			</div>
 
 			<div class="neck-card">
