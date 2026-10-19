@@ -1,14 +1,17 @@
 import * as Microphone from '../microphone'
 import * as Settings from '../settings'
-import { PITCH_CLASSES, resetChordTracking, trackChord } from '../chords'
+import { chordModelReady, loadChordModel, PITCH_CLASSES, resetChordTracking, trackChord } from '../chords'
 import type { View } from './view'
 import { createChordModes } from './chord-library'
 
 // A new label (chord or "none") must win for this long before it is shown.
 // trackChord's HMM already keeps a strum's attack and decay from flickering
-// through other chords; this only hides single-frame changes. (250 ms before
-// the HMM, which made a chord change appear ~0.5 s late.)
-const CHORD_CONFIRM_MS = 100
+// through other chords; this only hides brief changes. (250 ms before the
+// HMM, which made a chord change appear ~0.5 s late.)
+const CHORD_CONFIRM_MS = 150
+// The HMM forgets the chord only after this much continuous silence, so a
+// short gap between strums (the gate closing on a decay) keeps its evidence.
+const SILENCE_RESET_MS = 300
 
 /** `onMicNeed` tells index.ts that wantsMic() changed: only Listen uses the mic. */
 export function createChordsView(root: HTMLElement, onMicNeed: () => void): View {
@@ -35,6 +38,7 @@ export function createChordsView(root: HTMLElement, onMicNeed: () => void): View
 	let shown: string | null = null
 	let candidate: string | null = null
 	let candidateSince = 0
+	let silentSince: number | null = null
 
 	function render(label: string | null, notes: string[], idleText: string) {
 		name.textContent = label ?? '--'
@@ -54,6 +58,7 @@ export function createChordsView(root: HTMLElement, onMicNeed: () => void): View
 
 	function idle(text = 'Strum a chord') {
 		resetChordTracking()
+		silentSince = null
 		shown = null
 		candidate = null
 		render(null, [], text)
@@ -62,6 +67,8 @@ export function createChordsView(root: HTMLElement, onMicNeed: () => void): View
 
 	return {
 		onActivate: () => {
+			// The model's weights load on first visit; frames are skipped until then.
+			loadChordModel().catch((error) => console.error('chord model failed to load', error))
 			idle()
 			modes.onActivate()
 		},
@@ -69,14 +76,18 @@ export function createChordsView(root: HTMLElement, onMicNeed: () => void): View
 		wantsMic: () => modes.listening(),
 
 		onReading() {
-			if (!modes.listening()) return
+			if (!modes.listening() || !chordModelReady()) return
 			const spectrum = Microphone.getSpectrum()
 			// Same adaptive silence gate as the tuner, so quiet sources (an
 			// unplugged electric) are analysed too.
 			const loud = Microphone.isSounding()
 			const now = performance.now()
 			const analysis = loud && spectrum ? trackChord(spectrum.spectrumDb, spectrum.binHz, now, Settings.get().a4) : null
-			if (!analysis) resetChordTracking()
+			if (analysis) silentSince = null
+			else {
+				silentSince ??= now
+				if (now - silentSince >= SILENCE_RESET_MS) resetChordTracking()
+			}
 			const chord = analysis?.chord ?? null
 
 			const label = chord?.name ?? null

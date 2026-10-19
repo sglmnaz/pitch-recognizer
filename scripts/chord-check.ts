@@ -3,8 +3,10 @@
 // window, dB) and asserts recognizeChord names them, that single notes,
 // silence and noise are not named, and that the A4 reference is honoured.
 // Run with `npm run check:chords`.
-import { recognizeChord } from '../ts/chords.ts'
+import { createChordTracker, loadChordModel, recognizeChord, resetChordTracking, trackChord } from '../ts/chords.ts'
 import { spectrumDb as analyserSpectrum } from './audio.ts'
+
+await loadChordModel()
 
 const SAMPLE_RATE = 44100
 const FFT_SIZE = 16384 // must match CHORD_FFT_SIZE in ts/microphone.ts
@@ -66,8 +68,8 @@ const VOICINGS: [string, number[]][] = [
 ]
 
 /** Strum: each string plucked 15 ms after the previous, with real-ish partials. */
-function strum(midis: number[], bright = false, a4 = 440): Float32Array {
-	const length = Math.round(0.6 * SAMPLE_RATE)
+function strum(midis: number[], bright = false, a4 = 440, seconds = 0.6): Float32Array {
+	const length = Math.round(seconds * SAMPLE_RATE)
 	const out = new Float32Array(length)
 	midis.forEach((midi, string) => {
 		const f0 = n(midi, a4)
@@ -149,6 +151,77 @@ for (const [label, signal] of [['silence', quiet], ['white noise', hiss]] as [st
 	const match = recognizeChord(spectrumDb(signal), binHz).chord
 	if (match) {
 		console.log(`FAIL ${label} -> ${match.name}`)
+		allOk = false
+	}
+}
+
+// The shipped path, as the Chords view drives it: trackChord on 60 Hz analyser
+// frames (smoothing 0.8, like AnalyserNode), only while sound is playing, and
+// a reset after 300 ms of silence. C, a pause, then Am: each must be named
+// within 400 ms of its strum and still be named when it ends.
+const HOP = Math.round(SAMPLE_RATE / 60)
+const take = (parts: Float32Array[]) => {
+	const out = new Float32Array(parts.reduce((n, p) => n + p.length, 0))
+	parts.reduce((at, p) => (out.set(p, at), at + p.length), 0)
+	return out
+}
+const gap = new Float32Array(Math.round(0.5 * SAMPLE_RATE)).map(() => 1e-5 * noise())
+const cStrum = strum([48, 52, 55, 60, 64], false, 440, 1.5)
+const amStrum = strum([45, 52, 57, 60, 64], false, 440, 1.5)
+const session = take([cStrum, gap, amStrum])
+const segments = [
+	{ name: 'C', from: 0, to: cStrum.length },
+	{ name: 'Am', from: cStrum.length + gap.length, to: session.length },
+]
+/** Names per 60 Hz frame of `signal` from `tracker`, null where it is silent (not tracked). */
+function trackFrames(signal: Float32Array, track: (spectrum: Float32Array, ms: number) => string | null, reset: () => void, sounding: (end: number) => boolean) {
+	const state = { smoothing: 0.8 }
+	const frames: { end: number; name: string | null }[] = []
+	let silentSince: number | null = null
+	for (let end = FFT_SIZE; end <= signal.length; end += HOP) {
+		const spectrum = analyserSpectrum(signal.subarray(end - FFT_SIZE, end), state)
+		const ms = (end / SAMPLE_RATE) * 1000
+		if (sounding(end)) {
+			silentSince = null
+			frames.push({ end, name: track(spectrum, ms) })
+		} else {
+			silentSince ??= ms
+			if (ms - silentSince >= 300) reset()
+			frames.push({ end, name: null })
+		}
+	}
+	return frames
+}
+resetChordTracking()
+const sessionFrames = trackFrames(
+	session,
+	(spectrum, ms) => trackChord(spectrum, binHz, ms)?.chord?.name ?? null,
+	resetChordTracking,
+	(end) => segments.some((seg) => end > seg.from && end <= seg.to),
+)
+for (const seg of segments) {
+	const inside = sessionFrames.filter((f) => f.end > seg.from && f.end <= seg.to)
+	const first = inside.find((f) => f.name === seg.name)
+	const latency = first ? ((first.end - seg.from) / SAMPLE_RATE) * 1000 : Infinity
+	const last = inside[inside.length - 1]?.name
+	const ok = latency <= 400 && last === seg.name
+	console.log(`${ok ? 'ok  ' : 'FAIL'} trackChord ${seg.name}: first named after ${latency.toFixed(0)} ms, last frame ${last ?? '—'}`)
+	if (!ok) allOk = false
+}
+
+// NONE_BIAS leans the tracker towards chords; a ringing single note (whose
+// harmonics spell its own major triad) and noise must still not be named.
+// Each runs on its own tracker, as a second feature would.
+for (const [label, signal] of [
+	['tracked E2', strum([40], false, 440, 1.5)],
+	['tracked A2', strum([45], false, 440, 1.5)],
+	['tracked noise', new Float32Array(Math.round(1.5 * SAMPLE_RATE)).map(() => 0.01 * noise())],
+] as [string, Float32Array][]) {
+	const tracker = createChordTracker()
+	const frames = trackFrames(signal, (spectrum, ms) => tracker.track(spectrum, binHz, ms).chord?.name ?? null, tracker.reset, () => true)
+	const named = frames.filter((f) => f.name !== null)
+	if (named.length > 0.1 * frames.length) {
+		console.log(`FAIL ${label}: named in ${named.length}/${frames.length} frames (${named[0].name})`)
 		allOk = false
 	}
 }

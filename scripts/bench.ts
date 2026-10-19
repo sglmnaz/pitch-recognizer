@@ -9,6 +9,7 @@
 //   npm run bench -- --task notes --source guitarset --by-note   # acoustic notes, per note
 //   npm run bench -- --split tune     # tune constants here; default reports the test split
 //   npm run bench -- --json out.json  # save results to diff two versions
+//   npm run bench -- --task chords --by-source   # chord rows split into IDMT / GuitarSet too
 //
 // Sources (any that are present): bench/audio (your own labelled files, see
 // bench/README.md), bench/data/idmt (IDMT-SMT-Guitar), bench/data/guitarset.
@@ -16,7 +17,7 @@
 import { existsSync, readdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { FFT_SIZE, processFrame, stop } from '../ts/microphone.ts'
-import { resetChordTracking, trackChord } from '../ts/chords.ts'
+import { loadChordModel, resetChordTracking, trackChord } from '../ts/chords.ts'
 import { appBand, appHighpass, CONDITIONS, decode, degrade, rms, spectrumDb } from './audio.ts'
 
 export const SAMPLE_RATE = 44100
@@ -216,7 +217,7 @@ function idmtNotes(): Item<number>[] {
 const IDMT_QUALITIES: Record<string, string> = { '': 'maj', min: 'min', '7': '7', '13': '7', '79': '7', '713': '7', '7913': '7', '79b': '7', min7: 'min7', min79: 'min7', maj7: 'maj7' }
 
 /** IDMT-SMT-Guitar dataset 4, acoustic guitar through a microphone: chord changes per beat. */
-export function idmtChords(): Item<Chord>[] {
+export function idmtChords(keep: (id: string) => boolean = () => true): Item<Chord>[] {
 	const root = join(IDMT, 'dataset4', 'acoustic_mic')
 	if (!existsSync(root)) return []
 	const items: Item<Chord>[] = []
@@ -225,6 +226,9 @@ export function idmtChords(): Item<Chord>[] {
 			const annotations = join(root, tempo, genre, 'annotation', 'chords')
 			if (!existsSync(annotations)) continue
 			for (const file of readdirSync(annotations).sort()) {
+				// `keep` sees the id before the file is read (scripts/chord-data.ts never opens test annotations).
+				const id = `idmt/${tempo}/${genre}/${file}`
+				if (!keep(id)) continue
 				// Rows are `time,bar.beat[:chord]`; a chord lasts until the next labelled beat.
 				const rows = readFileSync(join(annotations, file), 'utf8')
 					.split(/\r?\n/)
@@ -240,7 +244,7 @@ export function idmtChords(): Item<Chord>[] {
 					return { start: Number(time), end, value }
 				})
 				const wav = join(root, tempo, genre, 'audio', file.replace(/\.csv$/, '.wav'))
-				if (existsSync(wav)) items.push({ id: `idmt/${tempo}/${genre}/${file}`, load: () => decode(wav, SAMPLE_RATE), segments })
+				if (existsSync(wav)) items.push({ id, load: () => decode(wav, SAMPLE_RATE), segments })
 			}
 		}
 	}
@@ -329,6 +333,7 @@ function evaluateChords(item: Item<Chord>, signal: Float32Array, score: ChordSco
 
 // Run only when invoked as a script: scripts/chord-data.ts imports the loaders.
 if (import.meta.main) {
+	await loadChordModel()
 
 	const args = process.argv.slice(2)
 	const option = (name: string) => (args.includes(name) ? args[args.indexOf(name) + 1] : null)
@@ -377,12 +382,32 @@ if (import.meta.main) {
 		const items = [...ownItems('chord', parseAppChord), ...spread(inSplit(idmtChords()), limit), ...spread(inSplit(guitarSetChords()), limit)]
 		console.log(`\nCHORDS (${split} split) — ${items.length} items (frame-level chord symbol recall, MIREX reductions)`)
 		console.log('condition       root  majmin sevenths  latency  top confusions (sevenths)')
-		for (const condition of activeConditions) {
-			const score: ChordScore = { root: { hits: 0, frames: 0 }, majmin: { hits: 0, frames: 0 }, sevenths: { hits: 0, frames: 0 }, confusions: new Map(), latencies: [] }
-			items.forEach((item, i) => evaluateChords(item, degrade(item.load(), SAMPLE_RATE, condition, i + 1), score))
+		const emptyScore = (): ChordScore => ({ root: { hits: 0, frames: 0 }, majmin: { hits: 0, frames: 0 }, sevenths: { hits: 0, frames: 0 }, confusions: new Map(), latencies: [] })
+		const row = (label: string, score: ChordScore) => {
 			const top = [...score.confusions.entries()].sort((a, b) => b[1] - a[1]).slice(0, 3).map(([k, v]) => `${k}×${v}`).join(' ')
 			const latency = quantile(score.latencies, 0.5)
-			console.log(`${condition.name.padEnd(13)} ${pct(score.root.hits, score.root.frames)} ${pct(score.majmin.hits, score.majmin.frames)}  ${pct(score.sevenths.hits, score.sevenths.frames)}  ${latency.toFixed(0).padStart(5)}ms  ${top}`)
+			console.log(`${label.padEnd(13)} ${pct(score.root.hits, score.root.frames)} ${pct(score.majmin.hits, score.majmin.frames)}  ${pct(score.sevenths.hits, score.sevenths.frames)}  ${latency.toFixed(0).padStart(5)}ms  ${top}`)
+			return latency
+		}
+		for (const condition of activeConditions) {
+			// Scored per source (idmt, guitarset, own) in the same pass, so --by-source splits this very run.
+			const bySource = new Map<string, ChordScore>()
+			items.forEach((item, i) => {
+				const source = item.id.split('/')[0]
+				if (!bySource.has(source)) bySource.set(source, emptyScore())
+				evaluateChords(item, degrade(item.load(), SAMPLE_RATE, condition, i + 1), bySource.get(source)!)
+			})
+			const score = emptyScore()
+			for (const part of bySource.values()) {
+				for (const level of ['root', 'majmin', 'sevenths'] as Level[]) {
+					score[level].hits += part[level].hits
+					score[level].frames += part[level].frames
+				}
+				for (const [k, v] of part.confusions) score.confusions.set(k, (score.confusions.get(k) ?? 0) + v)
+				score.latencies.push(...part.latencies)
+			}
+			const latency = row(condition.name, score)
+			if (args.includes('--by-source')) for (const [source, part] of bySource) row(`  ${source}`, part)
 			const { confusions, latencies, ...levels } = score
 			results[`chords/${condition.name}`] = { ...levels, latency }
 		}

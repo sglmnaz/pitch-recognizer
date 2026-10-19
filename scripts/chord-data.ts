@@ -50,7 +50,8 @@ const GUITARSET = 'bench/data/guitarset'
 
 function guitarSet(): Labelled[] {
 	return readdirSync(join(GUITARSET, 'annotation'))
-		.filter((file) => file.endsWith('.jams'))
+		// The split is decided from the file name, so test-split annotations are never opened.
+		.filter((file) => file.endsWith('.jams') && splitOf(`guitarset/${file.replace('.jams', '')}`) === 'tune')
 		.sort()
 		.map((file) => {
 			const jams = JSON.parse(readFileSync(join(GUITARSET, 'annotation', file), 'utf8'))
@@ -75,7 +76,7 @@ function guitarSet(): Labelled[] {
 }
 
 function idmt(): Labelled[] {
-	return idmtChords().map((item) => ({ id: item.id, load: item.load, instr: item.segments, perf: item.segments, notes: null, solo: false }))
+	return idmtChords((id) => splitOf(id) === 'tune').map((item) => ({ id: item.id, load: item.load, instr: item.segments, perf: item.segments, notes: null, solo: false }))
 }
 
 // --- synthetic strums ----------------------------------------------------------

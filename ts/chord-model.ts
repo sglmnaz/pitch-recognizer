@@ -2,7 +2,7 @@
 // chord recognizer (see ts/chords.ts), trained on the benchmark's tune split
 // only (GuitarSet players 00-01, IDMT-SMT-Guitar dataset4 "fast" takes) plus
 // synthetic strums (scripts/chord-data.ts --synth), 10710 parameters.
-// Settings: {"labels": "perf", "synth": true, "epochs": 12, "lr": 0.003, "note_weight": 1.0, "hidden": 32, "channels": 16, "no_pooled": false, "conditions": "clean,phone-good,phone-mid,phone-cheap,unplugged"}
+// Settings: {"labels": "perf", "synth": true, "epochs": 12, "lr": 0.003, "note_weight": 1.0, "hidden": 32, "channels": 16, "no_pooled": false, "conditions": "clean,phone-good,phone-mid,phone-cheap,unplugged", "threads": 16, "synth_takes": 160}
 
 export const SHAPE = {"note_bias": [60], "conv1_weight": [16, 11, 5], "conv1_bias": [16], "conv2_weight": [16, 16, 3], "conv2_bias": [16], "conv3_weight": [16, 16, 5], "conv3_bias": [16], "salience_weight": [1, 16, 1], "salience_bias": [1], "head1_weight": [32, 216], "head1_bias": [32], "head2_weight": [8, 32], "head2_bias": [8], "none1_weight": [16, 26], "none1_bias": [16], "none2_weight": [1, 16], "none2_bias": [1]}
 

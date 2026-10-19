@@ -33,7 +33,9 @@
 //
 // The tuning reference `a4` (the tuner's A4 calibration) moves the
 // log-frequency grid, so the model always sees notes on its semitone bins.
-import * as M from './chord-model.ts'
+// The ~100 KB of weights load on first use (loadChordModel), not at app
+// start-up, so the Tuner does not pay for parsing them.
+type Model = typeof import('./chord-model.ts')
 
 /** Pitch-class names as guitarists usually spell them. */
 export const PITCH_CLASSES = ['C', 'C#', 'D', 'Eb', 'E', 'F', 'F#', 'G', 'Ab', 'A', 'Bb', 'B']
@@ -69,9 +71,10 @@ const CHORD_TYPES: { suffix: string; intervals: number[] }[] = [
 // synthetic training takes play every type equally often, while 9 chords are
 // rare in real playing, and a bright string's overtones spell a 9th (the
 // fifth's 3rd harmonic) and a major 7th (the third's 3rd, the fifth's 5th),
-// so the model leans to 9 and maj7. On held-out recordings these offsets
-// move every score by < 1 point (scripts/chord-train.py --val); they keep
-// the dominant-7th voicings of scripts/chord-check.ts from reading as 9ths.
+// so the model leans to 9 and maj7. The values were chosen as the smallest
+// that keep the dominant-7th voicings of scripts/chord-check.ts (synthetic)
+// from reading as 9ths; the held-out recordings (scripts/chord-train.py
+// --val) only confirmed that they move every score by < 1 point.
 const TYPE_BIAS = [0, 0, 0, 0, -1, -1.75, 0, 0]
 const TYPES = CHORD_TYPES.length
 const CLASSES = 12 * TYPES + 1
@@ -117,9 +120,11 @@ export function logSpectrum(spectrumDb: Float32Array, binHz: number, a4 = 440, o
 	const { lo, hi, at } = logTable
 	for (let j = 0; j < LOG_BINS; j++) {
 		const i = Math.floor(at[j])
-		let db = spectrumDb[i] + (at[j] - i) * (spectrumDb[i + 1] - spectrumDb[i])
+		// Clamped first: an empty analyser bin is -Infinity, and -Infinity minus -Infinity is NaN.
+		const a = Math.max(spectrumDb[i], -200)
+		let db = a + (at[j] - i) * (Math.max(spectrumDb[i + 1], -200) - a)
 		for (let b = lo[j]; b <= hi[j]; b++) db = Math.max(db, spectrumDb[b])
-		out[j] = Number.isFinite(db) ? db : -200
+		out[j] = db
 	}
 	let ref = -Infinity
 	for (let j = LOG_NORM_FROM; j < LOG_NORM_TO; j++) ref = Math.max(ref, out[j])
@@ -140,12 +145,6 @@ const FIRST = (LOW_NOTE - LOG_LOW_MIDI) * LOG_BINS_PER_SEMITONE
 // of a lower note (an overtone, not a played note).
 const HARMONICS = [1 / 5, 1 / 4, 1 / 3, 1 / 2, 1, 2, 3, 4, 5, 6, 7]
 const OFFSETS = HARMONICS.map((h) => Math.round(LOG_BINS_PER_SEMITONE * 12 * Math.log2(h)))
-const [C1, , K1] = M.SHAPE.conv1_weight
-const [C2, , K2] = M.SHAPE.conv2_weight
-const [C3, , K3] = M.SHAPE.conv3_weight
-const HIDDEN = M.SHAPE.head1_weight[0]
-const HEAD_IN = M.SHAPE.head1_weight[1]
-const NONE_HIDDEN = M.SHAPE.none1_weight[0]
 
 /** 1-D convolution + ReLU over `length` positions, zero padding, as torch.nn.Conv1d. */
 function conv(input: Float32Array, cin: number, length: number, weight: Float32Array, bias: Float32Array, cout: number, k: number, stride: number, pad: number, out: Float32Array) {
@@ -167,19 +166,53 @@ function conv(input: Float32Array, cin: number, length: number, weight: Float32A
 	}
 }
 
-// Scratch buffers, reused every frame (the detection loop runs at 60 Hz).
-const logBuffer = new Float32Array(LOG_BINS)
-const stacked = new Float32Array(HARMONICS.length * FINE)
-const hidden1 = new Float32Array(C1 * FINE)
-const hidden2 = new Float32Array(C2 * NOTES)
-const hidden3 = new Float32Array(C3 * NOTES)
-const pooled = new Float32Array(C3 * 12)
-const headInput = new Float32Array(HEAD_IN)
-const headHidden = new Float32Array(HIDDEN)
-const logits = new Float64Array(CLASSES)
+/** The loaded weights, their sizes and scratch buffers reused every frame (the loop runs at 60 Hz). */
+function networkOf(M: Model) {
+	const [C1, , K1] = M.SHAPE.conv1_weight
+	const [C2, , K2] = M.SHAPE.conv2_weight
+	const [C3, , K3] = M.SHAPE.conv3_weight
+	const [HIDDEN, HEAD_IN] = M.SHAPE.head1_weight
+	return {
+		M, C1, K1, C2, K2, C3, K3, HIDDEN, HEAD_IN, NONE_HIDDEN: M.SHAPE.none1_weight[0],
+		logBuffer: new Float32Array(LOG_BINS),
+		stacked: new Float32Array(HARMONICS.length * FINE),
+		hidden1: new Float32Array(C1 * FINE),
+		hidden2: new Float32Array(C2 * NOTES),
+		hidden3: new Float32Array(C3 * NOTES),
+		pooled: new Float32Array(C3 * 12),
+		headInput: new Float32Array(HEAD_IN),
+		headHidden: new Float32Array(HIDDEN),
+		logits: new Float64Array(CLASSES),
+	}
+}
 
-/** Log-probabilities of the 97 classes (root * 8 + type, then "no chord") and the chroma. */
-function classify(spectrumDb: Float32Array, binHz: number, a4: number): { logp: Float64Array; chroma: number[] } {
+let network: ReturnType<typeof networkOf> | null = null
+let loading: Promise<void> | null = null
+
+/**
+ * Loads the weights (once). Until it resolves, recognizeChord and the trackers
+ * answer "no chord" (and start the load themselves), so a caller in the rAF
+ * loop simply skips frames instead of throwing.
+ */
+export function loadChordModel(): Promise<void> {
+	loading ??= import('./chord-model.ts').then((M) => {
+		network = networkOf(M)
+	})
+	return loading
+}
+
+/** True once loadChordModel has resolved. */
+export function chordModelReady(): boolean {
+	return network !== null
+}
+
+/** Log-probabilities of the 97 classes (root * 8 + type, then "no chord") and the chroma; null until the model has loaded. */
+function classify(spectrumDb: Float32Array, binHz: number, a4: number): { logp: Float64Array; chroma: number[] } | null {
+	if (!network) {
+		loadChordModel().catch((error) => console.error('chord model failed to load', error))
+		return null
+	}
+	const { M, C1, K1, C2, K2, C3, K3, HIDDEN, HEAD_IN, NONE_HIDDEN, logBuffer, stacked, hidden1, hidden2, hidden3, pooled, headInput, headHidden, logits } = network
 	const v = logSpectrum(spectrumDb, binHz, a4, logBuffer)
 	OFFSETS.forEach((offset, h) => {
 		for (let t = 0; t < FINE; t++) {
@@ -263,7 +296,9 @@ function matchOf(k: number, probability: number): ChordMatch | null {
 
 /** Most likely chord in this one frame, no smoothing over time; `a4` is the tuning reference in Hz. */
 export function recognizeChord(spectrumDb: Float32Array, binHz: number, a4 = 440): ChordAnalysis {
-	const { logp, chroma } = classify(spectrumDb, binHz, a4)
+	const result = classify(spectrumDb, binHz, a4)
+	if (!result) return { chroma: new Array(12).fill(0), chord: null }
+	const { logp, chroma } = result
 	let best = 0
 	for (let k = 1; k < CLASSES; k++) if (logp[k] > logp[best]) best = k
 	return { chroma, chord: matchOf(best, Math.exp(logp[best])) }
@@ -289,36 +324,51 @@ const EVIDENCE_POWER = 1.5
 const NONE_BIAS = 1.5
 const REFERENCE_MS = 100
 
-let belief: Float64Array | null = null
-let lastMs = 0
-
-/** Forgets the chord being tracked (call when the input goes silent). */
-export function resetChordTracking() {
-	belief = null
+export interface ChordTracker {
+	/** recognizeChord smoothed over time: call once per analyser frame with its timestamp. */
+	track(spectrumDb: Float32Array, binHz: number, timeMs: number, a4?: number): ChordAnalysis
+	/** Forgets the chord being tracked (after a stretch of silence, or a new exercise). */
+	reset(): void
 }
 
-/** recognizeChord smoothed over time: call once per analyser frame with its timestamp. */
-export function trackChord(spectrumDb: Float32Array, binHz: number, timeMs: number, a4 = 440): ChordAnalysis {
-	const { logp, chroma } = classify(spectrumDb, binHz, a4)
-	const dt = belief ? Math.min(timeMs - lastMs, 1000) : REFERENCE_MS
-	lastMs = timeMs
-	const prior = belief ?? new Float64Array(CLASSES).fill(1 / CLASSES)
-	const stay = Math.exp((-SWITCH_PER_SECOND * dt) / 1000)
-	const power = (EVIDENCE_POWER * dt) / REFERENCE_MS
-	logp[NONE] -= NONE_BIAS
-	let max = -Infinity
-	for (let k = 0; k < CLASSES; k++) max = Math.max(max, logp[k])
-	const next = new Float64Array(CLASSES)
-	let sum = 0
-	for (let k = 0; k < CLASSES; k++) {
-		next[k] = Math.exp(power * (logp[k] - max)) * (stay * prior[k] + (1 - stay) / CLASSES)
-		sum += next[k]
+/** An independent smoother, so two features (the Chords view, a trainer) never share state. */
+export function createChordTracker(): ChordTracker {
+	let belief: Float64Array | null = null
+	let lastMs = 0
+	return {
+		reset() {
+			belief = null
+		},
+		track(spectrumDb, binHz, timeMs, a4 = 440) {
+			const result = classify(spectrumDb, binHz, a4)
+			if (!result) return { chroma: new Array(12).fill(0), chord: null }
+			const { logp, chroma } = result
+			const dt = belief ? Math.min(timeMs - lastMs, 1000) : REFERENCE_MS
+			lastMs = timeMs
+			const prior = belief ?? new Float64Array(CLASSES).fill(1 / CLASSES)
+			const stay = Math.exp((-SWITCH_PER_SECOND * dt) / 1000)
+			const power = (EVIDENCE_POWER * dt) / REFERENCE_MS
+			logp[NONE] -= NONE_BIAS
+			let max = -Infinity
+			for (let k = 0; k < CLASSES; k++) max = Math.max(max, logp[k])
+			const next = new Float64Array(CLASSES)
+			let sum = 0
+			for (let k = 0; k < CLASSES; k++) {
+				next[k] = Math.exp(power * (logp[k] - max)) * (stay * prior[k] + (1 - stay) / CLASSES)
+				sum += next[k]
+			}
+			let best = 0
+			for (let k = 0; k < CLASSES; k++) {
+				next[k] /= sum
+				if (next[k] > next[best]) best = k
+			}
+			belief = next
+			return { chroma, chord: matchOf(best, next[best]) }
+		},
 	}
-	let best = 0
-	for (let k = 0; k < CLASSES; k++) {
-		next[k] /= sum
-		if (next[k] > next[best]) best = k
-	}
-	belief = next
-	return { chroma, chord: matchOf(best, next[best]) }
 }
+
+// The default tracker, used by the Chords view and the benchmark.
+const defaultTracker = createChordTracker()
+export const trackChord: ChordTracker['track'] = (spectrumDb, binHz, timeMs, a4) => defaultTracker.track(spectrumDb, binHz, timeMs, a4)
+export const resetChordTracking = () => defaultTracker.reset()

@@ -46,10 +46,10 @@ references outside a level's vocabulary are left out of it):
 
 - **root**, **majmin** (major/minor family), **sevenths** (maj, min, 7, maj7, min7)
 - **latency** median time from a chord change until it is first named
-  (the app's 250 ms display confirmation comes on top)
+  (the app's 150 ms display confirmation comes on top)
 - **top confusions** most frequent wrong answers at the sevenths level
 
-## Results so far (default 2026-10-16, quick set for chords)
+## Results so far (default 2026-10-16, quick set for chords; chords before the learned recognizer, see 2026-10-19)
 
 | | notes RPA | first-ok | chords majmin | sevenths | latency |
 |---|---|---|---|---|---|
@@ -102,7 +102,10 @@ ISMIR 2010 — and of the deep chroma extractor — Korzeniowski & Widmer, ISMIR
 by one MLP shared by all 12 roots → softmax over 12 × 8 types + "no chord" →
 HMM forward filtering with a uniform switch rate (no lag; Cho & Bello, IEEE/ACM
 TASLP 2014: enforcing continuity is what matters). 10.7k parameters, weights in
-`ts/chord-model.ts` (~100 KB), ~0.6 ms per frame in Node.
+`ts/chord-model.ts` (~94 KB, 39 KB gzipped, its own chunk loaded on the first
+visit to Chords, not at start-up). Per frame 0.56–0.59 ms in Node 24 on the dev
+desktop (logSpectrum 0.02 ms of it), so it runs on every rAF frame (no frame
+skipping; the HMM is time-based and would handle it).
 
 Training (tune split only — test-split audio is never read):
 
@@ -119,11 +122,22 @@ sounding (GuitarSet per-string annotations, exact for synthetic takes). The HMM
 switch rate, evidence power, "no chord" offset and type offsets were chosen on
 the held-out part of the tune split (`--val`), never on the test split. The
 type offsets (9: −1.75, maj7: −1 log-odds) undo the synthetic takes' flat
-type prior: they move held-out scores by < 1 point and keep the check's
-dominant-7th voicings from reading as 9ths (`check:chords`: soft 45/45, bright
-43/45, single notes, silence, noise and A4 = 432 / 466 Hz all pass).
+type prior; they were chosen on the synthetic strums of `check:chords` (the
+smallest that keep its dominant-7th voicings from reading as 9ths), and
+`--val` only confirmed they move held-out scores by < 1 point. `check:chords`:
+soft 45/45, bright 43/45; single notes, silence, noise, A4 = 432 / 466 Hz and
+the tracked strum → silence → reset → strum sequence all pass.
 
-Test split, default subset (120 items), before → after:
+Test split, default subset (120 items), before → after. **These test numbers
+are optimistic**: the split is by take, not by piece or instrument — IDMT's
+"slow" test takes are the same progressions on the same guitar as the "fast"
+tune takes, and GuitarSet's players all play the same 30 progressions on the
+same guitar, so the test audio is new performances of music the model has
+heard. The GuitarSet rows below are the more honest measure; expect less on a
+new guitar in a new room. The final model was scored on the test split twice,
+with nothing changed in between: once for this table, and once more with
+`--by-source` to split it by dataset (identical totals). No setting was
+chosen on test-split numbers.
 
 | | root | majmin | sevenths | latency |
 |---|---|---|---|---|
@@ -133,6 +147,20 @@ Test split, default subset (120 items), before → after:
 | phone-cheap | 67.1 → **75.7 %** | 60.2 → **72.1 %** | 45.3 → **61.0 %** | 281 → 284 ms |
 | unplugged | 31.3 → **55.2 %** | 24.9 → **52.4 %** | 9.0 → **46.8 %** | 429 → 372 ms |
 
+By dataset (`npm run bench -- --task chords --by-source`), before → after:
+
+| | GuitarSet root | majmin | sevenths | latency | IDMT root | majmin | sevenths | latency |
+|---|---|---|---|---|---|---|---|---|
+| clean | 64.8 → 74.4 % | 54.7 → 68.4 % | 36.3 → 51.5 % | 355 → 336 ms | 71.0 → 81.6 % | 67.9 → 82.5 % | 60.9 → 79.5 % | 269 → 273 ms |
+| phone-good | 65.9 → 76.3 % | 56.4 → 70.3 % | 37.6 → 53.4 % | 335 → 314 ms | 70.2 → 83.3 % | 67.7 → 83.7 % | 60.1 → 80.1 % | 271 → 273 ms |
+| phone-mid | 66.4 → 76.2 % | 56.9 → 70.1 % | 38.3 → 53.0 % | 328 → 314 ms | 70.4 → 82.8 % | 67.6 → 82.9 % | 60.4 → 79.2 % | 270 → 274 ms |
+| phone-cheap | 65.1 → 73.8 % | 56.2 → 67.9 % | 37.0 → 51.5 % | 327 → 329 ms | 69.7 → 78.4 % | 66.3 → 78.6 % | 58.0 → 75.5 % | 270 → 275 ms |
+| unplugged | 30.2 → 53.0 % | 23.1 → 48.5 % | 5.8 → 41.9 % | 529 → 486 ms | 32.7 → 58.2 % | 27.6 → 58.4 % | 13.8 → 54.3 % | 358 → 290 ms |
+
+The "before" columns are the previous recognizer (e1fec8d) run through the
+same bench code. IDMT gains most, which fits the caveat above: its test takes
+repeat its tune-split pieces.
+
 Overfitting: on the tune split it was trained on it scores 87.4 / 84.5 / 75.7 %
 (clean), against 77.5 / 74.0 / 62.6 % on test: a 10–13 point gap, which is why
 only test numbers are reported. The held-out validation inside the tune split
@@ -140,8 +168,9 @@ only test numbers are reported. The held-out validation inside the tune split
 gave 86 / 80 / 74 % on GuitarSet and 72 / 72 / 66 % on IDMT. The most frequent
 remaining error is "no chord" during a chord (soft strums, single bass notes in
 bossa / fingerpicked comping). The app's display confirmation went from
-250 ms to 100 ms, because the HMM now does the smoothing, so a change shows
-~150 ms sooner than the latency column suggests.
+250 ms to 150 ms, because the HMM now does the smoothing, so a change shows
+~100 ms sooner than before at the same benchmark latency; the view forgets
+the tracked chord only after 300 ms of continuous silence.
 
 Tried and rejected (held-out validation unless noted):
 - **GuitarSet's instructed labels** instead of the performed ones: +2.5 points on
