@@ -1,6 +1,7 @@
 /* Settings tab (ts/features/settings/settings.view.ts) ------------------------------- */
 /* A plain scrolling page: one group per tab, a heading over a card of rows. */
 .view--settings {
+	position: relative;
 	gap: 24px;
 }
 
@@ -11,6 +12,11 @@
 	/* Entering Settings scrolls a group to the top: keep its heading clear of
 	   the notch. */
 	scroll-margin-top: calc(16px + env(safe-area-inset-top));
+
+	@media (min-width: 960px) {
+		break-inside: avoid;
+		margin-bottom: 28px;
+	}
 }
 
 .settings-group__title {
@@ -76,11 +82,11 @@
 	transition:
 		color var(--dur) var(--ease),
 		background var(--dur) var(--ease);
-}
 
-.link-btn:hover {
-	color: var(--fg);
-	background: var(--surface-2);
+	&:hover {
+		color: var(--fg);
+		background: var(--surface-2);
+	}
 }
 
 /* Settings slider (Fret size). */
@@ -97,11 +103,6 @@
 		display: block;
 		columns: 2;
 		column-gap: 28px;
-	}
-
-	.settings-group {
-		break-inside: avoid;
-		margin-bottom: 28px;
 	}
 }
 
@@ -165,10 +166,6 @@
 	.settings-group[data-group='trainer'] .input {
 		min-height: 44px;
 	}
-}
-
-.view--settings {
-	position: relative;
 }
 
 .view--settings > .help-btn {

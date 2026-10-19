@@ -1,4 +1,5 @@
-/* App shell -------------------------------------------------------------- */
+/* App shell, tab bar and the desktop grids of the views. */
+
 .app {
 	position: relative;
 	max-width: 560px;
@@ -8,11 +9,36 @@
 	display: flex;
 	flex-direction: column;
 	gap: 24px;
+
+	/* Phones: the bottom padding keeps content out from under the docked tab
+	   bar (~62 px bar + a gap). */
+	@media (max-width: 600px) {
+		padding: calc(16px + env(safe-area-inset-top)) 16px calc(74px + env(safe-area-inset-bottom));
+	}
+
+	/* Tablets: a slightly wider column. */
+	@media (min-width: 601px) and (max-width: 959px) {
+		max-width: 640px;
+	}
+
+	/* Desktops: a wide container; each view lays out in two columns (below). */
+	@media (min-width: 960px) {
+		max-width: 1180px;
+		padding: calc(28px + env(safe-area-inset-top)) 40px 40px;
+		gap: 28px;
+	}
 }
 
+/* Phones: the tab bar is docked to the bottom edge, within thumb reach, and
+   clears the iPhone home indicator. Nothing is left at the top, so the header
+   takes no room (display: contents keeps the fixed bar, drops the box). */
 .topbar {
 	display: flex;
 	padding-top: 8px;
+
+	@media (max-width: 600px) {
+		display: contents;
+	}
 }
 
 /* Segmented tab control: fills the top bar. */
@@ -24,6 +50,31 @@
 	background: var(--surface-2);
 	border-radius: var(--radius);
 	box-shadow: var(--shadow-border);
+
+	@media (max-width: 600px) {
+		position: fixed;
+		left: 0;
+		right: 0;
+		bottom: 0;
+		z-index: 20;
+		padding: 4px 8px calc(4px + env(safe-area-inset-bottom));
+		border-radius: 0;
+		border-top: 1px solid var(--border);
+		background: var(--surface);
+		box-shadow: none;
+		/* Six tabs: the labels shrink and the tabs drop their side padding so
+		   "Metronome" (~56 px at 10.5 px) fits down to 360 px; narrower phones
+		   get icons only, the label kept for screen readers. The ellipsis is a
+		   backstop (a larger system font), never the plan. */
+		padding-inline: 4px;
+		gap: 1px;
+	}
+
+	/* Desktop: a segmented-control size on the left of the wide bar. */
+	@media (min-width: 960px) {
+		flex: 0 1 680px;
+		margin-right: auto;
+	}
 }
 
 .tab {
@@ -44,105 +95,110 @@
 	transition:
 		color var(--dur) var(--ease),
 		background var(--dur) var(--ease);
+
+	@media (max-width: 600px) {
+		flex-direction: column;
+		gap: 3px;
+		min-width: 0;
+		padding: 8px 0;
+		font-size: 10.5px;
+		border-radius: var(--radius);
+	}
+
+	&:hover {
+		color: var(--fg);
+	}
+
+	&[aria-selected='true'] {
+		color: var(--fg);
+		background: var(--surface);
+		box-shadow: var(--shadow-sm);
+	}
+
+	/* Six tabs on one bar from 601 px: tighter sides keep them inside the column. */
+	@media (min-width: 601px) and (max-width: 959px) {
+		padding-inline: 8px;
+	}
+
+	@media (max-width: 359px) {
+		min-height: 48px;
+	}
+}
+
+/* On the opaque phone bar the selected tab is a quiet tint, not a raised card. */
+@media (max-width: 600px) {
+	.tabs .tab[aria-selected='true'] {
+		background: var(--surface-2);
+		box-shadow: none;
+	}
 }
 
 .tab svg {
 	width: 15px;
 	height: 15px;
 	flex: none;
-}
 
-/* Phones: the tab bar is docked to the bottom edge, within thumb reach, and
-   clears the iPhone home indicator. Nothing is left at the top, so the header
-   takes no room (display: contents keeps the fixed bar, drops the box). The
-   app's bottom padding keeps content out from under it (~62 px bar + a gap). */
-@media (max-width: 600px) {
-	.app {
-		padding: calc(16px + env(safe-area-inset-top)) 16px calc(74px + env(safe-area-inset-bottom));
-	}
-
-	.topbar {
-		display: contents;
-	}
-
-	.tabs {
-		position: fixed;
-		left: 0;
-		right: 0;
-		bottom: 0;
-		z-index: 20;
-		padding: 4px 8px calc(4px + env(safe-area-inset-bottom));
-		border-radius: 0;
-		border-top: 1px solid var(--border);
-		background: var(--surface);
-		box-shadow: none;
-	}
-
-	.tab {
-		flex-direction: column;
-		gap: 3px;
-		padding: 8px 4px;
-		font-size: 11px;
-		border-radius: var(--radius);
-	}
-
-	/* On the opaque bar the selected tab is a quiet tint, not a raised card. */
-	.tabs .tab[aria-selected='true'] {
-		background: var(--surface-2);
-		box-shadow: none;
-	}
-
-	.tab svg {
+	@media (max-width: 600px) {
 		width: 20px;
 		height: 20px;
 	}
+
+	@media (max-width: 359px) {
+		width: 22px;
+		height: 22px;
+	}
 }
 
-.tab:hover {
-	color: var(--fg);
+.tab__label {
+	@media (max-width: 600px) {
+		max-width: 100%;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+
+	@media (max-width: 359px) {
+		position: absolute;
+		width: 1px;
+		height: 1px;
+		overflow: hidden;
+		clip: rect(0 0 0 0);
+		white-space: nowrap;
+	}
 }
 
-.tab[aria-selected='true'] {
-	color: var(--fg);
-	background: var(--surface);
-	box-shadow: var(--shadow-sm);
-}
-
-/* Panels / views --------------------------------------------------------- */
+/* Views ------------------------------------------------------------------ */
 .view {
 	display: flex;
 	flex-direction: column;
 	gap: var(--stack);
 }
 
-/* Wider screens ---------------------------------------------------------- */
-/* Phones (< 600 px) keep the single column and docked tab bar above.
-   Tablets get a slightly wider column; desktops (>= 960 px) a real layout:
-   a wide container, two columns per view, and a full-width fretboard. */
-@media (min-width: 601px) and (max-width: 959px) {
-	.app {
-		max-width: 640px;
-	}
+/* Top row of a view: the mode switch (same control on every tab) and the guide button. */
+.view-top {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+}
 
-	/* Six tabs on one bar from 601 px: tighter sides keep them inside the column. */
-	.tab {
-		padding-inline: 8px;
+.view-top > .segmented {
+	flex: 0 1 360px;
+	min-width: 0;
+	max-width: none;
+
+	@media (max-width: 600px) {
+		flex: 1 1 auto;
 	}
 }
 
+@media (max-width: 600px) {
+	.view-top > .segmented button {
+		min-height: 44px;
+	}
+}
+
+/* Desktop grids (Tuner, Chords, Trainer; the other views own theirs) ------ */
 @media (min-width: 960px) {
-	.app {
-		max-width: 1180px;
-		padding: calc(28px + env(safe-area-inset-top)) 40px 40px;
-		gap: 28px;
-	}
-
-	/* Tabs keep a segmented-control size on the left of the wide bar. */
-	.tabs {
-		flex: 0 1 680px;
-		margin-right: auto;
-	}
-
 	/* Tuner and Chords: the big readout on the left, mic and hint beside it,
 	   so nothing is stretched into a long thin line. */
 	#view-tuner:not([hidden]),
@@ -179,6 +235,13 @@
 		flex-direction: column;
 		justify-content: center;
 		padding: 40px 28px 32px;
+		min-height: 360px;
+	}
+
+	/* Auto side margins would shrink the meter in the flex column. */
+	.view > .readout .meter {
+		width: 100%;
+		max-width: 400px;
 	}
 
 	.view > .mic {
@@ -207,83 +270,5 @@
 	.view > .controls {
 		grid-area: controls;
 		align-self: end;
-	}
-
-	.view > .readout {
-		min-height: 360px;
-	}
-
-	/* Auto side margins would shrink the meter in the flex column. */
-	.view > .readout .meter {
-		width: 100%;
-		max-width: 400px;
-	}
-}
-
-/* Metronome (ts/features/metronome/metronome.view.ts) ---------------------------------------- */
-/* Six tabs: on phones the labels shrink and the tabs drop their side padding
-   so "Metronome" (~56 px at 10.5 px) fits down to 360 px; narrower phones get
-   icons only, the label kept for screen readers. The ellipsis is a backstop
-   (a larger system font), never the plan. */
-@media (max-width: 600px) {
-	.tabs {
-		padding-inline: 4px;
-		gap: 1px;
-	}
-
-	.tab {
-		min-width: 0;
-		padding-inline: 0;
-		font-size: 10.5px;
-	}
-
-	.tab__label {
-		max-width: 100%;
-		overflow: hidden;
-		text-overflow: ellipsis;
-		white-space: nowrap;
-	}
-}
-
-@media (max-width: 359px) {
-	.tab__label {
-		position: absolute;
-		width: 1px;
-		height: 1px;
-		overflow: hidden;
-		clip: rect(0 0 0 0);
-		white-space: nowrap;
-	}
-
-	.tab {
-		min-height: 48px;
-	}
-
-	.tab svg {
-		width: 22px;
-		height: 22px;
-	}
-}
-
-/* Top row of a view: the mode switch (same control on every tab) and the guide button. */
-.view-top {
-	display: flex;
-	align-items: center;
-	gap: 8px;
-}
-
-.view-top > .segmented {
-	flex: 0 1 360px;
-	min-width: 0;
-	max-width: none;
-}
-
-@media (max-width: 600px) {
-	.view-top > .segmented {
-		flex: 1 1 auto;
-	}
-
-	.view-top > .segmented button {
-		min-height: 44px;
 	}
 }

@@ -37,7 +37,7 @@ button {
 	outline-offset: 2px;
 }
 
-/* Tuner follow-ups: screen-reader text, A4 note, 44 px touch targets ------- */
+/* Text for screen readers only. */
 .sr-only {
 	position: absolute;
 	width: 1px;

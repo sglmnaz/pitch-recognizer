@@ -24,16 +24,16 @@
 	transition:
 		color var(--dur) var(--ease),
 		background var(--dur) var(--ease);
-}
 
-.segmented button:hover {
-	color: var(--fg);
-}
+	&:hover {
+		color: var(--fg);
+	}
 
-.segmented button[aria-pressed='true'] {
-	color: var(--fg);
-	background: var(--surface);
-	box-shadow: var(--shadow-sm);
+	&[aria-pressed='true'] {
+		color: var(--fg);
+		background: var(--surface);
+		box-shadow: var(--shadow-sm);
+	}
 }
 
 .segmented--small button {

@@ -79,10 +79,10 @@
 	transition:
 		background var(--dur) var(--ease),
 		box-shadow var(--dur) var(--ease);
-}
 
-.scale-note:hover {
-	background: var(--surface-2);
+	&:hover {
+		background: var(--surface-2);
+	}
 }
 
 .scale-note__name {
@@ -143,21 +143,21 @@
 		color var(--dur) var(--ease),
 		background var(--dur) var(--ease),
 		box-shadow var(--dur) var(--ease);
+
+	&:hover {
+		color: var(--fg);
+	}
+
+	&[aria-pressed='true'] {
+		color: var(--fg);
+		background: var(--surface-2);
+		box-shadow: 0 0 0 1px var(--border-strong);
+	}
 }
 
 .mic-toggle svg {
 	width: 14px;
 	height: 14px;
-}
-
-.mic-toggle:hover {
-	color: var(--fg);
-}
-
-.mic-toggle[aria-pressed='true'] {
-	color: var(--fg);
-	background: var(--surface-2);
-	box-shadow: 0 0 0 1px var(--border-strong);
 }
 
 .mic-toggle--live .status__dot {
@@ -191,14 +191,14 @@
 	cursor: pointer;
 	box-shadow: var(--shadow-border);
 	transition: background var(--dur) var(--ease);
-}
 
-.scale-result:hover {
-	background: var(--surface-2);
-}
+	&:hover {
+		background: var(--surface-2);
+	}
 
-.scale-result[aria-pressed='true'] {
-	box-shadow: 0 0 0 1px var(--accent);
+	&[aria-pressed='true'] {
+		box-shadow: 0 0 0 1px var(--accent);
+	}
 }
 
 .scale-result__title {
@@ -319,6 +319,11 @@
 
 .harmony__tabs {
 	flex: 0 1 340px;
+
+	/* Phones: a row of its own. */
+	@media (max-width: 600px) {
+		flex: 1 1 100%;
+	}
 }
 
 .harmony__size,
@@ -362,6 +367,10 @@
 	display: grid;
 	grid-template-columns: repeat(auto-fill, minmax(72px, 1fr));
 	gap: 6px;
+
+	@media (min-width: 601px) {
+		grid-template-columns: repeat(7, minmax(0, 1fr));
+	}
 }
 
 .harmony-chord,
@@ -389,17 +398,17 @@
 	transition:
 		background var(--dur) var(--ease),
 		box-shadow var(--dur) var(--ease);
-}
 
-.harmony-chord:hover {
-	background: var(--surface-2);
-}
+	&:hover {
+		background: var(--surface-2);
+	}
 
-.harmony-chord[aria-pressed='true'] {
-	background: var(--surface-2);
-	box-shadow:
-		inset 0 3px 0 var(--quality),
-		0 0 0 1px var(--accent);
+	&[aria-pressed='true'] {
+		background: var(--surface-2);
+		box-shadow:
+			inset 0 3px 0 var(--quality),
+			0 0 0 1px var(--accent);
+	}
 }
 
 .harmony-chord__numeral {
@@ -450,6 +459,12 @@
 	border-radius: var(--radius-lg);
 	background: var(--surface);
 	box-shadow: var(--shadow-border);
+
+	@media (max-width: 600px) {
+		align-self: stretch;
+		gap: 12px;
+		padding: 10px;
+	}
 }
 
 .chord-detail__neck {
@@ -488,11 +503,19 @@
 	display: flex;
 	flex-wrap: wrap;
 	gap: 6px;
+
+	@media (max-width: 600px) {
+		flex-basis: 100%;
+	}
 }
 
 .chord-detail__clear {
 	width: 32px;
 	padding: 0;
+
+	@media (max-width: 600px) {
+		width: 44px;
+	}
 }
 
 /* Progressions: a card each, one chip per bar; the bar playing gets the accent. */
@@ -503,6 +526,10 @@
 	margin: 0;
 	padding: 0;
 	list-style: none;
+
+	@media (max-width: 600px) {
+		grid-template-columns: 1fr;
+	}
 }
 
 .progression {
@@ -551,6 +578,10 @@
 	transition:
 		background var(--dur) var(--ease),
 		color var(--dur) var(--ease);
+
+	@media (max-width: 600px) {
+		min-height: 44px;
+	}
 }
 
 .progression__chord .harmony-chord__symbol {
@@ -705,19 +736,20 @@
 	transition:
 		color var(--dur) var(--ease),
 		background var(--dur) var(--ease);
-}
 
-.chord-fits__scale:hover {
-	color: var(--fg);
-	background: var(--surface-2);
+	&:hover {
+		color: var(--fg);
+		background: var(--surface-2);
+	}
+
+	@media (max-width: 600px) {
+		height: 44px;
+		padding: 0 14px;
+	}
 }
 
 /* Phones: 44 px for every thumb target. */
 @media (max-width: 600px) {
-	.harmony__tabs {
-		flex: 1 1 100%;
-	}
-
 	.harmony__tabs button,
 	.harmony__size button {
 		min-height: 44px;
@@ -733,40 +765,7 @@
 		height: 44px;
 	}
 
-	.chord-detail__clear {
-		width: 44px;
-	}
-
-	.progression__chord {
-		min-height: 44px;
-	}
-
-	.chord-fits__scale {
-		height: 44px;
-		padding: 0 14px;
-	}
-
-	.progressions {
-		grid-template-columns: 1fr;
-	}
-
-	.chord-detail {
-		align-self: stretch;
-		gap: 12px;
-		padding: 10px;
-	}
-
-	.chord-detail__actions {
-		flex-basis: 100%;
-	}
-
 	.chord-detail__actions .btn:not(.chord-detail__clear) {
 		flex: 1;
-	}
-}
-
-@media (min-width: 601px) {
-	.harmony-chords {
-		grid-template-columns: repeat(7, minmax(0, 1fr));
 	}
 }

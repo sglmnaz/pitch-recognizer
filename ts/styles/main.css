@@ -1,3 +1,27 @@
+/*
+ * Stylesheet entry (imported once by ts/main.ts). Native CSS: nesting and
+ * @layer, lowered for the browserslist targets by Lightning CSS (ADR 0004).
+ *
+ * Layers: tokens (custom properties, fonts) < base (reset, body, [hidden])
+ * < components (everything else). All rules live in a layer: unlayered rules
+ * would beat every layer. Inside `components` the import order below is the
+ * cascade order: shared pieces first, then the fretboard, then the tabs.
+ * Files can override earlier ones at equal specificity, so keep the order.
+ *
+ * Breakpoints (custom media is not native yet: literal values, always these):
+ *   phone    (max-width: 600px)                     tab bar docked at the bottom
+ *   tablet   (min-width: 601px) and (max-width: 959px)
+ *   wide     (min-width: 601px)                     tablet and desktop
+ *   desktop  (min-width: 960px)                     two-column views
+ *   short    (max-width: 600px) and (max-height: 760px)   e.g. 360 x 740
+ *   narrow   (max-width: 440px), (max-width: 420px), (max-width: 359px)
+ *
+ * Phones: one screen per view. The main interaction of each view (readout +
+ * mic, question + answers, tempo + Start) fits a 375 x 812 phone above the
+ * docked tab bar without scrolling; stats, voicing lists and progressions may
+ * scroll below. Tap targets stay at 44 px (--tap) or more: only paddings, hero
+ * type and the waveform shrink.
+ */
 @layer tokens, base, components;
 
 @import './tokens.css' layer(tokens);

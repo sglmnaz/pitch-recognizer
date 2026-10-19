@@ -5,10 +5,8 @@
 	display: flex;
 	flex-direction: column;
 	gap: 10px;
-}
 
-@media (min-width: 601px) {
-	.neck-card {
+	@media (min-width: 601px) {
 		margin-inline: calc((100% - min(760px, 100vw - 40px)) / 2);
 	}
 }
@@ -25,6 +23,12 @@
 	background: var(--board);
 	box-shadow: inset 0 0 0 1px var(--border);
 	color: var(--fg);
+
+	/* Phones: the horizontal neck keeps a playable size and scrolls inside its
+	   board; the vertical one is drawn to fit (ts/features/scales/scales.view.ts). */
+	@media (max-width: 600px) {
+		padding: 10px 6px 4px;
+	}
 }
 
 .neck {
@@ -36,13 +40,7 @@
 	-webkit-tap-highlight-color: transparent;
 }
 
-/* Phones: the horizontal neck keeps a playable size and scrolls inside its
-   board; the vertical one is drawn to fit (ts/features/scales/scales.view.ts). */
 @media (max-width: 600px) {
-	.neck-board {
-		padding: 10px 6px 4px;
-	}
-
 	.neck:not(.neck--vertical) {
 		width: 820px;
 	}
@@ -71,12 +69,10 @@
 
 .neck-card:has(.neck--vertical) .neck-board {
 	overflow: visible;
-}
 
-/* Wider screens: the board hugs the vertical neck instead of spanning the
-   column. (On phones the neck spans the board.) */
-@media (min-width: 601px) {
-	.neck-card:has(.neck--vertical) .neck-board {
+	/* Wider screens: the board hugs the vertical neck instead of spanning the
+	   column. (On phones the neck spans the board.) */
+	@media (min-width: 601px) {
 		align-self: center;
 	}
 }
@@ -301,15 +297,15 @@
 	display: inline-flex;
 	align-items: center;
 	gap: 6px;
-}
 
-.neck-legend li::before {
-	content: '';
-	width: 12px;
-	height: 12px;
-	border-radius: 50%;
-	background: var(--note-fill);
-	box-shadow: inset 0 0 0 1px var(--note-stroke);
+	&::before {
+		content: '';
+		width: 12px;
+		height: 12px;
+		border-radius: 50%;
+		background: var(--note-fill);
+		box-shadow: inset 0 0 0 1px var(--note-stroke);
+	}
 }
 
 .neck-legend .neck-legend__root::before {

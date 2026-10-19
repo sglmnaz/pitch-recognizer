@@ -9,6 +9,12 @@
 .tuner-tuning {
 	flex: 1;
 	height: 40px;
+
+	/* Phones: every tuner control reaches 44 px (the segmented control's 3 px
+	   padding makes its buttons 38). Desktop keeps the compact sizes. */
+	@media (max-width: 600px) {
+		height: 44px;
+	}
 }
 
 /* The meter's green band is the in-tune tolerance (--tol cents, 1 cent = 1% of
@@ -37,6 +43,14 @@
 	width: 100%;
 	max-width: 400px;
 	margin: 22px auto 0;
+
+	@media (max-width: 600px) {
+		margin-top: 16px;
+	}
+
+	@media (max-width: 600px) and (max-height: 760px) {
+		margin-top: 12px;
+	}
 }
 
 .string-chip {
@@ -61,10 +75,21 @@
 		color var(--dur) var(--ease),
 		background var(--dur) var(--ease),
 		box-shadow var(--dur) var(--ease);
-}
 
-.string-chip:hover {
-	color: var(--fg);
+	&:hover {
+		color: var(--fg);
+	}
+
+	&[data-state='ref'] {
+		background: var(--solid);
+		color: var(--solid-fg);
+		box-shadow: none;
+	}
+
+	@media (min-width: 960px) {
+		height: 60px;
+		font-size: 19px;
+	}
 }
 
 .string-chip__note sub {
@@ -77,12 +102,6 @@
 .string-chip[data-state='ref'] sub {
 	color: inherit;
 	opacity: 0.7;
-}
-
-.string-chip[data-state='ref'] {
-	background: var(--solid);
-	color: var(--solid-fg);
-	box-shadow: none;
 }
 
 @media (min-width: 960px) {
@@ -99,38 +118,13 @@
 		grid-area: head;
 		max-width: 440px;
 	}
-
-	.string-chip {
-		height: 60px;
-		font-size: 19px;
-	}
-}
-
-/* Phones: every tuner control reaches 44 px (the segmented control's 3 px
-   padding makes its buttons 38). Desktop keeps the compact sizes. */
-@media (max-width: 600px) {
-	.tuner-tuning {
-		height: 44px;
-	}
-
-	.strings {
-		margin-top: 16px;
-	}
-}
-
-@media (max-width: 600px) and (max-height: 760px) {
-	.strings {
-		margin-top: 12px;
-	}
 }
 
 .tuner-head .help-btn {
 	width: 40px;
 	height: 40px;
-}
 
-@media (max-width: 600px) {
-	.tuner-head .help-btn {
+	@media (max-width: 600px) {
 		width: 44px;
 		height: 44px;
 	}

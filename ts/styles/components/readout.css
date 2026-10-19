@@ -5,6 +5,14 @@
 	transition:
 		background var(--dur) var(--ease),
 		box-shadow var(--dur) var(--ease);
+
+	@media (max-width: 600px) {
+		padding: 20px 16px 16px;
+	}
+
+	@media (max-width: 600px) and (max-height: 760px) {
+		padding-block: 12px;
+	}
 }
 
 .readout--locked {
@@ -19,6 +27,19 @@
 	line-height: 0.95;
 	letter-spacing: -0.04em;
 	transition: color var(--dur) var(--ease);
+
+	@media (max-width: 420px) {
+		font-size: 64px;
+	}
+
+	@media (min-width: 960px) {
+		font-size: 112px;
+	}
+
+	/* Short phones (360 x 740 and the like): smaller hero numbers too. */
+	@media (max-width: 600px) and (max-height: 760px) {
+		font-size: 52px;
+	}
 }
 
 .readout--locked .readout__note {
@@ -42,6 +63,14 @@
 .meter {
 	margin: 22px auto 0;
 	max-width: 320px;
+
+	@media (max-width: 600px) {
+		margin-top: 16px;
+	}
+
+	@media (max-width: 600px) and (max-height: 760px) {
+		margin-top: 12px;
+	}
 }
 
 .meter__scale {
@@ -125,18 +154,6 @@
 	margin: 0;
 }
 
-@media (max-width: 420px) {
-	.readout__note {
-		font-size: 64px;
-	}
-}
-
-@media (min-width: 960px) {
-	.readout__note {
-		font-size: 112px;
-	}
-}
-
 /* "A4 = 432 Hz" where the Trainer and Scales show notes (ts/features/settings/settings.view.ts). */
 .a4-note {
 	margin: 12px 0 0;
@@ -144,29 +161,4 @@
 	font-size: 11px;
 	color: var(--fg-muted);
 	text-align: center;
-}
-
-@media (max-width: 600px) {
-	.readout {
-		padding: 20px 16px 16px;
-	}
-
-	.meter {
-		margin-top: 16px;
-	}
-}
-
-/* Short phones (360 x 740 and the like): smaller hero numbers too. */
-@media (max-width: 600px) and (max-height: 760px) {
-	.readout__note {
-		font-size: 52px;
-	}
-
-	.readout {
-		padding-block: 12px;
-	}
-
-	.meter {
-		margin-top: 12px;
-	}
 }
