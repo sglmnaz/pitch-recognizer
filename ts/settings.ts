@@ -21,6 +21,12 @@ export interface Settings {
 	scaleDegrees: number[]
 	/** Fret size multiplier, 0.5–1.5: height when vertical, width when horizontal. */
 	fretSize: number
+	/** Scales harmony: chords of the scale as triads or sevenths. */
+	chordView: 'triads' | 'sevenths'
+	/** Progression playback, 60–140 BPM (one bar per chord). */
+	progressionBpm: number
+	/** Start a progression over when it ends. */
+	progressionLoop: boolean
 
 	/* Tuner ---------------------------------------------------------------- */
 	/** Tuning id (ts/tuning.ts). */
@@ -93,6 +99,9 @@ const defaults: Settings = {
 	scaleLabels: 'notes',
 	scaleDegrees: [1, 3, 5],
 	fretSize: 1,
+	chordView: 'triads',
+	progressionBpm: 80,
+	progressionLoop: false,
 	tuning: 'standard',
 	tunerMode: 'guitar',
 	a4: 440,

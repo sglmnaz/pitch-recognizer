@@ -1,4 +1,5 @@
 import { createFretboard, type Dot } from '../fretboard'
+import { createHarmony } from './harmony'
 import * as Settings from '../settings'
 import * as Sound from '../sound'
 import { midiOfFrequency } from '../notes'
@@ -86,6 +87,17 @@ export function createScalesView(root: HTMLElement, mic: MicControl): View & { s
 	let playingMidi: number | null = null
 	let playTimer = 0
 	const fretboard = createFretboard(neck, board, { onTap, fill: screenHeight })
+	const harmony = createHarmony(root, {
+		redraw: render,
+		setScale(pc, type) {
+			mode = 'explore'
+			rootPc = pc
+			typeIndex = SCALE_TYPES.indexOf(type)
+			stopPlaying()
+			render()
+		},
+		stopScale,
+	})
 
 	/* Static controls ----------------------------------------------------- */
 	ROOTS.forEach((name, pc) => rootSelect.add(new Option(name, String(pc))))
@@ -223,7 +235,13 @@ export function createScalesView(root: HTMLElement, mic: MicControl): View & { s
 	}
 
 	/* Playback ------------------------------------------------------------ */
+	/** Stops Play scale and any progression. */
 	function stopPlaying() {
+		harmony.stop()
+		stopScale()
+	}
+
+	function stopScale() {
 		clearTimeout(playTimer)
 		playTimer = 0
 		playingMidi = null
@@ -235,6 +253,7 @@ export function createScalesView(root: HTMLElement, mic: MicControl): View & { s
 	function playScale() {
 		const shown = shownScale()
 		if (!shown) return
+		harmony.stop(true)
 		const midis = position
 			? positionRun(shown.rootPc, shown.type, positionWindows(shown.rootPc, shown.type)[position - 1])
 			: scaleRun(shown.rootPc, shown.type)
@@ -332,20 +351,30 @@ export function createScalesView(root: HTMLElement, mic: MicControl): View & { s
 		}
 	}
 
+	// A chord from the harmony section (tapped, or the bar of a progression
+	// playing): its tones in the root / tone colours, labelled with chord
+	// degrees, the rest of the scale dimmed; chord notes outside the scale
+	// (the V of a minor key, a blues 7th) join the neck.
 	function drawNeck(shown: Shown | null, names: Map<number, string>, highlighted: (degree: string) => boolean) {
 		const { scaleLabels } = Settings.get()
 		const degrees = shown ? degreeMap(shown.rootPc, shown.type) : new Map<number, string>()
+		const chord = harmony.chord()
+		const chordDegrees = new Map(chord ? degreesOf(chord.type).map((d, i) => [pitchClassOf(chord.notes[i]), d]) : [])
+		chord?.notes.forEach((n) => names.has(pitchClassOf(n)) || names.set(pitchClassOf(n), n))
 		const name = (midi: number) => names.get(midi % 12) ?? ROOTS[midi % 12]
 		const dots: Dot[] = []
 		STRINGS.forEach((_, string) => {
 			for (let fret = 0; fret <= FRETS; fret++) {
 				const midi = midiAt(string, fret)
 				const isMarked = mode === 'identify' && marked.has(`${string}-${fret}`)
-				const degree = degrees.get(midi % 12)
+				const inChord = chordDegrees.get(midi % 12)
+				const degree = chord ? (inChord ?? degrees.get(midi % 12)) : degrees.get(midi % 12)
 				if (!degree && !isMarked) continue
-				const role = !degree ? 'marked' : !highlighted(degree) ? 'note' : degree === '1' ? 'root' : 'tone'
+				const role = chord
+					? !inChord ? 'note' : inChord === '1' ? 'root' : 'tone'
+					: !degree ? 'marked' : !highlighted(degree) ? 'note' : degree === '1' ? 'root' : 'tone'
 				const label = scaleLabels === 'none' ? '' : scaleLabels === 'intervals' && degree ? degree : name(midi)
-				dots.push({ string, fret, role, label, detail: degree, marked: isMarked })
+				dots.push({ string, fret, role, label, detail: degree, marked: isMarked, dimmed: Boolean(chord && !inChord) })
 			}
 		})
 		fretboard.render({
@@ -363,6 +392,13 @@ export function createScalesView(root: HTMLElement, mic: MicControl): View & { s
 	function renderLegend(shown: Shown | null, scaleDegrees: number[]) {
 		legend.hidden = !shown
 		if (!shown) return
+		const chord = harmony.chord()
+		legendRoot.textContent = chord ? `${chord.symbol} root` : 'root'
+		if (chord) {
+			legendRoot.hidden = legendTone.hidden = false
+			legendTone.textContent = 'chord tones'
+			return
+		}
 		const present = new Set(degreesOf(shown.type).map(degreeNumber))
 		const tones = scaleDegrees.filter((n) => n > 1 && present.has(n)).map((n) => ORDINALS[n])
 		legendRoot.hidden = !scaleDegrees.includes(1)
@@ -407,6 +443,7 @@ export function createScalesView(root: HTMLElement, mic: MicControl): View & { s
 		clearButton.disabled = marked.size === 0
 
 		syncMic()
+		harmony.render({ mode, rootPc, type: SCALE_TYPES[typeIndex], marked: markedSorted })
 		renderLegend(shown, scaleDegrees)
 		drawNeck(shown, names, highlighted)
 		renderResults(matches)

@@ -64,8 +64,10 @@ export function semitonesOf(type: ScaleType): number[] {
 	return degreesOf(type).map((d) => parseDegree(d).semitones)
 }
 
-/** Each degree on its own letter from the root, e.g. F major → F G A Bb C D E. */
-function spellFrom(root: string, type: ScaleType): string[] {
+/** Each degree on its own letter from the root, e.g. F major → F G A Bb C D E.
+ * Never swaps the root's spelling (ts/harmony.ts keeps a key's letters: Db
+ * blues has Gb7, not F#7). */
+export function spellFrom(root: string, type: ScaleType): string[] {
 	const rootLetter = LETTERS.indexOf(root[0])
 	const rootPc = pitchClassOf(root)
 	return degreesOf(type).map((degree) => {
