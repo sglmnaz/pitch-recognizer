@@ -44,8 +44,14 @@ for genuinely floating surfaces.
 
 ## Components
 
-- **Segmented tabs** for Trainer/Tuner: bordered track, active pill gets the
-  surface color and a hairline shadow.
+- **Tab bar** with six tabs (Tuner, Chords, Scales, Trainer, Metronome, Settings),
+  icon + label: on wider screens a bordered segmented track in the header where the
+  active pill gets the surface color and a hairline shadow; on phones (< 600 px) an
+  opaque bar docked to the bottom edge with a quiet tint on the selected tab,
+  icon-only below 360 px (labels stay for screen readers).
+- **Segmented controls** for sub-modes inside a tab (Chords Listen / Library /
+  Identify, Scales Explore / Identify, Trainer Notes / Intervals / Chords / Changes)
+  use the same track-and-pill look.
 - **Buttons**: 36px tall, 6px radius. Primary is the solid near-black (or
   near-white in dark); secondary is surface + hairline border.
 - **Readout panel**: the shared note/frequency/cents display. Gains a green border

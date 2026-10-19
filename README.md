@@ -1,115 +1,152 @@
 # Pluck
 
-An ear-training and tuning web app: it listens through your microphone and detects
-the pitch you sing or play. It has two modes:
+A guitar practice web app that listens through the microphone: a tuner, a chord
+recognizer and library, a scale and harmony explorer, ear training and chord-change
+drills, and a metronome. Installable as a PWA, works offline.
 
-- **Trainer** — a guessing game. A note is shown on the staff; match it by ear to
-  build your score and streak.
-- **Tuner** — a continuous chromatic tuner showing the nearest note, its frequency,
-  and how many cents sharp or flat you are.
+Vanilla **TypeScript** (no framework), [**VexFlow**](https://www.vexflow.com/) for
+notation (the only runtime dependency), styled after
+[**Vercel Geist**](https://vercel.com/geist) (light and dark), bundled with
+[**Vite**](https://vitejs.dev/), deployed on Vercel. Pitch detection and chord
+recognition are the app's own code.
 
-Built with **TypeScript**, [**pitchy**](https://github.com/ianprime0509/pitchy) for
-pitch detection, [**VexFlow**](https://www.vexflow.com/) for music notation, styled
-in [**Vercel Geist**](https://vercel.com/geist) (light & dark), and bundled with
-[**Vite**](https://vitejs.dev/).
+## The six tabs
 
-## How to use
+The tab bar sits at the top on wide screens and docks to the bottom edge on phones.
+The microphone starts on load (if the browser waits for a gesture, the status says
+"Tap to start"); tabs that do not listen turn it off and back on when you leave.
 
-1. Press **Listen** and allow microphone access.
-2. Switch views with the tab bar (docked at the bottom on phones). The last tab,
-   **Settings**, holds every tab's options and the theme (System / Light / Dark).
-
-**Trainer:** a note appears on the staff (with its English and Italian solfège
-names). Sing or play it; the readout shows the note you are producing and how far
-off you are. Hold the correct note in tune for a moment to win the round and bump
-your score and streak. **Skip** passes on a note.
-
-Under **Settings → Trainer → Notes**:
-
-- **Match any octave** — accept the right note in any octave, not just the one
-  drawn (handy when the target sits outside your range).
-- **Sharps & flats** — add accidentals to the note pool.
-- **Light staff** — keep the staff on a light background even in dark mode.
-- **Target notes** — enable or disable individual notes so you only train the ones
-  you want (with All / None shortcuts). Settings are saved between sessions.
-
-**Tuner:** play any note. The readout shows the nearest note, frequency in Hz, and
-cents deviation. The meter has a green centre zone (in tune) flanked by yellow
-(close); the readout locks green when you are within the in-tune tolerance (±2, ±5 or ±10 cents in Settings, default ±5). Pick a tuning (Standard, Drop D, DADGAD, open tunings…) and Guitar mode to read cents off the nearest string, tap a string chip to hear its reference tone, and set A4 (415–466 Hz) in Settings.
-
-## Install (PWA)
-
-The app is a Progressive Web App: on a deployed (HTTPS) instance you can install it
-to your home screen. On Android Chrome use the install prompt or *Add to Home
-screen*; on iOS Safari use *Share → Add to Home Screen*. Once installed it launches
-standalone and works offline.
+- **Tuner**: pick a tuning (Standard, Drop D, half / whole step down, DADGAD, open
+  G / D / E / C…) to read cents off the nearest string, or **Chromatic** for the
+  nearest note of any pitch. A needle meter with a green in-tune band (±2, ±5 or
+  ±10 cents) and a readout that locks green; tap a string chip to hear its reference
+  tone. A4 is adjustable (415–466 Hz) and used by every tab that names notes.
+- **Chords**:
+  - **Listen**: strum and let it ring; names major, minor, 7, m7, maj7, 9, sus2 and
+    sus4 chords, with a live pitch-class profile. Tap the chord to open it in the
+    Library.
+  - **Library**: pick a root and type for the spelled notes and degrees, the keys
+    the chord belongs to, and up to eight playable voicings (tap to strum or
+    arpeggiate).
+  - **Identify**: mark one note per string on a neck and get the chord, slash
+    chords included.
+- **Scales**: an SVG fretboard with real fret spacing. **Explore** a root and scale
+  (degree colours, note or interval labels, positions 1–5, play the scale, the note
+  you play lights up) or **Identify** a scale from marked or played notes. Below the
+  neck, a harmony section: the chords of the scale (triads or sevenths), common
+  progressions to play along with, and the circle of fifths; Identify suggests
+  chords that fit.
+- **Trainer**:
+  - **Notes**: a note on the staff; sing or play it and hold it in tune to score.
+  - **Intervals** and **Chords**: ear training; hear an interval or a chord
+    quality and tap the answer (intervals can also be answered by singing).
+  - **Changes**: chord-change drills, One-minute (count the changes) or In time
+    with the metronome (each change judged early / on time / late; headphones work
+    best there, since the mic can hear the clicks).
+- **Metronome**: 30–300 BPM with tap tempo, beats and beat note, per-beat accent /
+  mute, subdivisions, three sounds, a speed trainer and an optional beat-1 flash.
+- **Settings**: one scrolling page with every tab's options plus the theme
+  (System / Light / Dark) and the fretboard (board theme, left-handed). Settings are
+  saved in the browser.
 
 ## Getting started
 
-Requires [Node.js](https://nodejs.org/) 18+.
+Requires [Node.js](https://nodejs.org/) **24** (the check scripts run the
+TypeScript sources directly).
 
 ```sh
-# Install dependencies
 npm install
-
-# Start the dev server (opens http://localhost:5173 with hot reload)
-npm run dev
-
-# Type-check and build for production into dist/
-npm run build
-
-# Preview the production build locally
-npm run preview
+npm run dev       # http://localhost:5173 (localhost counts as a secure origin for the mic)
+npm run build     # tsc --noEmit (strict), then vite build into dist/
+npm run preview   # serve the production build
 ```
 
-## Deploy to Vercel
+Self-checks (no test framework; each prints `ok` / `FAIL` lines and exits non-zero
+on failure):
 
-The repo is Vercel-ready ([vercel.json](vercel.json) pins the Vite preset, build
-command, and `dist` output, and sets no-cache headers on the service worker and
-manifest so updates land immediately).
+| Script | Checks |
+|---|---|
+| `check:pitch` | synthetic plucked strings through the detection pipeline |
+| `check:chords` | synthetic strummed chords through the recognizer |
+| `check:scales` | scale spelling and the scale identifier |
+| `check:tunings` | tuning presets, nearest string, A4 clamp |
+| `check:metronome` | click engine on a fake audio clock (spacing, accents, subdivisions, speed trainer, stalls) |
+| `check:chord-theory` | chord spelling, identifier, diatonic chords, chord-book voicings |
+| `check:ear` | ear-training questions, playback timing, sung answers, scoring |
+| `check:chord-library` | Library helpers (labels, keys containing a chord, symbol parsing) |
+| `check:harmony` | keys, progressions, circle of fifths, scales for a chord |
+| `check:changes` | chord-change drill: stabilizer, change counter, in-time judging, records |
+| `check:settings` | the settings loader against corrupt and stale stored values |
 
-- **Dashboard:** import the GitHub repo at [vercel.com/new](https://vercel.com/new);
-  the defaults are detected automatically. No environment variables are needed.
-- **CLI:** `npm i -g vercel && vercel` (then `vercel --prod`).
+`npm run bench` scores note and chord detection on labelled guitar datasets
+(downloaded locally, never bundled; needs `ffmpeg`). See
+[bench/README.md](bench/README.md).
 
-Vercel serves over HTTPS, which the microphone and the PWA install/service worker
-require.
+Add `?debug` to the URL for a live line with what the noise gate sees and a button
+that records 20 s of the raw mic stream, to replay field problems through the
+scripts.
 
-> The microphone only works on a secure origin. `localhost` (the dev server and
-> preview) counts as secure; if you deploy the contents of `dist/`, serve them
-> over HTTPS.
+## How detection works
+
+**Notes** (`ts/microphone.ts`): the mic stream (browser voice processing off) is
+band-limited to the guitar (two 70 Hz high-pass stages, 1.4 kHz low-pass) and
+analysed every animation frame with the McLeod Pitch Method, the autocorrelation
+computed from the power spectrum after subtracting the learned room noise. An
+adaptive noise gate with hysteresis, onset detection per pluck, an octave check and
+lock, a median window and a One Euro filter keep the readout steady. On the test
+split of the benchmark it reads the right note in the right octave in ~98.5 % of
+frames on clean electric recordings.
+
+**Chords** (`ts/chords.ts`): a small learned model (10.7k parameters, its weights a
+separate chunk loaded on first use) turns a log-frequency, harmonically stacked
+spectrum into per-semitone salience, then chroma and bass features, and scores the
+8 chord types on all 12 roots plus "no chord"; an HMM smooths it over time.
+Benchmark, test split, clean: root 77.5 %, major/minor 74.0 %, sevenths 62.6 %,
+~283 ms to name a change. Those totals are optimistic, because the test takes share
+pieces and guitars with the training takes. The GuitarSet-only row is the honest
+one: root 74.4 %, major/minor 68.4 %, sevenths 51.5 %. Expect less on a new guitar
+in a new room. Details in [bench/README.md](bench/README.md).
 
 ## Project structure
 
 ```
-index.html              App shell; loads ts/index.ts as a module
-vite.config.ts          Vite configuration
-tsconfig.json           TypeScript configuration (type-check only)
-PRODUCT.md / DESIGN.md  Product and design-system context
+index.html              App shell: all markup; TS only wires it up
+vite.config.ts          Vite + PWA (manifest, Workbox precache)
 ts/
-  index.ts              App shell: tab routing, mic lifecycle
-  microphone.ts         Web Audio capture + pitch detection
-  game.ts               Round logic, scoring, sustain detection
-  settings.ts           Persisted settings + active note pool
-  music-renderer.ts     Renders the target note with VexFlow
-  notes.ts              Note/frequency table and helpers
-  tokens.css            Geist design tokens (light + dark)
-  style.css             Layout and component styles
-  fonts/                Self-hosted Geist Sans + Geist Mono
-  views/
-    view.ts             Shared View interface
-    trainer.ts          Trainer (guessing game) view
-    tuner.ts            Tuner view
-    settings-panel.ts   Settings tab (theme, switches, note chips)
+  index.ts              Tab routing, shared mic block, mic lifecycle
+  microphone.ts         Web Audio capture + MPM pitch detection loop
+  fft.ts                FFT used by the detector
+  chords.ts             Learned chord recognizer (+ chord-model.ts weights)
+  notes.ts / tuning.ts  Note table and helpers / tuning presets
+  scales.ts             Scale formulas, fretboard constants, scale identifier
+  chord-theory.ts       Chord spelling, identifier, chords of a scale
+  chord-shapes.ts       Playable voicing generator
+  harmony.ts            Keys, progressions, circle of fifths
+  ear.ts / changes.ts   Ear-training and chord-change drill logic
+  game.ts               Notes trainer rounds and scoring
+  metronome.ts          Lookahead click engine (own AudioContext)
+  sound.ts              Plucked-string synth and reference tones
+  fretboard.ts          Shared SVG neck
+  settings.ts           Persisted, validated settings store
+  music-renderer.ts     VexFlow staff
+  tokens.css / style.css  Geist tokens (light + dark) / layout and components
+  views/                One factory per tab or sub-view (tuner, chords,
+                        chord-library, scales, harmony, trainer, ear, changes,
+                        metronome, settings-panel)
+scripts/                Self-checks, benchmark, chord-model training data
+bench/                  Benchmark notes and results
 ```
 
-## How pitch detection works
+## Install (PWA) and deploy
 
-`microphone.ts` captures audio with the Web Audio API and analyses each frame with
-pitchy's autocorrelation detector. A reading is only accepted when it is both loud
-enough (RMS above a floor) and confident enough (pitchy **clarity** ≥ 0.9, which
-rejects noise and unvoiced sounds). Accepted frequencies are median-smoothed over a
-short window to absorb the occasional octave jump.
+On an HTTPS deployment the app can be installed: *Add to Home Screen* on Android
+Chrome or iOS Safari. It then launches standalone and works offline.
+
+The repo is Vercel-ready: [vercel.json](vercel.json) pins the Vite preset and the
+`dist` output and sets no-cache headers on the service worker and manifest so
+updates land immediately. Import the repo at [vercel.com/new](https://vercel.com/new)
+or run `vercel`; no environment variables are needed. The microphone and the
+service worker need a secure origin (HTTPS, or localhost in development).
 
 ## License
 

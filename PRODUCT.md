@@ -4,17 +4,24 @@
 
 ## Product purpose
 
-Pluck (formerly Pitch Recognizer) is an ear-training and tuning web app. It listens through the
-microphone and detects the pitch the user sings or plays. It has two modes:
+Pluck (formerly Pitch Recognizer) is a guitar practice web app. It listens through the
+microphone and detects the notes and chords the user plays or sings. Six tabs:
 
-- **Trainer**: a guessing game. A note is shown on the staff; the user matches it
-  by ear, building score and streak.
-- **Tuner**: a continuous chromatic tuner showing the nearest note, frequency, and
-  cents deviation.
+- **Tuner**: tunings or chromatic, nearest note or string, Hz and cents on a needle
+  meter, reference tones, adjustable A4.
+- **Chords**: live chord recognition (Listen), a chord library with keys and
+  playable voicings, and an identifier from notes marked on a neck.
+- **Scales**: a fretboard explorer and scale identifier, with the chords of the
+  scale, progressions to play along with and the circle of fifths.
+- **Trainer**: notes on a staff to match by ear (score and streak), interval and
+  chord-quality ear training, and chord-change drills.
+- **Metronome**: tempo, meter, accents, subdivisions, speed trainer.
+- **Settings**: every tab's options and the theme on one page.
 
 ## Users
 
-Music learners and instrumentalists who want to train relative pitch or tune up.
+Guitarists and other music learners who want to tune up, find chords and scales on
+the neck, train relative pitch, or practise changes in time.
 Comfortable with note names; not necessarily with music theory jargon.
 
 ## Tone
