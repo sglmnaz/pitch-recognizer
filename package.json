@@ -16,6 +16,7 @@
 		"check:ear": "node scripts/ear-check.ts",
 		"check:chord-library": "node scripts/chord-library-check.ts",
 		"check:harmony": "node scripts/harmony-check.ts",
+		"check:changes": "node scripts/changes-check.ts",
 		"bench": "node scripts/bench.ts"
 	},
 	"keywords": [

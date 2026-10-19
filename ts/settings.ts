@@ -1,6 +1,7 @@
 import { possibleFrequencies, possibleFrequenciesWithoutAccidentals, type NoteInfo } from './notes'
 import { clampA4, tuningById } from './tuning'
 import { DEFAULT_INTERVALS, DEFAULT_QUALITIES, pool } from './ear'
+import * as Changes from './changes'
 
 export interface Settings {
 	/** Add sharps/flats to the pool of possible target notes. */
@@ -75,7 +76,7 @@ export interface Settings {
 
 	/* Trainer: ear training (ts/ear.ts) */
 	/** Which exercise the Trainer shows. */
-	trainerExercise: 'notes' | 'intervals' | 'chords'
+	trainerExercise: 'notes' | 'intervals' | 'chords' | 'changes'
 	/** Interval ids (ts/ear.ts INTERVALS) and chord quality ids (QUALITIES) asked. */
 	earIntervals: string[]
 	earChords: string[]
@@ -87,6 +88,21 @@ export interface Settings {
 	earSing: boolean
 	/** Move on by itself shortly after a right answer. */
 	earAutoAdvance: boolean
+
+	/* Trainer: chord changes (ts/changes.ts) */
+	/** The chords changed between, in order: 2–4 of Changes.CHANGE_CHORDS (fewer only mid-selection). */
+	changesChords: string[]
+	/** One-minute changes (count them) or in time with the metronome. */
+	changesMode: 'minute' | 'time'
+	/** One-minute session length, s: 30, 60 or 120. */
+	changesDuration: number
+	/** In time: tempo 40–160 BPM and beats per chord 1, 2 or 4. */
+	changesBpm: number
+	changesBeats: number
+	/** In time: +5 BPM after two clean passes. */
+	changesSpeedUp: boolean
+	/** 3-2-1 before a one-minute session, a bar of clicks before an in-time one. */
+	changesCountIn: boolean
 }
 
 const STORAGE_KEY = 'pitch-recognizer:settings'
@@ -137,6 +153,15 @@ const defaults: Settings = {
 	earGap: 0.75,
 	earSing: false,
 	earAutoAdvance: true,
+
+	/* Trainer: chord changes */
+	changesChords: Changes.DEFAULT_SEQUENCE,
+	changesMode: 'minute',
+	changesDuration: 60,
+	changesBpm: 60,
+	changesBeats: 4,
+	changesSpeedUp: false,
+	changesCountIn: true,
 }
 
 const listeners = new Set<() => void>()
@@ -158,7 +183,7 @@ function load(): Settings {
 			...merged,
 			a4: clampA4(merged.a4),
 			tuning: tuningById(merged.tuning).id,
-			trainerExercise: ['notes', 'intervals', 'chords'].includes(merged.trainerExercise) ? merged.trainerExercise : 'notes',
+			trainerExercise: ['notes', 'intervals', 'chords', 'changes'].includes(merged.trainerExercise) ? merged.trainerExercise : 'notes',
 			earIntervals: pool('intervals', Array.isArray(merged.earIntervals) ? merged.earIntervals : []),
 			earChords: pool('chords', Array.isArray(merged.earChords) ? merged.earChords : []),
 			chordsMode: oneOf(merged.chordsMode, ['listen', 'library', 'identify']),
@@ -167,6 +192,11 @@ function load(): Settings {
 			chordView: oneOf(merged.chordView, ['triads', 'sevenths']),
 			progressionBpm: Number.isFinite(Number(merged.progressionBpm)) ? Math.min(140, Math.max(60, Math.round(Number(merged.progressionBpm)))) : 80,
 			progressionLoop: merged.progressionLoop === true,
+			changesChords: Changes.validSequence(merged.changesChords),
+			changesMode: merged.changesMode === 'time' ? 'time' : 'minute',
+			changesDuration: Changes.DURATIONS.includes(merged.changesDuration) ? merged.changesDuration : defaults.changesDuration,
+			changesBpm: Math.round(Math.min(Changes.MAX_BPM, Math.max(Changes.MIN_BPM, Number(merged.changesBpm) || defaults.changesBpm))),
+			changesBeats: Changes.BEATS_PER_CHORD.includes(merged.changesBeats) ? merged.changesBeats : defaults.changesBeats,
 		}
 	} catch {
 		return { ...defaults }

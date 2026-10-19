@@ -342,6 +342,62 @@
 				<div class="chips" data-chips="earChords"></div>
 			</div>
 
+			<div class="settings__section" data-for="trainer" data-exercise="changes">
+				<label class="switch">
+					<span class="switch__text">
+						<span class="switch__title">Count-in</span>
+						<span class="switch__desc">3-2-1, or a bar of clicks in time</span>
+					</span>
+					<input type="checkbox" class="switch__input" data-setting="changesCountIn" />
+					<span class="switch__track"></span>
+				</label>
+				<label class="switch">
+					<span class="switch__text">
+						<span class="switch__title">Length</span>
+						<span class="switch__desc">One-minute changes</span>
+					</span>
+					<select class="select select--small" data-setting="changesDuration" data-type="number">
+						<option value="30">30 s</option>
+						<option value="60">1 min</option>
+						<option value="120">2 min</option>
+					</select>
+				</label>
+			</div>
+
+			<div class="settings__section" data-for="trainer" data-exercise="changes">
+				<div class="settings__heading">
+					<span class="panel__label">In time</span>
+				</div>
+				<label class="switch">
+					<span class="switch__text">
+						<span class="switch__title">Tempo</span>
+						<span class="switch__desc">40–160 BPM</span>
+					</span>
+					<span class="number">
+						<input type="number" class="input" min="40" max="160" step="1" inputmode="numeric" data-setting="changesBpm" aria-label="Tempo in BPM" />
+						<span class="number__unit">BPM</span>
+					</span>
+				</label>
+				<label class="switch">
+					<span class="switch__text">
+						<span class="switch__title">Beats per chord</span>
+					</span>
+					<select class="select select--small" data-setting="changesBeats" data-type="number">
+						<option value="1">1</option>
+						<option value="2">2</option>
+						<option value="4">4</option>
+					</select>
+				</label>
+				<label class="switch">
+					<span class="switch__text">
+						<span class="switch__title">Speed up</span>
+						<span class="switch__desc">+5 BPM after two clean passes</span>
+					</span>
+					<input type="checkbox" class="switch__input" data-setting="changesSpeedUp" />
+					<span class="switch__track"></span>
+				</label>
+			</div>
+
 			<div class="settings__section" data-for="trainer" data-exercise="intervals chords">
 				<label class="switch">
 					<span class="switch__text">
@@ -360,9 +416,10 @@
 				<button type="button" data-exercise="notes" aria-pressed="true">Notes</button>
 				<button type="button" data-exercise="intervals" aria-pressed="false">Intervals</button>
 				<button type="button" data-exercise="chords" aria-pressed="false">Chords</button>
+				<button type="button" data-exercise="changes" aria-pressed="false">Changes</button>
 			</div>
 
-			<div class="panel scoreboard">
+			<div class="panel scoreboard" data-only="notes ear">
 				<div class="stat">
 					<span class="stat__value" data-stat="score">0</span>
 					<span class="stat__label">Score</span>
@@ -436,6 +493,42 @@
 					<span class="ear-stats__total"></span>
 				</div>
 				<ol class="ear-stats__list"></ol>
+			</div>
+
+			<!-- Chord changes (ts/views/changes.ts): the player changes, the mic counts. -->
+			<div class="panel changes-stage" data-only="changes" hidden>
+				<div class="changes-meta">
+					<span class="changes-clock">1:00</span>
+					<span class="changes-count"><span class="changes-count__value">0</span> <span class="changes-count__label">changes</span></span>
+				</div>
+				<div class="changes-target">G</div>
+				<p class="changes-next"></p>
+				<p class="changes-heard">Hearing <span>—</span></p>
+				<ol class="changes-strip" role="img" aria-label="No changes yet" hidden></ol>
+				<div class="changes-result" hidden></div>
+				<div class="changes-shapes"></div>
+				<button class="btn btn--solid btn--large" type="button" data-action="changes-start" aria-keyshortcuts="Space">Start</button>
+				<p class="changes-status" aria-live="polite"></p>
+				<span class="sr-only changes-live" aria-live="polite"></span>
+			</div>
+
+			<div class="panel changes-setup" data-only="changes" hidden>
+				<div class="segmented changes-mode" role="group" aria-label="Drill">
+					<button type="button" data-changes-mode="minute" aria-pressed="true">One-minute</button>
+					<button type="button" data-changes-mode="time" aria-pressed="false">In time</button>
+				</div>
+				<div class="changes-group">
+					<span class="panel__label" id="changesPresetsLabel">Quick picks</span>
+					<div class="changes-presets" role="group" aria-labelledby="changesPresetsLabel"></div>
+				</div>
+				<div class="changes-group">
+					<div class="settings__heading">
+						<span class="panel__label" id="changesChordsLabel">Chords, in order</span>
+						<span class="changes-order"></span>
+					</div>
+					<div class="chips changes-chips" role="group" aria-labelledby="changesChordsLabel"></div>
+				</div>
+				<p class="changes-summary"></p>
 			</div>
 		</section>
 

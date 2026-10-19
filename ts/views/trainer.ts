@@ -5,12 +5,14 @@ import { centsBetween, getClosestNote } from '../notes'
 import type { PitchReading } from '../microphone'
 import type { View } from './view'
 import { createEarView } from './ear'
+import { createChangesView } from './changes'
 
 const CENTS_RANGE = 50
 
 /**
- * Three exercises behind one segmented control: Notes (match the note on the
- * staff with the mic), and the ear drills Intervals / Chords (ts/views/ear.ts).
+ * Four exercises behind one segmented control: Notes (match the note on the
+ * staff with the mic), the ear drills Intervals / Chords (ts/views/ear.ts) and
+ * Changes, chord-change drills played into the mic (ts/views/changes.ts).
  * `onMicNeed` tells index.ts that wantsMic() changed: Chords has no use for it.
  */
 export function createTrainerView(root: HTMLElement, onMicNeed: () => void): View {
@@ -158,16 +160,19 @@ export function createTrainerView(root: HTMLElement, onMicNeed: () => void): Vie
 
 	/* Exercise switch ------------------------------------------------------ */
 	const ear = createEarView(root)
+	const changes = createChangesView(root)
 	const modeButtons = Array.from(root.querySelectorAll<HTMLButtonElement>('.trainer-mode [data-exercise]'))
 	const exercise = () => Settings.get().trainerExercise
-	const active = () => (exercise() === 'notes' ? notes : ear)
+	const kindOf = (ex: string) => (ex === 'notes' || ex === 'changes' ? ex : 'ear')
+	const active = () => ({ notes, ear, changes })[kindOf(exercise())]
 
 	function applyExercise() {
 		const ex = exercise()
-		const kind = ex === 'notes' ? 'notes' : 'ear'
+		const kind = kindOf(ex)
 		for (const button of modeButtons) button.setAttribute('aria-pressed', String(button.dataset.exercise === ex))
 		root.classList.toggle('trainer--ear', kind === 'ear')
-		for (const element of root.querySelectorAll<HTMLElement>('[data-only]')) element.hidden = element.dataset.only !== kind
+		root.classList.toggle('trainer--changes', kind === 'changes')
+		for (const element of root.querySelectorAll<HTMLElement>('[data-only]')) element.hidden = !element.dataset.only!.split(' ').includes(kind)
 		// index.ts shows every data-for="trainer" settings section on this tab;
 		// narrow them to the exercise so the popover only holds what applies.
 		for (const section of document.querySelectorAll<HTMLElement>('.settings__section[data-for="trainer"]')) {
@@ -201,7 +206,7 @@ export function createTrainerView(root: HTMLElement, onMicNeed: () => void): Vie
 		},
 		reset: () => active().reset(),
 		onReading: (reading) => active().onReading(reading),
-		// Intervals only listen when sung answers are on.
-		wantsMic: () => exercise() === 'notes' || (exercise() === 'intervals' && Settings.get().earSing),
+		// Intervals only listen when sung answers are on; Changes always does.
+		wantsMic: () => exercise() === 'notes' || exercise() === 'changes' || (exercise() === 'intervals' && Settings.get().earSing),
 	}
 }

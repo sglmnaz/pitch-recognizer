@@ -3428,3 +3428,338 @@ a.btn {
 		grid-template-columns: repeat(7, minmax(0, 1fr));
 	}
 }
+
+/* Trainer → Changes: chord-change drills (ts/views/changes.ts) ------------ */
+/* Phones: the stage (target, Start) first, the mic under it, the setup last;
+   while running the setup is hidden. */
+.trainer--changes > .mic {
+	order: 1;
+}
+
+.trainer--changes > .changes-setup {
+	order: 2;
+}
+
+.changes-stage [hidden],
+.changes-stage[data-phase='done'] :is(.changes-meta, .changes-target, .changes-next, .changes-heard) {
+	display: none;
+}
+
+.changes-stage {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 6px;
+	padding: 16px 20px 20px;
+	text-align: center;
+}
+
+.changes-meta {
+	display: flex;
+	align-self: stretch;
+	justify-content: space-between;
+	align-items: baseline;
+	font-family: var(--font-mono);
+	font-variant-numeric: tabular-nums;
+}
+
+.changes-clock {
+	font-size: 17px;
+	font-weight: 500;
+	color: var(--fg-secondary);
+}
+
+.changes-count__value {
+	font-size: 40px;
+	font-weight: 500;
+	letter-spacing: -0.03em;
+	line-height: 1;
+}
+
+.changes-count__label {
+	font-size: 12px;
+	color: var(--fg-muted);
+}
+
+.changes-target {
+	font-family: var(--font-mono);
+	font-size: 96px;
+	font-weight: 500;
+	letter-spacing: -0.04em;
+	line-height: 1;
+	margin-top: 4px;
+}
+
+.changes-target--count {
+	color: var(--fg-muted);
+}
+
+.changes-next,
+.changes-heard,
+.changes-status {
+	margin: 0;
+	font-size: 14px;
+	color: var(--fg-secondary);
+}
+
+.changes-heard {
+	font-size: 13px;
+	color: var(--fg-muted);
+}
+
+.changes-heard span {
+	font-family: var(--font-mono);
+	color: var(--fg);
+}
+
+.changes-status:empty {
+	display: none;
+}
+
+/* A counted change (or an on-time one) flashes the stage green once. */
+.changes-stage--flash {
+	animation: changes-flash 0.5s var(--ease);
+}
+
+.changes-stage--flash .changes-target {
+	animation: changes-flash-text 0.5s var(--ease);
+}
+
+@keyframes changes-flash {
+	from {
+		box-shadow: 0 0 0 2px var(--success), var(--shadow-sm);
+		background: var(--success-bg);
+	}
+}
+
+@keyframes changes-flash-text {
+	from {
+		color: var(--success);
+	}
+}
+
+/* In time: one mark per change, newest on the right. */
+.changes-strip {
+	display: flex;
+	flex-wrap: nowrap;
+	justify-content: center;
+	gap: 4px;
+	max-width: 100%;
+	overflow: hidden;
+	min-height: 22px;
+	margin: 4px 0 0;
+	padding: 0;
+	list-style: none;
+	font-family: var(--font-mono);
+	font-size: 14px;
+}
+
+.changes-mark {
+	width: 18px;
+	color: var(--fg-muted);
+}
+
+.changes-mark--hit {
+	color: var(--success);
+}
+
+.changes-mark--early,
+.changes-mark--late {
+	color: var(--warning);
+}
+
+.changes-result {
+	margin-top: 4px;
+}
+
+.changes-result__big {
+	margin: 0;
+	font-family: var(--font-mono);
+	font-size: 56px;
+	font-weight: 500;
+	letter-spacing: -0.03em;
+	line-height: 1.05;
+}
+
+.changes-result__big small {
+	font-family: var(--font-sans);
+	font-size: 14px;
+	font-weight: 400;
+	letter-spacing: 0;
+	color: var(--fg-muted);
+}
+
+.changes-result__lines {
+	margin: 4px 0 0;
+	padding: 0;
+	list-style: none;
+	font-size: 13px;
+	color: var(--fg-secondary);
+}
+
+.changes-result__lines li:first-child {
+	color: var(--fg);
+	font-weight: 500;
+}
+
+/* Chord diagrams of the chosen chords, scaled to fit (up to four across). */
+.changes-shapes {
+	display: grid;
+	grid-template-columns: repeat(var(--n, 2), minmax(0, 120px));
+	justify-content: center;
+	gap: 10px;
+	align-self: stretch;
+	margin: 10px 0 12px;
+}
+
+.changes-shape {
+	margin: 0;
+	transition: opacity var(--dur) var(--ease);
+}
+
+/* The renderer sizes a diagram 1:1 inline; here it shrinks to its column. */
+.changes-shape .neck {
+	width: 100% !important;
+	height: auto !important;
+}
+
+.changes-shape figcaption {
+	margin-top: 4px;
+	font-family: var(--font-mono);
+	font-size: 13px;
+	color: var(--fg-secondary);
+}
+
+.changes-shape--target figcaption {
+	color: var(--fg);
+	font-weight: 600;
+}
+
+.trainer--running .changes-shape:not(.changes-shape--target) {
+	opacity: 0.45;
+}
+
+.changes-setup {
+	display: flex;
+	flex-direction: column;
+	gap: 14px;
+	padding: 16px 20px;
+}
+
+.changes-group {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+}
+
+.changes-presets {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 6px;
+}
+
+.changes-preset {
+	min-width: 44px;
+	padding: 0 10px;
+}
+
+.changes-chips {
+	grid-template-columns: repeat(auto-fill, minmax(52px, 1fr));
+}
+
+.changes-order {
+	font-family: var(--font-mono);
+	font-size: 12px;
+	color: var(--fg-secondary);
+}
+
+.changes-summary {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 6px 14px;
+	margin: 0;
+	font-size: 13px;
+	color: var(--fg-muted);
+}
+
+.changes-summary b {
+	font-family: var(--font-mono);
+	font-weight: 500;
+	color: var(--fg);
+}
+
+/* History sparkline: last sessions, the best as a dashed line. */
+.spark__line {
+	fill: none;
+	stroke: var(--accent);
+	stroke-width: 1.5;
+	stroke-linejoin: round;
+}
+
+.spark__best {
+	stroke: var(--border-strong);
+	stroke-dasharray: 2 3;
+}
+
+.spark__dot {
+	fill: var(--accent);
+}
+
+@media (max-width: 600px) {
+	/* Four exercises in a 288 px track at 320 px: trim the side padding. */
+	.trainer-mode button {
+		padding-inline: 4px;
+	}
+
+	.changes-mode button,
+	.changes-setup .chip,
+	.settings__section[data-for='trainer'] .input {
+		min-height: 44px;
+	}
+
+	.changes-target {
+		font-size: 76px;
+	}
+}
+
+@media (min-width: 960px) {
+	#view-trainer.trainer--changes:not([hidden]) {
+		grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+		grid-template-areas:
+			'mode mode'
+			'stage setup'
+			'stage mic';
+		grid-template-rows: auto auto 1fr;
+	}
+
+	#view-trainer.trainer--changes.trainer--running:not([hidden]) {
+		grid-template-areas:
+			'mode mode'
+			'stage mic';
+		grid-template-rows: auto 1fr;
+	}
+
+	.view > .changes-stage {
+		grid-area: stage;
+		align-self: stretch;
+		justify-content: center;
+		padding: 24px 28px 28px;
+	}
+
+	.view > .changes-setup {
+		grid-area: setup;
+	}
+
+	.trainer--changes > .mic {
+		align-self: start;
+	}
+
+	.changes-target {
+		font-size: 128px;
+	}
+
+	.changes-shapes {
+		grid-template-columns: repeat(var(--n, 2), minmax(0, 140px));
+	}
+}
