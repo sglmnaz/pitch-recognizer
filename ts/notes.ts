@@ -112,25 +112,34 @@ const possibleFrequencies = noteFrequencies.filter((note) => note.frequency >= 8
 
 const possibleFrequenciesWithoutAccidentals = possibleFrequencies.filter((note) => !note.note.includes('/'))
 
-/** Returns the table entry whose frequency is closest to the given one. */
-function getClosestNote(frequency: number): NoteInfo {
-	let closestNote = noteFrequencies[0]
-	let minDifference = Math.abs(frequency - closestNote.frequency)
+/** Concert pitch the note table is written for. */
+const A4_DEFAULT = 440
+// The table starts at C0, MIDI note 12.
+const FIRST_MIDI = 12
 
-	for (let i = 1; i < noteFrequencies.length; i++) {
-		const difference = Math.abs(frequency - noteFrequencies[i].frequency)
-		if (difference < minDifference) {
-			closestNote = noteFrequencies[i]
-			minDifference = difference
-		}
-	}
+/** Frequency of a MIDI note when A4 (MIDI 69) is tuned to `a4` Hz. */
+function frequencyOfMidi(midi: number, a4 = A4_DEFAULT): number {
+	return a4 * 2 ** ((midi - 69) / 12)
+}
 
-	return closestNote
+/** Fractional MIDI note of a frequency; the integer rounds to the nearest note. */
+function midiOfFrequency(frequency: number, a4 = A4_DEFAULT): number {
+	return 69 + 12 * Math.log2(frequency / a4)
+}
+
+/**
+ * Returns the note closest to the given frequency, with its frequency for the
+ * given A4 (so cents come out right when the user tunes to 432 or 415). The
+ * table only names the notes; the frequency is computed, not read from it.
+ */
+function getClosestNote(frequency: number, a4 = A4_DEFAULT): NoteInfo {
+	const index = Math.max(0, Math.min(noteFrequencies.length - 1, Math.round(midiOfFrequency(frequency, a4)) - FIRST_MIDI))
+	return { ...noteFrequencies[index], frequency: frequencyOfMidi(index + FIRST_MIDI, a4) }
 }
 
 /** Italian solfège name of the note closest to the given frequency. */
-function getNoteName(frequency: number): string {
-	return getClosestNote(frequency).altName
+function getNoteName(frequency: number, a4 = A4_DEFAULT): string {
+	return getClosestNote(frequency, a4).altName
 }
 
 /** Octave-independent pitch class, e.g. `C4` -> `C`, `C#4/Db4` -> `C#/Db`. */
@@ -147,6 +156,9 @@ function centsBetween(frequency: number, reference: number): number {
 }
 
 export {
+	A4_DEFAULT,
+	frequencyOfMidi,
+	midiOfFrequency,
 	getClosestNote,
 	getNoteName,
 	centsBetween,

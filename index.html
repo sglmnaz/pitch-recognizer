@@ -70,6 +70,45 @@
 
 		<div class="settings" id="settings" role="dialog" aria-label="Settings" hidden>
 			<!-- Sections show only on their tab (data-for, index.ts). -->
+			<div class="settings__section" data-for="tuner">
+				<div class="switch switch--wrap">
+					<span class="switch__text">
+						<span class="switch__title">A4 reference</span>
+						<span class="switch__desc">Concert pitch, for tuner and trainer</span>
+					</span>
+					<span class="number">
+						<input type="number" class="input" min="415" max="466" step="0.1" inputmode="decimal" data-setting="a4" aria-label="A4 in Hz" />
+						<span class="number__unit">Hz</span>
+					</span>
+					<input type="range" class="range switch__wide" min="415" max="466" step="1" data-setting="a4" aria-label="A4 in Hz" />
+					<span class="switch__wide settings__presets">
+						<button class="link-btn" type="button" data-set="a4:415">415</button>
+						<button class="link-btn" type="button" data-set="a4:432">432</button>
+						<button class="link-btn" type="button" data-set="a4:440">440</button>
+						<button class="link-btn" type="button" data-set="a4:442">442</button>
+						<button class="link-btn" type="button" data-set="a4:466">466</button>
+					</span>
+				</div>
+				<label class="switch">
+					<span class="switch__text">
+						<span class="switch__title">In-tune tolerance</span>
+						<span class="switch__desc">How close counts as in tune</span>
+					</span>
+					<select class="select select--small" data-setting="tolerance" data-type="number">
+						<option value="2">±2 cents</option>
+						<option value="5">±5 cents</option>
+						<option value="10">±10 cents</option>
+					</select>
+				</label>
+				<label class="switch">
+					<span class="switch__text">
+						<span class="switch__title">Tone volume</span>
+						<span class="switch__desc">Reference tone of a tapped string</span>
+					</span>
+					<input type="range" class="range" min="0" max="1" step="0.05" data-setting="toneVolume" />
+				</label>
+			</div>
+
 			<div class="settings__section" data-for="scales">
 				<label class="switch">
 					<span class="switch__text">
@@ -190,6 +229,14 @@
 
 		<!-- Tuner --------------------------------------------------------- -->
 		<section class="view" id="view-tuner" role="tabpanel">
+			<!-- Tuning picker + mode; options and chips are filled by ts/views/tuner.ts. -->
+			<div class="tuner-head">
+				<select class="select tuner-tuning" aria-label="Tuning"></select>
+				<div class="segmented tuner-mode" role="group" aria-label="Tuner mode">
+					<button type="button" data-tuner-mode="chromatic" aria-pressed="true">Chromatic</button>
+					<button type="button" data-tuner-mode="guitar" aria-pressed="false">Guitar</button>
+				</div>
+			</div>
 			<div class="panel readout">
 				<div class="readout__note readout__idle">--</div>
 				<div class="readout__sub">Play a note to begin</div>
@@ -207,8 +254,10 @@
 					</div>
 					<div class="meter__labels"><span>-50</span><span>0</span><span>+50</span></div>
 				</div>
+				<!-- One chip per string, low to high; tap to hear it. -->
+				<div class="strings" role="group" aria-label="Strings, tap to hear"></div>
 			</div>
-			<p class="hint">Play one string at a time and mute the others. Unplugged electric? Hold the phone close to the strings. The readout locks green within 5 cents.</p>
+			<p class="hint">Play one string at a time and mute the others. Unplugged electric? Hold the phone close to the strings. The readout locks green within <span class="tuner-tolerance">5</span> cents.</p>
 		</section>
 
 		<!-- Chords ------------------------------------------------------- -->

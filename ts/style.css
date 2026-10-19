@@ -1588,3 +1588,207 @@ button {
 		align-items: flex-start;
 	}
 }
+
+/* Tuner: tuning picker, string guide, tolerance-aware meter -------------- */
+/* Picker and mode share one row, each 40 px tall for a thumb. */
+.tuner-head {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+}
+
+.tuner-tuning {
+	flex: 1;
+	height: 40px;
+}
+
+.tuner-mode {
+	flex: none;
+}
+
+.tuner-mode button {
+	min-height: 34px;
+	padding: 0 14px;
+}
+
+/* The meter's green band is the in-tune tolerance (--tol cents, 1 cent = 1% of
+   the track, set by ts/views/tuner.ts); yellow reaches 15 cents past it. The
+   Trainer never sets it, so its meter keeps the 5-cent band. */
+.meter__zones {
+	--tol: 5;
+	--near: calc(var(--tol) + 15);
+	background: linear-gradient(
+		90deg,
+		var(--surface-2) 0 calc(50% - var(--near) * 1%),
+		color-mix(in srgb, var(--warning) 55%, transparent) calc(50% - var(--near) * 1%) calc(50% - var(--tol) * 1%),
+		color-mix(in srgb, var(--success) 75%, transparent) calc(50% - var(--tol) * 1%) calc(50% + var(--tol) * 1%),
+		color-mix(in srgb, var(--warning) 55%, transparent) calc(50% + var(--tol) * 1%) calc(50% + var(--near) * 1%),
+		var(--surface-2) calc(50% + var(--near) * 1%) 100%
+	);
+}
+
+/* One chip per string, low to high. States (data-state): idle; active = the
+   string being played; locked = that string is in tune; ref = its reference
+   tone is playing. data-tuned adds the small check a tuned string keeps. */
+.strings {
+	display: grid;
+	grid-template-columns: repeat(6, 1fr);
+	gap: 6px;
+	width: 100%;
+	max-width: 400px;
+	margin: 22px auto 0;
+}
+
+.string-chip {
+	appearance: none;
+	position: relative;
+	display: grid;
+	place-items: center;
+	height: 52px;
+	padding: 0;
+	border: none;
+	border-radius: var(--radius);
+	background: var(--surface-2);
+	color: var(--fg-secondary);
+	box-shadow: var(--shadow-border);
+	font-family: var(--font-mono);
+	font-size: 17px;
+	font-weight: 500;
+	cursor: pointer;
+	touch-action: manipulation;
+	-webkit-tap-highlight-color: transparent;
+	transition: color var(--dur) var(--ease), background var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
+}
+
+.string-chip:hover {
+	color: var(--fg);
+}
+
+.string-chip__note sub {
+	margin-left: 1px;
+	font-size: 10px;
+	line-height: 0;
+	color: var(--fg-muted);
+}
+
+.string-chip[data-state='active'] {
+	background: var(--surface);
+	color: var(--fg);
+	box-shadow: 0 0 0 2px var(--accent);
+}
+
+.string-chip[data-state='locked'] {
+	background: var(--success);
+	color: var(--solid-fg);
+	box-shadow: none;
+}
+
+.string-chip[data-state='ref'] {
+	background: var(--solid);
+	color: var(--solid-fg);
+	box-shadow: none;
+}
+
+.string-chip[data-state='locked'] sub,
+.string-chip[data-state='ref'] sub {
+	color: inherit;
+	opacity: 0.7;
+}
+
+.string-chip__check {
+	position: absolute;
+	top: 4px;
+	right: 4px;
+	width: 11px;
+	height: 11px;
+	color: var(--success);
+	opacity: 0;
+	transform: scale(0.6);
+	transition: opacity var(--dur) var(--ease), transform var(--dur) var(--ease);
+}
+
+.string-chip[data-tuned] .string-chip__check,
+.string-chip[data-state='locked'] .string-chip__check {
+	opacity: 1;
+	transform: none;
+}
+
+.string-chip[data-state='locked'] .string-chip__check {
+	color: inherit;
+}
+
+/* Settings: A4 field (number + slider + presets). */
+.switch--wrap {
+	flex-wrap: wrap;
+	cursor: default;
+}
+
+.switch--wrap:hover {
+	background: transparent;
+}
+
+.range.switch__wide,
+.switch__wide {
+	flex: 1 1 100%;
+	width: 100%;
+}
+
+.settings__presets {
+	display: flex;
+	justify-content: space-between;
+}
+
+.number {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+}
+
+.input {
+	width: 76px;
+	height: 32px;
+	padding: 0 8px;
+	border: none;
+	border-radius: var(--radius);
+	background: var(--surface);
+	color: var(--fg);
+	box-shadow: var(--shadow-border);
+	font-family: var(--font-mono);
+	font-size: 13px;
+	text-align: right;
+	-moz-appearance: textfield;
+	appearance: textfield;
+}
+
+.input::-webkit-inner-spin-button,
+.input::-webkit-outer-spin-button {
+	-webkit-appearance: none;
+	margin: 0;
+}
+
+.number__unit {
+	font-family: var(--font-mono);
+	font-size: 12px;
+	color: var(--fg-muted);
+}
+
+@media (min-width: 960px) {
+	/* The picker row spans the top; readout left, mic and hint right. */
+	#view-tuner:not([hidden]) {
+		grid-template-areas:
+			'head head'
+			'readout mic'
+			'readout hint';
+		grid-template-rows: auto auto 1fr;
+	}
+
+	.view > .tuner-head {
+		grid-area: head;
+		max-width: 440px;
+	}
+
+	.string-chip {
+		height: 60px;
+		font-size: 19px;
+	}
+}

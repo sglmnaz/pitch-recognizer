@@ -86,7 +86,7 @@ export function evaluate(reading: PitchReading | null, now: number): Evaluation 
 		return { detected: null, cents: null, onTarget: false, solved: false }
 	}
 
-	const detected = getClosestNote(reading.frequency)
+	const detected = getClosestNote(reading.frequency, Settings.get().a4)
 	const cents = centsBetween(reading.frequency, detected.frequency)
 	const onTarget = matches(detected)
 

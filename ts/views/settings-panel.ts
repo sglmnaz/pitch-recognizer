@@ -5,16 +5,34 @@ import * as Settings from '../settings'
  * and the All/None shortcuts. Keeps the controls in sync with stored settings.
  */
 export function createSettingsPanel(root: HTMLElement) {
-	// Checkbox switches store booleans, sliders numbers, selects their value.
+	// Checkbox switches store booleans, sliders and number fields numbers,
+	// selects their value (a number when marked data-type="number").
 	const switches = Array.from(root.querySelectorAll<HTMLInputElement | HTMLSelectElement>('[data-setting]'))
+	const isNumeric = (input: HTMLInputElement | HTMLSelectElement) =>
+		input.type === 'range' || input.type === 'number' || input.dataset.type === 'number'
 	const valueOf = (input: HTMLInputElement | HTMLSelectElement) =>
-		input.type === 'checkbox' ? (input as HTMLInputElement).checked : input.type === 'range' ? Number(input.value) : input.value
+		input.type === 'checkbox' ? (input as HTMLInputElement).checked : isNumeric(input) ? Number(input.value) : input.value
 	const chips = root.querySelector<HTMLElement>('#noteChips')!
 
 	for (const input of switches) {
 		// Sliders apply live while dragging.
 		input.addEventListener(input.type === 'range' ? 'input' : 'change', () => {
-			Settings.update({ [input.dataset.setting!]: valueOf(input) } as Partial<Settings.Settings>)
+			let value = valueOf(input)
+			if (typeof value === 'number' && input instanceof HTMLInputElement && input.min) {
+				// A typed number can be empty or out of range: clamp it, or put the
+				// stored value back.
+				if (Number.isNaN(value) || input.value === '') return sync()
+				value = Math.min(Number(input.max), Math.max(Number(input.min), value))
+			}
+			Settings.update({ [input.dataset.setting!]: value } as Partial<Settings.Settings>)
+		})
+	}
+
+	// Preset buttons: data-set="setting:value" (the A4 shortcuts).
+	for (const button of root.querySelectorAll<HTMLElement>('[data-set]')) {
+		button.addEventListener('click', () => {
+			const [key, value] = button.dataset.set!.split(':')
+			Settings.update({ [key]: Number(value) } as Partial<Settings.Settings>)
 		})
 	}
 

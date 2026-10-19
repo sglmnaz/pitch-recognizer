@@ -1,5 +1,6 @@
 import * as Settings from '../settings'
 import * as Sound from '../sound'
+import { midiOfFrequency } from '../notes'
 import {
 	degreeMap,
 	degreeNumber,
@@ -579,7 +580,7 @@ export function createScalesView(root: HTMLElement, mic: MicControl): View & { s
 
 		onReading(reading) {
 			// The synth's own notes come back through the mic: ignore them.
-			const midi = reading && !Sound.isRinging() ? Math.round(69 + 12 * Math.log2(reading.frequency / 440)) : null
+			const midi = reading && !Sound.isRinging() ? Math.round(midiOfFrequency(reading.frequency, Settings.get().a4)) : null
 			const now = performance.now()
 			if (midi !== heardMidi) {
 				heardMidi = midi

@@ -126,7 +126,7 @@ export function createTrainerView(root: HTMLElement): View {
 				return
 			}
 
-			const closest = getClosestNote(reading.frequency)
+			const closest = getClosestNote(reading.frequency, Settings.get().a4)
 			const cents = centsBetween(reading.frequency, closest.frequency)
 
 			detectedNote.classList.remove('readout__idle')

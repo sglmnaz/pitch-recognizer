@@ -1,4 +1,5 @@
 import { possibleFrequencies, possibleFrequenciesWithoutAccidentals, type NoteInfo } from './notes'
+import { clampA4, tuningById } from './tuning'
 
 export interface Settings {
 	/** Add sharps/flats to the pool of possible target notes. */
@@ -19,6 +20,18 @@ export interface Settings {
 	scaleDegrees: number[]
 	/** Fret size multiplier, 0.5–1.5: height when vertical, width when horizontal. */
 	fretSize: number
+
+	/* Tuner ---------------------------------------------------------------- */
+	/** Tuning id (ts/tuning.ts). */
+	tuning: string
+	/** Chromatic: nearest note of any pitch. Guitar: cents off the nearest string of the tuning. */
+	tunerMode: 'chromatic' | 'guitar'
+	/** A4 reference in Hz, 415–466. Drives note naming and cents in the tuner and the trainer. */
+	a4: number
+	/** Cents either side of a note that count as in tune: 2, 5 or 10. */
+	tolerance: number
+	/** Loudness of the string reference tone, 0–1. */
+	toneVolume: number
 }
 
 const STORAGE_KEY = 'pitch-recognizer:settings'
@@ -33,6 +46,11 @@ const defaults: Settings = {
 	scaleLabels: 'notes',
 	scaleDegrees: [1, 3, 5],
 	fretSize: 1,
+	tuning: 'standard',
+	tunerMode: 'chromatic',
+	a4: 440,
+	tolerance: 5,
+	toneVolume: 0.6,
 }
 
 const listeners = new Set<() => void>()
@@ -41,7 +59,9 @@ let settings: Settings = load()
 function load(): Settings {
 	try {
 		const stored = localStorage.getItem(STORAGE_KEY)
-		return stored ? { ...defaults, ...JSON.parse(stored) } : { ...defaults }
+		const merged: Settings = stored ? { ...defaults, ...JSON.parse(stored) } : { ...defaults }
+		// Stored values can be stale or hand-edited: keep the tuner's inputs valid.
+		return { ...merged, a4: clampA4(merged.a4), tuning: tuningById(merged.tuning).id }
 	} catch {
 		return { ...defaults }
 	}
