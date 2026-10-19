@@ -13,10 +13,14 @@
 	<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 	<meta name="apple-mobile-web-app-title" content="Pluck" />
 	<script>
-		// Resolve the theme before first paint to avoid a flash.
+		// Resolve the theme before first paint to avoid a flash: 'light' / 'dark'
+		// as chosen in Settings, nothing stored = follow the device (System).
 		(function () {
-			var saved = localStorage.getItem('theme')
-			var dark = saved ? saved === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches
+			var saved = null
+			try {
+				saved = localStorage.getItem('theme')
+			} catch (error) {}
+			var dark = saved === 'light' || saved === 'dark' ? saved === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches
 			document.documentElement.dataset.theme = dark ? 'dark' : 'light'
 		})()
 	</script>
@@ -32,7 +36,7 @@
 						<path d="m12 14 4-4" />
 						<path d="M3.34 19a10 10 0 1 1 17.32 0" />
 					</svg>
-					Tuner
+					<span class="tab__label">Tuner</span>
 				</button>
 				<button class="tab" role="tab" data-tab="chords" aria-selected="false">
 					<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -40,7 +44,7 @@
 						<circle cx="6" cy="18" r="3" />
 						<circle cx="18" cy="16" r="3" />
 					</svg>
-					Chords
+					<span class="tab__label">Chords</span>
 				</button>
 				<button class="tab" role="tab" data-tab="scales" aria-selected="false">
 					<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -49,366 +53,31 @@
 						<path d="M15 21V8" />
 						<path d="M20 21V4" />
 					</svg>
-					Scales
+					<span class="tab__label">Scales</span>
 				</button>
 				<button class="tab" role="tab" data-tab="trainer" aria-selected="false">
 					<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
 						<path d="M6 8.5a6.5 6.5 0 1 1 13 0c0 6-6 6-6 10a3.5 3.5 0 1 1-7 0" />
 						<path d="M15 8.5a2.5 2.5 0 0 0-5 0v1a2 2 0 1 1 0 4" />
 					</svg>
-					Trainer
+					<span class="tab__label">Trainer</span>
 				</button>
 				<button class="tab" role="tab" data-tab="metronome" aria-selected="false">
 					<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
 						<path d="M9 3h6l4 18H5z" />
 						<path d="m12 17 4-8" />
 					</svg>
-					Metronome
+					<span class="tab__label">Metronome</span>
+				</button>
+				<button class="tab" role="tab" data-tab="settings" aria-selected="false">
+					<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+						<circle cx="12" cy="12" r="3" />
+						<path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+					</svg>
+					<span class="tab__label">Settings</span>
 				</button>
 			</nav>
-			<button class="icon-btn" id="settingsToggle" type="button" aria-label="Settings" aria-expanded="false" aria-controls="settings">
-				<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-					<circle cx="12" cy="12" r="3" />
-					<path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
-				</svg>
-			</button>
-			<button class="icon-btn" id="themeToggle" type="button" aria-label="Toggle theme"></button>
 		</header>
-
-		<div class="settings" id="settings" role="dialog" aria-label="Settings" hidden>
-			<!-- Sections show only on their tab (data-for, index.ts). -->
-			<div class="settings__section" data-for="tuner">
-				<div class="switch switch--wrap">
-					<span class="switch__text">
-						<span class="switch__title">A4 reference</span>
-						<span class="switch__desc">Concert pitch for Tuner, Trainer, Scales and Chords</span>
-					</span>
-					<span class="number">
-						<input type="number" class="input" min="415" max="466" step="0.1" inputmode="decimal" data-setting="a4" aria-label="A4 frequency in Hz, number field" />
-						<span class="number__unit">Hz</span>
-					</span>
-					<input type="range" class="range switch__wide" min="415" max="466" step="1" data-setting="a4" aria-label="A4 frequency, slider" />
-					<span class="switch__wide settings__presets">
-						<button class="link-btn" type="button" data-set="a4:415">415</button>
-						<button class="link-btn" type="button" data-set="a4:432">432</button>
-						<button class="link-btn" type="button" data-set="a4:440">440</button>
-						<button class="link-btn" type="button" data-set="a4:442">442</button>
-						<button class="link-btn" type="button" data-set="a4:466">466</button>
-					</span>
-				</div>
-				<label class="switch">
-					<span class="switch__text">
-						<span class="switch__title">In-tune tolerance</span>
-						<span class="switch__desc">How close counts as in tune</span>
-					</span>
-					<select class="select select--small" data-setting="tolerance" data-type="number">
-						<option value="2">±2 cents</option>
-						<option value="5">±5 cents</option>
-						<option value="10">±10 cents</option>
-					</select>
-				</label>
-				<label class="switch">
-					<span class="switch__text">
-						<span class="switch__title">Tone volume</span>
-						<span class="switch__desc">Reference tone of a tapped string</span>
-					</span>
-					<input type="range" class="range" min="0" max="1" step="0.05" data-setting="toneVolume" />
-				</label>
-			</div>
-
-			<div class="settings__section" data-for="chords">
-				<label class="switch">
-					<span class="switch__text">
-						<span class="switch__title">Diagram labels</span>
-						<span class="switch__desc">What the dots on a chord diagram say</span>
-					</span>
-					<select class="select select--small" data-setting="chordLabels">
-						<option value="degrees">Degrees</option>
-						<option value="notes">Notes</option>
-						<option value="fingers">Fingers</option>
-						<option value="none">None</option>
-					</select>
-				</label>
-				<label class="switch">
-					<span class="switch__text">
-						<span class="switch__title">Play as</span>
-						<span class="switch__desc">Tapping a chord strums it or picks each string</span>
-					</span>
-					<select class="select select--small" data-setting="chordPlay">
-						<option value="strum">Strum</option>
-						<option value="arpeggio">Arpeggio</option>
-					</select>
-				</label>
-				<label class="switch">
-					<span class="switch__text">
-						<span class="switch__title">Fretboard theme</span>
-						<span class="switch__desc">Light or dark, whatever the app theme</span>
-					</span>
-					<select class="select select--small" data-setting="fretboardTheme">
-						<option value="auto">Auto</option>
-						<option value="light">Light</option>
-						<option value="dark">Dark</option>
-					</select>
-				</label>
-				<label class="switch">
-					<span class="switch__text">
-						<span class="switch__title">Left-handed</span>
-						<span class="switch__desc">Mirror the diagrams and the neck</span>
-					</span>
-					<input type="checkbox" class="switch__input" data-setting="leftHanded" />
-					<span class="switch__track"></span>
-				</label>
-			</div>
-
-			<div class="settings__section" data-for="scales">
-				<label class="switch">
-					<span class="switch__text">
-						<span class="switch__title">Fretboard theme</span>
-						<span class="switch__desc">Light or dark, whatever the app theme</span>
-					</span>
-					<select class="select select--small" data-setting="fretboardTheme">
-						<option value="auto">Auto</option>
-						<option value="light">Light</option>
-						<option value="dark">Dark</option>
-					</select>
-				</label>
-				<label class="switch">
-					<span class="switch__text">
-						<span class="switch__title">Vertical fretboard</span>
-						<span class="switch__desc">Neck top to bottom, like a chord diagram</span>
-					</span>
-					<input type="checkbox" class="switch__input" data-setting="fretboardVertical" />
-					<span class="switch__track"></span>
-				</label>
-				<label class="switch">
-					<span class="switch__text">
-						<span class="switch__title">Fret size</span>
-						<span class="switch__desc">Height when vertical, width when horizontal</span>
-					</span>
-					<input type="range" class="range" min="0.5" max="1.5" step="0.05" data-setting="fretSize" />
-				</label>
-				<!-- Fretboard: shared by every neck (ts/fretboard.ts). -->
-				<label class="switch">
-					<span class="switch__text">
-						<span class="switch__title">Left-handed</span>
-						<span class="switch__desc">Mirror the neck, nut on the right</span>
-					</span>
-					<input type="checkbox" class="switch__input" data-setting="leftHanded" />
-					<span class="switch__track"></span>
-				</label>
-				<!-- Harmony under the neck (ts/views/harmony.ts). -->
-				<label class="switch">
-					<span class="switch__text">
-						<span class="switch__title">Chords shown</span>
-						<span class="switch__desc">Chords of the scale as triads or sevenths</span>
-					</span>
-					<select class="select select--small" data-setting="chordView">
-						<option value="triads">Triads</option>
-						<option value="sevenths">Sevenths</option>
-					</select>
-				</label>
-				<label class="switch">
-					<span class="switch__text">
-						<span class="switch__title">Progression tempo</span>
-						<span class="switch__desc">One bar per chord</span>
-					</span>
-					<span class="number">
-						<input type="number" class="input" min="60" max="140" step="1" inputmode="numeric" data-setting="progressionBpm" aria-label="Progression tempo in BPM" />
-						<span class="number__unit">BPM</span>
-					</span>
-				</label>
-				<label class="switch">
-					<span class="switch__text">
-						<span class="switch__title">Loop progressions</span>
-						<span class="switch__desc">Start over at the end</span>
-					</span>
-					<input type="checkbox" class="switch__input" data-setting="progressionLoop" />
-					<span class="switch__track"></span>
-				</label>
-			</div>
-
-			<div class="settings__section" data-for="metronome">
-				<label class="switch">
-					<span class="switch__text">
-						<span class="switch__title">Sound</span>
-						<span class="switch__desc">Synthesized, no audio files</span>
-					</span>
-					<select class="select select--small" data-setting="metroSound">
-						<option value="click">Click</option>
-						<option value="wood">Wood block</option>
-						<option value="beep">Beep</option>
-					</select>
-				</label>
-				<label class="switch">
-					<span class="switch__text">
-						<span class="switch__title">Volume</span>
-					</span>
-					<input type="range" class="range" min="0" max="1" step="0.05" data-setting="metroVolume" />
-				</label>
-				<label class="switch">
-					<span class="switch__text">
-						<span class="switch__title">Flash on beat 1</span>
-						<span class="switch__desc">The screen blinks at the start of each bar</span>
-					</span>
-					<input type="checkbox" class="switch__input" data-setting="metroFlash" />
-					<span class="switch__track"></span>
-				</label>
-			</div>
-
-			<!-- Trainer: data-exercise limits a section to those exercises (ts/views/trainer.ts). -->
-			<div class="settings__section" data-for="trainer" data-exercise="notes">
-				<label class="switch">
-					<span class="switch__text">
-						<span class="switch__title">Match any octave</span>
-						<span class="switch__desc">The right note in any octave counts</span>
-					</span>
-					<input type="checkbox" class="switch__input" data-setting="matchAnyOctave" />
-					<span class="switch__track"></span>
-				</label>
-				<label class="switch">
-					<span class="switch__text">
-						<span class="switch__title">Sharps &amp; flats</span>
-						<span class="switch__desc">Add accidentals to the note pool</span>
-					</span>
-					<input type="checkbox" class="switch__input" data-setting="includeAccidentals" />
-					<span class="switch__track"></span>
-				</label>
-				<label class="switch">
-					<span class="switch__text">
-						<span class="switch__title">Light staff</span>
-						<span class="switch__desc">Keep the staff light in dark mode</span>
-					</span>
-					<input type="checkbox" class="switch__input" data-setting="lightStaff" />
-					<span class="switch__track"></span>
-				</label>
-			</div>
-
-			<div class="settings__section" data-for="trainer" data-exercise="notes">
-				<div class="settings__heading">
-					<span class="panel__label">Target notes</span>
-					<span class="settings__actions">
-						<button class="link-btn" type="button" data-notes="all">All</button>
-						<button class="link-btn" type="button" data-notes="none">None</button>
-					</span>
-				</div>
-				<div class="chips" id="noteChips"></div>
-			</div>
-
-			<div class="settings__section" data-for="trainer" data-exercise="intervals">
-				<label class="switch">
-					<span class="switch__text">
-						<span class="switch__title">Answer by singing</span>
-						<span class="switch__desc">Sing or play the second note instead of tapping. Best with headphones: the mic can hear the phone's speaker.</span>
-					</span>
-					<input type="checkbox" class="switch__input" data-setting="earSing" />
-					<span class="switch__track"></span>
-				</label>
-				<label class="switch">
-					<span class="switch__text">
-						<span class="switch__title">Direction</span>
-						<span class="switch__desc">How the two notes are played</span>
-					</span>
-					<select class="select select--small" data-setting="earDirection">
-						<option value="up">Ascending</option>
-						<option value="down">Descending</option>
-						<option value="harmonic">Harmonic</option>
-						<option value="mixed">Mixed</option>
-					</select>
-				</label>
-				<label class="switch">
-					<span class="switch__text">
-						<span class="switch__title">Note gap</span>
-						<span class="switch__desc">Time between the two notes</span>
-					</span>
-					<select class="select select--small" data-setting="earGap" data-type="number">
-						<option value="0.45">Fast</option>
-						<option value="0.75">Normal</option>
-						<option value="1.1">Slow</option>
-					</select>
-				</label>
-			</div>
-
-			<div class="settings__section" data-for="trainer" data-exercise="intervals">
-				<div class="settings__heading">
-					<span class="panel__label">Intervals</span>
-				</div>
-				<div class="chips chips--6" data-chips="earIntervals"></div>
-			</div>
-
-			<div class="settings__section" data-for="trainer" data-exercise="chords">
-				<div class="settings__heading">
-					<span class="panel__label">Chord qualities</span>
-				</div>
-				<div class="chips" data-chips="earChords"></div>
-			</div>
-
-			<div class="settings__section" data-for="trainer" data-exercise="changes">
-				<label class="switch">
-					<span class="switch__text">
-						<span class="switch__title">Count-in</span>
-						<span class="switch__desc">3-2-1, or a bar of clicks in time</span>
-					</span>
-					<input type="checkbox" class="switch__input" data-setting="changesCountIn" />
-					<span class="switch__track"></span>
-				</label>
-				<label class="switch">
-					<span class="switch__text">
-						<span class="switch__title">Length</span>
-						<span class="switch__desc">One-minute changes</span>
-					</span>
-					<select class="select select--small" data-setting="changesDuration" data-type="number">
-						<option value="30">30 s</option>
-						<option value="60">1 min</option>
-						<option value="120">2 min</option>
-					</select>
-				</label>
-			</div>
-
-			<div class="settings__section" data-for="trainer" data-exercise="changes">
-				<div class="settings__heading">
-					<span class="panel__label">In time</span>
-				</div>
-				<label class="switch">
-					<span class="switch__text">
-						<span class="switch__title">Tempo</span>
-						<span class="switch__desc">40–160 BPM</span>
-					</span>
-					<span class="number">
-						<input type="number" class="input" min="40" max="160" step="1" inputmode="numeric" data-setting="changesBpm" aria-label="Tempo in BPM" />
-						<span class="number__unit">BPM</span>
-					</span>
-				</label>
-				<label class="switch">
-					<span class="switch__text">
-						<span class="switch__title">Beats per chord</span>
-					</span>
-					<select class="select select--small" data-setting="changesBeats" data-type="number">
-						<option value="1">1</option>
-						<option value="2">2</option>
-						<option value="4">4</option>
-					</select>
-				</label>
-				<label class="switch">
-					<span class="switch__text">
-						<span class="switch__title">Speed up</span>
-						<span class="switch__desc">+5 BPM after two clean passes</span>
-					</span>
-					<input type="checkbox" class="switch__input" data-setting="changesSpeedUp" />
-					<span class="switch__track"></span>
-				</label>
-			</div>
-
-			<div class="settings__section" data-for="trainer" data-exercise="intervals chords">
-				<label class="switch">
-					<span class="switch__text">
-						<span class="switch__title">Auto-advance</span>
-						<span class="switch__desc">Next question shortly after a right answer</span>
-					</span>
-					<input type="checkbox" class="switch__input" data-setting="earAutoAdvance" />
-					<span class="switch__track"></span>
-				</label>
-			</div>
-		</div>
 
 		<!-- Trainer ------------------------------------------------------- -->
 		<section class="view" id="view-trainer" role="tabpanel" hidden>
@@ -793,26 +462,23 @@
 			</div>
 
 			<div class="panel metro-options">
-				<div class="metro-row">
-					<span class="metro-row__label">Beats per bar</span>
-					<div class="metro-stepper">
-						<button class="metro-step metro-step--small" type="button" data-beats="-1" aria-label="Fewer beats">&minus;</button>
-						<span class="metro-stepper__value" data-value="beats">4</span>
-						<button class="metro-step metro-step--small" type="button" data-beats="1" aria-label="More beats">+</button>
+				<!-- Time signature on one row: beats per bar over the beat note. Accents
+				     are set on the beat dots themselves (tap: normal, accent, mute). -->
+				<div class="metro-row metro-row--wrap">
+					<span class="metro-row__label">Time</span>
+					<div class="metro-time">
+						<div class="metro-stepper" role="group" aria-label="Beats per bar">
+							<button class="metro-step metro-step--small" type="button" data-beats="-1" aria-label="Fewer beats">&minus;</button>
+							<span class="metro-stepper__value" data-value="beats">4</span>
+							<button class="metro-step metro-step--small" type="button" data-beats="1" aria-label="More beats">+</button>
+						</div>
+						<span class="metro-time__over" aria-hidden="true">/</span>
+						<div class="segmented segmented--small metro-unit" role="group" aria-label="Beat note">
+							<button type="button" data-unit="4">4</button>
+							<button type="button" data-unit="8">8</button>
+						</div>
 					</div>
 				</div>
-				<div class="metro-row">
-					<span class="metro-row__label">Beat note</span>
-					<div class="segmented segmented--small metro-unit" role="group" aria-label="Beat note">
-						<button type="button" data-unit="4">4</button>
-						<button type="button" data-unit="8">8</button>
-					</div>
-				</div>
-				<label class="metro-row">
-					<span class="metro-row__label">Accent beat 1</span>
-					<input type="checkbox" class="switch__input" data-action="accent-first" />
-					<span class="switch__track"></span>
-				</label>
 				<div class="metro-row metro-row--stack">
 					<span class="metro-row__label">Subdivision</span>
 					<div class="segmented segmented--small" role="group" aria-label="Subdivision">
@@ -864,6 +530,387 @@
 					<div class="metro-progress__text"></div>
 				</div>
 			</div>
+		</section>
+
+		<!-- Settings: its own tab (ts/views/settings-panel.ts). One group per tab, in tab
+		     order; entering it scrolls to the group of the tab the user came from. -->
+		<section class="view view--settings" id="view-settings" role="tabpanel" aria-label="Settings" hidden>
+			<section class="settings-group" data-group="appearance" aria-labelledby="settings-appearance">
+				<h2 class="settings-group__title" id="settings-appearance">Appearance</h2>
+				<div class="panel settings-card">
+					<div class="settings__section">
+						<div class="switch switch--wrap">
+							<span class="switch__text">
+								<span class="switch__title" id="themeLabel">Theme</span>
+								<span class="switch__desc">System follows the device</span>
+							</span>
+							<div class="segmented settings__theme" role="group" aria-labelledby="themeLabel">
+								<button type="button" data-theme-choice="system" aria-pressed="true">System</button>
+								<button type="button" data-theme-choice="light" aria-pressed="false">Light</button>
+								<button type="button" data-theme-choice="dark" aria-pressed="false">Dark</button>
+							</div>
+						</div>
+					</div>
+				</div>
+			</section>
+
+			<section class="settings-group" data-group="fretboard" aria-labelledby="settings-fretboard">
+				<h2 class="settings-group__title" id="settings-fretboard">Fretboard</h2>
+				<p class="settings-group__desc">Chord diagrams and every neck</p>
+				<div class="panel settings-card">
+					<div class="settings__section">
+						<label class="switch">
+							<span class="switch__text">
+								<span class="switch__title">Fretboard theme</span>
+								<span class="switch__desc">Light or dark, whatever the app theme</span>
+							</span>
+							<select class="select select--small" data-setting="fretboardTheme">
+								<option value="auto">Auto</option>
+								<option value="light">Light</option>
+								<option value="dark">Dark</option>
+							</select>
+						</label>
+						<label class="switch">
+							<span class="switch__text">
+								<span class="switch__title">Left-handed</span>
+								<span class="switch__desc">Mirror the chord diagrams and every neck</span>
+							</span>
+							<input type="checkbox" class="switch__input" data-setting="leftHanded" />
+							<span class="switch__track"></span>
+						</label>
+					</div>
+				</div>
+			</section>
+
+			<section class="settings-group" data-group="tuner" aria-labelledby="settings-tuner">
+				<h2 class="settings-group__title" id="settings-tuner">Tuner</h2>
+				<div class="panel settings-card">
+					<div class="settings__section" data-for="tuner">
+						<div class="switch switch--wrap">
+							<span class="switch__text">
+								<span class="switch__title">A4 reference</span>
+								<span class="switch__desc">Concert pitch for Tuner, Trainer, Scales and Chords</span>
+							</span>
+							<span class="number">
+								<input type="number" class="input" min="415" max="466" step="0.1" inputmode="decimal" data-setting="a4" aria-label="A4 frequency in Hz, number field" />
+								<span class="number__unit">Hz</span>
+							</span>
+							<input type="range" class="range switch__wide" min="415" max="466" step="1" data-setting="a4" aria-label="A4 frequency, slider" />
+							<span class="switch__wide settings__presets">
+								<button class="link-btn" type="button" data-set="a4:415">415</button>
+								<button class="link-btn" type="button" data-set="a4:432">432</button>
+								<button class="link-btn" type="button" data-set="a4:440">440</button>
+								<button class="link-btn" type="button" data-set="a4:442">442</button>
+								<button class="link-btn" type="button" data-set="a4:466">466</button>
+							</span>
+						</div>
+						<label class="switch">
+							<span class="switch__text">
+								<span class="switch__title">In-tune tolerance</span>
+								<span class="switch__desc">How close counts as in tune</span>
+							</span>
+							<select class="select select--small" data-setting="tolerance" data-type="number">
+								<option value="2">±2 cents</option>
+								<option value="5">±5 cents</option>
+								<option value="10">±10 cents</option>
+							</select>
+						</label>
+						<label class="switch">
+							<span class="switch__text">
+								<span class="switch__title">Tone volume</span>
+								<span class="switch__desc">Reference tone of a tapped string</span>
+							</span>
+							<input type="range" class="range" min="0" max="1" step="0.05" data-setting="toneVolume" />
+						</label>
+					</div>
+				</div>
+			</section>
+
+			<section class="settings-group" data-group="chords" aria-labelledby="settings-chords">
+				<h2 class="settings-group__title" id="settings-chords">Chords</h2>
+				<div class="panel settings-card">
+					<div class="settings__section" data-for="chords">
+						<label class="switch">
+							<span class="switch__text">
+								<span class="switch__title">Diagram labels</span>
+								<span class="switch__desc">What the dots on a chord diagram say</span>
+							</span>
+							<select class="select select--small" data-setting="chordLabels">
+								<option value="degrees">Degrees</option>
+								<option value="notes">Notes</option>
+								<option value="fingers">Fingers</option>
+								<option value="none">None</option>
+							</select>
+						</label>
+						<label class="switch">
+							<span class="switch__text">
+								<span class="switch__title">Play as</span>
+								<span class="switch__desc">Tapping a chord strums it or picks each string</span>
+							</span>
+							<select class="select select--small" data-setting="chordPlay">
+								<option value="strum">Strum</option>
+								<option value="arpeggio">Arpeggio</option>
+							</select>
+						</label>
+					</div>
+				</div>
+			</section>
+
+			<section class="settings-group" data-group="scales" aria-labelledby="settings-scales">
+				<h2 class="settings-group__title" id="settings-scales">Scales</h2>
+				<div class="panel settings-card">
+					<div class="settings__section" data-for="scales">
+						<label class="switch">
+							<span class="switch__text">
+								<span class="switch__title">Vertical fretboard</span>
+								<span class="switch__desc">Neck top to bottom, like a chord diagram</span>
+							</span>
+							<input type="checkbox" class="switch__input" data-setting="fretboardVertical" />
+							<span class="switch__track"></span>
+						</label>
+						<label class="switch">
+							<span class="switch__text">
+								<span class="switch__title">Fret size</span>
+								<span class="switch__desc">Height when vertical, width when horizontal</span>
+							</span>
+							<input type="range" class="range" min="0.5" max="1.5" step="0.05" data-setting="fretSize" />
+						</label>
+						<!-- Harmony under the neck (ts/views/harmony.ts). -->
+						<label class="switch">
+							<span class="switch__text">
+								<span class="switch__title">Chords shown</span>
+								<span class="switch__desc">Chords of the scale as triads or sevenths</span>
+							</span>
+							<select class="select select--small" data-setting="chordView">
+								<option value="triads">Triads</option>
+								<option value="sevenths">Sevenths</option>
+							</select>
+						</label>
+						<label class="switch">
+							<span class="switch__text">
+								<span class="switch__title">Progression tempo</span>
+								<span class="switch__desc">One bar per chord</span>
+							</span>
+							<span class="number">
+								<input type="number" class="input" min="60" max="140" step="1" inputmode="numeric" data-setting="progressionBpm" aria-label="Progression tempo in BPM" />
+								<span class="number__unit">BPM</span>
+							</span>
+						</label>
+						<label class="switch">
+							<span class="switch__text">
+								<span class="switch__title">Loop progressions</span>
+								<span class="switch__desc">Start over at the end</span>
+							</span>
+							<input type="checkbox" class="switch__input" data-setting="progressionLoop" />
+							<span class="switch__track"></span>
+						</label>
+					</div>
+				</div>
+			</section>
+
+			<section class="settings-group" data-group="trainer" aria-labelledby="settings-trainer">
+				<h2 class="settings-group__title" id="settings-trainer">Trainer</h2>
+				<h3 class="settings-group__sub">Notes</h3>
+				<div class="panel settings-card">
+					<div class="settings__section" data-for="trainer" data-exercise="notes">
+						<label class="switch">
+							<span class="switch__text">
+								<span class="switch__title">Match any octave</span>
+								<span class="switch__desc">The right note in any octave counts</span>
+							</span>
+							<input type="checkbox" class="switch__input" data-setting="matchAnyOctave" />
+							<span class="switch__track"></span>
+						</label>
+						<label class="switch">
+							<span class="switch__text">
+								<span class="switch__title">Sharps &amp; flats</span>
+								<span class="switch__desc">Add accidentals to the note pool</span>
+							</span>
+							<input type="checkbox" class="switch__input" data-setting="includeAccidentals" />
+							<span class="switch__track"></span>
+						</label>
+						<label class="switch">
+							<span class="switch__text">
+								<span class="switch__title">Light staff</span>
+								<span class="switch__desc">Keep the staff light in dark mode</span>
+							</span>
+							<input type="checkbox" class="switch__input" data-setting="lightStaff" />
+							<span class="switch__track"></span>
+						</label>
+					</div>
+					<div class="settings__section" data-for="trainer" data-exercise="notes">
+						<div class="settings__heading">
+							<span class="panel__label">Target notes</span>
+							<span class="settings__actions">
+								<button class="link-btn" type="button" data-notes="all">All</button>
+								<button class="link-btn" type="button" data-notes="none">None</button>
+							</span>
+						</div>
+						<div class="chips" id="noteChips"></div>
+					</div>
+				</div>
+				<h3 class="settings-group__sub">Intervals</h3>
+				<div class="panel settings-card">
+					<div class="settings__section" data-for="trainer" data-exercise="intervals">
+						<label class="switch">
+							<span class="switch__text">
+								<span class="switch__title">Answer by singing</span>
+								<span class="switch__desc">Sing or play the second note instead of tapping. Best with headphones: the mic can hear the phone's speaker.</span>
+							</span>
+							<input type="checkbox" class="switch__input" data-setting="earSing" />
+							<span class="switch__track"></span>
+						</label>
+						<label class="switch">
+							<span class="switch__text">
+								<span class="switch__title">Direction</span>
+								<span class="switch__desc">How the two notes are played</span>
+							</span>
+							<select class="select select--small" data-setting="earDirection">
+								<option value="up">Ascending</option>
+								<option value="down">Descending</option>
+								<option value="harmonic">Harmonic</option>
+								<option value="mixed">Mixed</option>
+							</select>
+						</label>
+						<label class="switch">
+							<span class="switch__text">
+								<span class="switch__title">Note gap</span>
+								<span class="switch__desc">Time between the two notes</span>
+							</span>
+							<select class="select select--small" data-setting="earGap" data-type="number">
+								<option value="0.45">Fast</option>
+								<option value="0.75">Normal</option>
+								<option value="1.1">Slow</option>
+							</select>
+						</label>
+					</div>
+					<div class="settings__section" data-for="trainer" data-exercise="intervals">
+						<div class="settings__heading">
+							<span class="panel__label">Intervals asked</span>
+						</div>
+						<div class="chips chips--6" data-chips="earIntervals"></div>
+					</div>
+					<div class="settings__section" data-for="trainer" data-exercise="intervals">
+						<label class="switch">
+							<span class="switch__text">
+								<span class="switch__title">Auto-advance</span>
+								<span class="switch__desc">Next question shortly after a right answer</span>
+							</span>
+							<input type="checkbox" class="switch__input" data-setting="earAutoAdvance" />
+							<span class="switch__track"></span>
+						</label>
+					</div>
+				</div>
+				<h3 class="settings-group__sub">Chords</h3>
+				<div class="panel settings-card">
+					<div class="settings__section" data-for="trainer" data-exercise="chords">
+						<div class="settings__heading">
+							<span class="panel__label">Chord qualities</span>
+						</div>
+						<div class="chips" data-chips="earChords"></div>
+					</div>
+					<div class="settings__section" data-for="trainer" data-exercise="chords">
+						<label class="switch">
+							<span class="switch__text">
+								<span class="switch__title">Auto-advance</span>
+								<span class="switch__desc">Next question shortly after a right answer</span>
+							</span>
+							<input type="checkbox" class="switch__input" data-setting="earAutoAdvance" />
+							<span class="switch__track"></span>
+						</label>
+					</div>
+				</div>
+				<h3 class="settings-group__sub">Changes</h3>
+				<div class="panel settings-card">
+					<div class="settings__section" data-for="trainer" data-exercise="changes">
+						<label class="switch">
+							<span class="switch__text">
+								<span class="switch__title">Count-in</span>
+								<span class="switch__desc">3-2-1, or a bar of clicks in time</span>
+							</span>
+							<input type="checkbox" class="switch__input" data-setting="changesCountIn" />
+							<span class="switch__track"></span>
+						</label>
+						<label class="switch">
+							<span class="switch__text">
+								<span class="switch__title">Length</span>
+								<span class="switch__desc">One-minute changes</span>
+							</span>
+							<select class="select select--small" data-setting="changesDuration" data-type="number">
+								<option value="30">30 s</option>
+								<option value="60">1 min</option>
+								<option value="120">2 min</option>
+							</select>
+						</label>
+					</div>
+					<div class="settings__section" data-for="trainer" data-exercise="changes">
+						<div class="settings__heading">
+							<span class="panel__label">In time</span>
+						</div>
+						<label class="switch">
+							<span class="switch__text">
+								<span class="switch__title">Tempo</span>
+								<span class="switch__desc">40–160 BPM</span>
+							</span>
+							<span class="number">
+								<input type="number" class="input" min="40" max="160" step="1" inputmode="numeric" data-setting="changesBpm" aria-label="Tempo in BPM" />
+								<span class="number__unit">BPM</span>
+							</span>
+						</label>
+						<label class="switch">
+							<span class="switch__text">
+								<span class="switch__title">Beats per chord</span>
+							</span>
+							<select class="select select--small" data-setting="changesBeats" data-type="number">
+								<option value="1">1</option>
+								<option value="2">2</option>
+								<option value="4">4</option>
+							</select>
+						</label>
+						<label class="switch">
+							<span class="switch__text">
+								<span class="switch__title">Speed up</span>
+								<span class="switch__desc">+5 BPM after two clean passes</span>
+							</span>
+							<input type="checkbox" class="switch__input" data-setting="changesSpeedUp" />
+							<span class="switch__track"></span>
+						</label>
+					</div>
+				</div>
+			</section>
+
+			<section class="settings-group" data-group="metronome" aria-labelledby="settings-metronome">
+				<h2 class="settings-group__title" id="settings-metronome">Metronome</h2>
+				<div class="panel settings-card">
+					<div class="settings__section" data-for="metronome">
+						<label class="switch">
+							<span class="switch__text">
+								<span class="switch__title">Sound</span>
+								<span class="switch__desc">Synthesized, no audio files</span>
+							</span>
+							<select class="select select--small" data-setting="metroSound">
+								<option value="click">Click</option>
+								<option value="wood">Wood block</option>
+								<option value="beep">Beep</option>
+							</select>
+						</label>
+						<label class="switch">
+							<span class="switch__text">
+								<span class="switch__title">Volume</span>
+							</span>
+							<input type="range" class="range" min="0" max="1" step="0.05" data-setting="metroVolume" />
+						</label>
+						<label class="switch">
+							<span class="switch__text">
+								<span class="switch__title">Flash on beat 1</span>
+								<span class="switch__desc">The screen blinks at the start of each bar</span>
+							</span>
+							<input type="checkbox" class="switch__input" data-setting="metroFlash" />
+							<span class="switch__track"></span>
+						</label>
+					</div>
+				</div>
+			</section>
 		</section>
 
 		<!-- Mic control. index.ts moves it right under the active view's readout. -->

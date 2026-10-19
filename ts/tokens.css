@@ -29,6 +29,16 @@
 
 	--ease: cubic-bezier(0.4, 0, 0.2, 1);
 	--dur: 0.15s;
+
+	/* Vertical rhythm between the blocks of a view. Phones tighten it so a
+	   view's main interaction fits one screen above the docked tab bar. */
+	--stack: 20px;
+}
+
+@media (max-width: 600px) {
+	:root {
+		--stack: 12px;
+	}
 }
 
 /* Light ------------------------------------------------------------------ */

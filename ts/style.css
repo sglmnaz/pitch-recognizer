@@ -38,13 +38,10 @@ button {
 
 .topbar {
 	display: flex;
-	align-items: center;
-	justify-content: flex-end;
-	gap: 12px;
 	padding-top: 8px;
 }
 
-/* Segmented tab control: fills the top bar up to the icon buttons. */
+/* Segmented tab control: fills the top bar. */
 .tabs {
 	flex: 1;
 	display: flex;
@@ -80,12 +77,16 @@ button {
 }
 
 /* Phones: the tab bar is docked to the bottom edge, within thumb reach, and
-   clears the iPhone home indicator; settings and theme (rarely used) stay at
-   the top. The app's bottom padding keeps content out from under it
-   (~62 px bar + breathing room). */
+   clears the iPhone home indicator. Nothing is left at the top, so the header
+   takes no room (display: contents keeps the fixed bar, drops the box). The
+   app's bottom padding keeps content out from under it (~62 px bar + a gap). */
 @media (max-width: 600px) {
 	.app {
-		padding-bottom: calc(88px + env(safe-area-inset-bottom));
+		padding: calc(16px + env(safe-area-inset-top)) 16px calc(74px + env(safe-area-inset-bottom));
+	}
+
+	.topbar {
+		display: contents;
 	}
 
 	.tabs {
@@ -129,35 +130,6 @@ button {
 	color: var(--fg);
 	background: var(--surface);
 	box-shadow: var(--shadow-sm);
-}
-
-.icon-btn {
-	display: inline-grid;
-	place-items: center;
-	width: 34px;
-	height: 34px;
-	padding: 0;
-	border: none;
-	border-radius: var(--radius);
-	background: var(--surface);
-	color: var(--fg-secondary);
-	cursor: pointer;
-	box-shadow: var(--shadow-border);
-	transition: color var(--dur) var(--ease), background var(--dur) var(--ease);
-}
-
-.icon-btn[hidden] {
-	display: none;
-}
-
-.icon-btn:hover {
-	color: var(--fg);
-	background: var(--surface-2);
-}
-
-.icon-btn svg {
-	width: 16px;
-	height: 16px;
 }
 
 /* Mic control: waveform, big listen button, status ----------------------- */
@@ -287,7 +259,7 @@ button {
 .view {
 	display: flex;
 	flex-direction: column;
-	gap: 20px;
+	gap: var(--stack);
 }
 
 .view[hidden] {
@@ -550,24 +522,46 @@ button {
 	gap: 10px;
 }
 
-/* Settings popover ------------------------------------------------------- */
-.settings {
-	position: absolute;
-	top: 60px;
-	right: 20px;
-	z-index: 50;
-	width: 320px;
-	max-width: calc(100vw - 40px);
-	max-height: min(560px, calc(100vh - 96px));
-	overflow-y: auto;
-	padding: 6px;
-	background: var(--surface);
-	border-radius: var(--radius-lg);
-	box-shadow: var(--shadow-md);
+/* Settings tab (ts/views/settings-panel.ts) ------------------------------- */
+/* A plain scrolling page: one group per tab, a heading over a card of rows. */
+.view--settings {
+	gap: 24px;
 }
 
-.settings[hidden] {
-	display: none;
+.settings-group {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	/* Entering Settings scrolls a group to the top: keep its heading clear of
+	   the notch. */
+	scroll-margin-top: calc(16px + env(safe-area-inset-top));
+}
+
+.settings-group__title {
+	margin: 0 0 0 2px;
+	font-size: 16px;
+	font-weight: 600;
+	letter-spacing: -0.01em;
+}
+
+.settings-group__desc {
+	margin: -6px 0 0 2px;
+	font-size: 12px;
+	color: var(--fg-muted);
+}
+
+/* Trainer: one card per exercise under a small label. */
+.settings-group__sub {
+	margin: 6px 0 0 2px;
+	font-size: 11px;
+	font-weight: 500;
+	letter-spacing: 0.04em;
+	text-transform: uppercase;
+	color: var(--fg-muted);
+}
+
+.settings-card {
+	padding: 6px;
 }
 
 .settings__section {
@@ -578,9 +572,12 @@ button {
 	display: none;
 }
 
-/* Hidden sections (other tab's settings) must not leave a divider behind. */
 .settings__section:not([hidden]) ~ .settings__section:not([hidden]) {
 	border-top: 1px solid var(--border);
+}
+
+.settings__theme {
+	flex: none;
 }
 
 .settings__heading {
@@ -726,12 +723,6 @@ button {
 @media (max-width: 420px) {
 	.readout__note {
 		font-size: 64px;
-	}
-
-	.prompt {
-		flex-direction: column;
-		text-align: center;
-		align-items: center;
 	}
 }
 
@@ -1478,24 +1469,36 @@ button {
 	.app {
 		max-width: 640px;
 	}
+
+	/* Six tabs on one bar from 601 px: tighter sides keep them inside the column. */
+	.tab {
+		padding-inline: 8px;
+	}
 }
 
 @media (min-width: 960px) {
 	.app {
 		max-width: 1180px;
-		padding: calc(28px + env(safe-area-inset-top)) 40px 64px;
+		padding: calc(28px + env(safe-area-inset-top)) 40px 40px;
 		gap: 28px;
 	}
 
-	/* Tabs keep a segmented-control size on the left; settings and theme sit
-	   at the far right of the wide bar. */
-	.tabs {
-		flex: 0 1 560px;
-		margin-right: auto;
+	/* Settings: two balanced columns of groups instead of one long strip. */
+	.view--settings:not([hidden]) {
+		display: block;
+		columns: 2;
+		column-gap: 28px;
 	}
 
-	.settings {
-		right: 40px;
+	.settings-group {
+		break-inside: avoid;
+		margin-bottom: 28px;
+	}
+
+	/* Tabs keep a segmented-control size on the left of the wide bar. */
+	.tabs {
+		flex: 0 1 680px;
+		margin-right: auto;
 	}
 
 	/* Tuner and Chords: the big readout on the left, mic and hint beside it,
@@ -1579,7 +1582,7 @@ button {
 	}
 
 	.wave {
-		height: 112px;
+		height: 80px;
 	}
 
 	.staff {
@@ -1850,38 +1853,68 @@ button {
 		height: 44px;
 	}
 
-	.settings__section[data-for='tuner'] .input,
-	.settings__section[data-for='tuner'] .select {
+	.view--settings .input,
+	.view--settings .select,
+	.view--settings .range,
+	.view--settings .segmented button {
 		height: 44px;
 	}
 
-	.settings__presets .link-btn {
+	.settings__presets .link-btn,
+	.settings__actions .link-btn {
 		min-width: 44px;
 		min-height: 44px;
-	}
-
-	.settings__section[data-for='tuner'] .range {
-		height: 44px;
 	}
 }
 
 
 /* Metronome (ts/views/metronome.ts) ---------------------------------------- */
-/* Five tabs: on phones the labels shrink so "Metronome" fits at 360 px. */
+/* Six tabs: on phones the labels shrink and the tabs drop their side padding
+   so "Metronome" (~56 px at 10.5 px) fits down to 360 px; narrower phones get
+   icons only, the label kept for screen readers. The ellipsis is a backstop
+   (a larger system font), never the plan. */
 @media (max-width: 600px) {
 	.tabs {
 		padding-inline: 4px;
+		gap: 1px;
 	}
 
 	.tab {
 		min-width: 0;
-		padding-inline: 2px;
+		padding-inline: 0;
 		font-size: 10.5px;
+	}
+
+	.tab__label {
+		max-width: 100%;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+}
+
+@media (max-width: 359px) {
+	.tab__label {
+		position: absolute;
+		width: 1px;
+		height: 1px;
+		overflow: hidden;
+		clip: rect(0 0 0 0);
+		white-space: nowrap;
+	}
+
+	.tab {
+		min-height: 48px;
+	}
+
+	.tab svg {
+		width: 22px;
+		height: 22px;
 	}
 }
 
 .view--metronome {
-	gap: 14px;
+	gap: var(--stack);
 }
 
 /* Beat 1 blink: a screen-sized wash that ts/views/metronome.ts animates. Under
@@ -2519,12 +2552,11 @@ label.metro-row {
 
 	.ear__play,
 	.ear__next,
-	.settings__section[data-for='trainer'] .chip,
-	.settings__section[data-for='trainer'] .select {
+	.view--settings .chip {
 		height: 44px;
 	}
 
-	/* Six across is ~41 px wide in a phone popover; three rows of four are not. */
+	/* Six across is ~41 px wide on a phone; three rows of four are not. */
 	.chips--6 {
 		grid-template-columns: repeat(4, 1fr);
 	}
@@ -3417,10 +3449,6 @@ a.btn {
 	.chord-detail__actions .btn:not(.chord-detail__clear) {
 		flex: 1;
 	}
-
-	.settings__section[data-for='scales'] .input {
-		height: 44px;
-	}
 }
 
 @media (min-width: 601px) {
@@ -3768,5 +3796,185 @@ a.btn {
 
 	.changes-shapes {
 		grid-template-columns: repeat(var(--n, 2), minmax(0, 140px));
+	}
+}
+
+/* Metronome time signature: beats per bar over the beat note, one row. */
+.metro-time {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+}
+
+.metro-time__over {
+	font-family: var(--font-mono);
+	font-size: 18px;
+	color: var(--fg-muted);
+}
+
+.metro-time .segmented {
+	width: 88px;
+}
+
+/* Narrow phones: the controls drop under the label rather than overflow. */
+.metro-row--wrap {
+	flex-wrap: wrap;
+}
+
+/* Phones: one screen per view ------------------------------------------------
+   The main interaction of each view (readout + mic, question + answers, tempo
+   + Start) fits a 375 x 812 phone above the docked tab bar without scrolling;
+   stats, voicing lists and progressions may scroll below. Tap targets stay at
+   44 px or more: only paddings, hero type and the waveform shrink. */
+@media (max-width: 600px) {
+	/* Shared mic block: a slimmer scope and a 48 px button. */
+	.mic {
+		gap: 8px;
+	}
+
+	.wave-panel {
+		padding: 6px 12px;
+	}
+
+	.wave {
+		height: 40px;
+	}
+
+	.btn--large {
+		height: 48px;
+		font-size: 16px;
+	}
+
+	.readout {
+		padding: 20px 16px 16px;
+	}
+
+	.meter {
+		margin-top: 16px;
+	}
+
+	.strings {
+		margin-top: 16px;
+	}
+
+	.chroma {
+		margin-top: 16px;
+	}
+
+	/* Trainer: the staff stays beside the note name (it keeps its 132 px: the
+	   220 px VexFlow drawing is cropped to it, not scaled); a slimmer scoreboard. */
+	.stat {
+		padding: 8px 14px;
+	}
+
+	.stat__value {
+		font-size: 22px;
+	}
+
+	.prompt {
+		gap: 16px;
+		padding: 12px;
+	}
+
+	.prompt__note {
+		font-size: 40px;
+	}
+
+	.ear {
+		gap: 12px;
+		padding: 16px;
+	}
+
+	/* Chords Library: chord name, notes and the best diagram in one screen. */
+	.chord-info {
+		gap: 6px;
+	}
+
+	.chord-info__symbol {
+		font-size: 40px;
+	}
+
+	.voicing--hero .neck {
+		zoom: 1.25;
+	}
+
+	/* "In keys" label and chips share lines instead of stacking. */
+	.chord-keys {
+		flex-direction: row;
+		flex-wrap: wrap;
+		align-items: center;
+		margin-top: 0;
+	}
+
+	/* Metronome */
+	.metro-hero {
+		padding-block: 16px 12px;
+	}
+
+	.metro-dots {
+		margin: 16px 0 12px;
+	}
+
+	.metro-start,
+	.metro-tap {
+		height: 56px;
+	}
+
+	.metro-row {
+		min-height: 52px;
+		padding-inline: 12px;
+	}
+
+	.metro-row--stack {
+		padding-block: 10px;
+	}
+}
+
+/* Short phones (360 x 740 and the like): smaller hero numbers too. */
+@media (max-width: 600px) and (max-height: 760px) {
+	.readout__note {
+		font-size: 52px;
+	}
+
+	.readout {
+		padding-block: 12px;
+	}
+
+	.meter,
+	.strings,
+	.chroma {
+		margin-top: 12px;
+	}
+
+	.stat {
+		padding-block: 6px;
+	}
+
+	.prompt {
+		padding: 10px;
+	}
+
+	.prompt__note {
+		font-size: 34px;
+	}
+
+	.wave {
+		height: 32px;
+	}
+
+	.metro-bpm {
+		font-size: 64px;
+	}
+
+	.metro-dots {
+		margin: 12px 0 10px;
+	}
+
+	.chord-info__symbol {
+		font-size: 34px;
+	}
+
+	.voicing--hero .neck {
+		zoom: 1.1;
 	}
 }

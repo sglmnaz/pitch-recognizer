@@ -1,11 +1,55 @@
 import * as Settings from '../settings'
 import { INTERVALS, QUALITIES } from '../ear'
+import type { View } from './view'
+
+/* Theme: System (nothing stored: the inline script in index.html and this
+   follow the device, live), or Light / Dark stored under 'theme', which that
+   script reads before first paint so a reload never flashes. */
+type ThemeChoice = 'system' | 'light' | 'dark'
+const THEME_KEY = 'theme'
+const systemDark = matchMedia('(prefers-color-scheme: dark)')
+
+function loadTheme(): ThemeChoice {
+	try {
+		const saved = localStorage.getItem(THEME_KEY)
+		return saved === 'light' || saved === 'dark' ? saved : 'system'
+	} catch {
+		return 'system'
+	}
+}
+
+function saveTheme(choice: ThemeChoice) {
+	try {
+		if (choice === 'system') localStorage.removeItem(THEME_KEY)
+		else localStorage.setItem(THEME_KEY, choice)
+	} catch {
+		// Storage may be unavailable (private mode): the choice lasts this visit.
+	}
+}
 
 /**
- * Wires the settings popover: the switches and selects, the per-note target chips,
- * and the All/None shortcuts. Keeps the controls in sync with stored settings.
+ * The Settings tab: the switches and selects of every tab, the per-note target
+ * chips, the All/None shortcuts and the theme. Keeps the controls in sync with
+ * stored settings. On entry it scrolls to the group of the tab the user came
+ * from (`from`, null when the app opened on Settings).
  */
-export function createSettingsPanel(root: HTMLElement) {
+export function createSettingsView(root: HTMLElement, from: () => string | null): View {
+	let theme = loadTheme()
+	const themeButtons = Array.from(root.querySelectorAll<HTMLButtonElement>('[data-theme-choice]'))
+	function applyTheme() {
+		document.documentElement.dataset.theme = theme === 'system' ? (systemDark.matches ? 'dark' : 'light') : theme
+		for (const button of themeButtons) button.setAttribute('aria-pressed', String(button.dataset.themeChoice === theme))
+	}
+	for (const button of themeButtons) {
+		button.addEventListener('click', () => {
+			theme = button.dataset.themeChoice as ThemeChoice
+			saveTheme(theme)
+			applyTheme()
+		})
+	}
+	systemDark.addEventListener('change', applyTheme)
+	applyTheme()
+
 	// Checkbox switches store booleans, sliders and number fields numbers,
 	// selects their value (a number when marked data-type="number").
 	const switches = Array.from(root.querySelectorAll<HTMLInputElement | HTMLSelectElement>('[data-setting]'))
@@ -133,4 +177,15 @@ export function createSettingsPanel(root: HTMLElement) {
 
 	Settings.subscribe(sync)
 	sync()
+
+	return {
+		onActivate() {
+			const tab = from()
+			if (tab) root.querySelector(`[data-group="${tab}"]`)?.scrollIntoView({ block: 'start' })
+		},
+		onReading() {},
+		reset() {},
+		// Nothing here listens; an open mic would only cost battery.
+		wantsMic: () => false,
+	}
 }

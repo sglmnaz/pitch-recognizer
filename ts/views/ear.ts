@@ -229,9 +229,10 @@ export function createEarView(root: HTMLElement): View {
 	})
 
 	// A settings change can take the asked answer out of the pool or change the
-	// direction: ask afresh, but do not play while the user is in the popover.
-	Settings.subscribe(() => {
-		if (shown === null || shown !== exercise() || root.hidden) return
+	// direction: ask afresh, without playing. Settings live on their own tab, so
+	// this runs on coming back too (onActivate), not only on a live change.
+	function syncToSettings() {
+		if (shown === null || shown !== exercise()) return
 		// A decided round keeps its right/wrong marks; the next round picks the
 		// change up (startRound re-renders the answers).
 		if (Ear.getSession(shown).answered) return
@@ -243,6 +244,9 @@ export function createEarView(root: HTMLElement): View {
 			!Ear.pool(shown, enabled()).includes(q.id) ||
 			(shown === 'intervals' && earDirection !== 'mixed' && q.direction !== earDirection)
 		if (stale) startRound(false)
+	}
+	Settings.subscribe(() => {
+		if (!root.hidden) syncToSettings()
 	})
 
 	return {
@@ -253,6 +257,7 @@ export function createEarView(root: HTMLElement): View {
 				return
 			}
 			renderAnswers()
+			syncToSettings()
 			updateScoreboard()
 			renderStats()
 		},

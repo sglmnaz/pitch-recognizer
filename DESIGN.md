@@ -5,8 +5,8 @@ Visual language: **Vercel Geist**, extracted from vercel.com/geist into
 
 ## Theme
 
-Light and dark both ship; the choice follows the OS by default and is overridable
-with the header toggle (persisted to `localStorage`). Scene: a learner tuning up at
+Light and dark both ship; the choice follows the OS by default (System) and is
+overridable under Settings > Appearance (persisted to `localStorage`). Scene: a learner tuning up at
 a desk, sometimes in a bright room, sometimes practising at night. Neither lighting
 condition is the canonical one, so neither theme is the default; the system decides.
 
@@ -55,9 +55,13 @@ for genuinely floating surfaces.
   a soft green band in the centre (in tune, the tolerance setting, default ±5 cents) flanked by soft yellow
   (close), fading to neutral at the edges. Zone colors are theme-token mixes so
   they stay muted in both light and dark.
-- **Settings popover**: gear-triggered floating panel (border + `--shadow-md`,
-  closes on outside-click/Escape). Holds pill **switches** (track fills with accent
-  when on) and a grid of monospace **note chips** that fill solid when selected.
+- **Settings tab**: the sixth tab, a plain scrolling page with one group per tab
+  (heading over a bordered card of rows). Holds pill **switches** (track fills
+  with accent when on) and a grid of monospace **note chips** that fill solid
+  when selected.
+- **Density**: on phones the blocks of a view sit `--stack` (12 px) apart and the
+  hero type shrinks on short screens, so each view's main interaction fits one
+  screen above the docked tab bar; tap targets never drop below 44 px.
 
 ## Motion
 

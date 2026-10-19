@@ -48,7 +48,6 @@ export function createMetronomeView(root: HTMLElement): View {
 	const beatsValue = $<HTMLElement>('[data-value="beats"]')
 	const unitButtons = Array.from(root.querySelectorAll<HTMLButtonElement>('[data-unit]'))
 	const subButtons = Array.from(root.querySelectorAll<HTMLButtonElement>('[data-sub]'))
-	const accentFirst = $<HTMLInputElement>('[data-action="accent-first"]')
 	const trainerSwitch = $<HTMLInputElement>('[data-action="trainer"]')
 	const trainerDesc = $<HTMLElement>('.metro-row__desc')
 	const progress = $<HTMLElement>('.metro-progress')
@@ -155,7 +154,6 @@ export function createMetronomeView(root: HTMLElement): View {
 		accents[beat] = accent
 		Settings.update({ metroAccents: accents })
 	}
-	accentFirst.addEventListener('change', () => setAccent(0, accentFirst.checked ? 2 : 1))
 
 	function buildDots(beats: number) {
 		dots = Array.from({ length: beats }, (_, beat) => {
@@ -356,7 +354,6 @@ export function createMetronomeView(root: HTMLElement): View {
 			dot.dataset.accent = String(accent)
 			dot.setAttribute('aria-label', `Beat ${beat + 1}, ${labels[accent]}. Tap to change`)
 		})
-		accentFirst.checked = accents[0] === 2
 
 		showBpm(Metronome.getState().bpm)
 		beatsValue.textContent = String(s.metroBeats)

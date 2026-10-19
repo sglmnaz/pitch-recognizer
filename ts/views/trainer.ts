@@ -173,11 +173,6 @@ export function createTrainerView(root: HTMLElement, onMicNeed: () => void): Vie
 		root.classList.toggle('trainer--ear', kind === 'ear')
 		root.classList.toggle('trainer--changes', kind === 'changes')
 		for (const element of root.querySelectorAll<HTMLElement>('[data-only]')) element.hidden = !element.dataset.only!.split(' ').includes(kind)
-		// index.ts shows every data-for="trainer" settings section on this tab;
-		// narrow them to the exercise so the popover only holds what applies.
-		for (const section of document.querySelectorAll<HTMLElement>('.settings__section[data-for="trainer"]')) {
-			section.hidden = !section.dataset.exercise!.split(' ').includes(ex)
-		}
 	}
 
 	let sing = Settings.get().earSing

@@ -5,7 +5,7 @@ import { createTunerView } from './views/tuner'
 import { createChordsView } from './views/chords'
 import { createScalesView } from './views/scales'
 import { createMetronomeView } from './views/metronome'
-import { createSettingsPanel } from './views/settings-panel'
+import { createSettingsView } from './views/settings-panel'
 import type { View } from './views/view'
 
 function byId<T extends HTMLElement>(id: string): T {
@@ -15,15 +15,10 @@ function byId<T extends HTMLElement>(id: string): T {
 }
 
 const micButton = byId<HTMLButtonElement>('micButton')
-const themeToggle = byId<HTMLButtonElement>('themeToggle')
-const settingsToggle = byId<HTMLButtonElement>('settingsToggle')
-const settingsPanel = byId('settings')
 const status = byId('status')
 const waveform = byId<HTMLCanvasElement>('waveform')
 const mic = byId('mic')
 const tabButtons = Array.from(document.querySelectorAll<HTMLButtonElement>('[data-tab]'))
-
-createSettingsPanel(settingsPanel)
 
 // The Scales tab has its own mic toggle instead of the shared #mic block.
 const scalesView = createScalesView(byId('view-scales'), {
@@ -44,14 +39,19 @@ const views: Record<string, { view: View; section: HTMLElement }> = {
 	scales: { view: scalesView, section: byId('view-scales') },
 	// No microphone use (wantsMic false, no .readout for the #mic block).
 	metronome: { view: createMetronomeView(byId('view-metronome')), section: byId('view-metronome') },
+	// Opens at the group of the tab the user came from. No mic (wantsMic false).
+	settings: { view: createSettingsView(byId('view-settings'), () => lastTab), section: byId('view-settings') },
 }
 
 let currentName = 'tuner'
+// The last tab shown other than Settings: the group Settings scrolls to on
+// entry. Null while the app has shown nothing else (it opened on #settings).
+let lastTab: string | null = null
 let micActive = false
 let micBlocked = false
-// Views with no use for the mic (wantsMic false: the Metronome, the Trainer's
-// Chords exercise) turn it off: it would hear the clicks or the strums, and on
-// phones an open mic can change audio routing. True while the mic should come
+// Views with no use for the mic (wantsMic false: the Metronome, Settings, the
+// Trainer's Chords exercise) turn it off: it would hear the clicks or the
+// strums, and on phones an open mic can change audio routing. True while the mic should come
 // back on leaving them: it was on when they opened, or the app booted straight
 // into one. A mic the user had stopped stays stopped.
 let micResume = false
@@ -74,47 +74,12 @@ function syncMicNeed() {
 	}
 }
 
-/* Theme ------------------------------------------------------------------ */
-const SUN = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>'
-const MOON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>'
-
-function applyTheme(theme: 'light' | 'dark') {
-	document.documentElement.dataset.theme = theme
-	themeToggle.innerHTML = theme === 'dark' ? SUN : MOON
-	themeToggle.setAttribute('aria-label', theme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme')
-	localStorage.setItem('theme', theme)
-}
-
-themeToggle.addEventListener('click', () => {
-	applyTheme(document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark')
-})
-
-/* Settings popover ------------------------------------------------------- */
-function setSettingsOpen(open: boolean) {
-	settingsPanel.hidden = !open
-	settingsToggle.setAttribute('aria-expanded', String(open))
-}
-
-settingsToggle.addEventListener('click', (event) => {
-	event.stopPropagation()
-	setSettingsOpen(settingsPanel.hidden)
-})
-
-document.addEventListener('click', (event) => {
-	if (!settingsPanel.hidden && !settingsPanel.contains(event.target as Node)) {
-		setSettingsOpen(false)
-	}
-})
-
-document.addEventListener('keydown', (event) => {
-	if (event.key === 'Escape') setSettingsOpen(false)
-})
-
 /* View routing ----------------------------------------------------------- */
 function activate(name: string) {
 	if (!views[name]) name = 'tuner'
 	views[currentName].view.reset()
 	currentName = name
+	if (name !== 'settings') lastTab = name
 
 	for (const [key, { section }] of Object.entries(views)) {
 		section.hidden = key !== name
@@ -123,14 +88,10 @@ function activate(name: string) {
 		button.setAttribute('aria-selected', String(button.dataset.tab === name))
 	}
 
-	// Settings exist for the Tuner, Chords, Scales, Trainer and Metronome; show that tab's section.
-	const sections = settingsPanel.querySelectorAll<HTMLElement>('[data-for]')
-	sections.forEach((section) => (section.hidden = section.dataset.for !== name))
-	const hasSettings = [...sections].some((section) => !section.hidden)
-	settingsToggle.hidden = !hasSettings
-	if (!hasSettings) setSettingsOpen(false)
-
 	syncMicNeed()
+	// Each tab opens at its top (Settings then scrolls to a group itself): a
+	// long page left scrolled would otherwise carry its offset over.
+	window.scrollTo(0, 0)
 	views[name].view.onActivate()
 }
 
@@ -141,6 +102,9 @@ for (const button of tabButtons) {
 }
 
 window.addEventListener('hashchange', () => activate(location.hash.replace('#', '')))
+// activate() decides where a tab opens; the browser restoring a reloaded
+// page's old offset would fight it (and land Settings mid-page).
+history.scrollRestoration = 'manual'
 
 /* Microphone ------------------------------------------------------------- */
 function setStatus(text: string, live: boolean) {
@@ -354,7 +318,6 @@ if (DEBUG) {
 }
 
 /* Boot ------------------------------------------------------------------- */
-applyTheme(document.documentElement.dataset.theme === 'dark' ? 'dark' : 'light')
 activate(location.hash.replace('#', ''))
 drawWaveform(false)
 // Listen by default: a tuner that is not listening just looks broken. (Not
