@@ -5,16 +5,13 @@ import { nearestString, TUNINGS, tuningById, tuningStrings, type TuningString } 
 import type { PitchReading } from '../../core/microphone'
 import type { View } from '../../ui/view'
 import { liveRegion, subscribeVisible } from '../../ui/dom'
+import { createReadout } from '../../ui/readout'
 
-const CENTS_RANGE = 50
 // The tuning select's first entry: no target strings, name whatever is played.
 const CHROMATIC = 'chromatic'
 
 export function createTunerView(root: HTMLElement): View {
-	const readout = root.querySelector<HTMLElement>('.readout')!
-	const note = root.querySelector<HTMLElement>('.readout__note')!
-	const sub = root.querySelector<HTMLElement>('.readout__sub')!
-	const needle = root.querySelector<HTMLElement>('.meter__needle')!
+	const readout = createReadout(root)
 	const zones = root.querySelector<HTMLElement>('.meter__zones')!
 	const stringsRow = root.querySelector<HTMLElement>('.strings')!
 	const tuningSelect = root.querySelector<HTMLSelectElement>('.tuner-tuning')!
@@ -95,12 +92,8 @@ export function createTunerView(root: HTMLElement): View {
 		clearTimeout(refTimer)
 		const ms = Sound.playTone(string.frequency, Settings.get().toneVolume)
 		refIndex = index
-		note.classList.remove('readout__idle')
-		note.textContent = `${string.name}${string.octave}`
-		sub.textContent = `Reference · ${string.frequency.toFixed(1)} Hz`
+		readout.show(`${string.name}${string.octave}`, `Reference · ${string.frequency.toFixed(1)} Hz`, 0, false)
 		announce(`Playing ${string.name}${string.octave}`)
-		needle.style.left = '50%'
-		readout.classList.remove('readout--locked')
 		syncChips()
 		// While it rings the mic hears the speaker, not the guitar: readings
 		// are ignored until it has died away.
@@ -117,12 +110,8 @@ export function createTunerView(root: HTMLElement): View {
 
 	/* Readout ------------------------------------------------------------- */
 	function idle() {
-		note.textContent = '--'
-		note.classList.add('readout__idle')
-		sub.textContent = 'Play a note to begin'
+		readout.idle('Play a note to begin')
 		announce('')
-		needle.style.left = '50%'
-		readout.classList.remove('readout--locked')
 		syncChips()
 	}
 
@@ -149,11 +138,8 @@ export function createTunerView(root: HTMLElement): View {
 			if (refIndex !== null || Sound.isRinging()) return
 
 			if (!reading) {
-				note.textContent = '--'
-				note.classList.add('readout__idle')
-				sub.textContent = 'Listening…'
+				readout.idle('Listening…', false)
 				announce('')
-				readout.classList.remove('readout--locked')
 				syncChips()
 				return
 			}
@@ -177,15 +163,8 @@ export function createTunerView(root: HTMLElement): View {
 				cents = centsBetween(reading.frequency, closest.frequency)
 			}
 
-			note.classList.remove('readout__idle')
-			note.textContent = label
-			sub.textContent = `${prefix}${reading.frequency.toFixed(1)} Hz · ${cents > 0 ? '+' : ''}${Math.round(cents)} cents`
-
-			const clamped = Math.max(-CENTS_RANGE, Math.min(CENTS_RANGE, cents))
-			needle.style.left = `${50 + (clamped / CENTS_RANGE) * 50}%`
-
 			const inTune = Math.abs(cents) <= tolerance
-			readout.classList.toggle('readout--locked', inTune)
+			readout.show(label, `${prefix}${reading.frequency.toFixed(1)} Hz · ${cents > 0 ? '+' : ''}${Math.round(cents)} cents`, cents, inTune)
 			announce(inTune ? `${label}, in tune` : label)
 		},
 	}

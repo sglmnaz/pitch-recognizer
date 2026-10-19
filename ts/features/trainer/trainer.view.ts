@@ -6,10 +6,9 @@ import { centsBetween, getClosestNote } from '../../core/notes'
 import type { PitchReading } from '../../core/microphone'
 import type { View } from '../../ui/view'
 import { bindSegmented } from '../../ui/dom'
+import { createReadout } from '../../ui/readout'
 import { createEarView } from './ear.view'
 import { createChangesView } from './changes.view'
-
-const CENTS_RANGE = 50
 
 /**
  * Four exercises behind one segmented control: Notes (match the note on the
@@ -23,10 +22,7 @@ export function createTrainerView(root: HTMLElement, onMicNeed: () => void): Vie
 	const promptNote = root.querySelector<HTMLElement>('.prompt__note')!
 	const promptAlt = root.querySelector<HTMLElement>('.prompt__alt')!
 
-	const readout = root.querySelector<HTMLElement>('.readout')!
-	const detectedNote = root.querySelector<HTMLElement>('.readout__note')!
-	const detectedSub = root.querySelector<HTMLElement>('.readout__sub')!
-	const needle = root.querySelector<HTMLElement>('.meter__needle')!
+	const readout = createReadout(root)
 
 	const scoreValue = root.querySelector<HTMLElement>('[data-stat="score"]')!
 	const streakValue = root.querySelector<HTMLElement>('[data-stat="streak"]')!
@@ -73,13 +69,7 @@ export function createTrainerView(root: HTMLElement, onMicNeed: () => void): Vie
 		bestValue.textContent = String(best)
 	}
 
-	function clearReadout(message: string) {
-		detectedNote.textContent = '--'
-		detectedNote.classList.add('readout__idle')
-		detectedSub.textContent = message
-		needle.style.left = '50%'
-		readout.classList.remove('readout--locked')
-	}
+	const clearReadout = (message: string) => readout.idle(message)
 
 	function ensureStarted() {
 		if (started) return
@@ -149,13 +139,12 @@ export function createTrainerView(root: HTMLElement, onMicNeed: () => void): Vie
 			const closest = getClosestNote(reading.frequency, Settings.get().a4)
 			const cents = centsBetween(reading.frequency, closest.frequency)
 
-			detectedNote.classList.remove('readout__idle')
-			detectedNote.textContent = displayNote(closest.note)
-			detectedSub.textContent = evaluation.onTarget ? 'Hold it steady…' : `Find ${targetLabel()}`
-
-			const clamped = Math.max(-CENTS_RANGE, Math.min(CENTS_RANGE, cents))
-			needle.style.left = `${50 + (clamped / CENTS_RANGE) * 50}%`
-			readout.classList.toggle('readout--locked', evaluation.onTarget && Math.abs(cents) < 20)
+			readout.show(
+				displayNote(closest.note),
+				evaluation.onTarget ? 'Hold it steady…' : `Find ${targetLabel()}`,
+				cents,
+				evaluation.onTarget && Math.abs(cents) < 20
+			)
 
 			if (evaluation.solved) {
 				advance()
