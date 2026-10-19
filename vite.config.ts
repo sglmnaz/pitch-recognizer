@@ -1,5 +1,18 @@
+import browserslist from 'browserslist'
+import { browserslistToTargets } from 'lightningcss'
 import { defineConfig } from 'vite'
 import { VitePWA } from 'vite-plugin-pwa'
+
+// CSS browser support: "browserslist" in package.json. iOS / Safari 16.2 is the
+// floor because color-mix() with custom properties cannot be lowered.
+const browsers = browserslist()
+// Vite's Lightning CSS minifier reads esbuild-style build.cssTarget, not
+// css.lightningcss.targets, so the same list is mirrored there.
+const esbuildName: Record<string, string> = { chrome: 'chrome', and_chr: 'chrome', edge: 'edge', firefox: 'firefox', and_ff: 'firefox', safari: 'safari', ios_saf: 'ios' }
+const cssTarget = browsers.flatMap((b) => {
+	const [name, version] = b.split(' ')
+	return name in esbuildName ? [esbuildName[name] + version.split('-')[0]] : []
+})
 
 // Vite serves the project root as-is and uses index.html as the entry point.
 // `index.html` references `ts/main.ts` directly, so there is no separate
@@ -9,9 +22,16 @@ export default defineConfig({
 		// getUserMedia only works on a secure origin; localhost counts as one.
 		open: true,
 	},
+	// Native CSS (nesting, @layer) lowered for the targets by Lightning CSS (docs/adr/0004).
+	css: {
+		transformer: 'lightningcss',
+		lightningcss: { targets: browserslistToTargets(browsers) },
+	},
 	build: {
 		outDir: 'dist',
 		target: 'es2020',
+		cssTarget,
+		cssMinify: 'lightningcss',
 	},
 	plugins: [
 		VitePWA({
