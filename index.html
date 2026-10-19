@@ -58,6 +58,13 @@
 					</svg>
 					Trainer
 				</button>
+				<button class="tab" role="tab" data-tab="metronome" aria-selected="false">
+					<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+						<path d="M9 3h6l4 18H5z" />
+						<path d="m12 17 4-8" />
+					</svg>
+					Metronome
+				</button>
 			</nav>
 			<button class="icon-btn" id="settingsToggle" type="button" aria-label="Settings" aria-expanded="false" aria-controls="settings">
 				<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -135,6 +142,98 @@
 						<span class="switch__desc">Height when vertical, width when horizontal</span>
 					</span>
 					<input type="range" class="range" min="0.5" max="1.5" step="0.05" data-setting="fretSize" />
+				</label>
+			</div>
+
+			<div class="settings__section" data-for="metronome">
+				<label class="switch">
+					<span class="switch__text">
+						<span class="switch__title">Sound</span>
+						<span class="switch__desc">Synthesized, no audio files</span>
+					</span>
+					<select class="select select--small" data-setting="metroSound">
+						<option value="click">Click</option>
+						<option value="wood">Wood block</option>
+						<option value="beep">Beep</option>
+					</select>
+				</label>
+				<label class="switch">
+					<span class="switch__text">
+						<span class="switch__title">Volume</span>
+					</span>
+					<input type="range" class="range" min="0" max="1" step="0.05" data-setting="metroVolume" />
+				</label>
+				<label class="switch">
+					<span class="switch__text">
+						<span class="switch__title">Flash on beat 1</span>
+						<span class="switch__desc">The screen blinks at the start of each bar</span>
+					</span>
+					<input type="checkbox" class="switch__input" data-setting="metroFlash" />
+					<span class="switch__track"></span>
+				</label>
+			</div>
+
+			<div class="settings__section" data-for="metronome">
+				<div class="settings__heading">
+					<span class="panel__label">Speed trainer</span>
+				</div>
+				<label class="switch">
+					<span class="switch__text">
+						<span class="switch__title">Raise by</span>
+					</span>
+					<select class="select select--small" data-setting="metroTrainerStep" data-type="number">
+						<option value="1">1 BPM</option>
+						<option value="2">2 BPM</option>
+						<option value="3">3 BPM</option>
+						<option value="5">5 BPM</option>
+						<option value="10">10 BPM</option>
+					</select>
+				</label>
+				<label class="switch">
+					<span class="switch__text">
+						<span class="switch__title">Every</span>
+					</span>
+					<select class="select select--small" data-setting="metroTrainerBars" data-type="number">
+						<option value="1">1 bar</option>
+						<option value="2">2 bars</option>
+						<option value="4">4 bars</option>
+						<option value="8">8 bars</option>
+						<option value="16">16 bars</option>
+					</select>
+				</label>
+				<label class="switch">
+					<span class="switch__text">
+						<span class="switch__title">Up to</span>
+					</span>
+					<select class="select select--small" data-setting="metroTrainerTarget" data-type="number">
+						<option value="40">40 BPM</option>
+						<option value="50">50 BPM</option>
+						<option value="60">60 BPM</option>
+						<option value="70">70 BPM</option>
+						<option value="80">80 BPM</option>
+						<option value="90">90 BPM</option>
+						<option value="100">100 BPM</option>
+						<option value="110">110 BPM</option>
+						<option value="120">120 BPM</option>
+						<option value="130">130 BPM</option>
+						<option value="140">140 BPM</option>
+						<option value="150">150 BPM</option>
+						<option value="160">160 BPM</option>
+						<option value="170">170 BPM</option>
+						<option value="180">180 BPM</option>
+						<option value="190">190 BPM</option>
+						<option value="200">200 BPM</option>
+						<option value="210">210 BPM</option>
+						<option value="220">220 BPM</option>
+						<option value="230">230 BPM</option>
+						<option value="240">240 BPM</option>
+						<option value="250">250 BPM</option>
+						<option value="260">260 BPM</option>
+						<option value="270">270 BPM</option>
+						<option value="280">280 BPM</option>
+						<option value="290">290 BPM</option>
+						<option value="300">300 BPM</option>
+					</select>
 				</label>
 			</div>
 
@@ -346,6 +445,77 @@
 			</div>
 
 			<ol class="scale-results"></ol>
+		</section>
+
+		<!-- Metronome: engine in ts/metronome.ts, view in ts/views/metronome.ts. -->
+		<section class="view view--metronome" id="view-metronome" role="tabpanel" hidden>
+			<div class="metro-flash" aria-hidden="true"></div>
+
+			<div class="panel metro-hero">
+				<div class="metro-bpm">
+					<span class="metro-bpm__value">100</span>
+					<span class="metro-bpm__unit">BPM</span>
+				</div>
+				<div class="metro-name">Andante</div>
+				<div class="metro-dots" role="group" aria-label="Beats, tap to change the accent"></div>
+				<div class="metro-tempo">
+					<button class="metro-step" type="button" data-tempo="-1" aria-label="Slower">&minus;</button>
+					<input class="metro-slider" type="range" min="30" max="300" step="1" aria-label="Tempo in beats per minute" />
+					<button class="metro-step" type="button" data-tempo="1" aria-label="Faster">+</button>
+				</div>
+			</div>
+
+			<div class="metro-actions">
+				<button class="btn btn--solid metro-start" type="button" data-action="start">Start</button>
+				<button class="btn metro-tap" type="button" data-action="tap">Tap</button>
+			</div>
+
+			<div class="panel metro-options">
+				<div class="metro-row">
+					<span class="metro-row__label">Beats per bar</span>
+					<div class="metro-stepper">
+						<button class="metro-step metro-step--small" type="button" data-beats="-1" aria-label="Fewer beats">&minus;</button>
+						<span class="metro-stepper__value" data-value="beats">4</span>
+						<button class="metro-step metro-step--small" type="button" data-beats="1" aria-label="More beats">+</button>
+					</div>
+				</div>
+				<div class="metro-row">
+					<span class="metro-row__label">Beat note</span>
+					<div class="segmented segmented--small metro-unit" role="group" aria-label="Beat note">
+						<button type="button" data-unit="4">4</button>
+						<button type="button" data-unit="8">8</button>
+					</div>
+				</div>
+				<label class="metro-row">
+					<span class="metro-row__label">Accent beat 1</span>
+					<input type="checkbox" class="switch__input" data-action="accent-first" />
+					<span class="switch__track"></span>
+				</label>
+				<div class="metro-row metro-row--stack">
+					<span class="metro-row__label">Subdivision</span>
+					<div class="segmented segmented--small" role="group" aria-label="Subdivision">
+						<button type="button" data-sub="1">None</button>
+						<button type="button" data-sub="2">8ths</button>
+						<button type="button" data-sub="3">Triplets</button>
+						<button type="button" data-sub="4">16ths</button>
+					</div>
+				</div>
+			</div>
+
+			<div class="panel metro-trainer">
+				<label class="metro-row">
+					<span class="metro-row__text">
+						<span class="metro-row__label">Speed trainer</span>
+						<span class="metro-row__desc"></span>
+					</span>
+					<input type="checkbox" class="switch__input" data-action="trainer" />
+					<span class="switch__track"></span>
+				</label>
+				<div class="metro-progress" hidden>
+					<div class="metro-progress__bar"><span></span></div>
+					<div class="metro-progress__text"></div>
+				</div>
+			</div>
 		</section>
 
 		<!-- Mic control. index.ts moves it right under the active view's readout. -->
