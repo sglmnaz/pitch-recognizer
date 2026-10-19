@@ -2,7 +2,7 @@
 // progressions in its key and the circle of fifths; in Identify, the scales
 // a marked chord fits. The Scales view owns the neck: it asks chord() which
 // chord to light and redraws when told to (host.redraw). The circle is drawn
-// by ./circle.ts.
+// by ./circle.ts, progressions are played by ./progression-player.ts.
 import { createFretboard } from '../../ui/fretboard'
 import * as Settings from '../../core/settings'
 import * as Sound from '../../core/sound'
@@ -14,12 +14,10 @@ import { shapeNotes } from '../../music/chord-library'
 import { OPEN_CHORD_EVENT } from '../../ui/events'
 import { bindSegmented, liveRegion, scoped, setPressed } from '../../ui/dom'
 import { createCircle } from './circle'
+import { createProgressionPlayer } from './progression-player'
 
 // A strum: low string to high, this far apart (a quick downstroke).
 const STRUM_S = 0.025
-// Progressions: four beats a bar, one chord a bar, strummed on beats 1 and 3.
-const BEATS = 4
-const STRUM_BEATS = [0, 2]
 
 type Pane = 'chords' | 'progressions' | 'circle'
 
@@ -85,10 +83,6 @@ export function createHarmony(root: HTMLElement, host: HarmonyHost) {
 	let chordsKey = ''
 	let progKey = ''
 	let progKeyName = ''
-	// Progression playback.
-	let playing: { index: number; chords: KeyChord[]; bar: number } | null = null
-	let barTimer = 0
-	let nextBarAt = 0
 
 	/* Controls ------------------------------------------------------------ */
 	paneButtons.forEach((button) =>
@@ -141,48 +135,16 @@ export function createHarmony(root: HTMLElement, host: HarmonyHost) {
 		Sound.strum(shapeNotes(voicing.frets).midis, { step: STRUM_S, at, ringMs: Sound.NOTE_MS, stop: false })
 	}
 
-	// ponytail: bars are timed with setTimeout from a fixed start (no drift,
-	// a few ms of jitter per bar); both strums of a bar go to the audio clock
-	// at once. Move to an AudioContext lookahead like ts/core/metronome.ts if the
-	// jitter is ever audible.
-	function playBar() {
-		if (!playing) return
-		if (playing.bar >= playing.chords.length) {
-			if (!Settings.get().progressionLoop) return stop(true, 'Finished')
-			playing.bar = 0
-		}
-		const chord = playing.chords[playing.bar]
-		const beat = 60 / Settings.get().progressionBpm
-		for (const b of STRUM_BEATS) strum(chord, b * beat)
-		playing.bar++
-		nextBarAt += BEATS * beat * 1000
-		barTimer = window.setTimeout(playBar, Math.max(0, nextBarAt - performance.now()))
-		host.redraw()
-	}
-
-	function play(index: number, list: KeyChord[], name: string) {
-		stop()
-		Sound.stopAll()
-		playing = { index, chords: list, bar: 0 }
-		nextBarAt = performance.now()
-		announce(`Playing ${name}: ${list.map((c) => c.symbol).join(', ')}`)
-		playBar()
-	}
-
-	/**
-	 * Stops a progression and its scheduled strums; `redraw` when nothing
-	 * else is about to redraw the neck. `say` it only when the user stopped
-	 * it or it ended, not when a new key or tab silently ends it.
-	 */
-	function stop(redraw = false, say = '') {
-		if (!playing) return
-		clearTimeout(barTimer)
-		playing = null
-		Sound.stopAll()
-		if (say) announce(say)
-		syncProgressions()
-		if (redraw) host.redraw()
-	}
+	const player = createProgressionPlayer({
+		strum,
+		announce,
+		bar: () => host.redraw(),
+		stopped(redraw) {
+			syncProgressions()
+			if (redraw) host.redraw()
+		},
+	})
+	const stop = player.stop
 
 	/* Chords -------------------------------------------------------------- */
 	function renderChords(rootPc: number, type: ScaleType) {
@@ -257,7 +219,7 @@ export function createHarmony(root: HTMLElement, host: HarmonyHost) {
 					const button = document.createElement('button')
 					button.type = 'button'
 					button.className = 'btn btn--small progression__play'
-					button.addEventListener('click', () => (playing?.index === index ? stop(true, 'Stopped') : play(index, list, progression.name)))
+					button.addEventListener('click', () => (player.playing()?.index === index ? stop(true, 'Stopped') : player.play(index, list, progression.name)))
 					head.append(name, button)
 					const row = document.createElement('ol')
 					row.className = 'progression__chords'
@@ -285,6 +247,7 @@ export function createHarmony(root: HTMLElement, host: HarmonyHost) {
 
 	function syncProgressions() {
 		const { progressionBpm, progressionLoop } = Settings.get()
+		const playing = player.playing()
 		progNote.textContent = [progKeyName && `In ${progKeyName}`, `${progressionBpm} BPM`].filter(Boolean).join(' · ')
 		loopButton.setAttribute('aria-pressed', String(progressionLoop))
 		Array.from(progList.children).forEach((item, index) => {
@@ -363,10 +326,11 @@ export function createHarmony(root: HTMLElement, host: HarmonyHost) {
 			sync()
 		},
 		/** A progression is sounding: the Scales view's mic ignores what it hears. */
-		playing: () => playing !== null,
+		playing: () => player.playing() !== null,
 		/** The chord to light on the neck: the bar playing, else the one tapped. */
 		chord(): KeyChord | null {
 			if (state?.mode !== 'explore') return null
+			const playing = player.playing()
 			if (playing) return playing.chords[playing.bar - 1] ?? null
 			return selected === null || shownPane !== 'chords' ? null : (chords[selected] ?? null)
 		},
