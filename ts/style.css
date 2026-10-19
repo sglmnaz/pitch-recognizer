@@ -1599,6 +1599,7 @@ button {
 		grid-template-areas:
 			'header info'
 			'neck neck'
+			'harmony harmony'
 			'results results';
 		gap: 20px 32px;
 		align-items: center;
@@ -1619,6 +1620,13 @@ button {
 		margin-inline: 0;
 	}
 
+	/* Harmony (Explore) and chord fits (Identify) never show together. */
+	.view--scales > .harmony,
+	.view--scales > .chord-fits {
+		grid-area: harmony;
+		align-self: start;
+	}
+
 	.view--scales > .scale-results {
 		grid-area: results;
 		display: grid;
@@ -1626,18 +1634,20 @@ button {
 		align-self: start;
 	}
 
-	/* Vertical neck: it stands on the left, controls and results beside it. */
-	.view--scales:not([hidden]):has(.neck--vertical) {
+	/* Vertical neck: it stands on the left, controls and results beside it.
+	   The main neck only: the harmony chord diagram is vertical too. */
+	.view--scales:not([hidden]):has(> .neck-card .neck--vertical) {
 		grid-template-columns: auto minmax(0, 1fr);
 		grid-template-areas:
 			'neck header'
 			'neck info'
+			'neck harmony'
 			'neck results';
-		grid-template-rows: auto auto 1fr;
+		grid-template-rows: auto auto auto 1fr;
 		align-items: start;
 	}
 
-	.view--scales:has(.neck--vertical) > .scale-info {
+	.view--scales:has(> .neck-card .neck--vertical) > .scale-info {
 		align-items: flex-start;
 	}
 }
@@ -2941,5 +2951,480 @@ label.metro-row {
 	.metro-tempo .metro-step {
 		width: 44px;
 		height: 44px;
+	}
+}
+
+/* Scales harmony (ts/views/harmony.ts) ------------------------------------ */
+/* Under the neck: one segmented control picks Chords, Progressions or the
+   Circle, so Explore stays one neck and one row of chords until asked. */
+.harmony {
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+	min-width: 0;
+}
+
+.harmony[hidden],
+.harmony [hidden],
+.chord-fits[hidden] {
+	display: none;
+}
+
+.harmony__head {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px;
+}
+
+.harmony__tabs {
+	flex: 0 1 340px;
+}
+
+.harmony__size,
+.harmony__loop {
+	margin-left: auto;
+}
+
+.harmony__loop[aria-pressed='true'] {
+	color: var(--accent);
+	box-shadow: 0 0 0 1px var(--accent);
+}
+
+.harmony__pane {
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+}
+
+.harmony__note {
+	margin: 0;
+	font-size: 12px;
+	color: var(--fg-muted);
+}
+
+/* Quality cue: a 3 px bar on top of the chip, from the degree palette:
+   major in the root blue, minor in the tone teal, diminished / augmented in
+   the warm grey. */
+.harmony-chord--major {
+	--quality: var(--root-stroke);
+}
+
+.harmony-chord--minor {
+	--quality: var(--tone-stroke);
+}
+
+.harmony-chord--dim {
+	--quality: var(--note-stroke);
+}
+
+.harmony-chords {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(72px, 1fr));
+	gap: 6px;
+}
+
+.harmony-chord,
+.progression__chord {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 1px;
+	min-width: 0;
+	border: none;
+	border-radius: var(--radius);
+	background: var(--surface);
+	color: var(--fg);
+	font-family: var(--font-mono);
+	box-shadow: inset 0 3px 0 var(--quality), var(--shadow-border);
+}
+
+.harmony-chord {
+	min-height: 52px;
+	padding: 8px 4px 6px;
+	cursor: pointer;
+	transition: background var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
+}
+
+.harmony-chord:hover {
+	background: var(--surface-2);
+}
+
+.harmony-chord[aria-pressed='true'] {
+	background: var(--surface-2);
+	box-shadow: inset 0 3px 0 var(--quality), 0 0 0 1px var(--accent);
+}
+
+.harmony-chord__numeral {
+	font-size: 11px;
+	color: var(--fg-muted);
+}
+
+.harmony-chord__symbol {
+	max-width: 100%;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	font-size: 15px;
+	font-weight: 500;
+	white-space: nowrap;
+}
+
+.harmony-legend {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 4px 16px;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+	font-size: 12px;
+	color: var(--fg-muted);
+}
+
+.harmony-legend li::before {
+	content: '';
+	display: inline-block;
+	width: 10px;
+	height: 3px;
+	margin-right: 6px;
+	vertical-align: middle;
+	border-radius: 2px;
+	background: var(--quality);
+}
+
+/* The tapped chord: its easiest shape as a chord diagram, beside its name. */
+.chord-detail {
+	align-self: flex-start;
+	max-width: 100%;
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 16px;
+	padding: 12px;
+	border-radius: var(--radius-lg);
+	background: var(--surface);
+	box-shadow: var(--shadow-border);
+}
+
+.chord-detail__neck {
+	flex: none;
+}
+
+.chord-detail__text {
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+	min-width: 0;
+}
+
+.chord-detail__symbol {
+	font-family: var(--font-mono);
+	font-size: 26px;
+	font-weight: 600;
+	letter-spacing: -0.02em;
+}
+
+.chord-detail__name {
+	font-size: 13px;
+	color: var(--fg-secondary);
+}
+
+.chord-detail__notes {
+	font-family: var(--font-mono);
+	font-size: 12px;
+	color: var(--fg-muted);
+	word-spacing: 0.2em;
+	white-space: pre-wrap;
+}
+
+/* Beside the name on wider screens, a row of their own on phones. */
+.chord-detail__actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 6px;
+}
+
+a.btn {
+	text-decoration: none;
+}
+
+.chord-detail__clear {
+	width: 32px;
+	padding: 0;
+}
+
+/* Progressions: a card each, one chip per bar; the bar playing gets the accent. */
+.progressions {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+	gap: 8px;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.progression {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	padding: 10px 12px 12px;
+	border-radius: var(--radius-lg);
+	background: var(--surface);
+	box-shadow: var(--shadow-border);
+}
+
+.progression--playing {
+	box-shadow: 0 0 0 1px var(--accent);
+}
+
+.progression__head {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 8px;
+}
+
+.progression__name {
+	font-size: 14px;
+	font-weight: 500;
+}
+
+.progression--playing .progression__play {
+	color: var(--accent);
+}
+
+.progression__chords {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(48px, 1fr));
+	gap: 4px;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.progression__chord {
+	min-height: 40px;
+	padding: 6px 2px 4px;
+	background: var(--surface-2);
+	transition: background var(--dur) var(--ease), color var(--dur) var(--ease);
+}
+
+.progression__chord .harmony-chord__symbol {
+	font-size: 13px;
+}
+
+.progression__chord--now {
+	background: var(--accent);
+	color: var(--accent-contrast);
+	box-shadow: none;
+}
+
+.progression__chord--now .harmony-chord__numeral {
+	color: inherit;
+	opacity: 0.8;
+}
+
+/* Circle of fifths: hairline sectors on the surface, the current key's
+   neighbours in a light accent wash, the key itself solid accent. */
+.harmony__pane--circle {
+	align-items: center;
+	text-align: center;
+}
+
+.circle {
+	display: block;
+	width: 100%;
+	max-width: 420px;
+	height: auto;
+	font-family: var(--font-mono);
+	-webkit-tap-highlight-color: transparent;
+}
+
+.circle__key {
+	cursor: pointer;
+	outline: none;
+}
+
+.circle__key path {
+	fill: var(--surface);
+	stroke: var(--border-strong);
+	stroke-width: 1;
+	transition: fill var(--dur) var(--ease);
+}
+
+.circle__key text {
+	fill: var(--fg);
+	font-size: 17px;
+	font-weight: 500;
+	text-anchor: middle;
+	dominant-baseline: central;
+	pointer-events: none;
+}
+
+.circle__key--minor text {
+	font-size: 14px;
+	fill: var(--fg-secondary);
+}
+
+.circle__key text.circle__alt {
+	font-size: 12px;
+}
+
+.circle__key text.circle__sig {
+	font-size: 10px;
+	fill: var(--fg-muted);
+}
+
+.circle__key:hover path {
+	fill: var(--surface-2);
+}
+
+.circle__key--near path {
+	fill: color-mix(in srgb, var(--accent) 10%, var(--surface));
+}
+
+.circle__key--near:hover path {
+	fill: color-mix(in srgb, var(--accent) 16%, var(--surface));
+}
+
+.circle__key--current path {
+	fill: var(--accent);
+	stroke: var(--accent);
+}
+
+.circle__key--current text,
+.circle__key--current text.circle__sig {
+	fill: var(--accent-contrast);
+}
+
+.circle__key:focus-visible path {
+	stroke: var(--accent);
+	stroke-width: 2.5;
+}
+
+.circle__key--current:focus-visible path {
+	stroke: var(--fg);
+}
+
+.circle__center {
+	fill: var(--fg);
+	font-size: 22px;
+	font-weight: 600;
+	text-anchor: middle;
+	dominant-baseline: central;
+}
+
+.circle__center-sig {
+	fill: var(--fg-muted);
+	font-family: var(--font-sans);
+	font-size: 11px;
+	text-anchor: middle;
+	dominant-baseline: central;
+}
+
+/* Identify: the scales a marked chord fits, one small row. */
+.chord-fits {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 6px;
+}
+
+.chord-fits__label {
+	margin-right: 4px;
+	font-size: 13px;
+	color: var(--fg-muted);
+}
+
+.chord-fits__chord {
+	font-family: var(--font-mono);
+	font-size: 15px;
+	font-weight: 500;
+	color: var(--fg);
+}
+
+.chord-fits__list {
+	display: contents;
+}
+
+.chord-fits__scale {
+	height: 28px;
+	padding: 0 10px;
+	border: none;
+	border-radius: var(--radius-pill);
+	background: var(--surface);
+	color: var(--fg-secondary);
+	font-size: 12px;
+	font-weight: 500;
+	cursor: pointer;
+	box-shadow: var(--shadow-border);
+	transition: color var(--dur) var(--ease), background var(--dur) var(--ease);
+}
+
+.chord-fits__scale:hover {
+	color: var(--fg);
+	background: var(--surface-2);
+}
+
+/* Phones: 44 px for every thumb target. */
+@media (max-width: 600px) {
+	.harmony__tabs {
+		flex: 1 1 100%;
+	}
+
+	.harmony__tabs button,
+	.harmony__size button {
+		min-height: 44px;
+	}
+
+	.harmony__size button {
+		min-width: 64px;
+	}
+
+	.harmony__loop,
+	.chord-detail .btn--small,
+	.progression__play {
+		height: 44px;
+	}
+
+	.chord-detail__clear {
+		width: 44px;
+	}
+
+	.progression__chord {
+		min-height: 44px;
+	}
+
+	.chord-fits__scale {
+		height: 44px;
+		padding: 0 14px;
+	}
+
+	.progressions {
+		grid-template-columns: 1fr;
+	}
+
+	.chord-detail {
+		align-self: stretch;
+		gap: 12px;
+		padding: 10px;
+	}
+
+	.chord-detail__actions {
+		flex-basis: 100%;
+	}
+
+	.chord-detail__actions .btn:not(.chord-detail__clear) {
+		flex: 1;
+	}
+
+	.settings__section[data-for='scales'] .input {
+		height: 44px;
+	}
+}
+
+@media (min-width: 601px) {
+	.harmony-chords {
+		grid-template-columns: repeat(7, minmax(0, 1fr));
 	}
 }
