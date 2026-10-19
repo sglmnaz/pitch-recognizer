@@ -7,6 +7,8 @@
 		"dev": "vite",
 		"build": "tsc --noEmit && vite build",
 		"preview": "vite preview",
+		"lint": "biome lint",
+		"format": "biome format --write",
 		"typecheck": "tsc -p tsconfig.json && tsc -p tsconfig.scripts.json",
 		"check": "npm run check:pitch && npm run check:chords && npm run check:scales && npm run check:tunings && npm run check:metronome && npm run check:chord-theory && npm run check:ear && npm run check:chord-library && npm run check:harmony && npm run check:changes && npm run check:settings",
 		"check:pitch": "node scripts/pitch-check.ts",
@@ -38,6 +40,7 @@
 		"vexflow": "^4.2.5"
 	},
 	"devDependencies": {
+		"@biomejs/biome": "2.5.15",
 		"@playwright/test": "^1.64.1",
 		"@types/node": "^24.19.2",
 		"typescript": "^5.9.3",

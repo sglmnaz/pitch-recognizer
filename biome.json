@@ -1,0 +1,36 @@
+{
+	"$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
+	"vcs": { "enabled": true, "clientKind": "git", "useIgnoreFile": true },
+	"files": {
+		"includes": ["ts/**", "scripts/**", "tests/**", "*.ts", "*.json", "!**/chord-model.ts", "!package-lock.json"]
+	},
+	"formatter": {
+		"indentStyle": "tab",
+		"lineWidth": 160
+	},
+	"javascript": {
+		"formatter": { "quoteStyle": "single", "semicolons": "asNeeded", "trailingCommas": "es5" }
+	},
+	"css": {
+		"formatter": { "quoteStyle": "single" }
+	},
+	"assist": { "actions": { "source": { "organizeImports": "off" } } },
+	"linter": {
+		"rules": {
+			"recommended": true,
+			"style": {
+				"noNonNullAssertion": "off",
+				"noDescendingSpecificity": "off"
+			},
+			"suspicious": {
+				"useIterableCallbackReturn": "off",
+				"noDuplicateProperties": "off",
+				"noAssignInExpressions": "warn"
+			},
+			"complexity": {
+				"noCommaOperator": "warn",
+				"noImportantStyles": "warn"
+			}
+		}
+	}
+}
