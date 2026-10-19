@@ -11,7 +11,7 @@
 	}
 }
 
-/* The board: its own surface with a hairline, and its own data-theme when
+/* The board: its own surface with a hairline, and its own data-mode when
    the fretboard theme setting forces light or dark. */
 /* Only a horizontal neck scrolls, sideways; a vertical one grows with the
    page (no second scrollbar). */

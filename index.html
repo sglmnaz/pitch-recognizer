@@ -13,15 +13,19 @@
 	<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 	<meta name="apple-mobile-web-app-title" content="Pluck" />
 	<script>
-		// Resolve the theme before first paint to avoid a flash: 'light' / 'dark'
-		// as chosen in Settings, nothing stored = follow the device (System).
+		// Palette and mode before first paint, so a reload never flashes. Same
+		// keys and palette ids as ts/ui/theme.ts ('theme' is the pre-palette key
+		// of the mode, migrated there). No stored mode = follow the device.
 		(function () {
-			var saved = null
+			var mode = null
+			var palette = null
 			try {
-				saved = localStorage.getItem('theme')
+				mode = localStorage.getItem('pitch-recognizer:mode') || localStorage.getItem('theme')
+				palette = localStorage.getItem('pitch-recognizer:palette')
 			} catch (error) {}
-			var dark = saved === 'light' || saved === 'dark' ? saved === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches
-			document.documentElement.dataset.theme = dark ? 'dark' : 'light'
+			var root = document.documentElement
+			root.dataset.theme = ['default'].indexOf(palette) >= 0 ? palette : 'default'
+			root.dataset.mode = mode === 'light' || mode === 'dark' ? mode : matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
 		})()
 	</script>
 </head>
@@ -562,6 +566,16 @@
 								<button type="button" data-theme-choice="dark" aria-pressed="false">Dark</button>
 							</div>
 						</div>
+					</div>
+					<!-- Shown by settings.view.ts only when there is more than one palette (ts/ui/theme.ts). -->
+					<div class="settings__section" data-palette hidden>
+						<label class="switch">
+							<span class="switch__text">
+								<span class="switch__title">Palette</span>
+								<span class="switch__desc">The app's colours, in light and dark</span>
+							</span>
+							<select class="select select--small"></select>
+						</label>
 					</div>
 				</div>
 			</section>

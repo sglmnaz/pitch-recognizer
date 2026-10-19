@@ -34,12 +34,12 @@ export function createTrainerView(root: HTMLElement): View {
 	let started = false
 
 	function applyStaffTheme() {
-		// Force the staff to the light palette on demand, otherwise let it inherit
+		// Force the staff to light mode on demand (data-mode), otherwise let it inherit
 		// the app theme from the document root.
 		if (Settings.get().lightStaff) {
-			staff.dataset.theme = 'light'
+			staff.dataset.mode = 'light'
 		} else {
-			delete staff.dataset.theme
+			delete staff.dataset.mode
 		}
 	}
 

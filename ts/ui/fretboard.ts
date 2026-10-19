@@ -197,10 +197,10 @@ export function createFretboard(svg: SVGSVGElement, board: HTMLElement | null, o
 		const shown = Boolean(board?.clientWidth) && !win
 		const fromRight = shown && leftHanded && !vertical && layout === laidOut ? board!.scrollWidth - board!.scrollLeft - board!.clientWidth : null
 		const o = vertical ? 'v' : 'h'
-		// The board palette: on the board, or on a chord diagram's own svg.
+		// The board's forced mode (data-mode, palette inherited): on the board, or on a chord diagram's own svg.
 		const themed = board ?? svg
-		if (fretboardTheme === 'auto') delete themed.dataset.theme
-		else themed.dataset.theme = fretboardTheme
+		if (fretboardTheme === 'auto') delete themed.dataset.mode
+		else themed.dataset.mode = fretboardTheme
 
 		const boardWidth = board ? board.clientWidth - parseFloat(getComputedStyle(board).paddingLeft) * 2 : 0
 		const spacingV = win ? CHORD.spacing : phone.matches ? Math.max(SPACING.v, (boardWidth - MARGIN.v - EDGE) / 5) : SPACING.v

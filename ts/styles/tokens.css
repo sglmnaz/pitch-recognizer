@@ -2,6 +2,16 @@
  * Geist design tokens, extracted from vercel.com/geist and adapted for this app.
  * Neutrals carry a whisper of the brand hue (~220) so the greys never feel dead,
  * while staying faithful to Geist's near-monochrome look.
+ *
+ * Theming (docs/adr/0005): <html data-theme="<palette>" data-mode="light|dark">.
+ * Three tiers:
+ *   1. primitives  raw colour scales of the palette; components never use them
+ *   2. semantic    roles per mode (--bg, --fg, --surface, --accent, ...)
+ *   3. component   per component (--root-*, --board-*, --staff-*, --shadow-*)
+ * Any element can carry its own data-mode (the fretboard, the trainer staff):
+ * the semantic and component blocks match it too, so its subtree re-resolves.
+ * A new palette is one block overriding tier 2 (and 1/3 as needed) for both
+ * modes, keyed on [data-theme='<id>'] (see DESIGN.md, "How to add a theme").
  */
 
 @font-face {
@@ -69,110 +79,171 @@
 	}
 }
 
-/* Light ------------------------------------------------------------------ */
+/* Tier 1: primitives (default palette) ------------------------------------ */
+:root {
+	--gray-0: #ffffff;
+	--gray-25: #fbfbfc;
+	--gray-50: #f6f7f9;
+	--gray-75: #ededee;
+	--gray-100: #ebebec;
+	--gray-200: #dcdcde;
+	--gray-400: #a0a0a8;
+	--gray-450: #8f8f96;
+	--gray-500: #71717a;
+	--gray-600: #5f5f66;
+	--gray-700: #3d3d42;
+	--gray-800: #2a2a2e;
+	--gray-850: #1a1a1d;
+	--gray-900: #18181b;
+	--gray-925: #121214;
+	--gray-950: #0a0a0b;
+	--gray-1000: #04060a;
+
+	--blue-50: #e6f1fb;
+	--blue-300: #85b7eb;
+	--blue-350: #61b0ff;
+	--blue-400: #3b9eff;
+	--blue-500: #0072f5;
+	--blue-600: #0062d1;
+	--blue-700: #185fa5;
+	--blue-800: #0c447c;
+
+	--teal-50: #e1f5ee;
+	--teal-300: #5dcaa5;
+	--teal-700: #0f6e56;
+	--teal-800: #085041;
+
+	/* Warm grey: the fretboard wood and the plain scale notes. */
+	--stone-25: #f7f6f2;
+	--stone-50: #f1efe8;
+	--stone-200: #d3d1c7;
+	--stone-300: #c3c1b9;
+	--stone-350: #b4b2a9;
+	--stone-450: #8f8e89;
+	--stone-500: #8d8b84;
+	--stone-600: #5f5e5a;
+	--stone-650: #5a5a57;
+	--stone-700: #444441;
+	--stone-900: #1f1f1f;
+
+	--green-50: #e8f5ec;
+	--green-400: #5ec27a;
+	--green-400-a12: rgba(94, 194, 122, 0.12);
+	--green-700: #1a8245;
+
+	--orange-400: #f5a623;
+	--orange-600: #c2670a;
+}
+
+/* Tier 2: semantic roles per mode ------------------------------------------- */
 :root,
-[data-theme='light'] {
+[data-mode='light'] {
 	color-scheme: light;
 
-	--bg: #fbfbfc;
-	--surface: #ffffff;
-	--surface-2: #f6f7f9;
+	--bg: var(--gray-25);
+	--surface: var(--gray-0);
+	--surface-2: var(--gray-50);
 
-	--border: #ebebec;
-	--border-strong: #dcdcde;
+	--border: var(--gray-100);
+	--border-strong: var(--gray-200);
 
-	--fg: #18181b;
-	--fg-secondary: #5f5f66;
-	--fg-muted: #8f8f96;
+	--fg: var(--gray-900);
+	--fg-secondary: var(--gray-600);
+	--fg-muted: var(--gray-450);
 
-	--accent: #0072f5;
-	--accent-hover: #0062d1;
-	--accent-contrast: #ffffff;
+	--accent: var(--blue-500);
+	--accent-hover: var(--blue-600);
+	--accent-contrast: var(--gray-0);
 
-	/* Scale degrees (fretboard dots, degree strip): root, highlighted degrees
-	   (3rd/5th by default), other scale notes. Fill, 1 px outline, label.
-	   The fretboard can force either palette with its own data-theme. */
-	--root-fill: #e6f1fb;
-	--root-stroke: #185fa5;
-	--root-text: #0c447c;
-	--tone-fill: #e1f5ee;
-	--tone-stroke: #0f6e56;
-	--tone-text: #085041;
-	--note-fill: #f1efe8;
-	--note-stroke: #5f5e5a;
-	--note-text: #444441;
-
-	/* Fretboard wood and hardware. */
-	--board: #f7f6f2;
-	--board-fret: #c3c1b9;
-	--board-string: #8d8b84;
-	--board-nut: #444441;
-	--board-inlay: #c3c1b9;
-
-	--success: #1a8245;
-	--success-bg: #e8f5ec;
-	--warning: #c2670a;
+	--success: var(--green-700);
+	--success-bg: var(--green-50);
+	--warning: var(--orange-600);
 
 	/* Solid near-black primary button, the Geist signature. */
-	--solid: #18181b;
-	--solid-hover: #2a2a2e;
-	--solid-fg: #ffffff;
+	--solid: var(--gray-900);
+	--solid-hover: var(--gray-800);
+	--solid-fg: var(--gray-0);
 
-	--staff-ink: #18181b;
-	--staff-bg: #ffffff;
-
-	--shadow-border: 0 0 0 1px var(--border);
 	--shadow-sm: 0 0 0 1px var(--border), 0 1px 2px rgba(16, 16, 24, 0.04);
 	--shadow-md: 0 0 0 1px var(--border), 0 2px 4px rgba(16, 16, 24, 0.05), 0 8px 16px -8px rgba(16, 16, 24, 0.06);
 }
 
-/* Dark ------------------------------------------------------------------- */
-[data-theme='dark'] {
+[data-mode='dark'] {
 	color-scheme: dark;
 
-	--bg: #0a0a0b;
-	--surface: #121214;
-	--surface-2: #1a1a1d;
+	--bg: var(--gray-950);
+	--surface: var(--gray-925);
+	--surface-2: var(--gray-850);
 
-	--border: #2a2a2e;
-	--border-strong: #3d3d42;
+	--border: var(--gray-800);
+	--border-strong: var(--gray-700);
 
-	--fg: #ededee;
-	--fg-secondary: #a0a0a8;
-	--fg-muted: #71717a;
+	--fg: var(--gray-75);
+	--fg-secondary: var(--gray-400);
+	--fg-muted: var(--gray-500);
 
-	--accent: #3b9eff;
-	--accent-hover: #61b0ff;
-	--accent-contrast: #04060a;
+	--accent: var(--blue-400);
+	--accent-hover: var(--blue-350);
+	--accent-contrast: var(--gray-1000);
 
-	--root-fill: #0c447c;
-	--root-stroke: #85b7eb;
-	--root-text: #e6f1fb;
-	--tone-fill: #085041;
-	--tone-stroke: #5dcaa5;
-	--tone-text: #e1f5ee;
-	--note-fill: #444441;
-	--note-stroke: #b4b2a9;
-	--note-text: #f1efe8;
+	--success: var(--green-400);
+	--success-bg: var(--green-400-a12);
+	--warning: var(--orange-400);
 
-	--board: #1f1f1f;
-	--board-fret: #5a5a57;
-	--board-string: #8f8e89;
-	--board-nut: #d3d1c7;
-	--board-inlay: #5a5a57;
+	--solid: var(--gray-75);
+	--solid-hover: var(--gray-0);
+	--solid-fg: var(--gray-950);
 
-	--success: #5ec27a;
-	--success-bg: rgba(94, 194, 122, 0.12);
-	--warning: #f5a623;
-
-	--solid: #ededee;
-	--solid-hover: #ffffff;
-	--solid-fg: #0a0a0b;
-
-	--staff-ink: #ededee;
-	--staff-bg: #121214;
-
-	--shadow-border: 0 0 0 1px var(--border);
 	--shadow-sm: 0 0 0 1px var(--border), 0 1px 2px rgba(0, 0, 0, 0.4);
 	--shadow-md: 0 0 0 1px var(--border), 0 2px 4px rgba(0, 0, 0, 0.4), 0 12px 24px -8px rgba(0, 0, 0, 0.6);
+}
+
+/* Tier 3: component tokens -------------------------------------------------- */
+/* Scale degrees (fretboard dots, degree strip, harmony chips): root,
+   highlighted degrees (3rd/5th by default), other scale notes. Fill, 1 px
+   outline, label. Then the fretboard wood and hardware. */
+:root,
+[data-mode='light'] {
+	--root-fill: var(--blue-50);
+	--root-stroke: var(--blue-700);
+	--root-text: var(--blue-800);
+	--tone-fill: var(--teal-50);
+	--tone-stroke: var(--teal-700);
+	--tone-text: var(--teal-800);
+	--note-fill: var(--stone-50);
+	--note-stroke: var(--stone-600);
+	--note-text: var(--stone-700);
+
+	--board: var(--stone-25);
+	--board-fret: var(--stone-300);
+	--board-string: var(--stone-500);
+	--board-nut: var(--stone-700);
+}
+
+[data-mode='dark'] {
+	--root-fill: var(--blue-800);
+	--root-stroke: var(--blue-300);
+	--root-text: var(--blue-50);
+	--tone-fill: var(--teal-800);
+	--tone-stroke: var(--teal-300);
+	--tone-text: var(--teal-50);
+	--note-fill: var(--stone-700);
+	--note-stroke: var(--stone-350);
+	--note-text: var(--stone-50);
+
+	--board: var(--stone-900);
+	--board-fret: var(--stone-650);
+	--board-string: var(--stone-450);
+	--board-nut: var(--stone-200);
+}
+
+/* Derived from the roles above. Declared wherever a mode is, so that a
+   subtree with its own data-mode resolves them against its own roles. */
+:root,
+[data-mode='light'],
+[data-mode='dark'] {
+	--board-inlay: var(--board-fret);
+	--staff-ink: var(--fg);
+	--staff-bg: var(--surface);
+	--shadow-border: 0 0 0 1px var(--border);
 }

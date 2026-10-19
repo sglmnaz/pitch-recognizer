@@ -3,31 +3,7 @@ import { clamp } from '../../core/math'
 import { INTERVALS, QUALITIES } from '../../music/ear'
 import type { View } from '../../ui/view'
 import { subscribeVisible } from '../../ui/dom'
-
-/* Theme: System (nothing stored: the inline script in index.html and this
-   follow the device, live), or Light / Dark stored under 'theme', which that
-   script reads before first paint so a reload never flashes. */
-type ThemeChoice = 'system' | 'light' | 'dark'
-const THEME_KEY = 'theme'
-const systemDark = matchMedia('(prefers-color-scheme: dark)')
-
-function loadTheme(): ThemeChoice {
-	try {
-		const saved = localStorage.getItem(THEME_KEY)
-		return saved === 'light' || saved === 'dark' ? saved : 'system'
-	} catch {
-		return 'system'
-	}
-}
-
-function saveTheme(choice: ThemeChoice) {
-	try {
-		if (choice === 'system') localStorage.removeItem(THEME_KEY)
-		else localStorage.setItem(THEME_KEY, choice)
-	} catch {
-		// Storage may be unavailable (private mode): the choice lasts this visit.
-	}
-}
+import * as Theme from '../../ui/theme'
 
 /**
  * The Settings tab: the switches and selects of every tab, the per-note target
@@ -36,21 +12,28 @@ function saveTheme(choice: ThemeChoice) {
  * from (`from`, null when the app opened on Settings).
  */
 export function createSettingsView(root: HTMLElement, from: () => string | null): View {
-	let theme = loadTheme()
+	// Theme: System / Light / Dark (ts/ui/theme.ts), and a palette picker that
+	// only shows once there is more than one palette.
 	const themeButtons = Array.from(root.querySelectorAll<HTMLButtonElement>('[data-theme-choice]'))
-	function applyTheme() {
-		document.documentElement.dataset.theme = theme === 'system' ? (systemDark.matches ? 'dark' : 'light') : theme
-		for (const button of themeButtons) button.setAttribute('aria-pressed', String(button.dataset.themeChoice === theme))
+	const pressTheme = () => {
+		for (const button of themeButtons) button.setAttribute('aria-pressed', String(button.dataset.themeChoice === Theme.getMode()))
 	}
 	for (const button of themeButtons) {
 		button.addEventListener('click', () => {
-			theme = button.dataset.themeChoice as ThemeChoice
-			saveTheme(theme)
-			applyTheme()
+			const choice = Theme.MODES.find((m) => m === button.dataset.themeChoice)
+			if (choice) Theme.setMode(choice)
+			pressTheme()
 		})
 	}
-	systemDark.addEventListener('change', applyTheme)
-	applyTheme()
+	Theme.applyTheme()
+	pressTheme()
+	const paletteRow = root.querySelector<HTMLElement>('[data-palette]')!
+	if (Theme.THEMES.length > 1) {
+		const select = paletteRow.querySelector('select')!
+		select.replaceChildren(...Theme.THEMES.map((t) => new Option(t.label, t.id, false, t.id === Theme.getPalette())))
+		select.addEventListener('change', () => Theme.setPalette(select.value))
+		paletteRow.hidden = false
+	}
 
 	// Checkbox switches store booleans, sliders and number fields numbers,
 	// selects their value (a number when marked data-type="number").

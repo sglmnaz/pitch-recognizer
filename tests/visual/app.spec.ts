@@ -204,4 +204,41 @@ test.describe('behaviour', () => {
 		await start.click()
 		await expect(start).toHaveText('Start')
 	})
+
+	test('the pre-palette theme key migrates; theme-color follows the mode', async ({ page, open }) => {
+		await open('#settings')
+		const stored = await page.evaluate(() => [localStorage.getItem('theme'), localStorage.getItem('pitch-recognizer:mode')])
+		expect(stored).toEqual([null, 'light'])
+		await expect(page.locator('html')).toHaveAttribute('data-mode', 'light')
+		await expect(page.locator('meta[name="theme-color"]')).toHaveAttribute('content', '#fbfbfc')
+		await page.locator('[data-theme-choice="dark"]').click()
+		await expect(page.locator('meta[name="theme-color"]')).toHaveAttribute('content', '#0a0a0b')
+		await page.reload()
+		await expect(page.locator('html')).toHaveAttribute('data-mode', 'dark')
+	})
+
+	// A palette is one CSS block overriding semantic tokens per mode (DESIGN.md):
+	// inject one at runtime and check tokens and components follow, including a
+	// subtree that forces its own mode (the fretboard board).
+	test('a new palette is one CSS block', async ({ page, open }) => {
+		await open('#scales', { fretboardTheme: 'dark' })
+		await page.addStyleTag({
+			content: `[data-theme='test'][data-mode='light'], [data-theme='test'] [data-mode='light'] { --surface: rgb(255, 0, 0); }
+				[data-theme='test'][data-mode='dark'], [data-theme='test'] [data-mode='dark'] { --surface: rgb(0, 0, 255); }`,
+		})
+		const read = () =>
+			page.evaluate(() => {
+				const board = document.querySelector('#view-scales .neck-board')!
+				return {
+					token: getComputedStyle(document.documentElement).getPropertyValue('--surface').trim(),
+					button: getComputedStyle(document.querySelector('.btn')!).backgroundColor,
+					board: getComputedStyle(board).getPropertyValue('--surface').trim(),
+					staffBg: getComputedStyle(board).getPropertyValue('--staff-bg').trim(),
+				}
+			})
+		const before = await read()
+		expect(before.button).toBe('rgb(255, 255, 255)')
+		await page.evaluate(() => (document.documentElement.dataset.theme = 'test'))
+		expect(await read()).toEqual({ token: 'rgb(255, 0, 0)', button: 'rgb(255, 0, 0)', board: 'rgb(0, 0, 255)', staffBg: 'rgb(0, 0, 255)' })
+	})
 })
