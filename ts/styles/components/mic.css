@@ -49,9 +49,8 @@
 	color: var(--accent);
 }
 
-/* Mic toggle, the same on every tab (the shared block and Scales' own): dot +
-   mic icon + state. A tap starts or stops listening. The dot turns green
-   while the mic is actually listening, and pulses when on. */
+/* Scales' own mic toggle: mic icon + state, a tap starts or stops listening
+   (the shared block uses .mic-button, the same content on a big button). */
 .mic-toggle {
 	white-space: nowrap;
 	display: inline-flex;
@@ -93,8 +92,7 @@
 	}
 }
 
-/* The shared block's control: a .btn--large with mic + state. Listening shows
-   on the button itself: its outline turns the accent blue and breathes (no dot). */
+/* The shared block's control: a .btn--large with mic + state. */
 .mic-button {
 	gap: var(--space-8);
 
@@ -102,19 +100,17 @@
 		width: 18px;
 		height: 18px;
 	}
+}
 
-	& .status__dot {
-		display: none;
-	}
+/* Listening shows on the control itself, the big button and Scales' toggle
+   alike: its outline turns the accent blue and breathes. */
+:is(.mic-button, .mic-toggle).mic-toggle--live[aria-pressed='true'] {
+	box-shadow: 0 0 0 1px var(--accent);
+	animation: mic-outline 1.8s var(--ease) infinite;
 
-	&.mic-toggle--live {
-		box-shadow: 0 0 0 1px var(--accent);
-		animation: mic-outline 1.8s var(--ease) infinite;
-
-		/* Reduced motion: the blue outline alone says "listening". */
-		@media (prefers-reduced-motion: reduce) {
-			animation: none;
-		}
+	/* Reduced motion: the blue outline alone says "listening". */
+	@media (prefers-reduced-motion: reduce) {
+		animation: none;
 	}
 }
 
@@ -132,27 +128,6 @@
 	}
 }
 
-.status__dot {
-	width: 8px;
-	height: 8px;
-	border-radius: 50%;
-	background: var(--border-strong);
-	flex: none;
-}
-
-.mic-toggle--live .status__dot {
-	background: var(--success);
-}
-
-.mic-toggle--live[aria-pressed='true'] .status__dot {
-	animation: pulse 1.8s var(--ease) infinite;
-
-	/* The green dot alone says "listening". */
-	@media (prefers-reduced-motion: reduce) {
-		animation: none;
-	}
-}
-
 /* Blocked or waiting for a tap: what the toggle's label can't say. */
 .mic-hint {
 	margin: 0;
@@ -161,17 +136,6 @@
 	text-align: center;
 }
 
-@keyframes pulse {
-	0% {
-		box-shadow: 0 0 0 0 color-mix(in srgb, var(--success) 55%, transparent);
-	}
-	70% {
-		box-shadow: 0 0 0 6px transparent;
-	}
-	100% {
-		box-shadow: 0 0 0 0 transparent;
-	}
-}
 
 /* ?debug diagnostics line */
 .debug {
