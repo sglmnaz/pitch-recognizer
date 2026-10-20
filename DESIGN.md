@@ -10,14 +10,24 @@ windows behind black bezels, paper strips for charts. Approved mockups live in
 
 ## Themes
 
-Settings > Appearance offers **System / Light / Dark / Night** and a
-**Display** colour. System follows the device between Light and Dark.
+Settings > Appearance offers a **Theme** dropdown (System, Light, Dark, Night blue
+and the themes below) and a **Display** colour (Theme, grey-green, amber, blue, Casio
+yellow-green, red LED, green phosphor, VFD turquoise, white OLED, ice, violet, e-ink).
+System follows the device between Light and Dark.
 
 | Theme | Plate | Panel | Keys | LCD (default) |
 |-------|-------|-------|------|---------------|
 | Light (`classic`, light) | brushed aluminium | cream `#e7e1d3` | cream | grey-green, dark ink |
 | Dark (`classic`, dark) | graphite | anthracite `#2a2825` | dark grey | negative amber `#ffb347` |
 | Night (`night`, dark) | slate | navy `#1c222c` | blue-grey | blue, white ink |
+| Sand (`sand`, light) | champagne | sand `#d8ccb2` | cream | grey-green |
+| Studio white (`studio`, light) | silver | white `#efeeea` | light grey | grey-green; orange accent |
+| Mint (`mint`, light) | pale aluminium | mint `#cfe2d9` | ivory | pale yellow; red Start |
+| Studio grey (`graphite`, dark) | gunmetal | grey `#383b40` | grey | orange |
+| Petrol (`petrol`, dark) | petrol | teal `#1e3638` | teal | turquoise |
+| Walnut and brass (`walnut`, dark) | brass | walnut `#2e2219` | cream | nixie orange |
+| Olive (`olive`, dark) | olive | olive `#4b5039` | khaki | green phosphor; amber lamps |
+| Stage red (`stage`, dark) | red | red `#9e2b25` | black | red LED; yellow lamps |
 
 `<html data-theme="classic|night" data-mode="light|dark"
 [data-display="green|amber|blue"]>`. The display attribute recolours only the

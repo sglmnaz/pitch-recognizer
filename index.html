@@ -18,9 +18,9 @@
 		// is the oldest key of the mode, migrated there). No stored theme = follow
 		// the device.
 		(function () {
-			var themes = { light: ['classic', 'light'], dark: ['classic', 'dark'], night: ['night', 'dark'] }
-			var colors = { classic: { light: '#e7e1d3', dark: '#2a2825' }, night: { dark: '#1c222c' } }
-			var displays = { green: 1, amber: 1, blue: 1 }
+			var themes = { light: ['classic', 'light'], dark: ['classic', 'dark'], night: ['night', 'dark'], sand: ['sand', 'light'], studio: ['studio', 'light'], mint: ['mint', 'light'], graphite: ['graphite', 'dark'], petrol: ['petrol', 'dark'], walnut: ['walnut', 'dark'], olive: ['olive', 'dark'], stage: ['stage', 'dark'] }
+			var colors = { classic: { light: '#e7e1d3', dark: '#2a2825' }, night: { dark: '#1c222c' }, sand: { light: '#d8ccb2' }, studio: { light: '#efeeea' }, mint: { light: '#cfe2d9' }, graphite: { dark: '#383b40' }, petrol: { dark: '#1e3638' }, walnut: { dark: '#2e2219' }, olive: { dark: '#4b5039' }, stage: { dark: '#9e2b25' } }
+			var displays = { green: 1, amber: 1, blue: 1, casio: 1, red: 1, phosphor: 1, vfd: 1, oled: 1, ice: 1, violet: 1, eink: 1 }
 			var saved = null
 			var display = null
 			try {
@@ -426,8 +426,6 @@
 
 				<div class="scale-info">
 					<h2 class="scale-info__title"></h2>
-					<!-- Degree keys: latched = coloured on the neck. -->
-					<div class="scale-info__notes has-lamps" role="group" aria-label="Scale degrees, tap to colour"></div>
 					<p class="a4-note" hidden></p>
 				</div>
 
@@ -437,6 +435,9 @@
 						<button class="key" type="button" data-action="display" aria-expanded="false" aria-haspopup="true" title="Display options">Display</button>
 						<!-- An aluminium sub-panel whose tab points at the Display key (--tab-x, set by scales.view.ts). -->
 						<div class="display__menu" role="dialog" aria-label="Display" hidden>
+							<span class="silk">Coloured degrees</span>
+							<!-- Degree keys: latched = coloured on the neck. -->
+							<div class="scale-info__notes has-lamps" role="group" aria-label="Scale degrees, tap to colour"></div>
 							<span class="silk">Labels</span>
 							<div class="segmented segmented--small" role="group" aria-label="Labels">
 								<button type="button" data-labels="notes">Notes</button>
@@ -684,18 +685,13 @@
 				<h2 class="settings-group__title">Appearance</h2>
 				<div class="panel settings-card">
 					<div class="settings__section">
-						<div class="switch switch--wrap">
+						<label class="switch">
 							<span class="switch__text">
-								<span class="switch__title" id="themeLabel">Theme</span>
-								<span class="switch__desc">System follows the device</span>
+								<span class="switch__title">Theme</span>
+								<span class="switch__desc">System follows the device, light or dark</span>
 							</span>
-							<div class="segmented settings__theme" role="group" aria-labelledby="themeLabel">
-								<button type="button" data-theme-choice="system" aria-pressed="true">System</button>
-								<button type="button" data-theme-choice="light" aria-pressed="false">Light</button>
-								<button type="button" data-theme-choice="dark" aria-pressed="false">Dark</button>
-								<button type="button" data-theme-choice="night" aria-pressed="false">Night</button>
-							</div>
-						</div>
+							<select class="select select--small" data-theme-choice></select>
+						</label>
 					</div>
 					<div class="settings__section">
 						<label class="switch">
@@ -1176,9 +1172,9 @@
 		<h3>Explore</h3>
 		<ul>
 			<li>Pick a root and a scale: the neck shows every note, coloured by degree (root, 3rd and 5th, the rest).</li>
-			<li>Tap the degree keys to choose which degrees are coloured (their lamps light).</li>
+			<li>Display → Coloured degrees: tap a degree to colour it on the neck (its lamp lights).</li>
 			<li>▶ Play scale plays it; tap any note on the neck to hear it.</li>
-			<li>Display opens the display options: note names or intervals, positions 1–5, vertical neck.</li>
+			<li>Display opens the display options: coloured degrees, note names or intervals, positions 1–5, vertical neck.</li>
 			<li>Listen lights up the note you play on your guitar.</li>
 		</ul>
 		<h3>Chords, progressions, circle</h3>

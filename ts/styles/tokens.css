@@ -439,6 +439,407 @@
 	--dial-face: #161b23;
 }
 
+/* More themes: each overrides what differs from the classic block of its mode. */
+/* Sand: champagne plate, sand panel, cream keys. Light only. */
+[data-theme='sand'],
+[data-theme='sand'] [data-mode='light'] {
+	--panel: #d8ccb2;
+	--panel-sunk: #cbbea2;
+	--panel-raised: #d0c4a9;
+	--ink: #3a3226;
+	--ink-2: #4f4434;
+	--ink-3: #7a6d58;
+	--ink-4: #8c7f68;
+	--rule: rgba(58, 50, 38, 0.22);
+	--rule-strong: rgba(58, 50, 38, 0.75);
+	--outline: #2a241b;
+	--hole: #2a241b;
+	--plate: repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.18) 0 1px, rgba(0, 0, 0, 0.04) 1px 2px), linear-gradient(180deg, #e2d6bd, #cbbd9e);
+	--plate-edge: #3a3226;
+	--plate-ink: #4a3f2e;
+	--plate-ink-2: #6a5d48;
+	--key-face: #eee5d0;
+	--key-hi: #fbf6ea;
+	--key-side: #d9cdb4;
+	--key-front: #b3a585;
+	--key-ink: #4a3f2e;
+	--key3-face: #c96a2b;
+	--key3-hi: #e08c50;
+	--key3-side: #b05a20;
+	--key3-front: #7e3e12;
+	--lamp-off: #5a2a17;
+	--lamp-on: #ff5a22;
+	--window: #2a241b;
+	--lcd-bg: #c9caa8;
+	--lcd-ink: #262818;
+	--lcd-dim: rgba(38, 40, 24, 0.13);
+	--rocker-plate: #2a241b;
+	--rocker-up: #5a5040;
+	--rocker-down: #3a3226;
+	--track: #2a241b;
+	--menu-bg: #2e271d;
+	--menu-ink: #e4d9c3;
+	--menu-ink-2: #8c7f68;
+	--menu-rule: #4a3f2e;
+	--board: #e6d8b8;
+	--dial-face: #efe6d2;
+}
+
+/* Studio white: silver plate, white panel, light grey keys, orange accent. Light only. */
+[data-theme='studio'],
+[data-theme='studio'] [data-mode='light'] {
+	--panel: #efeeea;
+	--panel-sunk: #e2e1dc;
+	--panel-raised: #e7e6e1;
+	--ink: #2b2b2b;
+	--ink-2: #444444;
+	--ink-3: #707070;
+	--ink-4: #8a8a8a;
+	--rule: rgba(43, 43, 43, 0.2);
+	--rule-strong: rgba(43, 43, 43, 0.75);
+	--outline: #2b2b2b;
+	--hole: #2b2b2b;
+	--plate: repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.18) 0 1px, rgba(0, 0, 0, 0.04) 1px 2px), linear-gradient(180deg, #e4e4e1, #d2d2ce);
+	--plate-edge: #2b2b2b;
+	--plate-ink: #2b2b2b;
+	--plate-ink-2: #5a5a5a;
+	--key-face: #fafaf8;
+	--key-hi: #ffffff;
+	--key-side: #e2e2de;
+	--key-front: #b8b8b2;
+	--key-ink: #2b2b2b;
+	--key2-face: #c4c4c0;
+	--key2-hi: #dcdcd8;
+	--key2-side: #b0b0ac;
+	--key2-front: #8c8c88;
+	--key2-ink: #2b2b2b;
+	--key3-face: #f06a1a;
+	--key3-hi: #ff9a5a;
+	--key3-side: #d85a10;
+	--key3-front: #a0400a;
+	--lamp-off: #5a2412;
+	--lamp-on: #ff6a1a;
+	--lamp-glow: rgba(255, 106, 26, 0.55);
+	--window: #1d1d1d;
+	--lcd-bg: #d4d6d0;
+	--lcd-ink: #1f211d;
+	--lcd-dim: rgba(31, 33, 29, 0.13);
+	--rocker-plate: #2b2b2b;
+	--rocker-up: #55555a;
+	--rocker-down: #333336;
+	--track: #2b2b2b;
+	--menu-bg: #262626;
+	--menu-ink: #ececea;
+	--menu-ink-2: #8a8a8a;
+	--menu-rule: #3a3a3a;
+	--accent: #e0560f;
+	--board: #f2f0ea;
+	--dial-face: #f7f6f2;
+}
+
+/* Mint fifties: pastel mint panel, ivory keys, red accent. Light only. */
+[data-theme='mint'],
+[data-theme='mint'] [data-mode='light'] {
+	--panel: #cfe2d9;
+	--panel-sunk: #c0d6cc;
+	--panel-raised: #c8ddd3;
+	--ink: #25352e;
+	--ink-2: #34473f;
+	--ink-3: #5e7369;
+	--ink-4: #74887e;
+	--rule: rgba(37, 53, 46, 0.22);
+	--rule-strong: rgba(37, 53, 46, 0.75);
+	--outline: #1f2a25;
+	--hole: #1f2a25;
+	--plate: repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.18) 0 1px, rgba(0, 0, 0, 0.04) 1px 2px), linear-gradient(180deg, #dfe9e4, #c6d4cd);
+	--plate-edge: #25352e;
+	--plate-ink: #2c3e36;
+	--plate-ink-2: #4f6359;
+	--key-face: #f6f2e2;
+	--key-hi: #ffffff;
+	--key-side: #e2dcc6;
+	--key-front: #bdb59a;
+	--key-ink: #2c3e36;
+	--key3-face: #d8443a;
+	--key3-hi: #ec766e;
+	--key3-side: #bc362e;
+	--key3-front: #86231c;
+	--window: #1c2622;
+	--lcd-bg: #e8e6c4;
+	--lcd-ink: #2a2a18;
+	--lcd-dim: rgba(42, 42, 24, 0.13);
+	--rocker-plate: #1f2a25;
+	--rocker-up: #4a5a52;
+	--rocker-down: #2c3a33;
+	--track: #1f2a25;
+	--menu-bg: #22302a;
+	--menu-ink: #dcebe4;
+	--menu-ink-2: #74887e;
+	--menu-rule: #34473f;
+	--board: #eef0e2;
+	--dial-face: #f4f2e2;
+}
+
+/* Studio grey: gunmetal rack panel, grey keys, orange LCD. Dark only. */
+[data-theme='graphite'],
+[data-theme='graphite'] [data-mode='dark'] {
+	color-scheme: dark;
+	--panel: #383b40;
+	--panel-sunk: #2f3236;
+	--panel-raised: #404349;
+	--ink: #d9dce1;
+	--ink-2: #b9bdc4;
+	--ink-3: #8e939b;
+	--ink-4: #737880;
+	--rule-strong: #141518;
+	--outline: #141518;
+	--hole: #141518;
+	--plate: repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.06) 0 1px, rgba(0, 0, 0, 0.04) 1px 2px), linear-gradient(180deg, #4a4e55, #3a3d43);
+	--plate-edge: #141518;
+	--plate-ink: #e4e6ea;
+	--plate-ink-2: #a3a8b0;
+	--key-face: #575b62;
+	--key-hi: #73777e;
+	--key-side: #4a4e54;
+	--key-front: #26282c;
+	--key-ink: #e4e6ea;
+	--key2-face: #6b7078;
+	--key2-hi: #878c94;
+	--key2-side: #5d6168;
+	--key2-front: #33363a;
+	--key2-ink: #eef0f3;
+	--window: #0a0b0d;
+	--lcd-bg: #1b1205;
+	--lcd-ink: #ff9d2e;
+	--lcd-dim: rgba(255, 157, 46, 0.12);
+	--lcd-glow: 0 0 8px rgba(255, 150, 40, 0.6);
+	--rocker-plate: #141518;
+	--rocker-up: #575b62;
+	--rocker-down: #2a2c30;
+	--track: #141518;
+	--menu-bg: #1f2125;
+	--menu-ink: #d9dce1;
+	--menu-ink-2: #737880;
+	--menu-rule: #33363a;
+	--board: #2f3236;
+	--board-inlay: #454950;
+	--dial-face: #26282c;
+}
+
+/* Petrol: teal-blue panel and keys, turquoise LCD. Dark only. */
+[data-theme='petrol'],
+[data-theme='petrol'] [data-mode='dark'] {
+	color-scheme: dark;
+	--panel: #1e3638;
+	--panel-sunk: #182c2e;
+	--panel-raised: #24403f;
+	--ink: #d3e6e4;
+	--ink-2: #a9c6c3;
+	--ink-3: #7fa09d;
+	--ink-4: #668683;
+	--rule-strong: #091314;
+	--outline: #091314;
+	--hole: #091314;
+	--plate: repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.06) 0 1px, rgba(0, 0, 0, 0.04) 1px 2px), linear-gradient(180deg, #2c4a4c, #203a3c);
+	--plate-edge: #091314;
+	--plate-ink: #dceeec;
+	--plate-ink-2: #8fb0ad;
+	--key-face: #2f5254;
+	--key-hi: #46706f;
+	--key-side: #264547;
+	--key-front: #122425;
+	--key-ink: #d3e6e4;
+	--key2-face: #3e6466;
+	--key2-hi: #58807f;
+	--key2-side: #345557;
+	--key2-front: #18302f;
+	--key2-ink: #e4f2f0;
+	--window: #040a0a;
+	--lcd-bg: #04110f;
+	--lcd-ink: #4ff0d4;
+	--lcd-dim: rgba(79, 240, 212, 0.12);
+	--lcd-glow: 0 0 8px rgba(70, 240, 210, 0.6);
+	--rocker-plate: #091314;
+	--rocker-up: #46706f;
+	--rocker-down: #1a3133;
+	--track: #091314;
+	--menu-bg: #122426;
+	--menu-ink: #d3e6e4;
+	--menu-ink-2: #668683;
+	--menu-rule: #264547;
+	--board: #1b3133;
+	--board-inlay: #2c4a4c;
+	--dial-face: #15292b;
+}
+
+/* Walnut and brass: walnut panel, brass plate, cream keys, nixie LCD. Dark only. */
+[data-theme='walnut'],
+[data-theme='walnut'] [data-mode='dark'] {
+	color-scheme: dark;
+	--panel: #2e2219;
+	--panel-sunk: #261c14;
+	--panel-raised: #362a20;
+	--ink: #ecdcc6;
+	--ink-2: #cdb99e;
+	--ink-3: #a8917b;
+	--ink-4: #8a765f;
+	--rule-strong: #140d08;
+	--outline: #140d08;
+	--hole: #140d08;
+	--plate: repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.15) 0 1px, rgba(0, 0, 0, 0.04) 1px 2px), linear-gradient(180deg, #b8955a, #9a7840);
+	--plate-edge: #1a120c;
+	--plate-ink: #2e2219;
+	--plate-ink-2: #4a3622;
+	--plate-shine: rgba(255, 255, 255, 0.25);
+	--key-face: #e9dcc4;
+	--key-hi: #f8efdc;
+	--key-side: #d2c3a8;
+	--key-front: #a3917a;
+	--key-ink: #4a3a2a;
+	--key-lip: rgba(40, 34, 26, 0.22);
+	--key-down: 93%;
+	--key2-face: #b9a88a;
+	--key2-hi: #d4c4a6;
+	--key2-side: #a39376;
+	--key2-front: #7a6b52;
+	--key2-ink: #2e2219;
+	--key3-face: #c2502a;
+	--key3-hi: #da7854;
+	--key3-side: #a8401c;
+	--key3-front: #702a12;
+	--lamp-off: #4a2410;
+	--lamp-on: #ff7a2e;
+	--lamp-glow: rgba(255, 122, 46, 0.6);
+	--window: #120a05;
+	--lcd-bg: #120805;
+	--lcd-ink: #ff7a2e;
+	--lcd-dim: rgba(255, 122, 46, 0.12);
+	--lcd-glow: 0 0 8px rgba(255, 110, 40, 0.7);
+	--rocker-plate: #140d08;
+	--rocker-up: #5a4a38;
+	--rocker-down: #2e2219;
+	--track: #140d08;
+	--menu-bg: #1e160f;
+	--menu-ink: #ecdcc6;
+	--menu-ink-2: #8a765f;
+	--menu-rule: #3a2c20;
+	--board: #3a2c20;
+	--board-inlay: #4f3e2c;
+	--dial-face: #241a12;
+}
+
+/* Olive: field-instrument olive panel, khaki keys, green phosphor LCD, amber lamps. Dark only. */
+[data-theme='olive'],
+[data-theme='olive'] [data-mode='dark'] {
+	color-scheme: dark;
+	--panel: #4b5039;
+	--panel-sunk: #41452f;
+	--panel-raised: #545a40;
+	--ink: #e2e3d2;
+	--ink-2: #c4c6b0;
+	--ink-3: #99a08a;
+	--ink-4: #80866f;
+	--rule-strong: #1a1c13;
+	--outline: #1a1c13;
+	--hole: #1a1c13;
+	--plate: repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.06) 0 1px, rgba(0, 0, 0, 0.04) 1px 2px), linear-gradient(180deg, #5c6248, #4a4f39);
+	--plate-edge: #1a1c13;
+	--plate-ink: #e6e8d6;
+	--plate-ink-2: #aab097;
+	--key-face: #a8a37f;
+	--key-hi: #c4bf9b;
+	--key-side: #948f6c;
+	--key-front: #6a664b;
+	--key-ink: #24251a;
+	--key-lip: rgba(40, 34, 26, 0.25);
+	--key-down: 90%;
+	--key2-face: #7a7e62;
+	--key2-hi: #949a7c;
+	--key2-side: #6a6e54;
+	--key2-front: #45482f;
+	--key2-ink: #eef0e0;
+	--key3-face: #c48a2a;
+	--key3-hi: #dca552;
+	--key3-side: #a8741e;
+	--key3-front: #6e4c12;
+	--lamp-off: #4a3410;
+	--lamp-on: #ffb02e;
+	--lamp-glow: rgba(255, 176, 46, 0.6);
+	--window: #0e100a;
+	--lcd-bg: #0c160d;
+	--lcd-ink: #7dff8a;
+	--lcd-dim: rgba(125, 255, 138, 0.12);
+	--lcd-glow: 0 0 7px rgba(110, 255, 130, 0.55);
+	--rocker-plate: #1a1c13;
+	--rocker-up: #6a6e54;
+	--rocker-down: #2e3122;
+	--track: #1a1c13;
+	--menu-bg: #22251a;
+	--menu-ink: #e2e3d2;
+	--menu-ink-2: #80866f;
+	--menu-rule: #3a3e2c;
+	--board: #3e4230;
+	--board-inlay: #545a40;
+	--dial-face: #2e3122;
+}
+
+/* Stage red: red panel, black keys, red LEDs, yellow lamps. Dark only. */
+[data-theme='stage'],
+[data-theme='stage'] [data-mode='dark'] {
+	color-scheme: dark;
+	--panel: #9e2b25;
+	--panel-sunk: #8a241f;
+	--panel-raised: #a8332c;
+	--ink: #f3e2dc;
+	--ink-2: #e3c6bd;
+	--ink-3: #d0a69a;
+	--ink-4: #b88a7e;
+	--rule: rgba(0, 0, 0, 0.3);
+	--rule-strong: #3a0f0c;
+	--outline: #1a0705;
+	--hole: #1a0705;
+	--plate: repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.06) 0 1px, rgba(0, 0, 0, 0.04) 1px 2px), linear-gradient(180deg, #b23a32, #962922);
+	--plate-edge: #3a0f0c;
+	--plate-ink: #fbeee9;
+	--plate-ink-2: #e8c2b8;
+	--key-face: #2a2726;
+	--key-hi: #45413f;
+	--key-side: #211f1e;
+	--key-front: #0c0b0b;
+	--key-ink: #f3e2dc;
+	--key2-face: #3a3634;
+	--key2-hi: #55504d;
+	--key2-side: #2f2c2a;
+	--key2-front: #121110;
+	--key2-ink: #f3e2dc;
+	--key3-face: #f3e2dc;
+	--key3-hi: #ffffff;
+	--key3-side: #d8c6c0;
+	--key3-front: #a8928b;
+	--key3-ink: #3a0f0c;
+	--lamp-off: #4a3a10;
+	--lamp-on: #ffd23a;
+	--lamp-glow: rgba(255, 210, 58, 0.6);
+	--window: #160606;
+	--lcd-bg: #1a0605;
+	--lcd-ink: #ff4a3a;
+	--lcd-dim: rgba(255, 74, 58, 0.12);
+	--lcd-glow: 0 0 8px rgba(255, 60, 40, 0.7);
+	--rocker-plate: #1a0705;
+	--rocker-up: #45413f;
+	--rocker-down: #211f1e;
+	--track: #1a0705;
+	--menu-bg: #1a0a08;
+	--menu-ink: #f3e2dc;
+	--menu-ink-2: #b88a7e;
+	--menu-rule: #3a1a16;
+	--accent: #ffd23a;
+	--accent-contrast: #2a1a05;
+	--board: #2e2522;
+	--board-inlay: #45393a;
+	--dial-face: #241a18;
+}
+
 /* Tier 3: display ------------------------------------------------------------ */
 /* data-display on <html> recolours the LCD windows only, whatever the theme. */
 :root[data-display='green'] {
@@ -465,13 +866,85 @@
 	--lcd-shadow: inset 0 4px 8px -3px rgba(0, 0, 0, 0.6);
 }
 
+/* Casio yellow-green */
+:root[data-display='casio'] {
+	--lcd-bg: #b4c43a;
+	--lcd-ink: #1e2408;
+	--lcd-dim: rgba(30, 36, 8, 0.14);
+	--lcd-glow: none;
+	--lcd-shadow: inset 0 4px 6px -3px rgba(0, 0, 0, 0.45);
+}
+
+/* Red LED */
+:root[data-display='red'] {
+	--lcd-bg: #1a0605;
+	--lcd-ink: #ff3b2f;
+	--lcd-dim: rgba(255, 59, 47, 0.12);
+	--lcd-glow: 0 0 8px rgba(255, 50, 40, 0.7);
+	--lcd-shadow: inset 0 4px 8px -3px rgba(0, 0, 0, 0.9);
+}
+
+/* Green phosphor */
+:root[data-display='phosphor'] {
+	--lcd-bg: #06120a;
+	--lcd-ink: #62ff7a;
+	--lcd-dim: rgba(98, 255, 122, 0.12);
+	--lcd-glow: 0 0 8px rgba(90, 255, 120, 0.6);
+	--lcd-shadow: inset 0 4px 8px -3px rgba(0, 0, 0, 0.9);
+}
+
+/* VFD turquoise */
+:root[data-display='vfd'] {
+	--lcd-bg: #040b0b;
+	--lcd-ink: #5ff2dc;
+	--lcd-dim: rgba(95, 242, 220, 0.12);
+	--lcd-glow: 0 0 9px rgba(80, 240, 215, 0.65);
+	--lcd-shadow: inset 0 4px 8px -3px rgba(0, 0, 0, 0.9);
+}
+
+/* White OLED */
+:root[data-display='oled'] {
+	--lcd-bg: #050505;
+	--lcd-ink: #f2f2f2;
+	--lcd-dim: rgba(242, 242, 242, 0.1);
+	--lcd-glow: 0 0 5px rgba(255, 255, 255, 0.35);
+	--lcd-shadow: inset 0 4px 8px -3px rgba(0, 0, 0, 0.9);
+}
+
+/* Ice */
+:root[data-display='ice'] {
+	--lcd-bg: #d6e8f5;
+	--lcd-ink: #13263f;
+	--lcd-dim: rgba(19, 38, 63, 0.13);
+	--lcd-glow: none;
+	--lcd-shadow: inset 0 4px 6px -3px rgba(0, 0, 0, 0.4);
+}
+
+/* Violet */
+:root[data-display='violet'] {
+	--lcd-bg: #4a2c8a;
+	--lcd-ink: #efe6ff;
+	--lcd-dim: rgba(239, 230, 255, 0.14);
+	--lcd-glow: 0 0 7px rgba(230, 215, 255, 0.5);
+	--lcd-shadow: inset 0 4px 8px -3px rgba(0, 0, 0, 0.6);
+}
+
+/* E-ink */
+:root[data-display='eink'] {
+	--lcd-bg: #dcdcd6;
+	--lcd-ink: #2a2a28;
+	--lcd-dim: rgba(42, 42, 40, 0.12);
+	--lcd-glow: none;
+	--lcd-shadow: inset 0 3px 5px -3px rgba(0, 0, 0, 0.3);
+}
+
 /* Roles every component reads, derived from the materials above. Declared
    wherever a mode is, so a subtree with its own data-mode resolves them
    against its own materials. */
 :root,
 [data-mode='light'],
 [data-mode='dark'],
-[data-theme='night'] [data-mode='dark'] {
+[data-theme] [data-mode] {
 	--bg: var(--panel);
 	--surface: var(--key-face);
 	--surface-2: var(--panel-sunk);

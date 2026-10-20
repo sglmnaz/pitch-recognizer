@@ -212,7 +212,8 @@ test.describe('behaviour', () => {
 		expect(stored).toEqual([null, 'light'])
 		await expect(page.locator('html')).toHaveAttribute('data-mode', 'light')
 		await expect(page.locator('meta[name="theme-color"]')).toHaveAttribute('content', '#e7e1d3')
-		await page.locator('[data-theme-choice="night"]').click()
+		await page.getByRole('combobox', { name: 'Theme' }).click()
+		await page.getByRole('option', { name: 'Night blue' }).click()
 		await expect(page.locator('meta[name="theme-color"]')).toHaveAttribute('content', '#1c222c')
 		await page.reload()
 		await expect(page.locator('html')).toHaveAttribute('data-theme', 'night')
@@ -258,4 +259,28 @@ test.describe('behaviour', () => {
 		await page.reload()
 		await expect(page.locator('html')).toHaveAttribute('data-display', 'amber')
 	})
+})
+
+// The extra themes and LCD colours (ts/ui/theme.ts): one phone screen each,
+// so a missing token shows without multiplying every shot by every theme.
+test.describe('themes', () => {
+	test.skip(({ theme, viewport }) => theme !== 'light' || viewport?.width !== 375, 'phone-light only')
+	const remember = (page: Page, key: string, value: string) =>
+		page.evaluate(([k, v]) => localStorage.setItem(k, v), [key, value] as const).then(() => page.reload())
+
+	for (const id of ['sand', 'studio', 'mint', 'graphite', 'petrol', 'walnut', 'olive', 'stage']) {
+		test(id, async ({ page, open }) => {
+			await open('#chords')
+			await remember(page, 'pitch-recognizer:mode', id)
+			await shot(page, `theme-${id}`)
+		})
+	}
+
+	for (const id of ['casio', 'red', 'phosphor', 'vfd', 'oled', 'ice', 'violet', 'eink']) {
+		test(`lcd ${id}`, async ({ page, open }) => {
+			await open('#metronome')
+			await remember(page, 'pitch-recognizer:display', id)
+			await expect(page.locator('#view-metronome .plate')).toHaveScreenshot(`lcd-${id}.png`)
+		})
+	}
 })

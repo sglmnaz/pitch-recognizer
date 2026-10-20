@@ -1,8 +1,8 @@
 import { readString, remove, writeString } from '../core/storage'
 
 /*
- * Theme and display (docs/adr/0007). <html data-theme="classic|night"
- * data-mode="light|dark" [data-display="green|amber|blue"]>: the theme picks
+ * Theme and display (docs/adr/0007). <html data-theme="classic|night|sand|…"
+ * data-mode="light|dark" [data-display="green|amber|…"]>: the theme picks
  * the materials of the whole app, the mode drives color-scheme and lets a
  * subtree force light or dark (the fretboard, the trainer staff), the display
  * recolours only the LCD windows (absent = the theme's own LCD). The inline
@@ -19,7 +19,7 @@ export interface Theme {
 	id: string
 	label: string
 	/** data-theme: the palette block in tokens.css. */
-	palette: 'classic' | 'night'
+	palette: string
 	/** data-mode it forces; absent = follow the device (System). */
 	mode?: Mode
 	/** Browser chrome colour (<meta name="theme-color">) per resolved mode: the panel colour. */
@@ -33,6 +33,14 @@ export const THEMES: readonly Theme[] = [
 	{ id: 'light', label: 'Light', palette: 'classic', mode: 'light', themeColor: CLASSIC },
 	{ id: 'dark', label: 'Dark', palette: 'classic', mode: 'dark', themeColor: CLASSIC },
 	{ id: 'night', label: 'Night blue', palette: 'night', mode: 'dark', themeColor: { dark: '#1c222c' } },
+	{ id: 'sand', label: 'Sand', palette: 'sand', mode: 'light', themeColor: { light: '#d8ccb2' } },
+	{ id: 'studio', label: 'Studio white', palette: 'studio', mode: 'light', themeColor: { light: '#efeeea' } },
+	{ id: 'mint', label: 'Mint', palette: 'mint', mode: 'light', themeColor: { light: '#cfe2d9' } },
+	{ id: 'graphite', label: 'Studio grey', palette: 'graphite', mode: 'dark', themeColor: { dark: '#383b40' } },
+	{ id: 'petrol', label: 'Petrol', palette: 'petrol', mode: 'dark', themeColor: { dark: '#1e3638' } },
+	{ id: 'walnut', label: 'Walnut and brass', palette: 'walnut', mode: 'dark', themeColor: { dark: '#2e2219' } },
+	{ id: 'olive', label: 'Olive', palette: 'olive', mode: 'dark', themeColor: { dark: '#4b5039' } },
+	{ id: 'stage', label: 'Stage red', palette: 'stage', mode: 'dark', themeColor: { dark: '#9e2b25' } },
 ]
 
 /** LCD colours; 'auto' = the theme's own. */
@@ -41,6 +49,14 @@ export const DISPLAYS = [
 	{ id: 'green', label: 'Grey-green' },
 	{ id: 'amber', label: 'Amber' },
 	{ id: 'blue', label: 'Blue' },
+	{ id: 'casio', label: 'Casio yellow-green' },
+	{ id: 'red', label: 'Red LED' },
+	{ id: 'phosphor', label: 'Green phosphor' },
+	{ id: 'vfd', label: 'VFD turquoise' },
+	{ id: 'oled', label: 'White OLED' },
+	{ id: 'ice', label: 'Ice' },
+	{ id: 'violet', label: 'Violet' },
+	{ id: 'eink', label: 'E-ink' },
 ] as const
 export type Display = (typeof DISPLAYS)[number]['id']
 

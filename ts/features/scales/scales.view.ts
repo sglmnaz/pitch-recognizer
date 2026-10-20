@@ -151,8 +151,10 @@ export function createScalesView(root: HTMLElement): View {
 		event.stopPropagation()
 		setMenuOpen(displayMenu.hidden)
 	})
+	// The path, not the target: a degree key tapped inside is re-rendered (and
+	// detached) before the click reaches the document.
 	document.addEventListener('click', (event) => {
-		if (!displayMenu.hidden && !displayMenu.contains(event.target as Node)) setMenuOpen(false)
+		if (!displayMenu.hidden && !event.composedPath().includes(displayMenu)) setMenuOpen(false)
 	})
 	document.addEventListener('keydown', (event) => {
 		if (event.key === 'Escape') setMenuOpen(false)
