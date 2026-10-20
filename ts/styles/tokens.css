@@ -161,12 +161,10 @@
 	--key-front: #b5ad9b;
 	--key-ink: #4a463d;
 	--key-drop: 0 2.5px 3px 1px rgba(0, 0, 0, 0.22);
-	--key-face-down: #e2dccc;
-	--key-hi-down: #eee8da;
-	--key-side-down: #cbc3b2;
-	--key-front-down: #a59d8b;
 	/* The panel lip's shadow across the top of a sunk key. */
 	--key-lip: rgba(40, 34, 26, 0.22);
+	/* How much a sunk key darkens (share of its colour kept, the rest black). */
+	--key-down: 93%;
 	--key-drop-down: 0 1px 2px rgba(0, 0, 0, 0.08);
 
 	/* Grey keys: steppers (◀ ▶ ▼ ▲). */
@@ -282,11 +280,8 @@
 	--key-front: #1f1d1a;
 	--key-ink: #d8d2c4;
 	--key-drop: 0 2.5px 3px 1px rgba(0, 0, 0, 0.45);
-	--key-face-down: #34312d;
-	--key-hi-down: #4a4741;
-	--key-side-down: #2d2a27;
-	--key-front-down: #181614;
 	--key-lip: rgba(0, 0, 0, 0.4);
+	--key-down: 84%;
 	--key-drop-down: none;
 
 	--key2-face: #55524c;
@@ -386,10 +381,7 @@
 	--key-side: #2c3340;
 	--key-front: #191e27;
 	--key-ink: #d5dbe6;
-	--key-face-down: #2e3542;
-	--key-hi-down: #444d5d;
-	--key-side-down: #262c37;
-	--key-front-down: #12161d;
+	--key-down: 80%;
 
 	--key2-face: #4a5466;
 	--key2-hi: #67718a;

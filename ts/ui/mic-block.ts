@@ -39,11 +39,12 @@ export function onMicChange(listener: () => void) {
 export function micNeedChanged() {
 	const { view, section } = current()
 	const wanted = view.wantsMic?.() ?? true
-	// One shared mic control, placed right under the active view's readout.
-	// Views without one (Scales) have their own mic toggle: hide it there.
-	const readout = section.querySelector('.readout')
-	readout?.after(mic)
-	mic.hidden = !readout || !wanted
+	// One shared mic control, placed right after the view's [data-mic-slot] (or,
+	// failing that, its readout). Views with neither (Scales) have their own mic
+	// toggle: hide it there.
+	const anchor = section.querySelector('[data-mic-slot], .readout')
+	anchor?.after(mic)
+	mic.hidden = !anchor || !wanted
 	if (!wanted) {
 		if (micActive) {
 			micResume = true

@@ -54,14 +54,14 @@
 		--k-front-h: calc(var(--key-edge) - var(--key-sink));
 		border-top-width: var(--key-sink);
 		/* A shade darker: the variant's own colours, mixed toward black. */
-		background-color: color-mix(in srgb, var(--k-face) 93%, #000);
+		background-color: color-mix(in srgb, var(--k-face) var(--key-down), #000);
 		background-image: linear-gradient(180deg, var(--key-lip), transparent 9px);
 		box-shadow:
 			inset 0 0 0 var(--outline-width) var(--outline),
-			inset 0 var(--key-chamfer) 0 0 color-mix(in srgb, var(--k-hi) 94%, #000),
-			inset var(--key-cheek) 0 0 0 color-mix(in srgb, var(--k-side) 94%, #000),
-			inset calc(var(--key-cheek) * -1) 0 0 0 color-mix(in srgb, var(--k-side) 94%, #000),
-			inset 0 calc(var(--k-front-h) * -1) 0 0 color-mix(in srgb, var(--k-front) 92%, #000),
+			inset 0 var(--key-chamfer) 0 0 color-mix(in srgb, var(--k-hi) var(--key-down), #000),
+			inset var(--key-cheek) 0 0 0 color-mix(in srgb, var(--k-side) var(--key-down), #000),
+			inset calc(var(--key-cheek) * -1) 0 0 0 color-mix(in srgb, var(--k-side) var(--key-down), #000),
+			inset 0 calc(var(--k-front-h) * -1) 0 0 color-mix(in srgb, var(--k-front) var(--key-down), #000),
 			var(--key-drop-down);
 	}
 

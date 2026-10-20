@@ -197,7 +197,7 @@
 	}
 }
 
-/* Desktop grids (Tuner, Chords, Trainer; the other views own theirs) ------ */
+/* Desktop grids (Tuner, Chords; the other views own theirs) ---------------- */
 @media (min-width: 960px) {
 	/* Tuner and Chords: the big readout on the left, mic and hint beside it,
 	   so nothing is stretched into a long thin line. */
@@ -209,21 +209,6 @@
 			'readout mic'
 			'readout hint';
 		grid-template-rows: auto 1fr;
-		gap: 20px 28px;
-		align-items: start;
-	}
-
-	/* Trainer: what to play (score, staff) on the left, what you play
-	   (readout, mic) on the right. */
-	#view-trainer:not([hidden]) {
-		display: grid;
-		grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-		grid-template-areas:
-			'mode mode'
-			'score readout'
-			'prompt readout'
-			'prompt mic'
-			'controls mic';
 		gap: 20px 28px;
 		align-items: start;
 	}
@@ -258,22 +243,5 @@
 	.view > .hint {
 		grid-area: hint;
 		text-align: left;
-	}
-
-	.view > .scoreboard {
-		grid-area: score;
-	}
-
-	/* The staff card grows to the height of the readout + mic beside it. */
-	.view > .prompt {
-		grid-area: prompt;
-		align-self: stretch;
-		justify-content: center;
-		gap: 32px;
-	}
-
-	.view > .controls {
-		grid-area: controls;
-		align-self: end;
 	}
 }
