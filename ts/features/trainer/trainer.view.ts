@@ -10,6 +10,7 @@ import { createReadout } from '../../ui/readout'
 import { micNeedChanged } from '../../ui/mic-block'
 import { createEarView } from './ear.view'
 import { createChangesView } from './changes.view'
+import { createScoreboard } from './led'
 
 /**
  * Four exercises behind one segmented control: Notes (match the note on the
@@ -25,9 +26,7 @@ export function createTrainerView(root: HTMLElement): View {
 
 	const readout = createReadout(root)
 
-	const scoreValue = root.querySelector<HTMLElement>('[data-stat="score"]')!
-	const streakValue = root.querySelector<HTMLElement>('[data-stat="streak"]')!
-	const bestValue = root.querySelector<HTMLElement>('[data-stat="best"]')!
+	const showScore = createScoreboard(root)
 
 	const skipButton = root.querySelector<HTMLButtonElement>('[data-action="skip"]')!
 
@@ -63,12 +62,7 @@ export function createTrainerView(root: HTMLElement): View {
 		applyStaffTheme()
 	}
 
-	function updateScoreboard() {
-		const { score, streak, best } = Game.getState()
-		scoreValue.textContent = String(score)
-		streakValue.textContent = String(streak)
-		bestValue.textContent = String(best)
-	}
+	const updateScoreboard = () => showScore(Game.getState())
 
 	const clearReadout = (message: string) => readout.idle(message)
 

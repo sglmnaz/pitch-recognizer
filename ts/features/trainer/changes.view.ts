@@ -17,17 +17,20 @@ import { reducedMotion } from '../../ui/media'
 import { screenLock } from '../../ui/screen-lock'
 import { focusMicButton } from '../../ui/mic-block'
 import { faking, heardChord, installDebugHook, resetHeard, strummed } from './changes.recognizer'
+import { showLed } from './led'
 import { clockText, createChangesSession, verdict } from './changes.session'
 
 // Screen readers hear the count at most this often (a change can come every 250 ms).
 const ANNOUNCE_MS = 4000
 const STRIP_MARKS = 12
 
-// Arrows point the way the change was off the beat (a legend under the strip says so).
+// Arrows point the way the change was off the beat (the timing lamps' labels say so).
 const MARK_GLYPH: Record<Changes.Mark, string> = { hit: '✓', early: '←', late: '→', miss: '×' }
 const MARK_TEXT: Record<Changes.Mark, string> = { hit: 'on time', early: 'early', late: 'late', miss: 'missed' }
 
 const pairLabel = (sequence: string[]) => sequence.join('–')
+// In time's LED shows the share of changes on time; its label carries the unit.
+const ON_TIME_LABEL = 'On time %'
 
 export function createChangesView(root: HTMLElement): View {
 	const { $ } = scoped(root)
@@ -39,7 +42,10 @@ export function createChangesView(root: HTMLElement): View {
 	const target = $<HTMLElement>('.changes-target')
 	const next = $<HTMLElement>('.changes-next')
 	const heardText = $<HTMLElement>('.changes-heard span')
+	const timing = $<HTMLElement>('.changes-timing')
 	const strip = $<HTMLElement>('.changes-strip')
+	const tally = $<HTMLElement>('.changes-tally')
+	const lamps = timing.querySelectorAll<HTMLElement>('[data-mark]')
 	const result = $<HTMLElement>('.changes-result')
 	const shapesBox = $<HTMLElement>('.changes-shapes')
 	const startButton = $<HTMLButtonElement>('[data-action="changes-start"]')
@@ -50,7 +56,6 @@ export function createChangesView(root: HTMLElement): View {
 	const chipsBox = $<HTMLElement>('.changes-chips')
 	const order = $<HTMLElement>('.changes-order')
 	const summary = $<HTMLElement>('.changes-summary')
-	const legend = $<HTMLElement>('.changes-legend')
 	const tempo = $<HTMLElement>('.changes-tempo')
 	const tempoValue = $<HTMLElement>('.changes-tempo__value')
 
@@ -135,20 +140,27 @@ export function createChangesView(root: HTMLElement): View {
 		button.addEventListener('click', () => Settings.update({ changesBpm: clamp(Settings.get().changesBpm + Number(button.dataset.changesBpm), 40, 160) }))
 	}
 
+	/** The last sessions traced in pen on chart paper (trainer.css draws the grid): the best dashed, the latest dot in red. */
 	function sparkline(history: number[], best: number): string {
 		if (history.length < 2) return ''
-		const w = 96
-		const h = 24
-		const top = Math.max(best, 1)
-		const x = (i: number) => (i * (w - 4)) / (history.length - 1) + 2
-		const y = (n: number) => h - 3 - (n / top) * (h - 6)
-		const points = history.map((n, i) => `${x(i).toFixed(1)},${y(n).toFixed(1)}`).join(' ')
+		const w = 300
+		const h = 80
+		const pad = 10
+		// Headroom above the best, so the trace never runs along the paper's edge.
+		const top = Math.max(best, 1) * 1.1
+		const x = (i: number) => pad + (i * (w - 2 * pad)) / (history.length - 1)
+		const y = (n: number) => h - pad - (n / top) * (h - 2 * pad)
+		const points = history.map((n, i) => [x(i).toFixed(1), y(n).toFixed(1)])
 		const last = history.length - 1
+		const dots = points.map(([cx, cy], i) =>
+			i === last ? `<circle class="spark__dot spark__dot--last" cx="${cx}" cy="${cy}" r="3.5"/>` : `<circle class="spark__dot" cx="${cx}" cy="${cy}" r="2"/>`
+		)
 		return (
-			`<svg class="spark" viewBox="0 0 ${w} ${h}" width="${w}" height="${h}" role="img" aria-label="Last ${history.length} sessions: ${history.join(', ')}">` +
-			`<line class="spark__best" x1="2" x2="${w - 2}" y1="${y(best)}" y2="${y(best)}"/>` +
-			`<polyline class="spark__line" points="${points}"/>` +
-			`<circle class="spark__dot" cx="${x(last)}" cy="${y(history[last])}" r="2.5"/></svg>`
+			`<span class="silk">Last ${history.length} sessions</span>` +
+			'<span class="window"><span class="paper chart">' +
+			`<svg class="spark" viewBox="0 0 ${w} ${h}" role="img" aria-label="Last ${history.length} sessions: ${history.join(', ')}">` +
+			`<line class="spark__best" x1="${pad}" x2="${w - pad}" y1="${y(best).toFixed(1)}" y2="${y(best).toFixed(1)}"/>` +
+			`<polyline class="spark__line" points="${points.join(' ')}"/>${dots.join('')}</svg></span></span>`
 		)
 	}
 
@@ -168,7 +180,7 @@ export function createChangesView(root: HTMLElement): View {
 		const { best, history } = Changes.loadRecord(selection(), s.changesDuration)
 		const length = s.changesDuration < 60 ? `${s.changesDuration} s` : `${s.changesDuration / 60} min`
 		summary.innerHTML = history.length
-			? `<span>Best <b>${best}</b> in ${length}</span>${sparkline(history, best)}`
+			? `<span class="silk">Best · <b>${best}</b> in ${length}</span>${sparkline(history, best)}`
 			: `<span>No ${length} sessions of ${pairLabel(selection())} yet.</span>`
 	}
 
@@ -202,16 +214,15 @@ export function createChangesView(root: HTMLElement): View {
 	function renderIdle() {
 		const s = Settings.get()
 		const chords = selection()
-		strip.hidden = s.changesMode !== 'time'
-		legend.hidden = strip.hidden
+		timing.hidden = s.changesMode !== 'time'
 		if (s.changesMode === 'time') {
 			clock.textContent = `${s.changesBpm} BPM`
-			countLabel.textContent = 'on time'
-			countValue.textContent = '–'
+			countLabel.textContent = ON_TIME_LABEL
+			showLed(countValue, null)
 		} else {
 			clock.textContent = clockText(s.changesDuration * 1000)
-			countLabel.textContent = 'changes'
-			countValue.textContent = '0'
+			countLabel.textContent = 'Changes'
+			showLed(countValue, 0)
 		}
 		if (valid()) {
 			renderShapes(chords)
@@ -230,7 +241,8 @@ export function createChangesView(root: HTMLElement): View {
 		setup.hidden = running
 		root.classList.toggle('trainer--running', running)
 		startButton.textContent = running ? 'Stop' : session.phase() === 'done' ? 'Start again' : 'Start'
-		startButton.classList.toggle('btn--solid', !running)
+		// The hot key starts; Stop is an ordinary key.
+		startButton.classList.toggle('key--hot', !running)
 	}
 
 	function showHeard(symbol: string | null) {
@@ -260,6 +272,10 @@ export function createChangesView(root: HTMLElement): View {
 		)
 		const hits = marks.filter((m) => m === 'hit').length
 		strip.setAttribute('aria-label', `${hits} of ${marks.length} changes on time`)
+		tally.textContent = marks.length ? `${hits} / ${marks.length}` : ''
+		// The last change's lamp stays lit until the next one.
+		const last = marks[marks.length - 1]
+		for (const lamp of lamps) lamp.classList.toggle('is-on', lamp.dataset.mark === last)
 	}
 
 	function showCount(left: number, first: string) {
@@ -275,13 +291,13 @@ export function createChangesView(root: HTMLElement): View {
 			target: setTarget,
 			clock: (text) => (clock.textContent = text),
 			counted(count) {
-				countValue.textContent = String(count)
+				showLed(countValue, count)
 				flash()
 				announce(`${count} ${count === 1 ? 'change' : 'changes'}`)
 			},
 			marked(marks) {
 				renderStrip(marks)
-				countValue.textContent = `${Changes.accuracy(marks)}%`
+				showLed(countValue, Changes.accuracy(marks))
 				if (marks[marks.length - 1] === 'hit') flash()
 			},
 			announce,
@@ -306,16 +322,15 @@ export function createChangesView(root: HTMLElement): View {
 		resetHeard()
 		result.hidden = true
 		status.textContent = ''
-		strip.hidden = mode !== 'time'
-		legend.hidden = strip.hidden
+		timing.hidden = mode !== 'time'
 		renderStrip([])
 		if (mode === 'minute') {
-			countValue.textContent = '0'
-			countLabel.textContent = 'changes'
+			showLed(countValue, 0)
+			countLabel.textContent = 'Changes'
 			clock.textContent = clockText(s.changesDuration * 1000)
 		} else {
-			countValue.textContent = '–'
-			countLabel.textContent = 'on time'
+			showLed(countValue, null)
+			countLabel.textContent = ON_TIME_LABEL
 			clock.textContent = `${s.changesBpm} BPM`
 		}
 		session.start(
