@@ -91,7 +91,7 @@ const INLAYS = [3, 5, 7, 9, 12, 15, 17, 19, 21]
 // proportions) and fret 22 18 wide, where dots shrink a little to fit.
 const OPEN = 30 // room for open-string notes before the nut
 const LENGTH = 820
-const SPACING = { h: 28, v: 36 }
+const SPACING = { h: 32, v: 36 }
 const MARGIN = { h: 14, v: 34 } // first string from the edge; v leaves room for fret numbers
 const DOT_R = 10
 const ROOT_R = 11

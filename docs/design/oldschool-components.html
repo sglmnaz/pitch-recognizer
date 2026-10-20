@@ -14,6 +14,8 @@
 	- Rotary selector R1 is on trial: keep it if it reads well inside the app, otherwise fall back to interlocked keys.
 	- Circle of fifths C7: hub display and rim index (from C4), backlit sector (C5), black face for the dark theme (C6).
 	Wheels G2 (thumbwheel) and G3 (focus ring) approved, not placed in the app yet.
+	LED level bar as the control itself (L2) and the knob with a LED ring (L3): liked, kept for later.
+	Necks: every neck is printed on paper like the chord diagrams (N2: root in red ink, 3rd and 5th black, others outlined).
 	Rejected and left out: the knurled side thumbwheel, the small chicken-head rotary, chord diagram on the LCD (liked, but 1A reads better).
 	Mockups only, not wired to the app.
 -->
@@ -97,6 +99,14 @@ h2{font-size:15px;font-weight:600;max-width:760px;margin:28px auto 10px;padding:
 .ring__knurl{position:absolute;left:0;right:0;bottom:0;height:12px;background:repeating-linear-gradient(90deg,#111 0 2px,#5a5853 2px 5px)}
 .ring::after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,rgba(0,0,0,.65),transparent 25%,transparent 75%,rgba(0,0,0,.65));pointer-events:none}
 .ring__mark{position:absolute;left:50%;top:0;margin-left:-6px;border:6px solid transparent;border-top:10px solid #c63a1c;z-index:2}
+/* LED controls (kept for later): a level bar you tap / drag (L2), a knob with a LED ring (L3). */
+.ledbar{display:flex;gap:2px;touch-action:none;cursor:pointer}.ledbar i{width:8px;height:14px;border-radius:1px;background:#3a3631;box-shadow:inset 0 0 0 1px #1f1d1a}
+.ledbar i.g{background:#4ccf5c;box-shadow:0 0 5px rgba(76,207,92,.6)}.ledbar i.a{background:#ffb02e;box-shadow:0 0 5px rgba(255,176,46,.6)}.ledbar i.r{background:#ff3e22;box-shadow:0 0 5px rgba(255,62,34,.6)}
+.ledknob{position:relative;width:78px;height:78px;touch-action:none;cursor:ns-resize}
+.ledknob .seg{position:absolute;left:50%;top:50%;width:5px;height:9px;margin:-4.5px 0 0 -2.5px;border-radius:1px;background:#3a3631;box-shadow:inset 0 0 0 1px #1f1d1a}
+.ledknob .cap{position:absolute;inset:16px;border-radius:50%;background:repeating-conic-gradient(#8f8f8b 0 2.5deg,#e2e2de 2.5deg 5deg);box-shadow:0 0 0 1.5px #262421,0 3px 4px rgba(0,0,0,.35)}
+.ledknob .cap::before{content:'';position:absolute;inset:7px;border-radius:50%;background:radial-gradient(circle at 35% 30%,rgba(255,255,255,.55),rgba(255,255,255,0) 45%),repeating-radial-gradient(circle,#d4d4d0 0 1px,#c2c2be 1px 2.2px)}
+.ledknob .cap::after{content:'';position:absolute;left:50%;top:6px;width:3px;height:12px;margin-left:-1.5px;border-radius:2px;background:#2e2b25}
 </style>
 </head>
 <body>
@@ -123,6 +133,13 @@ h2{font-size:15px;font-weight:600;max-width:760px;margin:28px auto 10px;padding:
 <div class="pn"><div class="hd"><b>Focus ring · G3</b><span>horizontal ring under a red index · approved, not placed yet</span></div>
 <div class="ringwrap" id="ring"><span class="ring__mark"></span><div class="ring"><div class="ring__strip"></div><div class="ring__knurl"></div></div></div>
 <div class="sub" style="margin-top:8px">Drag left / right, like a lens's focus ring; one row, every value scrolls under the index.</div></div>
+
+<div class="pn"><div class="hd"><b>LED level bar · L2</b><span>the bar is the control: tap or drag the LEDs · kept for later</span></div>
+<div class="row" style="gap:12px;font-size:13px;font-weight:700;letter-spacing:1.4px"><span style="width:100px">VOLUME</span><span class="window" style="padding:3px"><span class="ledbar" id="l2"></span></span><span id="l2v" style="font-size:12px"></span></div></div>
+
+<div class="pn"><div class="hd"><b>LED ring knob · L3</b><span>the R1 knob with a crown of LEDs · kept for later</span></div>
+<div class="row" style="gap:28px"><div style="text-align:center"><div class="ledknob" id="l3a"><div class="cap"></div></div><div class="silk" style="margin-top:4px">Volume</div></div><div style="text-align:center"><div class="ledknob" id="l3b"><div class="cap"></div></div><div class="silk" style="margin-top:4px">Click</div></div></div>
+<div class="sub" style="margin-top:8px">Drag up / down on the knob.</div></div>
 
 <div class="pn"><div class="hd"><b>Number field</b><span>A4, BPM, volume: large digits</span></div>
 <div class="row" style="max-width:360px"><span class="bk gray" style="width:38px;height:42px;font-size:14px">▼</span><span class="win" style="flex:1"><span class="lcd" style="display:flex;align-items:baseline;justify-content:center;gap:6px;padding:4px 10px"><span class="dot" style="font-size:30px;line-height:1">440.0</span><span>Hz</span></span></span><span class="bk gray" style="width:38px;height:42px;font-size:14px">▲</span></div>
@@ -231,6 +248,15 @@ strip.innerHTML=cells.join('');strip.style.transform=`translateX(${ring.clientWi
 const set=(i)=>{cur=(i+12)%12;render()}
 const drag=(el,axis,px)=>{let start=null,base=0;el.addEventListener('pointerdown',(e)=>{start=axis==='y'?e.clientY:e.clientX;base=cur;el.setPointerCapture(e.pointerId)});el.addEventListener('pointermove',(e)=>{if(start!==null)set(base+Math.round(-((axis==='y'?e.clientY:e.clientX)-start)/px))});el.addEventListener('pointerup',()=>(start=null))}
 drag(byId('tw'),'y',22);drag(byId('ring'),'x',40);render();addEventListener('resize',render)})()
+
+// LED controls L2 / L3: green, then amber, then red.
+;(function(){const N=16,st={l2:.7,l3a:.55,l3b:.8},cls=(i,n)=>i<n*.56?'g':i<n*.8?'a':'r'
+const draw=()=>{byId('l2').innerHTML=Array.from({length:N},(_,i)=>`<i class="${i<Math.round(st.l2*N)?cls(i,N):''}"></i>`).join('');byId('l2v').textContent=`${Math.round(st.l2*100)}%`
+for(const id of ['l3a','l3b']){const k=byId(id),S=15;k.querySelectorAll('.seg').forEach((e)=>e.remove());let h='';for(let i=0;i<S;i++){const on=i<Math.round(st[id]*S),c=cls(i,S),col={g:'#4ccf5c',a:'#ffb02e',r:'#ff3e22'}[c];h+=`<span class="seg" style="transform:rotate(${-135+(i*270)/(S-1)}deg) translateY(-34px);${on?`background:${col};box-shadow:0 0 5px ${col}`:''}"></span>`}k.insertAdjacentHTML('afterbegin',h);k.querySelector('.cap').style.transform=`rotate(${-135+st[id]*270}deg)`}}
+const bar=byId('l2'),setBar=(e)=>{const r=bar.getBoundingClientRect();st.l2=Math.max(0,Math.min(1,Math.ceil(((e.clientX-r.left)/r.width)*N)/N));draw()}
+bar.addEventListener('pointerdown',(e)=>{bar.setPointerCapture(e.pointerId);setBar(e);bar.onpointermove=setBar});bar.addEventListener('pointerup',()=>(bar.onpointermove=null))
+for(const id of ['l3a','l3b']){const k=byId(id);let y0=0,v0=0;k.addEventListener('pointerdown',(e)=>{k.setPointerCapture(e.pointerId);y0=e.clientY;v0=st[id];k.onpointermove=(ev)=>{st[id]=Math.max(0,Math.min(1,v0+(y0-ev.clientY)/150));draw()}});k.addEventListener('pointerup',()=>(k.onpointermove=null))}
+draw()})()
 
 // Multiple selection
 ;(function(){const names=['m2','M2','m3','M3','P4','TT','P5'],on=[1,0,1,1,1,0,1]

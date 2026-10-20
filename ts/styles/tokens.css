@@ -215,6 +215,8 @@
 	--paper-grid: #e6b9a8;
 	--paper-pen: #2a3f8f;
 	--paper-edge: #e2dccc;
+	/* Red printing ink on paper (the root on every neck), the same in every theme. */
+	--paper-red: #c63a1c;
 
 	--rocker-plate: #262421;
 	--rocker-up: #4a4642;
@@ -236,22 +238,7 @@
 	--success-bg: rgba(76, 207, 92, 0.16);
 	--warning: #b8640d;
 
-	/* Scale degrees: root, highlighted degrees (3rd/5th by default), other notes. */
-	--root-fill: #d9532d;
-	--root-stroke: #2e2b25;
-	--root-text: #fff4ec;
-	--tone-fill: #363431;
-	--tone-stroke: #2e2b25;
-	--tone-text: #fff4ec;
-	--note-fill: #f6f1e4;
-	--note-stroke: #2e2b25;
-	--note-text: #2e2b25;
 
-	--board: #e9e1cc;
-	--board-fret: #8d8471;
-	--board-string: #4a463d;
-	--board-nut: #2e2b25;
-	--board-inlay: #bfb49b;
 
 	--dial-face: #f1ecdf;
 	--dial-near: rgba(232, 196, 106, 0.38);
@@ -344,21 +331,7 @@
 	--success-bg: rgba(94, 194, 122, 0.14);
 	--warning: #f5a623;
 
-	--root-fill: #e0603a;
-	--root-stroke: #0e0d0c;
-	--root-text: #fff4ec;
-	--tone-fill: #e9e2d0;
-	--tone-stroke: #0e0d0c;
-	--tone-text: #24221e;
-	--note-fill: #3d3a36;
-	--note-stroke: #9c968a;
-	--note-text: #d8d2c4;
 
-	--board: #34302b;
-	--board-fret: #6e6658;
-	--board-string: #a39b8a;
-	--board-nut: #e9e2d0;
-	--board-inlay: #4f4940;
 
 	--dial-face: #1f1e1c;
 	--dial-near: rgba(232, 196, 106, 0.22);
@@ -425,17 +398,7 @@
 
 	--track: #090c11;
 
-	--note-fill: #353d4b;
-	--note-stroke: #8590a3;
-	--note-text: #d5dbe6;
-	--tone-fill: #dde3ee;
-	--tone-text: #1c222c;
 
-	--board: #252c38;
-	--board-fret: #5c6679;
-	--board-string: #a6b0c2;
-	--board-nut: #dde3ee;
-	--board-inlay: #3a4352;
 
 	--dial-face: #161b23;
 }
@@ -482,7 +445,6 @@
 	--menu-ink: #e4d9c3;
 	--menu-ink-2: #8c7f68;
 	--menu-rule: #4a3f2e;
-	--board: #e6d8b8;
 	--dial-face: #efe6d2;
 }
 
@@ -534,7 +496,6 @@
 	--menu-ink-2: #8a8a8a;
 	--menu-rule: #3a3a3a;
 	--accent: #e0560f;
-	--board: #f2f0ea;
 	--dial-face: #f7f6f2;
 }
 
@@ -577,7 +538,6 @@
 	--menu-ink: #dcebe4;
 	--menu-ink-2: #74887e;
 	--menu-rule: #34473f;
-	--board: #eef0e2;
 	--dial-face: #f4f2e2;
 }
 
@@ -622,8 +582,6 @@
 	--menu-ink: #d9dce1;
 	--menu-ink-2: #737880;
 	--menu-rule: #33363a;
-	--board: #2f3236;
-	--board-inlay: #454950;
 	--dial-face: #26282c;
 }
 
@@ -668,8 +626,6 @@
 	--menu-ink: #d3e6e4;
 	--menu-ink-2: #668683;
 	--menu-rule: #264547;
-	--board: #1b3133;
-	--board-inlay: #2c4a4c;
 	--dial-face: #15292b;
 }
 
@@ -724,8 +680,6 @@
 	--menu-ink: #ecdcc6;
 	--menu-ink-2: #8a765f;
 	--menu-rule: #3a2c20;
-	--board: #3a2c20;
-	--board-inlay: #4f3e2c;
 	--dial-face: #241a12;
 }
 
@@ -779,8 +733,6 @@
 	--menu-ink: #e2e3d2;
 	--menu-ink-2: #80866f;
 	--menu-rule: #3a3e2c;
-	--board: #3e4230;
-	--board-inlay: #545a40;
 	--dial-face: #2e3122;
 }
 
@@ -836,8 +788,6 @@
 	--menu-rule: #3a1a16;
 	--accent: #ffd23a;
 	--accent-contrast: #2a1a05;
-	--board: #2e2522;
-	--board-inlay: #45393a;
 	--dial-face: #241a18;
 }
 
@@ -957,4 +907,22 @@
 	--shadow-border: 0 0 0 var(--outline-width) var(--outline);
 	--staff-bg: var(--paper);
 	--staff-ink: var(--paper-ink);
+
+	/* Every neck is printed on paper like the chord diagrams ("N2"): black
+	   lines, the root in red ink, 3rd and 5th solid black, other scale notes
+	   outlined. */
+	--board: var(--paper);
+	--board-fret: var(--paper-ink);
+	--board-string: var(--paper-ink);
+	--board-nut: var(--paper-ink);
+	--board-inlay: color-mix(in srgb, var(--paper-ink) 16%, var(--paper));
+	--root-fill: var(--paper-red);
+	--root-stroke: var(--paper-red);
+	--root-text: var(--paper);
+	--tone-fill: var(--paper-ink);
+	--tone-stroke: var(--paper-ink);
+	--tone-text: var(--paper);
+	--note-fill: var(--paper);
+	--note-stroke: var(--paper-ink);
+	--note-text: var(--paper-ink);
 }
