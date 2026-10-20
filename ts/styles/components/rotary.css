@@ -1,0 +1,92 @@
+/*
+ * Rotary selector R1 (ts/ui/rotary.ts; docs/design/oldschool-components.html).
+ * A knurled knob with 2–6 positions fanned over its top, each a lamp over a
+ * legend; the knob's pointer and the lit lamp show the choice. The positions
+ * are placed with sin / cos of --a (each position's angle, set by rotary.ts);
+ * --turn is the chosen one's.
+ */
+.rotary {
+	--rotary-r: 52px;
+	--rotary-knob: 60px;
+	/* Knob centre: low enough for the labels of the top positions. */
+	--rotary-cy: calc(var(--rotary-r) + 18px);
+
+	position: relative;
+	width: calc(2 * var(--rotary-r) + 56px);
+	height: calc(var(--rotary-cy) + var(--rotary-knob) / 2 + 6px);
+}
+
+.rotary__pos {
+	position: absolute;
+	left: calc(50% + var(--rotary-r) * sin(var(--a, 0deg)));
+	top: calc(var(--rotary-cy) - var(--rotary-r) * cos(var(--a, 0deg)));
+	translate: -50% -50%;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: var(--space-4);
+	min-width: var(--tap);
+	min-height: var(--tap);
+	padding: 0 2px;
+	border: 0;
+	background: none;
+	color: var(--fg-muted);
+	font-family: var(--font-ui);
+	font-size: var(--text-xs);
+	font-weight: 700;
+	letter-spacing: 0.1em;
+	line-height: 1;
+	text-transform: uppercase;
+	white-space: nowrap;
+	cursor: pointer;
+	-webkit-tap-highlight-color: transparent;
+
+	&[aria-checked='true'] {
+		color: var(--fg);
+	}
+}
+
+.rotary__knob {
+	position: absolute;
+	left: 50%;
+	top: var(--rotary-cy);
+	width: var(--rotary-knob);
+	height: var(--rotary-knob);
+	translate: -50% -50%;
+	border-radius: 50%;
+	/* Knurled rim in the grey key material, so the knob follows the theme. */
+	background: repeating-conic-gradient(var(--key2-front) 0 2.5deg, var(--key2-hi) 2.5deg 5deg);
+	box-shadow:
+		0 0 0 var(--outline-width) var(--outline),
+		var(--key-drop);
+	cursor: pointer;
+
+	/* Brushed cap, lit from the top left (it does not turn with the knob). */
+	&::before {
+		content: '';
+		position: absolute;
+		inset: 8px;
+		border-radius: 50%;
+		background:
+			radial-gradient(circle at 35% 30%, var(--plate-shine), transparent 45%),
+			repeating-radial-gradient(circle, var(--key2-hi) 0 1px, var(--key2-face) 1px 2.2px);
+		box-shadow: 0 0 0 1px var(--key2-front);
+	}
+
+	/* The pointer: only it turns, so the drop shadow and the light stay put. */
+	&::after {
+		content: '';
+		position: absolute;
+		inset: 0;
+		border-radius: 50%;
+		background: linear-gradient(var(--key2-ink), var(--key2-ink)) 50% 11px / 4px 30% no-repeat;
+		rotate: var(--turn, 0deg);
+		/* A short turn with a slight overshoot, like a detent. */
+		transition: rotate 0.14s cubic-bezier(0.3, 1.4, 0.6, 1);
+
+		@media (prefers-reduced-motion: reduce) {
+			transition: none;
+		}
+	}
+}

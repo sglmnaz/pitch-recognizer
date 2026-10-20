@@ -38,6 +38,7 @@
 @import './components/chips.css' layer(components);
 @import './components/segmented.css' layer(components);
 @import './components/select.css' layer(components);
+@import './components/rotary.css' layer(components);
 @import './components/help.css' layer(components);
 @import '../ui/fretboard.css' layer(components);
 @import '../features/tuner/tuner.css' layer(components);
