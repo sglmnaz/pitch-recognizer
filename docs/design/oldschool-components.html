@@ -13,7 +13,8 @@
 	- Pressed keys: light still from above, face sunk 3px, darker, top shaded by the panel lip (no inverted bevel).
 	- Rotary selector R1 is on trial: keep it if it reads well inside the app, otherwise fall back to interlocked keys.
 	- Circle of fifths C7: hub display and rim index (from C4), backlit sector (C5), black face for the dark theme (C6).
-	Rejected and left out: thumbwheel, the small chicken-head rotary, chord diagram on the LCD (liked, but 1A reads better).
+	Wheels G2 (thumbwheel) and G3 (focus ring) approved, not placed in the app yet.
+	Rejected and left out: the knurled side thumbwheel, the small chicken-head rotary, chord diagram on the LCD (liked, but 1A reads better).
 	Mockups only, not wired to the app.
 -->
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css" />
@@ -79,6 +80,23 @@ h2{font-size:15px;font-weight:600;max-width:760px;margin:28px auto 10px;padding:
 .tl{display:flex;flex-direction:column;align-items:center;gap:6px}
 .big{width:16px;height:16px;border-radius:2px;box-shadow:0 0 0 1.5px #262421}
 .res{display:flex;align-items:center;gap:10px;padding:9px 10px;border-top:1.5px solid rgba(46,43,37,.22)}.res:first-child{border-top:0}
+/* Wheels (approved 2026-10-20, not yet placed in the app): a vertical thumbwheel seen
+   edge-on in a slot, and a horizontal focus ring under a red index. Drag, tap a
+   visible value, or use the arrow keys. */
+.tw{display:flex;align-items:center;gap:14px}
+.tw__idx{width:0;height:0;border:7px solid transparent;border-left:10px solid #c63a1c}
+.slot{width:62px;height:96px;border-radius:5px;background:#222120;padding:4px;box-shadow:inset 0 2px 3px rgba(0,0,0,.7),0 1px 0 rgba(255,255,255,.75);touch-action:none;cursor:ns-resize}
+.wheel{position:relative;height:100%;border-radius:3px;overflow:hidden;background:linear-gradient(180deg,#5a5853 0%,#cfcfca 22%,#ededea 50%,#cfcfca 78%,#5a5853 100%)}
+.wheel__teeth{position:absolute;right:0;top:0;bottom:0;width:12px;background:repeating-linear-gradient(180deg,rgba(0,0,0,.35) 0 2px,transparent 2px 5px)}
+.wheel__n{position:absolute;left:0;right:12px;text-align:center;font-weight:700;font-size:22px;color:#2e2b25}
+.ringwrap{position:relative;height:74px;touch-action:none;cursor:ew-resize}
+.ring{position:absolute;inset:14px 0 0;border-radius:6px;overflow:hidden;background:linear-gradient(180deg,#1c1b19,#3a3835 30%,#4a4743 50%,#3a3835 70%,#1c1b19);box-shadow:0 0 0 1.5px #111}
+.ring__strip{position:absolute;top:0;bottom:0;display:flex;transition:transform .1s}
+.ring__cell{width:56px;flex:none;display:flex;align-items:center;justify-content:center;padding-bottom:10px;font-size:18px;font-weight:700;color:#ede7d8}
+.ring__cell.sel{color:#ffb347;text-shadow:0 0 6px rgba(255,170,60,.6)}
+.ring__knurl{position:absolute;left:0;right:0;bottom:0;height:12px;background:repeating-linear-gradient(90deg,#111 0 2px,#5a5853 2px 5px)}
+.ring::after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,rgba(0,0,0,.65),transparent 25%,transparent 75%,rgba(0,0,0,.65));pointer-events:none}
+.ring__mark{position:absolute;left:50%;top:0;margin-left:-6px;border:6px solid transparent;border-top:10px solid #c63a1c;z-index:2}
 </style>
 </head>
 <body>
@@ -97,6 +115,14 @@ h2{font-size:15px;font-weight:600;max-width:760px;margin:28px auto 10px;padding:
 
 <div class="pn"><div class="hd"><b>Rotary selector · R1</b><span>2–6 fixed options (subdivision, tolerance, sound) · on trial</span></div>
 <div class="row" style="gap:20px;flex-wrap:wrap"><div class="dial" id="r1"></div><div class="sub" style="max-width:260px">Knurled aluminium knob like a hi-fi input selector; the lamp next to the chosen position lights. Tap to step. If it does not read well in the app, interlocked keys are the fallback.</div></div></div>
+
+<div class="pn"><div class="hd"><b>Thumbwheel · G2</b><span>vertical wheel seen edge-on in a slot · approved, not placed yet</span></div>
+<div class="tw"><span class="tw__idx"></span><div class="slot" id="tw"><div class="wheel"><div class="wheel__teeth"></div></div></div><span class="window" style="flex:1"><span class="lcd" style="display:flex;justify-content:space-between;align-items:center">Root <span class="dot" style="font-size:22px" data-wheel-out>C</span></span></span></div>
+<div class="sub" style="margin-top:8px">Drag up / down, like a walkman's volume wheel; the neighbouring values show above and below.</div></div>
+
+<div class="pn"><div class="hd"><b>Focus ring · G3</b><span>horizontal ring under a red index · approved, not placed yet</span></div>
+<div class="ringwrap" id="ring"><span class="ring__mark"></span><div class="ring"><div class="ring__strip"></div><div class="ring__knurl"></div></div></div>
+<div class="sub" style="margin-top:8px">Drag left / right, like a lens's focus ring; one row, every value scrolls under the index.</div></div>
 
 <div class="pn"><div class="hd"><b>Number field</b><span>A4, BPM, volume: large digits</span></div>
 <div class="row" style="max-width:360px"><span class="bk gray" style="width:38px;height:42px;font-size:14px">▼</span><span class="win" style="flex:1"><span class="lcd" style="display:flex;align-items:baseline;justify-content:center;gap:6px;padding:4px 10px"><span class="dot" style="font-size:30px;line-height:1">440.0</span><span>Hz</span></span></span><span class="bk gray" style="width:38px;height:42px;font-size:14px">▲</span></div>
@@ -194,6 +220,17 @@ opts.forEach((o,j)=>{const a=(angles[j]-90)*Math.PI/180;h+=`<span class="lbl" st
 el.innerHTML=h+'<div class="k1"></div>'
 const set=()=>{el.querySelector('.k1').style.transform=`rotate(${angles[i]}deg)`;el.querySelectorAll('[data-l]').forEach((l)=>l.classList.toggle('on',+l.dataset.l===i))}
 set();el.addEventListener('click',()=>{i=(i+1)%opts.length;set()})})()
+
+// Wheels G2 / G3: one shared value, one step per notch dragged.
+;(function(){const N=['C','C♯','D','E♭','E','F','F♯','G','A♭','A','B♭','B'];let cur=0
+const render=()=>{document.querySelectorAll('[data-wheel-out]').forEach((e)=>(e.textContent=N[cur]))
+const w=document.querySelector('#tw .wheel');w.querySelectorAll('.wheel__n').forEach((e)=>e.remove())
+for(let d=-2;d<=2;d++){const e=document.createElement('div');e.className='wheel__n';e.textContent=N[(cur+d+12)%12];e.style.top=`${36+d*24}px`;e.style.opacity=d===0?1:0.45-Math.abs(d)*0.1;e.style.transform=`scaleY(${1-Math.abs(d)*0.25})`;w.append(e)}
+const ring=byId('ring'),strip=ring.querySelector('.ring__strip'),cells=[];for(let r=-1;r<=1;r++)N.forEach((n,i)=>cells.push(`<div class="ring__cell${r===0&&i===cur?' sel':''}">${n}</div>`))
+strip.innerHTML=cells.join('');strip.style.transform=`translateX(${ring.clientWidth/2-28-(12+cur)*56}px)`}
+const set=(i)=>{cur=(i+12)%12;render()}
+const drag=(el,axis,px)=>{let start=null,base=0;el.addEventListener('pointerdown',(e)=>{start=axis==='y'?e.clientY:e.clientX;base=cur;el.setPointerCapture(e.pointerId)});el.addEventListener('pointermove',(e)=>{if(start!==null)set(base+Math.round(-((axis==='y'?e.clientY:e.clientX)-start)/px))});el.addEventListener('pointerup',()=>(start=null))}
+drag(byId('tw'),'y',22);drag(byId('ring'),'x',40);render();addEventListener('resize',render)})()
 
 // Multiple selection
 ;(function(){const names=['m2','M2','m3','M3','P4','TT','P5'],on=[1,0,1,1,1,0,1]
