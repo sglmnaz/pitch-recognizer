@@ -212,10 +212,15 @@ export function createChangesView(root: HTMLElement): View {
 		markTargetShape(symbol)
 	}
 
+	// One minute: the change count is the hero, a big LED. In time: the on-time
+	// percentage sits in the row at the height of the tempo beside it.
+	const sizeCounter = (big: boolean) => countValue.classList.toggle('led--big', big)
+
 	function renderIdle() {
 		const s = Settings.get()
 		const chords = selection()
 		timing.hidden = s.changesMode !== 'time'
+		sizeCounter(s.changesMode !== 'time')
 		if (s.changesMode === 'time') {
 			clock.textContent = `${s.changesBpm} BPM`
 			countLabel.textContent = ON_TIME_LABEL
@@ -325,6 +330,7 @@ export function createChangesView(root: HTMLElement): View {
 		status.textContent = ''
 		timing.hidden = mode !== 'time'
 		renderStrip([])
+		sizeCounter(mode === 'minute')
 		if (mode === 'minute') {
 			showLed(countValue, 0)
 			countLabel.textContent = 'Changes'

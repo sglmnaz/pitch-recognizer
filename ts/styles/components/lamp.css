@@ -49,7 +49,8 @@
 	& > :is(button, .key) {
 		overflow: visible;
 
-		&::before {
+		/* ::after: ::before is the keycap (key.css). */
+		&::after {
 			content: '';
 			position: absolute;
 			left: 50%;
@@ -62,9 +63,7 @@
 			box-shadow: var(--lamp-ring);
 		}
 
-		&:is([aria-pressed='true'], [aria-selected='true'])::before {
-			/* The key sinks by its top border: keep the lamp where it was. */
-			top: calc(-1 * (var(--lamp-h) + var(--space-8) + 2px + var(--key-sink)));
+		&:is([aria-pressed='true'], [aria-selected='true'])::after {
 			background: var(--lamp-on);
 			box-shadow:
 				var(--lamp-ring),

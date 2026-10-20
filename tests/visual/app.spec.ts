@@ -234,7 +234,8 @@ test.describe('behaviour', () => {
 				const board = document.querySelector('#view-scales .neck-board')!
 				return {
 					token: getComputedStyle(document.documentElement).getPropertyValue('--surface').trim(),
-					button: getComputedStyle(document.querySelector('.btn')!).backgroundColor,
+					// The keycap is the button's ::before (key.css).
+					button: getComputedStyle(document.querySelector('.btn')!, '::before').backgroundColor,
 					board: getComputedStyle(board).getPropertyValue('--surface').trim(),
 					boardBg: getComputedStyle(board).getPropertyValue('--bg').trim(),
 				}
@@ -277,13 +278,13 @@ test.describe('behaviour', () => {
 	test('the display colour is independent of the theme', async ({ page, open }) => {
 		await open('#settings')
 		const color = (selector: string) => page.evaluate((s) => getComputedStyle(document.querySelector(s)!).backgroundColor, selector)
-		const keyBefore = await color('.btn')
+		const keyBefore = await page.evaluate(() => getComputedStyle(document.querySelector('.btn')!, '::before').backgroundColor)
 		// Through the dropdown itself: open it, pick Amber.
 		await page.getByRole('combobox', { name: 'Display' }).click()
 		await page.getByRole('option', { name: 'Amber' }).click()
 		await expect(page.getByRole('combobox', { name: 'Display' })).toHaveText('Amber')
 		expect(await color('.dropdown')).toBe('rgb(20, 16, 11)')
-		expect(await color('.btn')).toBe(keyBefore)
+		expect(await page.evaluate(() => getComputedStyle(document.querySelector('.btn')!, '::before').backgroundColor)).toBe(keyBefore)
 		await page.reload()
 		await expect(page.locator('html')).toHaveAttribute('data-display', 'amber')
 	})

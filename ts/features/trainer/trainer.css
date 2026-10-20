@@ -206,7 +206,8 @@
 	text-transform: none;
 	letter-spacing: 0.02em;
 
-	&::before {
+	/* The lamp above the key (::before is its cap). */
+	&::after {
 		content: '';
 		position: absolute;
 		left: 50%;
@@ -219,19 +220,14 @@
 		box-shadow: var(--lamp-ring);
 	}
 
-	/* A sunk key moves down by its top border: keep the lamp where it was. */
-	&.is-down::before {
-		top: calc(-1 * (var(--lamp-room) + 2px + var(--key-sink)));
-	}
-
-	&[data-state='right']::before {
+	&[data-state='right']::after {
 		background: var(--lamp-ok-on);
 		box-shadow:
 			var(--lamp-ring),
 			0 0 8px var(--lamp-ok-glow);
 	}
 
-	&[data-state='wrong']::before {
+	&[data-state='wrong']::after {
 		background: var(--lamp-on);
 		box-shadow:
 			var(--lamp-ring),
@@ -408,6 +404,11 @@
 	display: flex;
 	flex-direction: column;
 	gap: var(--space-4);
+}
+
+/* In time: the small LED is as tall as the tempo LCD beside it. */
+.changes-count .led:not(.led--big) {
+	padding-block: var(--space-8);
 }
 
 .changes-clock {

@@ -45,6 +45,16 @@
 	font-display: swap;
 }
 
+/* Seven-segment digits (DSEG7, OFL): the metronome's tempo, like the
+   approved hardware mockup. */
+@font-face {
+	font-family: 'DSEG7';
+	src: url('./fonts/DSEG7Classic-BoldItalic.woff2') format('woff2');
+	font-weight: 700;
+	font-style: italic;
+	font-display: swap;
+}
+
 @font-face {
 	font-family: 'Geist';
 	src: url('./fonts/Geist-Variable.woff2') format('woff2');
@@ -60,6 +70,8 @@
 	--font-text: 'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 	/* Big LCD and LED values. */
 	--font-display: 'Doto', var(--font-ui);
+	/* Seven-segment digits (numbers only: the tempo). */
+	--font-segment: 'DSEG7', var(--font-display);
 	/* Older names, still read by a few rules. */
 	--font-sans: var(--font-text);
 	--font-mono: var(--font-ui);
@@ -176,6 +188,13 @@
 	--key2-front: #858279;
 	--key2-ink: #2e2c28;
 
+	/* Black keys: the fine − + of a value. */
+	--key4-face: #363431;
+	--key4-hi: #56534e;
+	--key4-side: #2a2825;
+	--key4-front: #1a1917;
+	--key4-ink: #d9d5cb;
+
 	/* The one hot key of a view (Start). */
 	--key3-face: #e8742c;
 	--key3-hi: #f7a46b;
@@ -284,6 +303,12 @@
 	--key2-side: #4a4742;
 	--key2-front: #2a2825;
 	--key2-ink: #e3ddd0;
+
+	--key4-face: #1f1d1b;
+	--key4-hi: #3a3734;
+	--key4-side: #181614;
+	--key4-front: #0a0909;
+	--key4-ink: #e3ddd0;
 
 	--key3-face: #d4651f;
 	--key3-hi: #ec8d4d;

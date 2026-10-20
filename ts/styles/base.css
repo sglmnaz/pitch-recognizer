@@ -8,11 +8,10 @@ html {
 
 body {
 	margin: 0;
-	/* dvh = the height actually visible. On phones 100vh is the height with the
-	   browser toolbar hidden, so a page that fits would still scroll by the
-	   toolbar's height. vh stays as the fallback for older browsers. */
-	min-height: 100vh;
-	min-height: 100dvh;
+	/* No min-height: the body's background paints the whole canvas anyway, and
+	   any viewport unit (vh, and dvh on edge-to-edge Android, where it can
+	   include the system bars) made a page that fits scroll a little. The
+	   document is exactly as tall as its content. */
 	font-family: var(--font-ui);
 	font-size: var(--text-base);
 	line-height: 1.5;

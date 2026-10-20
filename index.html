@@ -549,7 +549,9 @@
 							<span><span class="metro-meter">4/4</span> <span class="metro-trn lcd__dim">· TRN</span></span>
 						</div>
 						<div class="metro-bpm">
-							<input class="metro-bpm__value lcd__big" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="3" value="100" aria-label="Tempo in BPM, tap to type" />
+							<!-- The unlit segments behind the number, as on a real seven-segment display. -->
+							<span class="metro-bpm__ghost" aria-hidden="true">888</span>
+							<input class="metro-bpm__value" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="3" value="100" aria-label="Tempo in BPM, tap to type" />
 							<span class="metro-bpm__unit">BPM</span>
 						</div>
 					</div>
@@ -557,13 +559,13 @@
 				<div class="metro-beats" role="group" aria-label="Beats, tap to change the accent"></div>
 				<div class="metro-tempo">
 					<button class="key key--step metro-step metro-step--ten" type="button" data-tempo="-10" aria-label="10 BPM slower">&minus;10</button>
-					<button class="key key--step metro-step" type="button" data-tempo="-1" aria-label="1 BPM slower">&minus;</button>
+					<button class="key key--dark metro-step" type="button" data-tempo="-1" aria-label="1 BPM slower">&minus;</button>
 					<div class="metro-fader">
 						<!-- Printed scale: a tick every 30 BPM, numbers every 90 (30 … 300 is 9 steps). -->
 						<span class="metro-fader__scale" aria-hidden="true"><span>30</span><span>120</span><span>210</span><span>300</span></span>
 						<input class="range metro-slider" type="range" min="30" max="300" step="1" aria-label="Tempo in beats per minute" />
 					</div>
-					<button class="key key--step metro-step" type="button" data-tempo="1" aria-label="1 BPM faster">+</button>
+					<button class="key key--dark metro-step" type="button" data-tempo="1" aria-label="1 BPM faster">+</button>
 					<button class="key key--step metro-step metro-step--ten" type="button" data-tempo="10" aria-label="10 BPM faster">+10</button>
 				</div>
 			</div>
@@ -631,13 +633,16 @@
 
 			<div class="panel metro-trainer">
 				<hr class="rule" />
-				<label class="switch">
+				<!-- A small slide switch, OFF / ON printed either side, a lamp by the name (switch.css). -->
+				<label class="switch switch--slide">
 					<span class="switch__text">
-						<span class="switch__title">Speed trainer</span>
+						<span class="switch__title">Speed trainer <span class="lamp"></span></span>
 						<span class="switch__desc"></span>
 					</span>
 					<input type="checkbox" class="switch__input" data-action="trainer" />
+					<span class="silk">Off</span>
 					<span class="switch__track"></span>
+					<span class="silk">On</span>
 				</label>
 				<div class="metro-trainer__config" hidden>
 					<div class="metro-row">

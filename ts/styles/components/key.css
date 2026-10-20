@@ -1,11 +1,15 @@
 /*
  * Keys: every pressable control (buttons, chips, segmented and stepper keys).
- * One bevel, drawn inside the padding box so the box never changes size:
- *   outline ring · lit top chamfer · shaded cheeks · front edge below the face.
- * A latched key ([aria-pressed='true'], .is-down) or one held down (:active)
- * sinks: a transparent top border of --key-sink pushes the bevel down, the
- * front edge shortens by the same amount, the base stays put, the face goes a
- * shade darker and the panel lip shades its top. No transition: a key snaps.
+ * The keycap is the ::before layer, drawn with real borders so the corners
+ * meet in mitred bevels (docs/design/metronome-hardware-oldschool.html):
+ *   lit top chamfer · lighter left cheek · shaded right cheek · front edge,
+ * an outline ring and a drop shadow. The button itself is only the hit area
+ * and the legend, so its box never changes size.
+ * A latched key ([aria-pressed='true'], [aria-selected='true'], .is-down) or
+ * one held down (:active) sinks: the cap starts --key-sink lower, its front
+ * edge shortens by as much (the base stays put), it goes a shade darker and
+ * the panel lip shades its top; the legend moves down with it. No transition:
+ * a key snaps. ::after stays free for a lamp above the key (lamp.css).
  *
  * Colours come from --k-* (set per variant below, read from the theme), so a
  * new kind of key is one block of five custom properties.
@@ -17,19 +21,21 @@
 	--k-front: var(--key-front);
 	--k-ink: var(--key-ink);
 	--k-front-h: var(--key-edge);
+	--k-top: 0px;
 
 	appearance: none;
 	position: relative;
+	isolation: isolate;
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
 	gap: var(--space-6);
 	min-width: 0;
-	/* Face between the chamfer and the front edge: the label centres on it. */
-	padding: var(--key-chamfer) var(--space-12) var(--k-front-h);
-	border: 0 solid transparent;
+	/* The legend centres on the face, between the chamfer and the front edge. */
+	padding: calc(var(--k-top) + var(--key-chamfer)) var(--space-12) var(--k-front-h);
+	border: 0;
 	border-radius: var(--key-radius);
-	background: var(--k-face) padding-box;
+	background: none;
 	color: var(--k-ink);
 	font-family: var(--font-ui);
 	font-size: var(--text-md);
@@ -41,28 +47,37 @@
 	cursor: pointer;
 	user-select: none;
 	-webkit-tap-highlight-color: transparent;
-	box-shadow:
-		inset 0 0 0 var(--outline-width) var(--outline),
-		inset 0 var(--key-chamfer) 0 0 var(--k-hi),
-		inset var(--key-cheek) 0 0 0 var(--k-side),
-		inset calc(var(--key-cheek) * -1) 0 0 0 var(--k-side),
-		inset 0 calc(var(--k-front-h) * -1) 0 0 var(--k-front),
-		var(--key-drop);
+
+	&::before {
+		content: '';
+		position: absolute;
+		inset: var(--k-top) 0 0;
+		z-index: -1;
+		box-sizing: border-box;
+		border-style: solid;
+		border-width: var(--key-chamfer) var(--key-cheek) var(--k-front-h);
+		/* Light from the top left: the left cheek catches a little of it. */
+		border-color: var(--k-hi) var(--k-side) var(--k-front) color-mix(in srgb, var(--k-side) 55%, var(--k-hi));
+		border-radius: var(--key-radius);
+		background: var(--k-face);
+		box-shadow:
+			0 0 0 var(--outline-width) var(--outline),
+			var(--key-drop);
+	}
 
 	&:is([aria-pressed='true'], [aria-selected='true'], .is-down),
 	&:active:not(:disabled, [aria-disabled='true']) {
+		--k-top: var(--key-sink);
 		--k-front-h: calc(var(--key-edge) - var(--key-sink));
-		border-top-width: var(--key-sink);
 		/* A shade darker: the variant's own colours, mixed toward black. */
-		background-color: color-mix(in srgb, var(--k-face) var(--key-down), #000);
-		background-image: linear-gradient(180deg, var(--key-lip), transparent 9px);
-		box-shadow:
-			inset 0 0 0 var(--outline-width) var(--outline),
-			inset 0 var(--key-chamfer) 0 0 color-mix(in srgb, var(--k-hi) var(--key-down), #000),
-			inset var(--key-cheek) 0 0 0 color-mix(in srgb, var(--k-side) var(--key-down), #000),
-			inset calc(var(--key-cheek) * -1) 0 0 0 color-mix(in srgb, var(--k-side) var(--key-down), #000),
-			inset 0 calc(var(--k-front-h) * -1) 0 0 color-mix(in srgb, var(--k-front) var(--key-down), #000),
-			var(--key-drop-down);
+		&::before {
+			border-color: color-mix(in srgb, var(--k-hi) var(--key-down), #000) color-mix(in srgb, var(--k-side) var(--key-down), #000)
+				color-mix(in srgb, var(--k-front) var(--key-down), #000) color-mix(in srgb, color-mix(in srgb, var(--k-side) 55%, var(--k-hi)) var(--key-down), #000);
+			background: linear-gradient(180deg, var(--key-lip), transparent 9px) color-mix(in srgb, var(--k-face) var(--key-down), #000);
+			box-shadow:
+				0 0 0 var(--outline-width) var(--outline),
+				var(--key-drop-down);
+		}
 	}
 
 	&:disabled,
@@ -78,13 +93,22 @@
 	}
 }
 
-/* Grey keys: steppers (◀ ▶ ▼ ▲, − +). */
+/* Grey keys: steppers (◀ ▶ ▼ ▲, −10 +10). */
 :where(.key--step) {
 	--k-face: var(--key2-face);
 	--k-hi: var(--key2-hi);
 	--k-side: var(--key2-side);
 	--k-front: var(--key2-front);
 	--k-ink: var(--key2-ink);
+}
+
+/* Black keys: the fine − + of a value (the metronome's tempo). */
+:where(.key--dark) {
+	--k-face: var(--key4-face);
+	--k-hi: var(--key4-hi);
+	--k-side: var(--key4-side);
+	--k-front: var(--key4-front);
+	--k-ink: var(--key4-ink);
 }
 
 /* The one hot key of a view (Start). */
