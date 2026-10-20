@@ -582,12 +582,10 @@
 	transition: opacity var(--dur) var(--ease);
 }
 
-/* The shared renderer sizes a chord diagram 1:1 with inline width / height
-   (ts/ui/fretboard.ts); only !important beats an inline style. Here it
-   shrinks to its column. */
+/* Drawn fluid (changes.view.ts): it shrinks to its column. */
 .changes-shape .neck {
-	width: 100% !important;
-	height: auto !important;
+	width: 100%;
+	height: auto;
 }
 
 .changes-shape figcaption {

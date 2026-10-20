@@ -65,6 +65,9 @@ export interface FretboardOptions {
 	 * theme…). For necks whose view does not re-render on Settings.subscribe
 	 * itself, e.g. a page of chord diagrams; call destroy() when dropping one. */
 	autoRender?: boolean
+	/** A chord diagram that scales with its container (CSS width) instead of
+	 * the default 1:1 size, e.g. several across a phone. */
+	fluid?: boolean
 }
 
 export interface Fretboard {
@@ -261,10 +264,11 @@ export function createFretboard(svg: SVGSVGElement, board: HTMLElement | null, o
 			svg.setAttribute('aria-label', spec.label)
 		}
 		// Vertical and chord diagrams are drawn 1:1 (inline size beats the
-		// stylesheet's width: 100%). Horizontal on wider screens: the rendered
-		// width grows with the length, so dots keep their size.
-		svg.style.width = vertical || win ? `${width}px` : phoneWidth ? `${g.length}px` : size === 1 ? '' : `${100 * size}%`
-		svg.style.height = vertical || win ? `${height}px` : ''
+		// stylesheet's width: 100%) unless fluid. Horizontal on wider screens: the
+		// rendered width grows with the length, so dots keep their size.
+		const oneToOne = (vertical || win) && !options.fluid
+		svg.style.width = oneToOne ? `${width}px` : vertical || win ? '' : phoneWidth ? `${g.length}px` : size === 1 ? '' : `${100 * size}%`
+		svg.style.height = oneToOne ? `${height}px` : ''
 
 		const box = spec.box ?? null
 		const dots = new Map(spec.dots.map((d) => [`${d.string}-${d.fret}`, d]))

@@ -83,6 +83,7 @@ export function createChangesView(root: HTMLElement): View {
 			// or four across a phone are too small for degree labels: plain dots.
 			const diagram = chordDiagram(rootPc, type, chordShapes(rootPc, type, { limit: 1 })[0], {
 				autoRender: true,
+				fluid: true,
 				labels: sequence.length > 2 ? 'none' : 'degrees',
 				fingers: false,
 			})

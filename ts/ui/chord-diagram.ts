@@ -17,6 +17,8 @@ export interface ChordDiagramOptions {
 	labels?: DiagramLabels | (() => DiagramLabels)
 	/** The finger row under the diagram (default true; 'fingers' labels drop it). */
 	fingers?: boolean
+	/** Scale with the container instead of drawing 1:1 (fretboard fluid). */
+	fluid?: boolean
 }
 
 export interface ChordDiagram {
@@ -29,7 +31,7 @@ export interface ChordDiagram {
 
 export function chordDiagram(rootPc: number, type: ChordType, voicing: Voicing | undefined, opts: ChordDiagramOptions = {}): ChordDiagram {
 	const el = opts.svg ?? svgEl('svg', { class: 'neck' })
-	const board = createFretboard(el, null, { autoRender: opts.autoRender })
+	const board = createFretboard(el, null, { autoRender: opts.autoRender, fluid: opts.fluid })
 	return {
 		el,
 		render() {
