@@ -47,7 +47,7 @@ h1{font-size:20px;font-weight:600;max-width:900px;margin:32px auto 4px;padding:0
 .rule{height:1.5px;background:#2e2b25;opacity:.75;margin:14px 0 12px}
 .hint{font-family:Geist;font-size:12px;color:#76716a;line-height:1.5;text-align:center;margin-top:12px}
 .help{display:flex;justify-content:flex-end;color:#7d786f;font-size:19px;margin-top:8px}
-.wave{height:34px;border-radius:2px;background:#c7c9bb;box-shadow:inset 0 3px 5px -2px rgba(0,0,0,.45)}
+.wave{height:34px;border-radius:2px;background:#c7c9bb;color:#23251f;box-shadow:inset 0 3px 5px -2px rgba(0,0,0,.45)}
 .tabs{position:absolute;left:0;right:0;bottom:0;padding:10px 10px 30px;display:flex;background:inherit;border-top:1.5px solid #2e2b25}
 .tab{flex:1;display:flex;flex-direction:column;align-items:center;gap:5px;font-size:10.5px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:#8a847a;padding-top:12px;position:relative}.tab i{font-size:21px}.tab.on{color:#2e2b25}.tab .lamp{position:absolute;top:0;width:12px;height:4px}
 .home{position:absolute;left:50%;bottom:8px;width:134px;height:5px;margin-left:-67px;border-radius:3px;background:#1a1a1a}
@@ -65,17 +65,36 @@ h1{font-size:20px;font-weight:600;max-width:900px;margin:32px auto 4px;padding:0
 .set small{display:block;font-family:Geist;font-size:11px;color:#76716a;letter-spacing:0;text-transform:none;font-weight:400;margin-top:2px}
 .ctl{width:390px;border-radius:12px;padding:16px 20px;font-family:'Barlow Semi Condensed',sans-serif;color:#2e2b25;background:#e7e1d3}
 .chk{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}.chk .bk{height:46px;flex-direction:column;gap:3px;font-size:14px;text-transform:none;letter-spacing:.5px}.chk small{font-size:10px;letter-spacing:1px;opacity:.7;text-transform:none}
+/* Dark theme (chosen 2026-10-20 over five other palettes and six tweaks of this one): graphite front,
+   anthracite panel, dark keys, negative amber LCD; lamps and the lit Listen key stay red */
+.dark{color:#d8d2c4;background-color:#2a2825;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 .05 0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E")}
+.dark .alu{background:repeating-linear-gradient(0deg,rgba(255,255,255,.05) 0 1px,rgba(0,0,0,.06) 1px 2px),linear-gradient(180deg,#3d3d3f,#2f2f31);border-bottom-color:#0e0d0c;box-shadow:0 1px 0 rgba(255,255,255,.06)}
+.dark .sb{color:#e8e6e1}
+.dark .brand b{color:#d9d7d2;text-shadow:0 -1px 0 rgba(0,0,0,.6)}.dark .brand span{color:#9c9a95}
+.dark .lamp{background:#4a1a14;box-shadow:0 0 0 1.5px #0e0d0c}.dark .lamp.on{background:#ff3e22;box-shadow:0 0 0 1.5px #0e0d0c,0 0 8px rgba(255,62,34,.6)}
+.dark .ilk{background:#0e0d0c}
+.dark .bk.cream{background:#3d3a36;color:#d8d2c4;border-color:#5a564f #34312d #1f1d1a #3a3733;box-shadow:0 0 0 1.5px #0e0d0c,0 2.5px 3px 1px rgba(0,0,0,.45)}
+.dark .bk.dn,.dark .bk.lit.on{background-color:#34312d;background-image:linear-gradient(180deg,rgba(0,0,0,.4),rgba(0,0,0,0) 9px);border-color:#4a4741 #2d2a27 #181614 #2d2a27;box-shadow:0 0 0 1.5px #0e0d0c}
+.dark .ilk .bk{box-shadow:none}
+.dark .bk.lit.on{color:#ff5a3a;text-shadow:0 0 7px rgba(255,62,34,.7)}
+.dark .win{background:#0b0a09;box-shadow:inset 0 2px 3px rgba(0,0,0,.9),0 1px 0 rgba(255,255,255,.07)}
+.dark .lcd,.dark .wave{background:#14100b;color:#ffb347;box-shadow:inset 0 4px 8px -3px rgba(0,0,0,.9)}
+.dark .lcd .dot{text-shadow:0 0 8px rgba(255,170,60,.55)}.dark .lcd span[style],.dark .wave svg{filter:drop-shadow(0 0 3px rgba(255,170,60,.5))}
+.dark .t2,.dark .hint{color:#958e81}.dark .help{color:#7a7468}
+.dark .rule{background:#0e0d0c;opacity:1;box-shadow:0 1px 0 rgba(255,255,255,.06)}
+.dark .tabs{border-top-color:#0e0d0c}.dark .tab{color:#7a7468}.dark .tab.on{color:#e8e2d4}
+.dark .home{background:#e8e6e1}
 </style>
 </head>
 <body>
 <h1>Old-school screens</h1>
-<p class="intro">Tuner, Chords (Listen) and Scales (Explore, horizontal and vertical neck) in the old-school hardware style. Metronome: <a href="metronome-hardware-oldschool.html">metronome-hardware-oldschool.html</a>. Mockups only.</p>
+<p class="intro">Tuner, Chords (Listen, light and dark theme) and Scales (Explore, horizontal and vertical neck) in the old-school hardware style. Metronome: <a href="metronome-hardware-oldschool.html">metronome-hardware-oldschool.html</a>. Other components (dropdown, lists, chord diagram, tab, counters…): <a href="oldschool-components.html">oldschool-components.html</a>. Mockups only.</p>
 <div class="grid" id="g"></div>
 <script>
 const SB='<div class="island"></div><div class="sb"><span>9:41</span><span class="ic"><i class="ti ti-antenna-bars-5" aria-hidden="true"></i><i class="ti ti-wifi" aria-hidden="true"></i><i class="ti ti-battery-3" aria-hidden="true"></i></span></div>'
 const T=[['ti-gauge','Tuner'],['ti-music','Chords'],['ti-chart-bar','Scales'],['ti-ear','Trainer'],['ti-triangle','Metro'],['ti-settings','Settings']]
 const tabs=on=>`<div class="tabs">${T.map((t,i)=>`<span class="tab${i===on?' on':''}"><span class="lamp${i===on?' on':''}"></span><i class="ti ${t[0]}" aria-hidden="true"></i>${t[1]}</span>`).join('')}</div><div class="home"></div>`
-const listen=`<div class="win" style="padding:5px"><div class="wave"><svg width="100%" height="34" viewBox="0 0 300 34" preserveAspectRatio="none" aria-hidden="true"><path d="M0 17 ${Array.from({length:60},(_,i)=>`L${i*5+2.5} ${17+Math.sin(i*1.3)*(9+((i*7)%6))}`).join(' ')} L300 17" fill="none" stroke="#23251f" stroke-width="1.6"/></svg></div></div>
+const listen=`<div class="win" style="padding:5px"><div class="wave"><svg width="100%" height="34" viewBox="0 0 300 34" preserveAspectRatio="none" aria-hidden="true"><path d="M0 17 ${Array.from({length:60},(_,i)=>`L${i*5+2.5} ${17+Math.sin(i*1.3)*(9+((i*7)%6))}`).join(' ')} L300 17" fill="none" stroke="currentColor" stroke-width="1.6"/></svg></div></div>
 <div style="display:flex;margin-top:12px"><span class="bk cream lit on" style="flex:1;--h:48px;height:48px;font-size:15px"><i class="ti ti-microphone" aria-hidden="true" style="font-size:17px"></i>Listening</span></div>`
 
 // Tuner: hi-fi tuning-dial meter, cents -50..+50
@@ -107,7 +126,7 @@ const chords=`<div class="phone"><div class="alu">${SB}<div class="brand"><b>PLU
 <div class="r lcdt"><span>Chord</span><span>A minor seventh</span></div>
 <div class="dot" style="font-size:78px;line-height:1;text-align:center;margin:6px 0 2px">Am7</div>
 <div class="lcdt" style="text-align:center;letter-spacing:3px">A · C · E · G</div>
-<div style="display:grid;grid-template-columns:repeat(12,1fr);gap:4px;align-items:end;height:44px;margin-top:12px">${chroma.map(v=>`<span style="height:${Math.max(6,v*44)}px;background:repeating-linear-gradient(0deg,#23251f 0 3px,transparent 3px 4px);opacity:${v>.4?1:.35}"></span>`).join('')}</div>
+<div style="display:grid;grid-template-columns:repeat(12,1fr);gap:4px;align-items:end;height:44px;margin-top:12px">${chroma.map(v=>`<span style="height:${Math.max(6,v*44)}px;background:repeating-linear-gradient(0deg,currentColor 0 3px,transparent 3px 4px);opacity:${v>.4?1:.35}"></span>`).join('')}</div>
 <div style="display:grid;grid-template-columns:repeat(12,1fr);gap:4px;margin-top:4px;font-size:8.5px;font-weight:600;text-align:center">${pcs.map(p=>`<span>${p}</span>`).join('')}</div>
 </div></div></div><div class="body">
 <div class="r"><span><div class="t1">Open in library</div><div class="t2">Voicings, notes and keys for Am7</div></span><span class="bk cream" style="width:92px;height:40px;font-size:13px">Open ${arrow}</span></div>
@@ -159,7 +178,7 @@ const row=(t,s,on)=>`<div class="set tg${on?' on':''}"><span>${t}${s?`<small>${s
 const controls=`<div class="ctl"><div class="row"><span class="bk cream lit tg" style="flex:1;--h:42px;height:42px;font-size:12px"><i class="ti ti-microphone" aria-hidden="true"></i>Listen</span><span class="bk cream lit tg on" style="flex:1;--h:42px;height:42px;font-size:12px"><i class="ti ti-microphone" aria-hidden="true"></i>Listen</span></div>
 <div style="margin-top:14px">${row('Speed trainer','+5 BPM every 4 bars',false)}${row('Loop','Repeat the progression',true)}${row('Left-handed','Mirror every fretboard',false)}${row('Beat-1 flash','',true)}</div></div>`
 
-document.getElementById('g').innerHTML=[[tuner,'Tuner','tuning-dial meter, momentary string keys'],[chords,'Chords · Listen','dot-matrix LCD, chromagram'],[scalesH,'Scales · Explore','horizontal neck'],[scalesV,'Scales · Explore','vertical neck'],[controls,'On/off controls','lit key for Listen, rocker for the rest · tap to try']].map(([h,n,s])=>`<div>${h}<div class="cap">${n}<span>${s}</span></div></div>`).join('')
+document.getElementById('g').innerHTML=[[tuner,'Tuner','tuning-dial meter, momentary string keys'],[chords,'Chords · Listen','dot-matrix LCD, chromagram'],[chords.replace('class="phone"','class="phone dark"'),'Chords · Listen, dark','graphite, amber LCD'],[scalesH,'Scales · Explore','horizontal neck'],[scalesV,'Scales · Explore','vertical neck'],[controls,'On/off controls','lit key for Listen, rocker for the rest · tap to try']].map(([h,n,s])=>`<div>${h}<div class="cap">${n}<span>${s}</span></div></div>`).join('')
 document.querySelectorAll('.tg').forEach((b)=>b.addEventListener('click',()=>b.classList.toggle('on')))
 </script>
 </body>

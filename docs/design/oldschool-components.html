@@ -1,0 +1,281 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Pluck — old-school components</title>
+<!--
+	Design exploration (2026-10-20): the remaining UI elements in the old-school hardware style, as approved
+	one by one. Companion of oldschool-screens.html (screens, on/off controls, pressed keys, dark theme).
+	Rules settled here:
+	- Doto (dot matrix) only for large display values (chord name, LED counters, number field); small values
+	  on an LCD use Barlow Semi Condensed, like "Standard".
+	- Pressed keys: light still from above, face sunk 3px, darker, top shaded by the panel lip (no inverted bevel).
+	- Rotary selector R1 is on trial: keep it if it reads well inside the app, otherwise fall back to interlocked keys.
+	- Circle of fifths C7: hub display and rim index (from C4), backlit sector (C5), black face for the dark theme (C6).
+	Rejected and left out: thumbwheel, the small chicken-head rotary, chord diagram on the LCD (liked, but 1A reads better).
+	Mockups only, not wired to the app.
+-->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css" />
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@500;600;700&family=Geist:wght@400;500&family=Doto:wght@900&display=swap');
+body{margin:0;background:#f4f4f5;font-family:system-ui,sans-serif;color:#18181b}
+h1{font-size:20px;font-weight:600;max-width:760px;margin:32px auto 4px;padding:0 16px}
+h2{font-size:15px;font-weight:600;max-width:760px;margin:28px auto 10px;padding:0 16px;color:#52525b;text-transform:uppercase;letter-spacing:1px}
+.intro{max-width:760px;margin:0 auto;padding:0 16px;font-size:14px;color:#52525b}
+.col{max-width:760px;margin:0 auto;padding:0 16px}
+.pn{border-radius:12px;padding:14px 18px 18px;background:#e7e1d3;font-family:'Barlow Semi Condensed',sans-serif;color:#2e2b25;margin-bottom:14px}
+.hd{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:12px;gap:12px}.hd b{font-size:15px;letter-spacing:1.4px;text-transform:uppercase;white-space:nowrap}.hd span{font-size:12px;color:#76716a;font-family:Geist,sans-serif;text-align:right}
+.g2{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;align-items:start}
+.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.sub{font-size:11px;color:#76716a;font-family:Geist,sans-serif;margin:0 0 6px}
+.row{display:flex;gap:8px;align-items:center}
+.bk{box-sizing:border-box;display:flex;align-items:center;justify-content:center;gap:7px;height:36px;border-style:solid;border-width:3px 4px 6px;border-radius:3px;font-size:12px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;box-shadow:0 0 0 1.5px #262421,0 2.5px 3px 1px rgba(0,0,0,.22);background:#ede7d8;color:#4a463d;border-color:#fbf8ef #d6cfbf #b5ad9b #e2dbcc;line-height:1;flex:none;cursor:pointer;user-select:none}
+.gray{background:#b9b6ae;color:#2e2c28;border-color:#d6d3cc #a3a097 #858279 #ada9a0}
+/* pressed: face sunk 3px (front edge 6 -> 3, base unmoved), darker, panel lip shades the top */
+.bk.dn{height:33px;margin-top:3px;border-bottom-width:3px;background-color:#e2dccc;background-image:linear-gradient(180deg,rgba(40,34,26,.22),rgba(40,34,26,0) 9px);border-color:#eee8da #cbc3b2 #a59d8b #cbc3b2;box-shadow:0 0 0 1.5px #262421,0 1px 2px rgba(0,0,0,.08)}
+.win{border-radius:4px;padding:4px;background:#222120;box-shadow:inset 0 2px 3px rgba(0,0,0,.7),0 1px 0 rgba(255,255,255,.75)}
+.lcd{border-radius:2px;padding:6px 10px;background:#c7c9bb;color:#23251f;box-shadow:inset 0 4px 6px -3px rgba(0,0,0,.45);font-size:12px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase}
+.off{color:rgba(35,37,31,.15)}
+.dot{font-family:Doto,monospace;font-weight:900;letter-spacing:1px;text-transform:none}
+.silk{font-size:10px;font-weight:700;letter-spacing:1.8px;text-transform:uppercase;color:#5a564d}
+.lamp{display:inline-block;width:12px;height:5px;border-radius:1px;background:#5a1f17;box-shadow:0 0 0 1.5px #262421;flex:none}.lamp.on{background:#ff3e22;box-shadow:0 0 0 1.5px #262421,0 0 8px rgba(255,62,34,.55)}
+.rk{box-sizing:border-box;display:block;width:40px;height:26px;padding:3px;border-radius:3px;background:#262421;box-shadow:0 1px 0 rgba(255,255,255,.6);flex:none}
+.rk b{display:block;height:100%;border-radius:2px;background:linear-gradient(90deg,#2f2c29 0 50%,#4a4642 50%);position:relative}
+.on .rk b{background:linear-gradient(90deg,#4a4642 0 50%,#2f2c29 50%)}
+.rk b::before{content:'I';position:absolute;right:0;width:50%;top:0;bottom:0;display:grid;place-items:center;font-size:10px;color:#8a847a}
+.on .rk b::before{color:#ff3e22;text-shadow:0 0 5px rgba(255,62,34,.8)}
+.ilk{display:flex;gap:2px;padding:2px;background:#262421;border-radius:3px}.ilk .bk{box-shadow:none;flex:1;height:30px;font-size:11px}.ilk .bk.dn{height:27px;box-shadow:none}
+.card{background:#2b2926;border-radius:3px;padding:4px;box-shadow:0 0 0 1.5px #262421,0 6px 14px rgba(0,0,0,.3)}
+.opt{display:flex;align-items:center;gap:10px;padding:7px 10px;color:#d8d2c4;font-size:13px;font-weight:600;letter-spacing:1px;text-transform:uppercase;border-radius:2px}
+.opt.sel{background:#c7c9bb;color:#23251f}
+.grp{padding:8px 10px 3px;font-size:9.5px;font-weight:700;letter-spacing:2px;color:#8a847a;text-transform:uppercase;border-top:1px solid #45413c}.grp:first-child{border-top:0}
+.set{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 0;border-top:1.5px solid rgba(46,43,37,.22);font-size:13px;font-weight:700;letter-spacing:1.4px;text-transform:uppercase}
+.set small{display:block;font-family:Geist;font-size:11px;color:#76716a;letter-spacing:0;text-transform:none;font-weight:400;margin-top:2px}
+.band{display:flex;align-items:center;gap:8px;margin:2px 0 4px;font-size:11px;font-weight:700;letter-spacing:2.4px;text-transform:uppercase;color:#5a564d}.band::after{content:'';flex:1;height:1.5px;background:#2e2b25;opacity:.6}
+.acc{border-radius:3px;box-shadow:0 0 0 1.5px #262421;overflow:hidden;margin-top:8px}
+.acc-h{display:flex;align-items:center;gap:10px;padding:9px 10px;background:#ddd6c6;font-size:13px;font-weight:700;letter-spacing:1.4px;text-transform:uppercase;cursor:pointer}
+.acc-h .bk{width:26px;height:24px;font-size:10px;border-width:2px 3px 4px}
+.acc-b{padding:6px 12px 10px;background:#d6cfbf;box-shadow:inset 0 3px 5px -2px rgba(0,0,0,.25)}
+.manual{background:#f6f2e8;border-radius:3px;box-shadow:0 0 0 1.5px #262421,0 10px 24px rgba(0,0,0,.28);padding:14px 16px 16px}
+.manual h4{margin:0;font-size:17px;font-weight:700;letter-spacing:2px;text-transform:uppercase}
+.manual p{font-family:Geist;font-size:12px;line-height:1.55;color:#4a463d;margin:6px 0 0}
+.manual .num{display:inline-grid;place-items:center;width:18px;height:18px;border-radius:50%;background:#2e2b25;color:#f6f2e8;font-size:10px;font-weight:700;margin-right:6px}
+.pop{position:relative;background:linear-gradient(180deg,#d9d9d5,#c9c9c4);border-radius:3px;padding:12px;box-shadow:0 0 0 1.5px #262421,0 8px 18px rgba(0,0,0,.25)}
+.pop::before{content:'';position:absolute;top:-8px;right:28px;border:8px solid transparent;border-top:0;border-bottom-color:#262421}
+.pop::after{content:'';position:absolute;top:-6px;right:29.5px;border:6.5px solid transparent;border-top:0;border-bottom-color:#d9d9d5}
+.paper{background:#f6f2e8;border-radius:2px;box-shadow:0 0 0 1.5px #262421,0 3px 6px rgba(0,0,0,.18)}
+/* rotary R1: knurled aluminium input selector, lamp next to the chosen position */
+.dial{position:relative;width:190px;height:170px;cursor:pointer;user-select:none}
+.lbl{position:absolute;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;gap:4px;font-size:12px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:#4a463d;white-space:nowrap}
+.k1{position:absolute;border-radius:50%;left:50%;top:96px;width:96px;height:96px;margin:-48px 0 0 -48px;background:repeating-conic-gradient(#8f8f8b 0 2.5deg,#e2e2de 2.5deg 5deg);box-shadow:0 0 0 1.5px #262421,0 4px 6px rgba(0,0,0,.35);transition:transform .14s cubic-bezier(.3,1.4,.6,1)}
+.k1::before{content:'';position:absolute;inset:9px;border-radius:50%;background:radial-gradient(circle at 35% 30%,rgba(255,255,255,.55),rgba(255,255,255,0) 45%),repeating-radial-gradient(circle,#d4d4d0 0 1px,#c2c2be 1px 2.2px);box-shadow:0 0 0 1px #6e6e6a,inset 0 -2px 3px rgba(0,0,0,.2)}
+.k1::after{content:'';position:absolute;left:50%;top:13px;width:4px;height:24px;margin-left:-2px;border-radius:2px;background:#2e2b25}
+@media (prefers-reduced-motion:reduce){.k1{transition:none}}
+.led{border-radius:2px;padding:4px 8px;background:#1a0605;color:#ff3b2f;font-family:Doto;font-weight:900;text-align:right;text-shadow:0 0 6px rgba(255,50,40,.7);box-shadow:inset 0 3px 6px rgba(0,0,0,.8)}
+.led .o{color:rgba(255,59,47,.12);text-shadow:none}
+.bar{display:flex;gap:2px}.bar i{width:7px;height:12px;border-radius:1px;background:#3a3631;box-shadow:inset 0 0 0 1px #1f1d1a}
+.bar i.g{background:#4ccf5c;box-shadow:0 0 5px rgba(76,207,92,.6)}.bar i.a{background:#ffb02e;box-shadow:0 0 5px rgba(255,176,46,.6)}.bar i.r{background:#ff3e22;box-shadow:0 0 5px rgba(255,62,34,.6)}
+.tl{display:flex;flex-direction:column;align-items:center;gap:6px}
+.big{width:16px;height:16px;border-radius:2px;box-shadow:0 0 0 1.5px #262421}
+.res{display:flex;align-items:center;gap:10px;padding:9px 10px;border-top:1.5px solid rgba(46,43,37,.22)}.res:first-child{border-top:0}
+</style>
+</head>
+<body>
+<h1>Old-school components</h1>
+<p class="intro">Every remaining UI element in the old-school hardware style. Screens, on/off controls and the dark theme: <a href="oldschool-screens.html">oldschool-screens.html</a>. Mockups only; tap the controls to try them.</p>
+
+<h2>Controls and containers</h2>
+<div class="col">
+<div class="pn"><div class="hd"><b>Dropdown</b><span>tuning, chord type, settings</span></div>
+<div class="g2">
+<div><div class="sub">Closed: LCD window with ◀ ▶ (steps) and LIST (opens)</div>
+<div class="row"><span class="bk gray" style="width:34px">◀</span><span class="win" style="flex:1"><span class="lcd" style="display:flex;justify-content:space-between"><span>Drop D</span><span class="off">D A D G B E</span></span></span><span class="bk gray" style="width:34px">▶</span><span class="bk" style="width:50px;font-size:11px">List</span></div></div>
+<div><div class="sub">Open: dark card, engraved groups, chosen item in LCD negative with its lamp</div>
+<div class="card"><div class="grp">Triads</div><div class="opt">Major</div><div class="opt sel"><span class="lamp on"></span>Minor</div><div class="opt">Sus2</div><div class="grp">Sevenths</div><div class="opt">Dominant 7</div><div class="opt">Minor 7</div></div></div>
+</div></div>
+
+<div class="pn"><div class="hd"><b>Rotary selector · R1</b><span>2–6 fixed options (subdivision, tolerance, sound) · on trial</span></div>
+<div class="row" style="gap:20px;flex-wrap:wrap"><div class="dial" id="r1"></div><div class="sub" style="max-width:260px">Knurled aluminium knob like a hi-fi input selector; the lamp next to the chosen position lights. Tap to step. If it does not read well in the app, interlocked keys are the fallback.</div></div></div>
+
+<div class="pn"><div class="hd"><b>Number field</b><span>A4, BPM, volume: large digits</span></div>
+<div class="row" style="max-width:360px"><span class="bk gray" style="width:38px;height:42px;font-size:14px">▼</span><span class="win" style="flex:1"><span class="lcd" style="display:flex;align-items:baseline;justify-content:center;gap:6px;padding:4px 10px"><span class="dot" style="font-size:30px;line-height:1">440.0</span><span>Hz</span></span></span><span class="bk gray" style="width:38px;height:42px;font-size:14px">▲</span></div>
+<div class="sub" style="margin-top:8px">Hold ▼ ▲ to repeat. Dot-matrix font provisional.</div></div>
+
+<div class="pn"><div class="hd"><b>Multiple selection</b><span>trainer notes, intervals, qualities</span></div>
+<div class="sub">A row of latching keys with a lamp above: each stays down while active</div>
+<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:5px;justify-items:center" id="multiL"></div>
+<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:5px;margin-top:7px" id="multi"></div></div>
+
+<div class="pn"><div class="hd"><b>Settings list</b><span>group band, printed rows, the right control on the right</span></div>
+<div class="band">Tuner</div>
+<div class="set" style="border-top:0"><span>Tuning<small>Used by the string chips</small></span><span class="win"><span class="lcd" style="display:block;padding:5px 9px">Standard</span></span></div>
+<div class="set"><span>Reference A4</span><span class="row" style="gap:6px"><span class="bk gray" style="width:30px;height:30px;font-size:11px">▼</span><span class="win"><span class="lcd" style="display:block;padding:5px 10px;font-size:13px">440.0 Hz</span></span><span class="bk gray" style="width:30px;height:30px;font-size:11px">▲</span></span></div>
+<div class="set"><span>Tone volume<small>Reference tone loudness</small></span><span style="position:relative;width:110px;height:6px;border-radius:2px;background:#262421;box-shadow:inset 0 1px 2px #000"><span style="position:absolute;left:62%;top:-8px;width:14px;height:22px;margin-left:-7px;border-radius:2px;background:#ede7d8;box-shadow:0 0 0 1.5px #262421,inset 0 -3px 0 #b5ad9b"></span></span></div>
+<div class="set tg on"><span>Left-handed<small>Mirror every fretboard</small></span><span class="rk"><b></b></span></div></div>
+
+<div class="pn"><div class="hd"><b>Accordion</b><span>hinged flap: ▸ / ▾ key, recessed inside</span></div>
+<div class="acc"><div class="acc-h"><span class="bk">▾</span>Metronome<span style="margin-left:auto" class="lamp on"></span></div>
+<div class="acc-b"><div class="set tg" style="border-top:0"><span>Accent beat 1</span><span class="rk"><b></b></span></div><div class="set tg on"><span>Beat-1 flash</span><span class="rk"><b></b></span></div></div></div>
+<div class="acc"><div class="acc-h"><span class="bk">▸</span>Scales<span style="margin-left:auto" class="lamp"></span></div><div class="acc-b" hidden><div class="set tg" style="border-top:0"><span>Vertical neck</span><span class="rk"><b></b></span></div></div></div>
+<div class="sub" style="margin-top:8px">The side lamp says the group has something switched on (optional).</div></div>
+
+<div class="pn"><div class="hd"><b>Popover</b><span>Scales Display panel: aluminium sub-panel with a tab</span></div>
+<div style="display:flex;justify-content:flex-end;margin-bottom:12px"><span class="bk dn" style="width:92px">Display</span></div>
+<div class="pop"><div class="silk" style="margin-bottom:8px">Labels</div><div class="ilk"><span class="bk dn">Notes</span><span class="bk">Intervals</span><span class="bk">None</span></div>
+<div class="set tg on" style="border-top-color:rgba(46,43,37,.3);margin-top:8px"><span>Vertical neck</span><span class="rk"><b></b></span></div>
+<div class="set tg" style="border-top-color:rgba(46,43,37,.3);padding-bottom:0"><span>Position boxes</span><span class="rk"><b></b></span></div></div></div>
+
+<div class="pn"><div class="hd"><b>Guide dialog</b><span>a page of the operator's manual, numbered steps, CLOSE key</span></div>
+<div style="background:rgba(30,26,22,.45);border-radius:6px;padding:22px 16px">
+<div class="manual"><div class="row" style="justify-content:space-between"><h4>Tuner · Quick guide</h4><span class="bk" style="width:64px;height:30px;font-size:11px">Close</span></div>
+<div style="height:1.5px;background:#2e2b25;margin:10px 0 4px;opacity:.7"></div>
+<p><span class="num">1</span>Pick a tuning with ◀ ▶. Chromatic names any pitch.</p>
+<p><span class="num">2</span>Play one string. The needle shows how many cents you are off.</p>
+<p><span class="num">3</span>The IN TUNE lamp lights within the tolerance you set.</p></div></div></div>
+</div>
+
+<h2>Music graphics</h2>
+<div class="col">
+<div class="pn"><div class="hd"><b>Chord diagram</b><span>chord library, Changes, chords of the scale</span></div>
+<div style="max-width:220px"><div class="paper" style="padding:6px" id="cd"></div><div class="row" style="justify-content:space-between;margin-top:8px"><span class="silk">x02010 · root A</span><span class="bk" style="height:30px;font-size:11px;padding:0 10px">▶ Strum</span></div></div>
+<div class="sub" style="margin-top:8px">Printed on card, like a songbook. The LCD dot-matrix version was liked too, but this one reads better.</div></div>
+
+<div class="pn"><div class="hd"><b>Tablature</b><span>voicings and scales on a strip of tab paper</span></div>
+<div class="win" style="padding:5px" id="tab"></div><div class="sub" style="margin-top:8px">The note sounding now sits in a red circle.</div></div>
+
+<div class="pn"><div class="hd"><b>Staff</b><span>Trainer notes: chart-recorder paper in a window</span></div>
+<div class="win" style="padding:5px" id="staff"></div>
+<div class="row" style="justify-content:space-between;margin-top:8px"><span class="silk">Target · G3</span><span class="silk">Streak 7 · best 12</span></div></div>
+
+<div class="pn"><div class="hd"><b>Circle of fifths · C7</b><span>clock-face dial, display in the hub, index on the rim, the key's sector backlit</span></div>
+<div class="g2"><div style="display:flex;justify-content:center" id="cofL"></div><div style="display:flex;justify-content:center;background:#2a2825;border-radius:8px;padding:8px 0" id="cofD"></div></div>
+<div class="sub" style="margin-top:8px">Light: cream face, grey-green LCD. Dark theme: black face with cream print, amber negative LCD. Tap a major or minor key.</div></div>
+
+<div class="pn"><div class="hd"><b>Progression player</b><span>step sequencer: one bar per key, lamp on the bar playing</span></div><div id="seq"></div></div>
+
+<div class="pn"><div class="hd"><b>Neck legend</b><span>silk-screened on the panel</span></div><div class="row" style="gap:18px;flex-wrap:wrap" id="leg"></div></div>
+</div>
+
+<h2>Data and feedback</h2>
+<div class="col">
+<div class="pn"><div class="hd"><b>Score, streak, best</b><span>Trainer notes, intervals, qualities</span></div>
+<div class="g3" id="score"></div><div class="sub" style="margin-top:10px">Red LED counters with the unlit digits showing, like a scoreboard.</div></div>
+
+<div class="pn"><div class="hd"><b>Session bars</b><span>intervals, weakest first: LED VU meters</span></div><div id="bars"></div></div>
+
+<div class="pn"><div class="hd"><b>Changes counter</b><span>Changes · one minute: big counter + history on chart paper</span></div>
+<div class="row" style="align-items:stretch;gap:12px"><div style="display:flex;flex-direction:column;gap:6px"><span class="silk">Changes</span><span class="win"><span class="led" style="display:block;font-size:46px;line-height:1;padding:6px 10px"><span class="o">0</span>37</span></span><span class="silk">Best · 41</span></div>
+<div style="flex:1;display:flex;flex-direction:column;gap:6px"><span class="silk">Last 8 sessions</span><div class="win" style="flex:1;padding:4px" id="spark"></div></div></div></div>
+
+<div class="pn"><div class="hd"><b>Timing lamps</b><span>Changes · in time: one lamp per outcome + tape of the last hits</span></div>
+<div class="row" style="justify-content:space-around">
+<span class="tl"><span class="big" style="background:#ffb02e;box-shadow:0 0 0 1.5px #262421,0 0 8px rgba(255,176,46,.6)"></span><span class="silk">← Early</span></span>
+<span class="tl"><span class="big" style="background:#4ccf5c;box-shadow:0 0 0 1.5px #262421,0 0 8px rgba(76,207,92,.6)"></span><span class="silk">✓ On time</span></span>
+<span class="tl"><span class="big" style="background:#3a3631"></span><span class="silk">Late →</span></span>
+<span class="tl"><span class="big" style="background:#3a3631"></span><span class="silk">× Miss</span></span></div>
+<div class="win" style="margin-top:14px"><div class="lcd" style="display:flex;gap:6px;align-items:center;font-size:15px;letter-spacing:4px"><span style="font-size:10px;letter-spacing:1.5px">Last</span>✓ ✓ ← ✓ → ✓ ✓ × ✓ ✓ ←<span style="margin-left:auto;font-size:11px;letter-spacing:1.5px">8 / 11</span></div></div></div>
+
+<div class="pn"><div class="hd"><b>Results list</b><span>Identify chords and scales: printed index with a match indicator</span></div>
+<div style="border-radius:3px;box-shadow:0 0 0 1.5px #262421;background:#ede7d8" id="res"></div></div>
+
+<div class="pn"><div class="hd"><b>Status line</b><span>mic messages and hints: one LCD line</span></div>
+<div class="win"><div class="lcd" style="display:flex;align-items:center;gap:10px"><span class="lamp" style="background:#c99a1a;box-shadow:0 0 0 1.5px #262421,0 0 6px rgba(240,180,40,.6)"></span><span>Tap anywhere to start the microphone</span></div></div>
+<div class="win" style="margin-top:8px"><div class="lcd" style="display:flex;align-items:center;gap:10px"><span class="lamp"></span><span>Mic blocked · allow it in browser settings</span></div></div></div>
+</div>
+
+<script>
+const F="font-family='Barlow Semi Condensed'"
+const byId=(id)=>document.getElementById(id)
+
+// Rotary R1
+;(function(){const el=byId('r1'),opts=['Off','1/8','1/16','Triplet'],angles=[-90,-30,30,90];let i=1;let h=''
+opts.forEach((o,j)=>{const a=(angles[j]-90)*Math.PI/180;h+=`<span class="lbl" style="left:${95+70*Math.cos(a)}px;top:${96+70*Math.sin(a)}px"><span class="lamp" data-l="${j}"></span>${o}</span>`})
+el.innerHTML=h+'<div class="k1"></div>'
+const set=()=>{el.querySelector('.k1').style.transform=`rotate(${angles[i]}deg)`;el.querySelectorAll('[data-l]').forEach((l)=>l.classList.toggle('on',+l.dataset.l===i))}
+set();el.addEventListener('click',()=>{i=(i+1)%opts.length;set()})})()
+
+// Multiple selection
+;(function(){const names=['m2','M2','m3','M3','P4','TT','P5'],on=[1,0,1,1,1,0,1]
+byId('multiL').innerHTML=on.map((v)=>`<span class="lamp${v?' on':''}"></span>`).join('')
+byId('multi').innerHTML=names.map((n,i)=>`<span class="bk${on[i]?' dn':''}" style="width:auto">${n}</span>`).join('')
+byId('multi').querySelectorAll('.bk').forEach((b,i)=>b.addEventListener('click',()=>{b.classList.toggle('dn');byId('multiL').children[i].classList.toggle('on')}))})()
+
+// Chord diagram (printed card)
+;(function(){const W=150,H=176,x0=28,dx=19,y0=46,dy=24,frets=4,ink='#2e2b25',bg='#f6f2e8',shape=['x',0,2,0,1,0],fing=[0,0,2,0,1,0]
+let s=`<svg width="100%" viewBox="0 0 ${W} ${H}" style="display:block" aria-hidden="true"><rect width="${W}" height="${H}" fill="${bg}"/><text x="${W/2}" y="22" text-anchor="middle" font-size="18" ${F} font-weight="700" letter-spacing="2" fill="${ink}">Am7</text><rect x="${x0-1}" y="${y0-5}" width="${dx*5+2}" height="5" fill="${ink}"/>`
+for(let f=1;f<=frets;f++)s+=`<line x1="${x0}" y1="${y0+f*dy}" x2="${x0+dx*5}" y2="${y0+f*dy}" stroke="${ink}" stroke-width="1.3"/>`
+for(let i=0;i<6;i++)s+=`<line x1="${x0+i*dx}" y1="${y0}" x2="${x0+i*dx}" y2="${y0+frets*dy}" stroke="${ink}" stroke-width="1.2"/>`
+shape.forEach((v,i)=>{const x=x0+i*dx;if(v==='x')s+=`<text x="${x}" y="${y0-10}" text-anchor="middle" font-size="12" font-weight="700" ${F} fill="${ink}">×</text>`;else if(v===0)s+=`<circle cx="${x}" cy="${y0-14}" r="4" fill="none" stroke="${ink}" stroke-width="1.5"/>`;else{const y=y0+(v-.5)*dy;s+=`<circle cx="${x}" cy="${y}" r="7.5" fill="${ink}"/><text x="${x}" y="${y+3.6}" text-anchor="middle" font-size="10" font-weight="700" ${F} fill="${bg}">${fing[i]}</text>`}})
+;['E','A','D','G','B','E'].forEach((n,i)=>s+=`<text x="${x0+i*dx}" y="${y0+frets*dy+16}" text-anchor="middle" font-size="9" font-weight="600" ${F} fill="${ink}" opacity=".7">${n}</text>`)
+byId('cd').innerHTML=s+'</svg>'})()
+
+// Tablature: Am7 strum then A minor pentatonic, the sounding note in a red circle
+;(function(){const W=640,H=118,top=26,gap=12;let s=`<svg width="100%" viewBox="0 0 ${W} ${H}" style="display:block" aria-hidden="true"><rect width="${W}" height="${H}" fill="#f6f2e8"/>`
+for(let i=0;i<6;i++)s+=`<line x1="10" y1="${top+i*gap}" x2="${W-10}" y2="${top+i*gap}" stroke="#2e2b25"/>`
+s+=`<line x1="10" y1="${top}" x2="10" y2="${top+5*gap}" stroke="#2e2b25" stroke-width="2.5"/><line x1="${W-10}" y1="${top}" x2="${W-10}" y2="${top+5*gap}" stroke="#2e2b25" stroke-width="1.5"/>`
+;['T','A','B'].forEach((c,i)=>s+=`<text x="24" y="${top+14+i*17}" font-size="15" font-weight="700" ${F} fill="#2e2b25" text-anchor="middle">${c}</text>`)
+const cell=(x,str,f,hl)=>{const y=top+str*gap;return (hl?`<circle cx="${x}" cy="${y}" r="8.5" fill="#ff3e22"/>`:`<rect x="${x-7}" y="${y-7}" width="14" height="14" fill="#f6f2e8"/>`)+`<text x="${x}" y="${y+4.5}" font-size="13" font-weight="700" ${F} fill="${hl?'#fff4ec':'#2e2b25'}" text-anchor="middle">${f}</text>`}
+;[[0,0],[1,1],[2,0],[3,2],[4,0]].forEach(([str,f])=>s+=cell(70,str,f))
+s+=`<text x="70" y="${top-10}" font-size="11" font-weight="700" ${F} fill="#5a564d" text-anchor="middle">Am7</text><line x1="110" y1="${top}" x2="110" y2="${top+5*gap}" stroke="#2e2b25"/>`
+;[[5,5],[5,8],[4,5],[4,7],[3,5],[3,7],[2,5],[2,7],[1,5],[1,8],[0,5],[0,8]].forEach(([str,f],i)=>s+=cell(138+i*39,str,f,i===4))
+s+=`<text x="138" y="${top-10}" font-size="11" font-weight="700" ${F} fill="#5a564d">A minor pentatonic · position 1</text>`
+byId('tab').innerHTML=s+'</svg>'})()
+
+// Staff on chart paper
+;(function(){const W=640,H=130,top=40,g=10;let s=`<svg width="100%" viewBox="0 0 ${W} ${H}" style="display:block" aria-hidden="true"><defs><pattern id="mm" width="10" height="10" patternUnits="userSpaceOnUse"><path d="M10 0H0V10" fill="none" stroke="#e6b9a8" stroke-width=".5"/></pattern></defs><rect width="${W}" height="${H}" fill="#f6f2e8"/><rect width="${W}" height="${H}" fill="url(#mm)"/>`
+for(let i=0;i<5;i++)s+=`<line x1="20" y1="${top+i*g}" x2="${W-20}" y2="${top+i*g}" stroke="#2e2b25" stroke-width="1.2"/>`
+s+=`<text x="26" y="${top+36}" font-size="56" fill="#2e2b25" font-family="serif">𝄞</text><text x="38" y="${top-8}" font-size="10" font-weight="700" ${F} fill="#2e2b25">8va</text>`
+s+=`<ellipse cx="${W/2}" cy="${top+3*g}" rx="9" ry="6.5" fill="none" stroke="#2e2b25" stroke-width="3" transform="rotate(-20 ${W/2} ${top+3*g})"/>`
+s+=`<rect x="0" y="0" width="12" height="${H}" fill="#e2dccc"/><rect x="${W-12}" y="0" width="12" height="${H}" fill="#e2dccc"/>`;for(let y=8;y<H;y+=16)s+=`<circle cx="6" cy="${y}" r="2.4" fill="#b5ad9b"/><circle cx="${W-6}" cy="${y}" r="2.4" fill="#b5ad9b"/>`
+byId('staff').innerHTML=s+'</svg>'})()
+
+// Circle of fifths C7: C4's hub display and rim index, C5's backlit sector, C6's black face for the dark theme
+;(function(){const MAJ=['C','G','D','A','E','B','F♯','D♭','A♭','E♭','B♭','F'],MIN=['Am','Em','Bm','F♯m','C♯m','G♯m','D♯m','B♭m','Fm','Cm','Gm','Dm'],SIG=['no ♯ / ♭','1 ♯','2 ♯','3 ♯','4 ♯','5 ♯','6 ♯','5 ♭','4 ♭','3 ♭','2 ♭','1 ♭']
+const C=145,pol=(r,d)=>{const a=(d-90)*Math.PI/180;return [C+r*Math.cos(a),C+r*Math.sin(a)]}
+const wedge=(r1,r2,a0,a1)=>{const [x1,y1]=pol(r2,a0),[x2,y2]=pol(r2,a1),[x3,y3]=pol(r1,a1),[x4,y4]=pol(r1,a0);return `M${x1} ${y1} A${r2} ${r2} 0 0 1 ${x2} ${y2} L${x3} ${y3} A${r1} ${r1} 0 0 0 ${x4} ${y4}Z`}
+const T={cofL:{bezel:'#c9c9c4',line:'#262421',face:'#f1ecdf',alt:'#ebe5d6',ink:'#2e2b25',minor:'#5a564d',glowA:'#ffd98a',glowB:'#f0a83a',glowSh:'rgba(255,180,60,.55)',sel:'#2e2b25',rim:'#222120',lcd:'#c7c9bb',lcdInk:'#23251f',lcdGlow:'none',idx:'#c63a1c',sep:'rgba(46,43,37,.3)'},
+cofD:{bezel:'#3a3a3c',line:'#0e0d0c',face:'#1f1e1c',alt:'#252421',ink:'#e9e2d0',minor:'#9d968a',glowA:'#b9761f',glowB:'#7a4a12',glowSh:'rgba(255,160,50,.45)',sel:'#ffe2b0',rim:'#0b0a09',lcd:'#14100b',lcdInk:'#ffb347',lcdGlow:'drop-shadow(0 0 4px rgba(255,170,60,.6))',idx:'#ff4a2c',sep:'rgba(233,226,208,.18)'}}
+const st={cofL:0,cofD:0}
+function draw(id){const t=T[id],k=st[id],[gx,gy]=pol(90,k*30);let s=`<svg width="290" height="290" viewBox="0 0 290 290" aria-hidden="true" style="display:block;max-width:100%"><defs><radialGradient id="g${id}" cx="${gx}" cy="${gy}" r="70" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="${t.glowA}"/><stop offset="1" stop-color="${t.glowB}"/></radialGradient></defs>`
+s+=`<circle cx="${C}" cy="${C}" r="142" fill="${t.bezel}" stroke="${t.line}" stroke-width="1.5"/><circle cx="${C}" cy="${C}" r="134" fill="${t.face}" stroke="${t.line}" stroke-width="1.5"/>`
+for(let i=0;i<12;i++)s+=`<path d="${wedge(60,126,i*30-15,i*30+15)}" fill="${i===k?`url(#g${id})`:i%2?t.alt:t.face}" stroke="${t.sep}" stroke-width=".8" ${i===k?`style="filter:drop-shadow(0 0 7px ${t.glowSh})"`:''}/>`
+for(let n=0;n<60;n++){const [x1,y1]=pol(126,n*6),[x2,y2]=pol(n%5===0?118:122,n*6);s+=`<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${t.ink}" stroke-width="${n%5===0?1.6:.8}"/>`}
+for(let i=0;i<12;i++){const [x,y]=pol(101,i*30),[xm,ym]=pol(77,i*30);s+=`<text data-i="${i}" x="${x}" y="${y+6}" text-anchor="middle" font-size="18" font-weight="700" ${F} fill="${i===k?t.sel:t.ink}" style="cursor:pointer">${MAJ[i]}</text><text data-i="${i}" x="${xm}" y="${ym+4}" text-anchor="middle" font-size="11" font-weight="700" ${F} fill="${i===k?t.sel:t.minor}" style="cursor:pointer">${MIN[i]}</text>`}
+s+=`<g transform="rotate(${k*30} ${C} ${C})"><path d="M${C-7} ${C-143} L${C+7} ${C-143} L${C} ${C-130}Z" fill="${t.idx}" stroke="${t.line}" stroke-width="1"/></g>`
+s+=`<circle cx="${C}" cy="${C}" r="57" fill="${t.rim}"/><circle cx="${C}" cy="${C}" r="52" fill="${t.lcd}"/><g style="filter:${t.lcdGlow}" fill="${t.lcdInk}" ${F} font-weight="700"><text x="${C}" y="${C-17}" text-anchor="middle" font-size="9" letter-spacing="1.8">KEY</text><text x="${C}" y="${C+10}" text-anchor="middle" font-size="30">${MAJ[k]}</text><text x="${C}" y="${C+28}" text-anchor="middle" font-size="10" letter-spacing=".8">${MIN[k]} · ${SIG[k]}</text></g></svg>`
+const el=byId(id);el.innerHTML=s;el.querySelectorAll('[data-i]').forEach((x)=>x.addEventListener('click',()=>{st[id]=+x.dataset.i;draw(id)}))}
+draw('cofL');draw('cofD')})()
+
+// Progression player
+;(function(){const ch=['C','Am','F','G'],num=['I','vi','IV','V'];let cur=1
+const draw=()=>{byId('seq').innerHTML=`<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;justify-items:center">${ch.map((c,i)=>`<span class="lamp${i===cur?' on':''}"></span>`).join('')}</div>
+<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:7px">${ch.map((c,i)=>`<span class="bk${i===cur?' dn':''}" data-b="${i}" style="width:auto;height:${i===cur?39:42}px;flex-direction:column;gap:3px;font-size:16px;text-transform:none;letter-spacing:.5px"><small style="font-size:9px;letter-spacing:1px;opacity:.7">${num[i]}</small>${c}</span>`).join('')}</div>
+<div class="row" style="margin-top:12px"><span class="bk" style="width:96px">▶ Play</span><span class="bk" style="width:70px">■ Stop</span><span class="win" style="margin-left:auto"><span class="lcd" style="display:block;padding:5px 10px;font-size:13px">96 BPM</span></span><span class="silk">Loop</span><span class="rk on" style="display:block"><b></b></span></div>`
+byId('seq').querySelectorAll('[data-b]').forEach((b)=>b.addEventListener('click',()=>{cur=+b.dataset.b;draw()}))};draw()})()
+
+// Neck legend
+byId('leg').innerHTML=[['#d9532d','#d9532d','R','Root'],['#363431','#363431','3','Chord tone'],['#f6f1e4','#2e2b25','2','Scale note'],['transparent','#2e2b25','·','Marked']].map(([f,s,t,l])=>`<span class="row" style="gap:7px"><svg width="22" height="22" aria-hidden="true"><circle cx="11" cy="11" r="9" fill="${f}" stroke="${s}" stroke-width="1.4" ${l==='Marked'?"stroke-dasharray='2 2'":''}/><text x="11" y="15" text-anchor="middle" font-size="11" font-weight="700" ${F} fill="${f==='#f6f1e4'||f==='transparent'?'#2e2b25':'#fff4ec'}">${t}</text></svg><span class="silk">${l}</span></span>`).join('')
+
+// Score LEDs, unlit leading zeros
+byId('score').innerHTML=[['Score','124'],['Streak','007'],['Best','012']].map(([l,v])=>`<div><span class="silk">${l}</span><div class="win" style="margin-top:5px"><div class="led" style="font-size:28px;line-height:1.05">${v.replace(/^(0+)/,(m)=>`<span class="o">${m}</span>`)}</div></div></div>`).join('')
+
+// Session bars: 16 LEDs, red -> amber -> green
+byId('bars').innerHTML=[['TT',.35],['m6',.45],['M7',.55],['m2',.7],['P4',.8],['P5',.95]].map(([n,v])=>{const on=Math.round(v*16);return `<div class="row" style="margin-top:6px"><span class="silk" style="width:28px">${n}</span><span class="win" style="padding:3px"><span class="bar">${Array.from({length:16},(_,i)=>`<i class="${i<on?(i<6?'r':i<11?'a':'g'):''}"></i>`).join('')}</span></span><span style="font-size:13px;font-weight:700;margin-left:4px">${Math.round(v*100)}%</span></div>`}).join('')
+
+// Changes history on chart paper
+;(function(){const W=300,H=86,v=[24,28,27,31,33,30,36,37],mx=42,px=(i)=>12+i*(W-24)/7,py=(y)=>H-8-(y/mx)*(H-16)
+let s=`<svg width="100%" height="100%" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" style="display:block;min-height:86px" aria-hidden="true"><defs><pattern id="gp" width="12" height="12" patternUnits="userSpaceOnUse"><path d="M12 0H0V12" fill="none" stroke="#e6b9a8" stroke-width=".6"/></pattern></defs><rect width="${W}" height="${H}" fill="#f6f2e8"/><rect width="${W}" height="${H}" fill="url(#gp)"/>`
+s+=`<polyline points="${v.map((y,i)=>`${px(i)},${py(y)}`).join(' ')}" fill="none" stroke="#2a3f8f" stroke-width="2"/>`;v.forEach((y,i)=>s+=`<circle cx="${px(i)}" cy="${py(y)}" r="${i===7?3.5:2}" fill="${i===7?'#c63a1c':'#2a3f8f'}"/>`)
+byId('spark').innerHTML=s+'</svg>'})()
+
+// Results list
+byId('res').innerHTML=[['Am7','A minor seventh','exact',4],['C6','C sixth','1 extra',3],['Em7♭5','E half-diminished','1 missing',2]].map(([s,n,d,m])=>`<div class="res"><span style="font-size:20px;font-weight:700;width:64px;letter-spacing:.5px">${s}</span><span style="flex:1"><span style="font-size:13px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase">${n}</span><span style="display:block;font-family:Geist;font-size:11px;color:#76716a">${d}</span></span><span class="row" style="gap:3px">${[0,1,2,3].map((k)=>`<span class="lamp${k<m?' on':''}" style="width:8px;height:8px"></span>`).join('')}</span><span class="bk" style="height:30px;font-size:11px;padding:0 9px">Open</span></div>`).join('')
+
+// Interactions: interlocked keys, rockers, accordion
+document.querySelectorAll('.ilk').forEach((g)=>g.querySelectorAll('.bk').forEach((b)=>b.addEventListener('click',()=>{g.querySelectorAll('.bk').forEach((x)=>x.classList.remove('dn'));b.classList.add('dn')})))
+document.querySelectorAll('.tg').forEach((b)=>b.addEventListener('click',()=>b.classList.toggle('on')))
+document.querySelectorAll('.acc-h').forEach((h)=>h.addEventListener('click',()=>{const b=h.nextElementSibling,k=h.querySelector('.bk');if(b){b.hidden=!b.hidden;k.textContent=b.hidden?'▸':'▾'}}))
+</script>
+</body>
+</html>
