@@ -104,6 +104,18 @@ export function stopAll() {
 /** True while a synth note may still be audible to the microphone. */
 export const isRinging = () => performance.now() < ringingUntil
 
+/** The shared audio context, created on first use and resumed if the browser suspended it. */
+export function audio(): AudioContext {
+	ctx ??= new AudioContext()
+	if (ctx.state === 'suspended') ctx.resume()
+	return ctx
+}
+
+/** Tells the views that ignore the mic while the speaker plays to ignore the next `ms` too (a UI click). */
+export function mask(ms: number) {
+	ringingUntil = Math.max(ringingUntil, performance.now() + ms)
+}
+
 /* Reference tone ----------------------------------------------------------- */
 // A string to tune against needs the exact pitch, which the plucked buffers
 // cannot promise (integer delay line, up to a few cents off), and it should

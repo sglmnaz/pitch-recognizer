@@ -43,6 +43,14 @@ export interface Settings {
 	/** Loudness of the string reference tone, 0–1. */
 	toneVolume: number
 
+	/* Feel (ts/ui/feedback.ts) */
+	/** A short click when a key, switch or knob is pressed. */
+	uiSounds: boolean
+	/** A short vibration with it, where the device can. */
+	haptics: boolean
+	/** Loudness of those clicks, 0–1. */
+	uiVolume: number
+
 	/* Metronome */
 	/** Tempo, 30–300 BPM. */
 	metroBpm: number
@@ -127,6 +135,9 @@ const defaults: Settings = {
 	a4: 440,
 	tolerance: 5,
 	toneVolume: 0.6,
+	uiSounds: true,
+	haptics: true,
+	uiVolume: 0.5,
 	metroBpm: 100,
 	metroBeats: 4,
 	metroUnit: 4,
@@ -223,6 +234,9 @@ export function load(): Settings {
 		a4: clampA4(typeof s.a4 === 'number' ? s.a4 : d.a4),
 		tolerance: oneOf(s.tolerance, [5, 2, 10]),
 		toneVolume: clamp(s.toneVolume, 0, 1, d.toneVolume),
+		uiSounds: bool(s.uiSounds, d.uiSounds),
+		haptics: bool(s.haptics, d.haptics),
+		uiVolume: clamp(s.uiVolume, 0, 1, d.uiVolume),
 
 		metroBpm: clamp(s.metroBpm, 30, 300, d.metroBpm, true),
 		metroBeats: clamp(s.metroBeats, 1, 12, d.metroBeats, true),

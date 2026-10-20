@@ -1,3 +1,5 @@
+import { detent } from './feedback'
+
 /**
  * Rotary selector (R1, docs/design/oldschool-components.html): a knurled knob
  * pointing at one of 2–6 fixed positions, a lamp lit next to the chosen one.
@@ -23,6 +25,7 @@ export function bindRotary(root: HTMLElement, onPick: (value: string) => void) {
 
 	let current = 0
 	const pick = (i: number) => {
+		if (i !== current) detent()
 		show(positions[i].dataset.value!)
 		onPick(positions[i].dataset.value!)
 	}

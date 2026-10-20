@@ -1,3 +1,5 @@
+import { detent } from './feedback'
+
 /**
  * The old-school dropdown (docs/design/oldschool-components.html, "Dropdown"):
  * the closed control is an LCD window, the open list a dark card with engraved
@@ -142,6 +144,7 @@ export function dropdown(select: HTMLSelectElement) {
 		const option = select.options[index]
 		if (!option || option.disabled) return
 		const changed = select.selectedIndex !== index
+		if (changed) detent()
 		select.selectedIndex = index
 		close()
 		if (changed) select.dispatchEvent(new Event('change', { bubbles: true }))
