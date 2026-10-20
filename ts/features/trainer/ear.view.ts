@@ -51,9 +51,6 @@ export function createEarView(root: HTMLElement): View {
 	const enabled = () => (exercise() === 'intervals' ? Settings.get().earIntervals : Settings.get().earChords)
 	const question = () => Ear.getSession(exercise()).question
 	const buttons = () => Array.from(answers.querySelectorAll<HTMLButtonElement>('.ear-answer'))
-	// Browsers hold audio until the page has had a gesture: never auto-play the
-	// first question of a page that booted straight into the Trainer.
-	const canAutoplay = () => navigator.userActivation?.hasBeenActive ?? false
 
 	function renderAnswers() {
 		const ex = exercise()
@@ -250,8 +247,10 @@ export function createEarView(root: HTMLElement): View {
 	return {
 		onActivate() {
 			const ex = exercise()
+			// Opening the tab or the exercise never makes a sound: the user plays
+			// the first question (Play or Space); Next and auto-advance play theirs.
 			if (shown !== ex || !question()) {
-				startRound(canAutoplay())
+				startRound(false)
 				return
 			}
 			renderAnswers()

@@ -18,8 +18,8 @@
 		// is the oldest key of the mode, migrated there). No stored theme = follow
 		// the device.
 		(function () {
-			var themes = { light: ['classic', 'light'], dark: ['classic', 'dark'], night: ['night', 'dark'], sand: ['sand', 'light'], studio: ['studio', 'light'], mint: ['mint', 'light'], graphite: ['graphite', 'dark'], petrol: ['petrol', 'dark'], walnut: ['walnut', 'dark'], olive: ['olive', 'dark'], stage: ['stage', 'dark'], tweed: ['tweed', 'light'], juno: ['juno', 'dark'] }
-			var colors = { classic: { light: '#e7e1d3', dark: '#2a2825' }, night: { dark: '#1c222c' }, sand: { light: '#d8ccb2' }, studio: { light: '#efeeea' }, mint: { light: '#cfe2d9' }, graphite: { dark: '#383b40' }, petrol: { dark: '#1e3638' }, walnut: { dark: '#2e2219' }, olive: { dark: '#4b5039' }, stage: { dark: '#9e2b25' }, tweed: { light: '#4a2016' }, juno: { dark: '#202020' } }
+			var themes = { light: ['classic', 'light'], dark: ['classic', 'dark'], night: ['night', 'dark'], sand: ['sand', 'light'], studio: ['studio', 'light'], mint: ['mint', 'light'], graphite: ['graphite', 'dark'], petrol: ['petrol', 'dark'], walnut: ['walnut', 'dark'], olive: ['olive', 'dark'], stage: ['stage', 'dark'] }
+			var colors = { classic: { light: '#e7e1d3', dark: '#2a2825' }, night: { dark: '#1c222c' }, sand: { light: '#d8ccb2' }, studio: { light: '#efeeea' }, mint: { light: '#cfe2d9' }, graphite: { dark: '#383b40' }, petrol: { dark: '#1e3638' }, walnut: { dark: '#2e2219' }, olive: { dark: '#4b5039' }, stage: { dark: '#9e2b25' } }
 			var displays = { green: 1, amber: 1, blue: 1, casio: 1, red: 1, phosphor: 1, vfd: 1, oled: 1, ice: 1, violet: 1, eink: 1 }
 			var saved = null
 			var display = null
@@ -165,7 +165,7 @@
 						<p class="ear__prompt">Which interval?</p>
 						<p class="ear__hint"></p>
 					</div>
-					<button class="btn ear__play" type="button" data-action="replay" aria-keyshortcuts="Space">
+					<button class="btn ear__play" type="button" data-action="replay" data-feedback="none" aria-keyshortcuts="Space">
 						<svg viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true">
 							<path d="M7 4v16l13-8z" />
 						</svg>
@@ -377,7 +377,7 @@
 					</div>
 					<div class="neck-toolbar">
 						<span class="window chord-shape-window"><span class="lcd chord-shape"></span></span>
-						<button class="btn btn--small" type="button" data-action="strum" aria-label="Strum the marked shape">▶ <span>Strum</span></button>
+						<button class="btn btn--small" type="button" data-action="strum" data-feedback="none" aria-label="Strum the marked shape">▶ <span>Strum</span></button>
 						<!-- Narrow phones keep only the glyphs (fretboard.css hides the spans). -->
 						<button class="btn btn--small" type="button" data-action="clear-shape" aria-label="Clear the shape">✕ <span>Clear</span></button>
 					</div>
@@ -430,7 +430,7 @@
 				</div>
 
 				<div class="neck-toolbar">
-					<button class="key neck-toolbar__play" type="button" data-action="play" title="Play scale"><span>▶ Play scale</span></button>
+					<button class="key neck-toolbar__play" type="button" data-action="play" data-feedback="none" title="Play scale"><span>▶ Play scale</span></button>
 					<div class="display">
 						<button class="key" type="button" data-action="display" aria-expanded="false" aria-haspopup="true" title="Display options">Display</button>
 						<!-- An aluminium sub-panel whose tab points at the Display key (--tab-x, set by scales.view.ts). -->
@@ -494,7 +494,7 @@
 							<span class="chord-detail__notes"></span>
 						</div>
 						<div class="chord-detail__actions">
-							<button class="key" type="button" data-action="strum">▶ Strum</button>
+							<button class="key" type="button" data-action="strum" data-feedback="none">▶ Strum</button>
 							<a class="key" href="#chords" data-action="open-chord">Open in Chords</a>
 							<button class="key chord-detail__clear" type="button" data-action="chord-clear" aria-label="Back to the scale" title="Back to the scale">×</button>
 						</div>

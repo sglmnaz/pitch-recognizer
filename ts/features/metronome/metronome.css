@@ -452,3 +452,11 @@ input.metro-bpm__value {
 		grid-area: trainer;
 	}
 }
+
+/* Reset, bottom left across from the guide icon. */
+.metro-reset {
+	align-self: flex-start;
+	justify-self: start;
+	order: 98;
+	min-width: 64px;
+}

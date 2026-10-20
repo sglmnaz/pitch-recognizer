@@ -4,6 +4,7 @@ import { INTERVALS, QUALITIES } from '../../music/ear'
 import type { View } from '../../ui/view'
 import { subscribeVisible } from '../../ui/dom'
 import * as Theme from '../../ui/theme'
+import { resetKey } from '../../ui/reset-key'
 
 /**
  * The Settings tab: the switches and selects of every tab, the per-note target
@@ -52,7 +53,7 @@ export function createSettingsView(root: HTMLElement, from: () => string | null)
 
 	// A Reset key on each section's band: back to the defaults of what that
 	// section shows (read from its controls, so a new control is covered by
-	// itself). Two taps: the first arms it ("Sure?") for a few seconds.
+	// itself). Two taps (ts/ui/reset-key.ts).
 	for (const group of root.querySelectorAll<HTMLElement>('.settings-group[data-group]')) {
 		const keys = new Set<keyof Settings.Settings>()
 		for (const el of group.querySelectorAll<HTMLElement>('[data-setting], [data-chips]')) keys.add((el.dataset.setting ?? el.dataset.chips) as keyof Settings.Settings)
@@ -61,30 +62,8 @@ export function createSettingsView(root: HTMLElement, from: () => string | null)
 		const appearance = group.dataset.group === 'appearance'
 		if (!keys.size && !appearance) continue
 
-		const button = document.createElement('button')
-		button.type = 'button'
-		button.className = 'link-btn settings-group__reset'
 		const title = group.querySelector('.settings-group__title')?.textContent ?? 'section'
-		const idle = () => {
-			button.textContent = 'Reset'
-			button.setAttribute('aria-label', `Reset ${title} to the defaults`)
-			button.classList.remove('is-armed')
-		}
-		let armed = 0
-		button.addEventListener('click', () => {
-			if (!armed) {
-				button.textContent = 'Sure?'
-				button.setAttribute('aria-label', `Tap again to reset ${title}`)
-				button.classList.add('is-armed')
-				armed = window.setTimeout(() => {
-					armed = 0
-					idle()
-				}, 3000)
-				return
-			}
-			clearTimeout(armed)
-			armed = 0
-			idle()
+		const button = resetKey(title, () => {
 			if (appearance) {
 				Theme.setTheme('system')
 				Theme.setDisplay('auto')
@@ -93,7 +72,7 @@ export function createSettingsView(root: HTMLElement, from: () => string | null)
 			}
 			Settings.reset([...keys])
 		})
-		idle()
+		button.classList.add('settings-group__reset')
 		group.querySelector('.settings-group__title')?.after(button)
 	}
 

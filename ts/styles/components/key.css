@@ -29,8 +29,7 @@
 	padding: var(--key-chamfer) var(--space-12) var(--k-front-h);
 	border: 0 solid transparent;
 	border-radius: var(--key-radius);
-	/* The face, and a coloured head just under the chamfer when a theme gives keys one. */
-	background: linear-gradient(var(--key-head), var(--key-head)) 0 var(--key-chamfer) / 100% var(--key-head-h) no-repeat padding-box, var(--k-face) padding-box;
+	background: var(--k-face) padding-box;
 	color: var(--k-ink);
 	font-family: var(--font-ui);
 	font-size: var(--text-md);
@@ -56,10 +55,7 @@
 		border-top-width: var(--key-sink);
 		/* A shade darker: the variant's own colours, mixed toward black. */
 		background-color: color-mix(in srgb, var(--k-face) var(--key-down), #000);
-		background-image: linear-gradient(180deg, var(--key-lip), transparent 9px), linear-gradient(var(--key-head), var(--key-head));
-		background-size: 100% 100%, 100% var(--key-head-h);
-		background-position: 0 0, 0 var(--key-chamfer);
-		background-repeat: no-repeat;
+		background-image: linear-gradient(180deg, var(--key-lip), transparent 9px);
 		box-shadow:
 			inset 0 0 0 var(--outline-width) var(--outline),
 			inset 0 var(--key-chamfer) 0 0 color-mix(in srgb, var(--k-hi) var(--key-down), #000),

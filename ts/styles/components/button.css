@@ -29,6 +29,11 @@
 	}
 }
 
+/* A two-tap Reset (ts/ui/reset-key.ts): armed, its legend lights red. */
+.reset-key.is-armed {
+	color: var(--lamp-on);
+}
+
 .btn--small {
 	height: 32px;
 	font-size: var(--text-sm);

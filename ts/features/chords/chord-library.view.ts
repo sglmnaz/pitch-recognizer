@@ -201,6 +201,8 @@ export function createChordModes(root: HTMLElement): ChordModes {
 				card.append(diagrams[i].el, el('span', caption.title, 'voicing__title'))
 				const strum = el('button', '▶ Strum', 'key voicing__strum')
 				strum.type = 'button'
+				// The chord is the sound: no key click over it.
+				strum.dataset.feedback = 'none'
 				strum.setAttribute('aria-label', `Play ${symbol}, ${shapeString(voicing)}, ${caption.position}`)
 				strum.addEventListener('click', () => play(shapeNotes(voicing.frets).midis))
 				const foot = el('div', '', 'voicing__foot')

@@ -61,8 +61,9 @@ const SOUNDS: Record<Kind, (at: number, v: number, on: boolean) => void> = {
 	detent: (at, v) => noise(at, 0.003, 'highpass', 5000, 0.7, 0.7 * v),
 }
 
-// Vibration lengths (ms): a rocker is a snap with a settle.
-const BUZZ: Record<Kind, number | number[]> = { key: 8, latch: 14, rocker: [6, 25, 10], detent: 3 }
+// Vibration lengths (ms): a rocker is a snap with a settle. Many Android
+// motors skip pulses much under ~10 ms, so nothing here is shorter.
+const BUZZ: Record<Kind, number | number[]> = { key: 15, latch: 25, rocker: [15, 40, 20], detent: 10 }
 
 // iPhone: a native switch toggled from a tap ticks the Taptic Engine.
 let iosSwitch: HTMLLabelElement | null = null
@@ -96,8 +97,10 @@ export function feedback(kind: Kind, on = true) {
 
 export const detent = () => feedback('detent')
 
+const SLIDER_MS = 35
+
 // Any other control opts in with data-feedback="key|latch|detent"; "none" silences a
-// key that makes its own sound (a reference tone).
+// key that makes its own sound (a reference tone, a strum).
 const KEYS = '.key, .btn, .chip, .link-btn, .segmented > button, .tab, [data-feedback]'
 // Keys that stay down: interlocked ones (one of a row) and any aria-pressed toggle.
 const INTERLOCKED = '.segmented > button, .tab'
@@ -127,5 +130,15 @@ export function initFeedback() {
 	document.addEventListener('change', (event) => {
 		const input = event.target as HTMLInputElement
 		if (input.matches('.switch__input')) feedback('rocker', input.checked)
+	})
+	// Faders tick like a detented pot: one per step, at most every SLIDER_MS so
+	// a fast drag across the tempo range doesn't buzz.
+	let lastTick = 0
+	document.addEventListener('input', (event) => {
+		if (!(event.target as Element).matches('input[type="range"]')) return
+		const now = performance.now()
+		if (now - lastTick < SLIDER_MS) return
+		lastTick = now
+		feedback('detent')
 	})
 }

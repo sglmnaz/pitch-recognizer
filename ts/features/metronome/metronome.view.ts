@@ -6,6 +6,7 @@ import { bindSegmented, onBareKey, scoped } from '../../ui/dom'
 import { reducedMotion } from '../../ui/media'
 import { bindRotary } from '../../ui/rotary'
 import { screenLock } from '../../ui/screen-lock'
+import { resetKey } from '../../ui/reset-key'
 
 const MAX_BEATS = 12
 // Taps further apart than this start a new measurement; the average covers the
@@ -369,6 +370,15 @@ export function createMetronomeView(root: HTMLElement): View & { stop(): void } 
 	Metronome.setTempo(Settings.get().metroBpm)
 	Settings.subscribe(sync)
 	sync()
+
+	// Reset (two taps): every metronome setting back to its default, tempo included.
+	const metroKeys = (Object.keys(Settings.get()) as (keyof Settings.Settings)[]).filter((key) => key.startsWith('metro'))
+	const reset = resetKey('the metronome', () => {
+		Settings.reset(metroKeys)
+		Metronome.setTempo(Settings.get().metroBpm)
+	})
+	reset.classList.add('metro-reset')
+	$<HTMLElement>('.help-link').before(reset)
 
 	return {
 		onActivate() {

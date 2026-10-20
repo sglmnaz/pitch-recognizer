@@ -29,7 +29,6 @@
 	margin: 0 calc(var(--app-pad-x) * -1);
 	background: var(--plate);
 	border-bottom: 6px solid var(--plate-edge);
-	border-image: var(--plate-edge-image);
 	box-shadow: 0 1px 0 var(--plate-shine);
 	color: var(--plate-ink);
 
@@ -50,15 +49,6 @@
 	}
 }
 
-/* A theme's chrome (or other) lettering: the paint shows through the letters. */
-.plate__brand b {
-	@supports (background-clip: text) or (-webkit-background-clip: text) {
-		background: var(--brand-paint);
-		-webkit-background-clip: text;
-		background-clip: text;
-	}
-}
-
 /* Labels engraved on the plate read in the plate's ink. */
 .plate .silk {
 	color: var(--plate-ink-2);
@@ -74,13 +64,10 @@
 	text-transform: uppercase;
 
 	& b {
-		font-family: var(--brand-font);
-		font-size: var(--brand-size);
-		letter-spacing: var(--brand-spacing);
-		text-transform: var(--brand-transform);
-		line-height: 1;
-		color: var(--brand-ink);
-		text-shadow: var(--brand-shadow);
+		font-size: var(--text-3xl);
+		letter-spacing: 0.22em;
+		color: var(--plate-ink);
+		text-shadow: 0 1px 0 var(--plate-shine);
 	}
 
 	& span {

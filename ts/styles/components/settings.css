@@ -133,10 +133,6 @@
 	top: 2px;
 	right: 0;
 	min-width: 64px;
-
-	&.is-armed {
-		color: var(--lamp-on);
-	}
 }
 
 .settings-group__desc {

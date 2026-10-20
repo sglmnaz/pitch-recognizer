@@ -344,12 +344,25 @@
 }
 
 /* Identify: the marked shape on a small display, then a printed index -------- */
+/* As tall as the Strum and Clear keys beside it. */
 .chord-shape-window {
+	display: flex;
 	flex: 1;
 	min-width: 0;
+	height: 32px;
+	padding: 3px;
+
+	@media (max-width: 600px) {
+		height: var(--tap);
+	}
 }
 
 .chord-shape {
+	display: flex;
+	align-items: center;
+	flex: 1;
+	min-width: 0;
+	padding-block: 0;
 	overflow: hidden;
 	font-size: var(--text-lg);
 	font-weight: 700;

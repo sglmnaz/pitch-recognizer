@@ -164,6 +164,8 @@ export function createHarmony(root: HTMLElement, host: HarmonyHost) {
 					const button = document.createElement('button')
 					button.type = 'button'
 					button.className = 'key harmony-chord'
+					// It strums the chord: no key click over it.
+					button.dataset.feedback = 'none'
 					// Starts with the visible text (voice control), then says it in words.
 					button.setAttribute('aria-label', `${chord.numeral} ${chord.symbol}, ${chord.root} ${chord.type.name}`)
 					const numeral = document.createElement('span')
@@ -221,6 +223,7 @@ export function createHarmony(root: HTMLElement, host: HarmonyHost) {
 					const button = document.createElement('button')
 					button.type = 'button'
 					button.className = 'key progression__play'
+					button.dataset.feedback = 'none'
 					button.addEventListener('click', () => (player.playing()?.index === index ? stop(true, 'Stopped') : player.play(index, list, progression.name)))
 					head.append(name, button)
 					// A step sequencer: one key per bar, its lamp lit while the bar plays.
