@@ -49,6 +49,11 @@
 	}
 }
 
+/* Labels engraved on the plate read in the plate's ink. */
+.plate .silk {
+	color: var(--plate-ink-2);
+}
+
 /* "PLUCK" and the model name, engraved on the plate. */
 .plate__brand {
 	display: flex;

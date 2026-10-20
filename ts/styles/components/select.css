@@ -60,4 +60,16 @@
 		padding-inline: 0;
 		font-size: var(--text-xs);
 	}
+
+	/* Phones: thumb-sized keys and window. */
+	@media (max-width: 600px) {
+		& > .select,
+		& > .key {
+			height: var(--tap);
+		}
+
+		& > .key {
+			width: var(--tap);
+		}
+	}
 }

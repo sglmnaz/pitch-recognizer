@@ -230,6 +230,11 @@
 
 	.view > .readout {
 		grid-area: readout;
+	}
+
+	/* A single-window readout fills its column like a big display. A split one
+	   (.readout--split, the Tuner) lays out its own parts. */
+	.view > .readout:not(.readout--split) {
 		align-self: stretch;
 		display: flex;
 		flex-direction: column;
@@ -239,7 +244,7 @@
 	}
 
 	/* Auto side margins would shrink the meter in the flex column. */
-	.view > .readout .meter {
+	.view > .readout:not(.readout--split) .meter {
 		width: 100%;
 		max-width: 420px;
 	}
