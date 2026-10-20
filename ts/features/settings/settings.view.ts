@@ -12,27 +12,21 @@ import * as Theme from '../../ui/theme'
  * from (`from`, null when the app opened on Settings).
  */
 export function createSettingsView(root: HTMLElement, from: () => string | null): View {
-	// Theme: System / Light / Dark (ts/ui/theme.ts), and a palette picker that
-	// only shows once there is more than one palette.
+	// Theme: System / Light / Dark / Night, and the LCD colour (ts/ui/theme.ts).
 	const themeButtons = Array.from(root.querySelectorAll<HTMLButtonElement>('[data-theme-choice]'))
 	const pressTheme = () => {
-		for (const button of themeButtons) button.setAttribute('aria-pressed', String(button.dataset.themeChoice === Theme.getMode()))
+		for (const button of themeButtons) button.setAttribute('aria-pressed', String(button.dataset.themeChoice === Theme.getTheme()))
 	}
 	for (const button of themeButtons) {
 		button.addEventListener('click', () => {
-			const choice = Theme.MODES.find((m) => m === button.dataset.themeChoice)
-			if (choice) Theme.setMode(choice)
+			Theme.setTheme(button.dataset.themeChoice ?? '')
 			pressTheme()
 		})
 	}
 	pressTheme()
-	const paletteRow = root.querySelector<HTMLElement>('[data-palette]')!
-	if (Theme.THEMES.length > 1) {
-		const select = paletteRow.querySelector('select')!
-		select.replaceChildren(...Theme.THEMES.map((t) => new Option(t.label, t.id, false, t.id === Theme.getPalette())))
-		select.addEventListener('change', () => Theme.setPalette(select.value))
-		paletteRow.hidden = false
-	}
+	const displaySelect = root.querySelector<HTMLSelectElement>('[data-display-choice]')!
+	displaySelect.replaceChildren(...Theme.DISPLAYS.map((d) => new Option(d.label, d.id, false, d.id === Theme.getDisplay())))
+	displaySelect.addEventListener('change', () => Theme.setDisplay(displaySelect.value))
 
 	// Checkbox switches store booleans, sliders and number fields numbers,
 	// selects their value (a number when marked data-type="number").

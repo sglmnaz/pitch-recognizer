@@ -6,30 +6,34 @@
 	<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 	<title>Pluck</title>
 	<meta name="description" content="Guitar tuner, chord recognition and ear training from your microphone." />
-	<meta name="theme-color" content="#0a0a0b" />
+	<meta name="theme-color" content="#e7e1d3" />
 	<link rel="icon" type="image/png" href="/favicon-64x64.png" />
 	<link rel="apple-touch-icon" href="/apple-touch-icon-180x180.png" />
 	<meta name="apple-mobile-web-app-capable" content="yes" />
 	<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 	<meta name="apple-mobile-web-app-title" content="Pluck" />
 	<script>
-		// Palette and mode before first paint, so a reload never flashes. Same
-		// keys, palette ids and theme colours as THEMES in ts/ui/theme.ts ('theme'
-		// is the pre-palette key of the mode, migrated there). No stored mode =
-		// follow the device.
+		// Theme, mode and display before first paint, so a reload never flashes.
+		// Same keys, ids and colours as THEMES / DISPLAYS in ts/ui/theme.ts ('theme'
+		// is the oldest key of the mode, migrated there). No stored theme = follow
+		// the device.
 		(function () {
-			var colors = { default: { light: '#fbfbfc', dark: '#0a0a0b' } }
-			var mode = null
-			var palette = null
+			var themes = { light: ['classic', 'light'], dark: ['classic', 'dark'], night: ['night', 'dark'] }
+			var colors = { classic: { light: '#e7e1d3', dark: '#2a2825' }, night: { dark: '#1c222c' } }
+			var displays = { green: 1, amber: 1, blue: 1 }
+			var saved = null
+			var display = null
 			try {
-				mode = localStorage.getItem('pitch-recognizer:mode') || localStorage.getItem('theme')
-				palette = localStorage.getItem('pitch-recognizer:palette')
+				saved = localStorage.getItem('pitch-recognizer:mode') || localStorage.getItem('theme')
+				display = localStorage.getItem('pitch-recognizer:display')
 			} catch (error) {}
 			var root = document.documentElement
-			root.dataset.theme = colors.hasOwnProperty(palette) ? palette : 'default'
-			root.dataset.mode = mode === 'light' || mode === 'dark' ? mode : matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
-			// The browser chrome too, so light mode never starts with a dark bar.
-			document.querySelector('meta[name="theme-color"]').setAttribute('content', colors[root.dataset.theme][root.dataset.mode])
+			var theme = themes.hasOwnProperty(saved) ? themes[saved] : ['classic', matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light']
+			root.dataset.theme = theme[0]
+			root.dataset.mode = theme[1]
+			if (displays.hasOwnProperty(display)) root.dataset.display = display
+			// The browser chrome too, so a light theme never starts with a dark bar.
+			document.querySelector('meta[name="theme-color"]').setAttribute('content', colors[theme[0]][theme[1]])
 		})()
 	</script>
 </head>
@@ -90,7 +94,7 @@
 		<!-- Trainer ------------------------------------------------------- -->
 		<section class="view" id="view-trainer" role="tabpanel" aria-labelledby="tab-trainer" hidden>
 			<div class="view-top">
-				<div class="segmented trainer-mode" role="group" aria-label="Exercise">
+				<div class="segmented has-lamps trainer-mode" role="group" aria-label="Exercise">
 					<button type="button" data-exercise="notes" aria-pressed="true">Notes</button>
 					<button type="button" data-exercise="intervals" aria-pressed="false">Intervals</button>
 					<button type="button" data-exercise="chords" aria-pressed="false">Chords</button>
@@ -264,7 +268,7 @@
 			<!-- Sub-views: Listen (the recognizer, ts/features/chords/chords.view.ts), Library and
 			     Identify (ts/features/chords/chord-library.view.ts). -->
 			<div class="view-top">
-				<div class="segmented chords-modes" role="group" aria-label="Chords mode">
+				<div class="segmented has-lamps chords-modes" role="group" aria-label="Chords mode">
 					<button type="button" data-chords-mode="listen" aria-pressed="true">Listen</button>
 					<button type="button" data-chords-mode="library" aria-pressed="false">Library</button>
 					<button type="button" data-chords-mode="identify" aria-pressed="false">Identify</button>
@@ -326,7 +330,7 @@
 		<!-- Scales: explorer + identifier on one fretboard (ts/features/scales/scales.view.ts). -->
 		<section class="view view--scales" id="view-scales" role="tabpanel" aria-labelledby="tab-scales" hidden>
 			<div class="view-top">
-				<div class="segmented scales-mode" role="group" aria-label="Mode">
+				<div class="segmented has-lamps scales-mode" role="group" aria-label="Mode">
 					<button type="button" data-scales-mode="explore" aria-pressed="true">Explore</button>
 					<button type="button" data-scales-mode="identify" aria-pressed="false">Identify</button>
 				</div>
@@ -384,7 +388,7 @@
 						</div>
 					</div>
 					<button class="position-chip" type="button" hidden aria-label="Show the whole neck"></button>
-					<button class="mic-toggle" type="button" data-action="mic" aria-pressed="false">
+					<button class="key mic-toggle" type="button" data-action="mic" aria-pressed="false">
 						<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
 							<rect x="9" y="2" width="6" height="12" rx="3" />
 							<path d="M5 10v1a7 7 0 0 0 14 0v-1M12 18v4" />
@@ -581,17 +585,17 @@
 								<button type="button" data-theme-choice="system" aria-pressed="true">System</button>
 								<button type="button" data-theme-choice="light" aria-pressed="false">Light</button>
 								<button type="button" data-theme-choice="dark" aria-pressed="false">Dark</button>
+								<button type="button" data-theme-choice="night" aria-pressed="false">Night</button>
 							</div>
 						</div>
 					</div>
-					<!-- Shown by settings.view.ts only when there is more than one palette (ts/ui/theme.ts). -->
-					<div class="settings__section" data-palette hidden>
+					<div class="settings__section">
 						<label class="switch">
 							<span class="switch__text">
-								<span class="switch__title">Palette</span>
-								<span class="switch__desc">The app's colours, in light and dark</span>
+								<span class="switch__title">Display</span>
+								<span class="switch__desc">Colour of the LCD windows</span>
 							</span>
-							<select class="select select--small"></select>
+							<select class="select select--small" data-display-choice></select>
 						</label>
 					</div>
 				</div>

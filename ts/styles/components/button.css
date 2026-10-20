@@ -1,50 +1,16 @@
-/* Buttons ---------------------------------------------------------------- */
+/* Buttons: keys (key.css) in the app's usual sizes. --------------------- */
 .btn {
-	appearance: none;
-	display: inline-flex;
-	align-items: center;
-	justify-content: center;
-	gap: var(--space-6);
 	height: 36px;
-	padding: 0 14px;
-	border: var(--key-border);
-	border-radius: var(--key-radius);
-	font-size: var(--text-base);
-	font-weight: var(--key-font-weight);
-	letter-spacing: var(--key-letter-spacing);
-	text-transform: var(--key-text-transform);
-	cursor: pointer;
-	white-space: nowrap;
-	background: var(--key-bg);
-	color: var(--key-fg);
-	box-shadow: var(--key-shadow);
-	transition:
-		background var(--dur) var(--ease),
-		color var(--dur) var(--ease),
-		opacity var(--dur) var(--ease);
-
-	&:hover:not(:disabled) {
-		background: var(--key-bg-hover);
-	}
-
-	&:active:not(:disabled) {
-		translate: var(--key-pressed-offset);
-	}
-
-	&:disabled {
-		opacity: 0.5;
-		cursor: not-allowed;
-	}
+	padding-inline: 14px;
 }
 
+/* The solid (primary) button of the old look: now the hot key. */
 .btn--solid {
-	background: var(--key-solid-bg);
-	color: var(--key-solid-fg);
-	box-shadow: var(--key-solid-shadow);
-
-	&:hover:not(:disabled) {
-		background: var(--key-solid-bg-hover);
-	}
+	--k-face: var(--key3-face);
+	--k-hi: var(--key3-hi);
+	--k-side: var(--key3-side);
+	--k-front: var(--key3-front);
+	--k-ink: var(--key3-ink);
 }
 
 .btn--block {
@@ -54,29 +20,17 @@
 /* The primary listen control: full width, hard to miss. */
 .btn--large {
 	width: 100%;
-	height: 56px;
-	border-radius: var(--key-radius-lg);
-	font-size: var(--text-2xl);
-	font-weight: 600;
+	height: 54px;
+	font-size: var(--text-xl);
 
 	@media (max-width: 600px) {
 		height: 48px;
-		font-size: var(--text-xl);
+		font-size: var(--text-lg);
 	}
 }
 
 .btn--small {
 	height: 32px;
-	font-size: var(--text-md);
-	padding: 0 var(--space-12);
-}
-
-.btn svg {
-	width: 14px;
-	height: 14px;
-	flex: none;
-}
-
-a.btn {
-	text-decoration: none;
+	font-size: var(--text-sm);
+	padding-inline: var(--space-10);
 }

@@ -1,14 +1,128 @@
+/*
+ * Surfaces of the hardware:
+ *   .panel   a block printed on the panel: no card, a rule frames it
+ *   .plate   the brushed aluminium front plate at the top of a view
+ *   .window  the black bezel around an LCD, a paper strip or a neck
+ *   .lcd     the display glass inside a window (colours from --lcd-*)
+ *   .paper   a strip of chart / tab paper
+ *   .silk    a silk-screened label on the panel
+ */
 .panel {
-	background: var(--panel-bg);
-	border: var(--panel-border);
-	border-radius: var(--panel-radius);
-	box-shadow: var(--panel-shadow);
+	position: relative;
 }
 
-.panel__label {
-	font-size: var(--text-xs);
-	font-weight: 500;
-	letter-spacing: 0.04em;
+.panel__label,
+.silk {
+	font-family: var(--font-ui);
+	font-size: var(--text-2xs);
+	font-weight: var(--label-weight);
+	letter-spacing: 0.18em;
 	text-transform: uppercase;
-	color: var(--fg-muted);
+	color: var(--fg-secondary);
+}
+
+.plate {
+	display: flex;
+	flex-direction: column;
+	gap: var(--space-12);
+	padding: var(--space-12) var(--app-pad-x) var(--space-16);
+	margin: 0 calc(var(--app-pad-x) * -1);
+	background: var(--plate);
+	border-bottom: 6px solid var(--plate-edge);
+	box-shadow: 0 1px 0 var(--plate-shine);
+	color: var(--plate-ink);
+
+	/* Phones: the plate runs up under the status bar, edge to edge. */
+	@media (max-width: 600px) {
+		margin-top: calc(var(--app-pad-top) * -1);
+		padding-top: calc(var(--space-12) + env(safe-area-inset-top));
+	}
+
+	/* Wider screens: a framed plate inside the column. */
+	@media (min-width: 601px) {
+		margin-inline: 0;
+		padding-inline: var(--space-20);
+		border-radius: var(--radius-lg);
+		box-shadow:
+			0 0 0 var(--outline-width) var(--outline),
+			0 1px 0 var(--plate-shine);
+	}
+}
+
+/* "PLUCK" and the model name, engraved on the plate. */
+.plate__brand {
+	display: flex;
+	justify-content: space-between;
+	align-items: baseline;
+	font-family: var(--font-ui);
+	font-weight: 700;
+	text-transform: uppercase;
+
+	& b {
+		font-size: var(--text-3xl);
+		letter-spacing: 0.22em;
+		color: var(--plate-ink);
+		text-shadow: 0 1px 0 var(--plate-shine);
+	}
+
+	& span {
+		font-size: var(--text-2xs);
+		font-weight: 600;
+		letter-spacing: 0.24em;
+		color: var(--plate-ink-2);
+	}
+}
+
+.window {
+	display: block;
+	padding: 4px;
+	border-radius: var(--radius-lg);
+	background: var(--window);
+	box-shadow: var(--window-shadow);
+}
+
+.lcd {
+	display: block;
+	padding: var(--space-6) var(--space-10);
+	border-radius: var(--radius-sm);
+	background: var(--lcd-bg);
+	color: var(--lcd-ink);
+	text-shadow: var(--lcd-glow);
+	box-shadow: var(--lcd-shadow);
+	font-family: var(--font-ui);
+	font-size: var(--text-sm);
+	font-weight: 600;
+	letter-spacing: 0.12em;
+	text-transform: uppercase;
+	font-variant-numeric: tabular-nums;
+}
+
+/* Unlit segments / dim LCD text. */
+.lcd__dim {
+	color: var(--lcd-dim);
+	text-shadow: none;
+}
+
+/* The big dot-matrix value (chord name, note, tempo). */
+.lcd__big {
+	font-family: var(--font-display);
+	font-weight: 900;
+	letter-spacing: 0.04em;
+	text-transform: none;
+	line-height: 1;
+}
+
+.paper {
+	display: block;
+	background: var(--paper);
+	color: var(--paper-ink);
+	border-radius: var(--radius-sm);
+}
+
+/* The heavier printed rule between blocks of a view. */
+.rule {
+	height: 1.5px;
+	margin: 0;
+	border: 0;
+	background: var(--rule-strong);
 }

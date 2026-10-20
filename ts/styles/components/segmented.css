@@ -1,44 +1,28 @@
-/* Scales ----------------------------------------------------------------- */
-/* Small segmented control (Explore / Identify, labels, positions): the tab
-   bar's look at a smaller scale. */
+/*
+ * Segmented controls are interlocked keys: a dark well holding a row of keys,
+ * exactly one down. The mode switch at the top of a view also gets a lamp above
+ * each key (layout.css adds .has-lamps through .view-top).
+ */
 .segmented {
 	display: flex;
-	padding: 3px;
-	gap: var(--seg-gap);
-	background: var(--seg-track-bg);
-	border-radius: var(--seg-radius);
-	box-shadow: var(--seg-track-shadow);
+	padding: 2px;
+	gap: 2px;
+	background: var(--hole);
+	border-radius: var(--radius);
 }
 
-.segmented button {
+.segmented > button {
+	--key-drop: none;
+	--key-drop-down: none;
+
 	flex: 1;
-	border: none;
-	background: transparent;
-	color: var(--seg-fg);
-	font-size: var(--text-md);
-	font-weight: var(--key-font-weight);
-	letter-spacing: var(--key-letter-spacing);
-	text-transform: var(--key-text-transform);
-	padding: 5px 12px;
-	border-radius: var(--seg-key-radius);
-	cursor: pointer;
-	white-space: nowrap;
-	transition:
-		color var(--dur) var(--ease),
-		background var(--dur) var(--ease);
-
-	&:hover {
-		color: var(--fg);
-	}
-
-	&[aria-pressed='true'] {
-		color: var(--seg-on-fg);
-		background: var(--seg-on-bg);
-		box-shadow: var(--seg-on-shadow);
-	}
+	height: 36px;
+	padding-inline: var(--space-10);
+	font-size: var(--text-sm);
 }
 
-.segmented--small button {
-	padding: var(--space-4) var(--space-10);
-	font-size: var(--text-sm);
+.segmented--small > button {
+	height: 30px;
+	padding-inline: var(--space-8);
+	font-size: var(--text-xs);
 }

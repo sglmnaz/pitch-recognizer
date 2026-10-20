@@ -13,11 +13,12 @@ body {
 	   toolbar's height. vh stays as the fallback for older browsers. */
 	min-height: 100vh;
 	min-height: 100dvh;
-	font-family: var(--font-sans);
+	font-family: var(--font-ui);
 	font-size: var(--text-base);
 	line-height: 1.5;
 	color: var(--fg);
-	background: var(--bg);
+	/* The panel: a flat colour with fine grain, like painted sheet metal. */
+	background: var(--panel-grain) var(--panel);
 	-webkit-font-smoothing: antialiased;
 	text-rendering: optimizeLegibility;
 }

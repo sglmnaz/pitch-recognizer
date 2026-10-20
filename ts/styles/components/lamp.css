@@ -1,0 +1,74 @@
+/*
+ * Lamps: small rectangular indicators. Red = on, green = in tune / ok,
+ * amber = waiting. `.lamp` is an element; `.has-lamps` puts one above every
+ * key of a row (the mode switches), lit on the key that is down.
+ */
+.lamp {
+	display: inline-block;
+	flex: none;
+	width: var(--lamp-w);
+	height: var(--lamp-h);
+	border-radius: 1px;
+	background: var(--lamp-off);
+	box-shadow: var(--lamp-ring);
+
+	&.is-on {
+		background: var(--lamp-on);
+		box-shadow:
+			var(--lamp-ring),
+			0 0 8px var(--lamp-glow);
+	}
+}
+
+.lamp--ok {
+	background: var(--lamp-ok-off);
+
+	&.is-on {
+		background: var(--lamp-ok-on);
+		box-shadow:
+			var(--lamp-ring),
+			0 0 8px var(--lamp-ok-glow);
+	}
+}
+
+.lamp--warn {
+	background: var(--lamp-warn-off);
+
+	&.is-on {
+		background: var(--lamp-warn-on);
+		box-shadow:
+			var(--lamp-ring),
+			0 0 8px var(--lamp-warn-glow);
+	}
+}
+
+/* A lamp above each key of a row: the row keeps room for them. */
+.has-lamps {
+	margin-top: calc(var(--lamp-h) + var(--space-8));
+
+	& > :is(button, .key) {
+		overflow: visible;
+
+		&::before {
+			content: '';
+			position: absolute;
+			left: 50%;
+			top: calc(-1 * (var(--lamp-h) + var(--space-8) + 2px));
+			width: var(--lamp-w);
+			height: var(--lamp-h);
+			margin-left: calc(var(--lamp-w) / -2);
+			border-radius: 1px;
+			background: var(--lamp-off);
+			box-shadow: var(--lamp-ring);
+		}
+
+		&:is([aria-pressed='true'], [aria-selected='true'])::before {
+			/* The key sinks by its top border: keep the lamp where it was. */
+			top: calc(-1 * (var(--lamp-h) + var(--space-8) + 2px + var(--key-sink)));
+			background: var(--lamp-on);
+			box-shadow:
+				var(--lamp-ring),
+				0 0 8px var(--lamp-glow);
+		}
+	}
+}

@@ -1,83 +1,106 @@
 import { readString, remove, writeString } from '../core/storage'
 
 /*
- * Theme = palette × mode (docs/adr/0005). <html data-theme="<palette id>"
- * data-mode="light|dark">; the inline script in index.html sets both before
- * first paint from the same keys, so a reload never flashes. Each palette is
- * one CSS block in ts/styles/tokens.css plus one entry here (DESIGN.md, "How
- * to add a theme"); the head script's `colors` map must list the same ids
- * and theme colours.
+ * Theme and display (docs/adr/0007). <html data-theme="classic|night"
+ * data-mode="light|dark" [data-display="green|amber|blue"]>: the theme picks
+ * the materials of the whole app, the mode drives color-scheme and lets a
+ * subtree force light or dark (the fretboard, the trainer staff), the display
+ * recolours only the LCD windows (absent = the theme's own LCD). The inline
+ * script in index.html sets the same attributes before first paint from the
+ * same keys, so a reload never flashes: keep THEMES, the keys and the theme
+ * colours in step with it. A new theme is one block per mode in
+ * ts/styles/tokens.css plus one entry here (DESIGN.md, "How to add a theme").
  */
 
 export type Mode = 'light' | 'dark'
-/** What the user picks: a mode, or follow the device. */
-export type ModeChoice = 'system' | Mode
 
 export interface Theme {
+	/** What the user picks, stored under THEME_KEY. */
 	id: string
 	label: string
-	/** Browser chrome colour (<meta name="theme-color">): the palette's --bg per mode. */
-	themeColor: Record<Mode, string>
+	/** data-theme: the palette block in tokens.css. */
+	palette: 'classic' | 'night'
+	/** data-mode it forces; absent = follow the device (System). */
+	mode?: Mode
+	/** Browser chrome colour (<meta name="theme-color">) per resolved mode: the panel colour. */
+	themeColor: Partial<Record<Mode, string>>
 }
 
-export const THEMES: readonly Theme[] = [{ id: 'default', label: 'Default', themeColor: { light: '#fbfbfc', dark: '#0a0a0b' } }]
-export const MODES: readonly ModeChoice[] = ['system', 'light', 'dark']
+const CLASSIC = { light: '#e7e1d3', dark: '#2a2825' }
 
-const MODE_KEY = 'pitch-recognizer:mode'
-const PALETTE_KEY = 'pitch-recognizer:palette'
-/** Before palettes the mode lived under 'theme' ('light' / 'dark', absent = system). */
-const LEGACY_MODE_KEY = 'theme'
+export const THEMES: readonly Theme[] = [
+	{ id: 'system', label: 'System', palette: 'classic', themeColor: CLASSIC },
+	{ id: 'light', label: 'Light', palette: 'classic', mode: 'light', themeColor: CLASSIC },
+	{ id: 'dark', label: 'Dark', palette: 'classic', mode: 'dark', themeColor: CLASSIC },
+	{ id: 'night', label: 'Night blue', palette: 'night', mode: 'dark', themeColor: { dark: '#1c222c' } },
+]
+
+/** LCD colours; 'auto' = the theme's own. */
+export const DISPLAYS = [
+	{ id: 'auto', label: 'Theme' },
+	{ id: 'green', label: 'Grey-green' },
+	{ id: 'amber', label: 'Amber' },
+	{ id: 'blue', label: 'Blue' },
+] as const
+export type Display = (typeof DISPLAYS)[number]['id']
+
+const THEME_KEY = 'pitch-recognizer:mode'
+const DISPLAY_KEY = 'pitch-recognizer:display'
+/** Older keys: the mode as 'theme' (pre-palette), the Geist palette id. */
+const LEGACY_KEYS = ['theme', 'pitch-recognizer:palette']
 
 const systemDark = matchMedia('(prefers-color-scheme: dark)')
-const isMode = (value: string | null): value is Mode => value === 'light' || value === 'dark'
 
-function loadMode(): ModeChoice {
-	const legacy = readString(LEGACY_MODE_KEY)
-	if (legacy !== null) {
-		if (isMode(legacy) && readString(MODE_KEY) === null) writeString(MODE_KEY, legacy)
-		remove(LEGACY_MODE_KEY)
-	}
-	const saved = readString(MODE_KEY)
-	return isMode(saved) ? saved : 'system'
+function loadTheme(): Theme {
+	const legacyMode = readString('theme')
+	if (legacyMode !== null && readString(THEME_KEY) === null) writeString(THEME_KEY, legacyMode)
+	for (const key of LEGACY_KEYS) remove(key)
+	const saved = readString(THEME_KEY)
+	return THEMES.find((t) => t.id === saved) ?? THEMES[0]
 }
 
-function loadPalette(): string {
-	const saved = readString(PALETTE_KEY)
-	return THEMES.some((t) => t.id === saved) ? saved! : THEMES[0].id
+function loadDisplay(): Display {
+	const saved = readString(DISPLAY_KEY)
+	return DISPLAYS.find((d) => d.id === saved)?.id ?? 'auto'
 }
 
-let mode = loadMode()
-let palette = loadPalette()
+let theme = loadTheme()
+let display = loadDisplay()
 
-export const getMode = () => mode
-export const getPalette = () => palette
-const resolvedMode = (): Mode => (mode === 'system' ? (systemDark.matches ? 'dark' : 'light') : mode)
+export const getTheme = () => theme.id
+export const getDisplay = () => display
 
-/** Applies palette and mode to the document and the browser chrome. */
+/** Applies theme, mode and display to the document and the browser chrome. */
 export function applyTheme() {
 	const root = document.documentElement
-	const resolved = resolvedMode()
-	root.dataset.theme = palette
-	root.dataset.mode = resolved
-	const theme = THEMES.find((t) => t.id === palette) ?? THEMES[0]
-	document.querySelector('meta[name="theme-color"]')?.setAttribute('content', theme.themeColor[resolved])
+	const mode: Mode = theme.mode ?? (systemDark.matches ? 'dark' : 'light')
+	root.dataset.theme = theme.palette
+	root.dataset.mode = mode
+	if (display === 'auto') delete root.dataset.display
+	else root.dataset.display = display
+	const color = theme.themeColor[mode] ?? CLASSIC[mode]
+	document.querySelector('meta[name="theme-color"]')?.setAttribute('content', color)
 }
 
-export function setMode(choice: ModeChoice) {
-	mode = choice
-	if (choice === 'system') remove(MODE_KEY)
-	else writeString(MODE_KEY, choice)
+export function setTheme(id: string) {
+	const next = THEMES.find((t) => t.id === id)
+	if (!next) return
+	theme = next
+	if (next.id === 'system') remove(THEME_KEY)
+	else writeString(THEME_KEY, next.id)
 	applyTheme()
 }
 
-export function setPalette(id: string) {
-	if (!THEMES.some((t) => t.id === id)) return
-	palette = id
-	writeString(PALETTE_KEY, id)
+export function setDisplay(id: string) {
+	const next = DISPLAYS.find((d) => d.id === id)
+	if (!next) return
+	display = next.id
+	if (display === 'auto') remove(DISPLAY_KEY)
+	else writeString(DISPLAY_KEY, display)
 	applyTheme()
 }
 
 // System follows the device live.
 systemDark.addEventListener('change', () => {
-	if (mode === 'system') applyTheme()
+	if (!theme.mode) applyTheme()
 })

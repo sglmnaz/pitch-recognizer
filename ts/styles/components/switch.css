@@ -1,15 +1,15 @@
-/* Switch */
+/*
+ * Switch rows: label on the left, a rocker on the right. The rocker is the
+ * hidden checkbox's .switch__track: a dark plate holding a rocker that tips to
+ * O (off, left half up) or I (on, right half down and lit red), like a mobile
+ * toggle turned into hardware.
+ */
 .switch {
 	display: flex;
 	align-items: center;
 	gap: var(--space-12);
-	padding: var(--space-8);
-	border-radius: var(--radius);
+	padding: var(--space-8) 0;
 	cursor: pointer;
-
-	&:hover {
-		background: var(--surface-2);
-	}
 }
 
 .switch__text {
@@ -19,13 +19,18 @@
 
 .switch__title {
 	display: block;
-	font-size: var(--text-base);
-	font-weight: 500;
+	font-family: var(--font-ui);
+	font-size: var(--text-md);
+	font-weight: var(--label-weight);
+	letter-spacing: 0.1em;
+	text-transform: uppercase;
 }
 
 .switch__desc {
 	display: block;
-	font-size: var(--text-sm);
+	margin-top: 2px;
+	font-family: var(--font-text);
+	font-size: var(--text-xs);
 	color: var(--fg-muted);
 }
 
@@ -37,33 +42,34 @@
 
 .switch__track {
 	flex: none;
-	position: relative;
-	width: 36px;
-	height: 20px;
-	border-radius: var(--switch-radius);
-	background: var(--switch-track-bg);
-	transition: background var(--dur) var(--ease);
+	width: 44px;
+	height: 28px;
+	padding: 3px;
+	border-radius: var(--radius);
+	background: var(--rocker-plate);
+	box-shadow: 0 1px 0 var(--plate-shine);
 
+	/* The rocker: the raised half is lighter, the pressed half darker; the I
+	   glyph sits on the right half. */
 	&::after {
-		content: '';
-		position: absolute;
-		top: 2px;
-		left: 2px;
-		width: 16px;
-		height: 16px;
-		border-radius: var(--switch-knob-radius);
-		background: var(--switch-knob-bg);
-		box-shadow: var(--switch-knob-shadow);
-		transition: transform var(--dur) var(--ease);
+		content: 'I';
+		display: grid;
+		place-items: center;
+		height: 100%;
+		padding-left: 50%;
+		border-radius: var(--radius-sm);
+		background: linear-gradient(90deg, var(--rocker-down) 0 50%, var(--rocker-up) 50%);
+		font-family: var(--font-ui);
+		font-size: var(--text-2xs);
+		font-weight: 700;
+		color: var(--rocker-ink);
 	}
 }
 
-.switch__input:checked + .switch__track {
-	background: var(--switch-track-on-bg);
-
-	&::after {
-		transform: translateX(16px);
-	}
+.switch__input:checked + .switch__track::after {
+	background: linear-gradient(90deg, var(--rocker-up) 0 50%, var(--rocker-down) 50%);
+	color: var(--lamp-on);
+	text-shadow: 0 0 5px var(--lamp-glow);
 }
 
 .switch__input:focus-visible + .switch__track {
@@ -75,10 +81,6 @@
 .switch--wrap {
 	flex-wrap: wrap;
 	cursor: default;
-
-	&:hover {
-		background: transparent;
-	}
 }
 
 .range.switch__wide,

@@ -27,9 +27,11 @@
 @import './tokens.css' layer(tokens);
 @import './base.css' layer(base);
 @import './layout.css' layer(components);
+@import './components/panel.css' layer(components);
+@import './components/key.css' layer(components);
+@import './components/lamp.css' layer(components);
 @import './components/mic.css' layer(components);
 @import './components/button.css' layer(components);
-@import './components/panel.css' layer(components);
 @import './components/readout.css' layer(components);
 @import './components/settings.css' layer(components);
 @import './components/switch.css' layer(components);

@@ -1,20 +1,49 @@
 /*
- * Geist design tokens, extracted from vercel.com/geist and adapted for this app.
- * Neutrals carry a whisper of the brand hue (~220) so the greys never feel dead,
- * while staying faithful to Geist's near-monochrome look.
+ * Design tokens: the old-school hardware look (docs/design/oldschool-*.html,
+ * DESIGN.md). A brushed aluminium front plate, a cream (or graphite) panel with
+ * grain, bevelled keys that sink when latched, rectangular lamps, grey-green /
+ * amber LCD windows, paper strips for charts.
  *
- * Theming (docs/adr/0005): <html data-theme="<palette>" data-mode="light|dark">.
- * Three tiers:
- *   1. primitives  raw colour scales of the palette; components never use them
- *   2. semantic    roles per mode (--bg, --fg, --surface, --accent, ...)
- *   3. component   per component (--root-*, --board-*, --staff-*, --shadow-*),
- *                  and shape / material (--key-*, --seg-*, --switch-*,
- *                  --range-*, --panel-*, --readout-*, --indicator-on)
- * Any element can carry its own data-mode (the fretboard, the trainer staff):
- * the semantic and component blocks match it too, so its subtree re-resolves.
- * A new palette is one block overriding tier 2 (and 1/3 as needed) for both
- * modes, keyed on [data-theme='<id>'] (see DESIGN.md, "How to add a theme").
+ * Theming (docs/adr/0007): <html data-theme="classic|night" data-mode="light|dark"
+ * [data-display="green|amber|blue"]>.
+ *   1. shape     sizes, fonts, key geometry: the same everywhere (:root)
+ *   2. theme     every colour and material, one block per theme x mode
+ *   3. display   --lcd-* only, overriding the theme's LCD when data-display is set
+ * Components read tier 1 and 2 names only; no raw colours outside this file
+ * (exceptions: SVG drawings that need a literal are commented where they are).
+ * Any element can carry its own data-mode (the fretboard board theme, the
+ * trainer staff): the theme blocks match it too, so its subtree re-resolves.
  */
+
+@font-face {
+	font-family: 'Barlow Semi Condensed';
+	src: url('./fonts/BarlowSemiCondensed-500.woff2') format('woff2');
+	font-weight: 500;
+	font-display: swap;
+}
+
+@font-face {
+	font-family: 'Barlow Semi Condensed';
+	src: url('./fonts/BarlowSemiCondensed-600.woff2') format('woff2');
+	font-weight: 600;
+	font-display: swap;
+}
+
+@font-face {
+	font-family: 'Barlow Semi Condensed';
+	src: url('./fonts/BarlowSemiCondensed-700.woff2') format('woff2');
+	font-weight: 700;
+	font-display: swap;
+}
+
+/* Dot matrix: only for large display values (chord name, LED counters, big
+   numbers). Small values on an LCD stay in Barlow. */
+@font-face {
+	font-family: 'Doto';
+	src: url('./fonts/Doto-900.woff2') format('woff2');
+	font-weight: 900;
+	font-display: swap;
+}
 
 @font-face {
 	font-family: 'Geist';
@@ -23,26 +52,30 @@
 	font-display: swap;
 }
 
-@font-face {
-	font-family: 'Geist Mono';
-	src: url('./fonts/GeistMono-Variable.woff2') format('woff2');
-	font-weight: 100 900;
-	font-display: swap;
-}
-
+/* Tier 1: shape ------------------------------------------------------------- */
 :root {
-	--font-sans: 'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-	--font-mono: 'Geist Mono', ui-monospace, 'SF Mono', Menlo, Monaco, 'Courier New', monospace;
+	/* Labels, keys, values: condensed and uppercase like silk-screen print. */
+	--font-ui: 'Barlow Semi Condensed', 'Arial Narrow', system-ui, sans-serif;
+	/* Running text: hints, descriptions, the guide. */
+	--font-text: 'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+	/* Big LCD and LED values. */
+	--font-display: 'Doto', var(--font-ui);
+	/* Older names, still read by a few rules. */
+	--font-sans: var(--font-text);
+	--font-mono: var(--font-ui);
 
-	--radius-sm: 4px;
-	--radius: 6px;
-	--radius-lg: 8px;
+	/* Silk-screen labels: tracked out, uppercase. */
+	--label-weight: 700;
+	--label-spacing: 0.12em;
+
+	--radius-sm: 2px;
+	--radius: 3px;
+	--radius-lg: 5px;
 	--radius-pill: 999px;
 
 	--ease: cubic-bezier(0.4, 0, 0.2, 1);
 	--dur: 0.15s;
 
-	/* Type scale for UI text (hero numerals keep their own sizes). */
 	--text-2xs: 10px;
 	--text-xs: 11px;
 	--text-sm: 12px;
@@ -53,7 +86,6 @@
 	--text-2xl: 17px;
 	--text-3xl: 18px;
 
-	/* Spacing steps (gaps, paddings, margins). */
 	--space-4: 4px;
 	--space-6: 6px;
 	--space-8: 8px;
@@ -66,264 +98,380 @@
 	/* Minimum touch target on phones. */
 	--tap: 44px;
 
-	/* Same in both modes: the switch knob's lift. (The dialog backdrop is a
-	   literal in help.css: older Safari's ::backdrop can't read tokens.) */
-	--shadow-knob: 0 1px 2px rgba(0, 0, 0, 0.2);
-
 	/* Vertical rhythm between the blocks of a view. Phones tighten it so a
 	   view's main interaction fits one screen above the docked tab bar. */
 	--stack: 20px;
+
+	/* Keys: a bevel of lit top chamfer, shaded sides and a front edge below the
+	   face. Latched (pressed) keys sink by --key-sink: the face drops, the front
+	   edge shortens by the same amount, the base never moves (components.css,
+	   .key). */
+	--key-chamfer: 3px;
+	--key-cheek: 4px;
+	--key-edge: 6px;
+	--key-sink: 3px;
+	--key-radius: 3px;
+	--outline-width: 1.5px;
+
+	/* Lamps: the small rectangular indicator above (or on) a control. */
+	--lamp-w: 13px;
+	--lamp-h: 5px;
 }
 
 @media (max-width: 600px) {
 	:root {
-		--stack: 12px;
+		--stack: 14px;
 	}
 }
 
-/* Tier 1: primitives (default palette) ------------------------------------ */
-:root {
-	--gray-0: #ffffff;
-	--gray-25: #fbfbfc;
-	--gray-50: #f6f7f9;
-	--gray-75: #ededee;
-	--gray-100: #ebebec;
-	--gray-200: #dcdcde;
-	--gray-400: #a0a0a8;
-	--gray-450: #8f8f96;
-	--gray-500: #71717a;
-	--gray-600: #5f5f66;
-	--gray-700: #3d3d42;
-	--gray-800: #2a2a2e;
-	--gray-850: #1a1a1d;
-	--gray-900: #18181b;
-	--gray-925: #121214;
-	--gray-950: #0a0a0b;
-	--gray-1000: #04060a;
+/* Tier 2: themes -------------------------------------------------------------- */
 
-	--blue-50: #e6f1fb;
-	--blue-300: #85b7eb;
-	--blue-350: #61b0ff;
-	--blue-400: #3b9eff;
-	--blue-500: #0072f5;
-	--blue-600: #0062d1;
-	--blue-700: #185fa5;
-	--blue-800: #0c447c;
-
-	--teal-50: #e1f5ee;
-	--teal-300: #5dcaa5;
-	--teal-700: #0f6e56;
-	--teal-800: #085041;
-
-	/* Warm grey: the fretboard wood and the plain scale notes. */
-	--stone-25: #f7f6f2;
-	--stone-50: #f1efe8;
-	--stone-200: #d3d1c7;
-	--stone-300: #c3c1b9;
-	--stone-350: #b4b2a9;
-	--stone-450: #8f8e89;
-	--stone-500: #8d8b84;
-	--stone-600: #5f5e5a;
-	--stone-650: #5a5a57;
-	--stone-700: #444441;
-	--stone-900: #1f1f1f;
-
-	--green-50: #e8f5ec;
-	--green-400: #5ec27a;
-	--green-400-a12: rgba(94, 194, 122, 0.12);
-	--green-700: #1a8245;
-
-	--orange-400: #f5a623;
-	--orange-600: #c2670a;
-}
-
-/* Tier 2: semantic roles per mode ------------------------------------------- */
+/* Classic light: aluminium plate, cream panel, cream keys, grey-green LCD. */
 :root,
 [data-mode='light'] {
 	color-scheme: light;
 
-	--bg: var(--gray-25);
-	--surface: var(--gray-0);
-	--surface-2: var(--gray-50);
+	--panel: #e7e1d3;
+	/* Fine noise over the panel (dark specks on cream). */
+	--panel-grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 .06 0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E");
+	/* Recessed areas (an open flap, a well) and raised ones (a flap header). */
+	--panel-sunk: #d6cfbf;
+	--panel-raised: #ddd6c6;
 
-	--border: var(--gray-100);
-	--border-strong: var(--gray-200);
+	--ink: #2e2b25;
+	--ink-2: #4a463d;
+	--ink-3: #76716a;
+	--ink-4: #8a847a;
+	/* Printed hairlines between rows, and the heavier rule between blocks. */
+	--rule: rgba(46, 43, 37, 0.22);
+	--rule-strong: rgba(46, 43, 37, 0.75);
+	/* The dark line around keys, windows and plates; the hole a key sits in. */
+	--outline: #262421;
+	--hole: #262421;
 
-	--fg: var(--gray-900);
-	--fg-secondary: var(--gray-600);
-	--fg-muted: var(--gray-450);
+	--plate: repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.18) 0 1px, rgba(0, 0, 0, 0.035) 1px 2px), linear-gradient(180deg, #d9d9d5, #c9c9c4);
+	--plate-edge: #2a2826;
+	--plate-ink: #3a3936;
+	--plate-ink-2: #55534e;
+	--plate-shine: rgba(255, 255, 255, 0.6);
 
-	--accent: var(--blue-500);
-	--accent-hover: var(--blue-600);
-	--accent-contrast: var(--gray-0);
+	--key-face: #ede7d8;
+	--key-hi: #fbf8ef;
+	--key-side: #d6cfbf;
+	--key-front: #b5ad9b;
+	--key-ink: #4a463d;
+	--key-drop: 0 2.5px 3px 1px rgba(0, 0, 0, 0.22);
+	--key-face-down: #e2dccc;
+	--key-hi-down: #eee8da;
+	--key-side-down: #cbc3b2;
+	--key-front-down: #a59d8b;
+	/* The panel lip's shadow across the top of a sunk key. */
+	--key-lip: rgba(40, 34, 26, 0.22);
+	--key-drop-down: 0 1px 2px rgba(0, 0, 0, 0.08);
 
-	--success: var(--green-700);
-	--success-bg: var(--green-50);
-	--warning: var(--orange-600);
+	/* Grey keys: steppers (◀ ▶ ▼ ▲). */
+	--key2-face: #b9b6ae;
+	--key2-hi: #d6d3cc;
+	--key2-side: #a3a097;
+	--key2-front: #858279;
+	--key2-ink: #2e2c28;
 
-	/* Solid near-black primary button, the Geist signature. */
-	--solid: var(--gray-900);
-	--solid-hover: var(--gray-800);
-	--solid-fg: var(--gray-0);
+	/* The one hot key of a view (Start). */
+	--key3-face: #e8742c;
+	--key3-hi: #f7a46b;
+	--key3-side: #cf6322;
+	--key3-front: #9a4413;
+	--key3-ink: #fff3e8;
 
-	--shadow-sm: 0 0 0 1px var(--border), 0 1px 2px rgba(16, 16, 24, 0.04);
-	--shadow-md: 0 0 0 1px var(--border), 0 2px 4px rgba(16, 16, 24, 0.05), 0 8px 16px -8px rgba(16, 16, 24, 0.06);
+	--lamp-off: #5a1f17;
+	--lamp-on: #ff3e22;
+	--lamp-glow: rgba(255, 62, 34, 0.55);
+	--lamp-ok-off: #1f4a28;
+	--lamp-ok-on: #4ccf5c;
+	--lamp-ok-glow: rgba(76, 207, 92, 0.6);
+	--lamp-warn-off: #4a3410;
+	--lamp-warn-on: #ffb02e;
+	--lamp-warn-glow: rgba(255, 176, 46, 0.6);
+	--lamp-ring: 0 0 0 var(--outline-width) var(--outline), 0 1px 0 var(--outline-width) rgba(255, 255, 255, 0.45);
+
+	/* Window: the black bezel around an LCD, a paper strip or a neck. */
+	--window: #222120;
+	--window-shadow: inset 0 2px 3px rgba(0, 0, 0, 0.7), 0 1px 0 rgba(255, 255, 255, 0.75);
+
+	--lcd-bg: #c7c9bb;
+	--lcd-ink: #23251f;
+	--lcd-dim: rgba(35, 37, 31, 0.13);
+	--lcd-glow: none;
+	--lcd-shadow: inset 0 4px 6px -3px rgba(0, 0, 0, 0.45);
+
+	--led-bg: #1a0605;
+	--led-on: #ff3b2f;
+	--led-off: rgba(255, 59, 47, 0.12);
+	--led-glow: rgba(255, 50, 40, 0.7);
+	--led-unlit: #3a3631;
+
+	--paper: #f6f2e8;
+	--paper-ink: #2e2b25;
+	--paper-grid: #e6b9a8;
+	--paper-pen: #2a3f8f;
+	--paper-edge: #e2dccc;
+
+	--rocker-plate: #262421;
+	--rocker-up: #4a4642;
+	--rocker-down: #2f2c29;
+	--rocker-ink: #8a847a;
+
+	--track: #262421;
+
+	/* Red ink: needles, marks, the sounding note, focus. */
+	--accent: #c63a1c;
+	--accent-contrast: #fff4ec;
+	--success: #2f8a46;
+	--success-bg: rgba(76, 207, 92, 0.16);
+	--warning: #b8640d;
+
+	/* Scale degrees: root, highlighted degrees (3rd/5th by default), other notes. */
+	--root-fill: #d9532d;
+	--root-stroke: #2e2b25;
+	--root-text: #fff4ec;
+	--tone-fill: #363431;
+	--tone-stroke: #2e2b25;
+	--tone-text: #fff4ec;
+	--note-fill: #f6f1e4;
+	--note-stroke: #2e2b25;
+	--note-text: #2e2b25;
+
+	--board: #e9e1cc;
+	--board-fret: #8d8471;
+	--board-string: #4a463d;
+	--board-nut: #2e2b25;
+	--board-inlay: #bfb49b;
+
+	--dial-face: #f1ecdf;
+	--dial-near: rgba(232, 196, 106, 0.38);
+	--dial-ok: rgba(74, 164, 98, 0.55);
 }
 
+/* Classic dark: graphite plate, anthracite panel, dark keys, amber LCD. */
 [data-mode='dark'] {
 	color-scheme: dark;
 
-	--bg: var(--gray-950);
-	--surface: var(--gray-925);
-	--surface-2: var(--gray-850);
+	--panel: #2a2825;
+	--panel-grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 .05 0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E");
+	--panel-sunk: #22201e;
+	--panel-raised: #33302c;
 
-	--border: var(--gray-800);
-	--border-strong: var(--gray-700);
+	--ink: #d8d2c4;
+	--ink-2: #bdb6a7;
+	--ink-3: #958e81;
+	--ink-4: #7a7468;
+	--rule: rgba(0, 0, 0, 0.45);
+	--rule-strong: #0e0d0c;
+	--outline: #0e0d0c;
+	--hole: #0e0d0c;
 
-	--fg: var(--gray-75);
-	--fg-secondary: var(--gray-400);
-	--fg-muted: var(--gray-500);
+	--plate: repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.05) 0 1px, rgba(0, 0, 0, 0.06) 1px 2px), linear-gradient(180deg, #3d3d3f, #2f2f31);
+	--plate-edge: #0e0d0c;
+	--plate-ink: #d9d7d2;
+	--plate-ink-2: #9c9a95;
+	--plate-shine: rgba(255, 255, 255, 0.06);
 
-	--accent: var(--blue-400);
-	--accent-hover: var(--blue-350);
-	--accent-contrast: var(--gray-1000);
+	--key-face: #3d3a36;
+	--key-hi: #5a564f;
+	--key-side: #34312d;
+	--key-front: #1f1d1a;
+	--key-ink: #d8d2c4;
+	--key-drop: 0 2.5px 3px 1px rgba(0, 0, 0, 0.45);
+	--key-face-down: #34312d;
+	--key-hi-down: #4a4741;
+	--key-side-down: #2d2a27;
+	--key-front-down: #181614;
+	--key-lip: rgba(0, 0, 0, 0.4);
+	--key-drop-down: none;
 
-	--success: var(--green-400);
-	--success-bg: var(--green-400-a12);
-	--warning: var(--orange-400);
+	--key2-face: #55524c;
+	--key2-hi: #716d66;
+	--key2-side: #4a4742;
+	--key2-front: #2a2825;
+	--key2-ink: #e3ddd0;
 
-	--solid: var(--gray-75);
-	--solid-hover: var(--gray-0);
-	--solid-fg: var(--gray-950);
+	--key3-face: #d4651f;
+	--key3-hi: #ec8d4d;
+	--key3-side: #b9561a;
+	--key3-front: #7a330c;
+	--key3-ink: #fff3e8;
 
-	--shadow-sm: 0 0 0 1px var(--border), 0 1px 2px rgba(0, 0, 0, 0.4);
-	--shadow-md: 0 0 0 1px var(--border), 0 2px 4px rgba(0, 0, 0, 0.4), 0 12px 24px -8px rgba(0, 0, 0, 0.6);
+	--lamp-off: #4a1a14;
+	--lamp-on: #ff3e22;
+	--lamp-glow: rgba(255, 62, 34, 0.6);
+	--lamp-ok-off: #173a20;
+	--lamp-warn-off: #3f2c0d;
+	--lamp-ring: 0 0 0 var(--outline-width) var(--outline);
+
+	--window: #0b0a09;
+	--window-shadow: inset 0 2px 3px rgba(0, 0, 0, 0.9), 0 1px 0 rgba(255, 255, 255, 0.07);
+
+	--lcd-bg: #14100b;
+	--lcd-ink: #ffb347;
+	--lcd-dim: rgba(255, 179, 71, 0.12);
+	--lcd-glow: 0 0 8px rgba(255, 170, 60, 0.55);
+	--lcd-shadow: inset 0 4px 8px -3px rgba(0, 0, 0, 0.9);
+
+	--paper: #ddd6c4;
+	--paper-ink: #24221e;
+	--paper-grid: #c9a493;
+	--paper-pen: #2a3f8f;
+	--paper-edge: #c9c2b0;
+
+	--rocker-plate: #0e0d0c;
+	--rocker-up: #4a4642;
+	--rocker-down: #262421;
+	--rocker-ink: #8a847a;
+
+	--track: #0e0d0c;
+
+	--accent: #ff5a3a;
+	--accent-contrast: #1a0a05;
+	--success: #5ec27a;
+	--success-bg: rgba(94, 194, 122, 0.14);
+	--warning: #f5a623;
+
+	--root-fill: #e0603a;
+	--root-stroke: #0e0d0c;
+	--root-text: #fff4ec;
+	--tone-fill: #e9e2d0;
+	--tone-stroke: #0e0d0c;
+	--tone-text: #24221e;
+	--note-fill: #3d3a36;
+	--note-stroke: #9c968a;
+	--note-text: #d8d2c4;
+
+	--board: #34302b;
+	--board-fret: #6e6658;
+	--board-string: #a39b8a;
+	--board-nut: #e9e2d0;
+	--board-inlay: #4f4940;
+
+	--dial-face: #1f1e1c;
+	--dial-near: rgba(232, 196, 106, 0.22);
+	--dial-ok: rgba(94, 194, 122, 0.35);
 }
 
-/* Tier 3: component tokens -------------------------------------------------- */
-/* Scale degrees (fretboard dots, degree strip, harmony chips): root,
-   highlighted degrees (3rd/5th by default), other scale notes. Fill, 1 px
-   outline, label. Then the fretboard wood and hardware. */
-:root,
-[data-mode='light'] {
-	--root-fill: var(--blue-50);
-	--root-stroke: var(--blue-700);
-	--root-text: var(--blue-800);
-	--tone-fill: var(--teal-50);
-	--tone-stroke: var(--teal-700);
-	--tone-text: var(--teal-800);
-	--note-fill: var(--stone-50);
-	--note-stroke: var(--stone-600);
-	--note-text: var(--stone-700);
+/* Night blue: slate plate, navy panel, blue-grey keys, blue LCD with white type.
+   Dark only; a subtree forced to light falls back to classic light. */
+[data-theme='night'],
+[data-theme='night'] [data-mode='dark'] {
+	color-scheme: dark;
 
-	--board: var(--stone-25);
-	--board-fret: var(--stone-300);
-	--board-string: var(--stone-500);
-	--board-nut: var(--stone-700);
+	--panel: #1c222c;
+	--panel-sunk: #161b23;
+	--panel-raised: #242b37;
+
+	--ink: #d5dbe6;
+	--ink-2: #b4bdcc;
+	--ink-3: #8590a3;
+	--ink-4: #6c778a;
+	--rule: rgba(0, 0, 0, 0.45);
+	--rule-strong: #090c11;
+	--outline: #090c11;
+	--hole: #090c11;
+
+	--plate: repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.05) 0 1px, rgba(0, 0, 0, 0.06) 1px 2px), linear-gradient(180deg, #3b4250, #2c323e);
+	--plate-edge: #090c11;
+	--plate-ink: #dde3ee;
+	--plate-ink-2: #94a0b5;
+
+	--key-face: #353d4b;
+	--key-hi: #4f5869;
+	--key-side: #2c3340;
+	--key-front: #191e27;
+	--key-ink: #d5dbe6;
+	--key-face-down: #2e3542;
+	--key-hi-down: #444d5d;
+	--key-side-down: #262c37;
+	--key-front-down: #12161d;
+
+	--key2-face: #4a5466;
+	--key2-hi: #67718a;
+	--key2-side: #3f4858;
+	--key2-front: #222833;
+	--key2-ink: #e3e8f0;
+
+	--window: #05070b;
+
+	--lcd-bg: #1f4fc4;
+	--lcd-ink: #eef4ff;
+	--lcd-dim: rgba(238, 244, 255, 0.14);
+	--lcd-glow: 0 0 8px rgba(220, 235, 255, 0.55);
+
+	--paper: #d9dde5;
+	--paper-ink: #1c222c;
+	--paper-grid: #a9b6cc;
+	--paper-edge: #c2c8d3;
+
+	--rocker-plate: #090c11;
+	--rocker-up: #4f5869;
+	--rocker-down: #262c37;
+
+	--track: #090c11;
+
+	--note-fill: #353d4b;
+	--note-stroke: #8590a3;
+	--note-text: #d5dbe6;
+	--tone-fill: #dde3ee;
+	--tone-text: #1c222c;
+
+	--board: #252c38;
+	--board-fret: #5c6679;
+	--board-string: #a6b0c2;
+	--board-nut: #dde3ee;
+	--board-inlay: #3a4352;
+
+	--dial-face: #161b23;
 }
 
-[data-mode='dark'] {
-	--root-fill: var(--blue-800);
-	--root-stroke: var(--blue-300);
-	--root-text: var(--blue-50);
-	--tone-fill: var(--teal-800);
-	--tone-stroke: var(--teal-300);
-	--tone-text: var(--teal-50);
-	--note-fill: var(--stone-700);
-	--note-stroke: var(--stone-350);
-	--note-text: var(--stone-50);
-
-	--board: var(--stone-900);
-	--board-fret: var(--stone-650);
-	--board-string: var(--stone-450);
-	--board-nut: var(--stone-200);
+/* Tier 3: display ------------------------------------------------------------ */
+/* data-display on <html> recolours the LCD windows only, whatever the theme. */
+:root[data-display='green'] {
+	--lcd-bg: #c7c9bb;
+	--lcd-ink: #23251f;
+	--lcd-dim: rgba(35, 37, 31, 0.13);
+	--lcd-glow: none;
+	--lcd-shadow: inset 0 4px 6px -3px rgba(0, 0, 0, 0.45);
 }
 
-/* Derived from the roles above. Declared wherever a mode is, so that a
-   subtree with its own data-mode resolves them against its own roles. */
+:root[data-display='amber'] {
+	--lcd-bg: #14100b;
+	--lcd-ink: #ffb347;
+	--lcd-dim: rgba(255, 179, 71, 0.12);
+	--lcd-glow: 0 0 8px rgba(255, 170, 60, 0.55);
+	--lcd-shadow: inset 0 4px 8px -3px rgba(0, 0, 0, 0.9);
+}
+
+:root[data-display='blue'] {
+	--lcd-bg: #1f4fc4;
+	--lcd-ink: #eef4ff;
+	--lcd-dim: rgba(238, 244, 255, 0.14);
+	--lcd-glow: 0 0 8px rgba(220, 235, 255, 0.55);
+	--lcd-shadow: inset 0 4px 8px -3px rgba(0, 0, 0, 0.6);
+}
+
+/* Roles every component reads, derived from the materials above. Declared
+   wherever a mode is, so a subtree with its own data-mode resolves them
+   against its own materials. */
 :root,
 [data-mode='light'],
-[data-mode='dark'] {
-	--board-inlay: var(--board-fret);
-	--staff-ink: var(--fg);
-	--staff-bg: var(--surface);
-	--shadow-border: 0 0 0 1px var(--border);
-}
-
-/* Shape and material: what the controls are made of (DESIGN.md, "Shape and
-   material tokens"). The base components read these, so a style theme (a
-   different hardware look, not a palette) is mostly overrides here. The
-   defaults reproduce the Geist look exactly. Shapes first: the same in both
-   modes. */
-:root {
-	/* Keys: buttons, chips, stepper keys, the mic toggle. A pressed key moves
-	   by --key-pressed-offset, a `translate` value (none: it stays put). */
-	--key-radius: var(--radius);
-	--key-radius-lg: var(--radius-lg);
-	--key-border: none;
-	--key-pressed-offset: none;
-	--key-font-weight: 500;
-	--key-letter-spacing: normal;
-	--key-text-transform: none;
-
-	/* Segmented controls and the tab bar: a track holding keys. */
-	--seg-gap: 2px;
-	--seg-radius: var(--radius);
-	--seg-key-radius: var(--radius-sm);
-
-	/* Switch: track and knob. */
-	--switch-radius: var(--radius-pill);
-	--switch-knob-radius: 50%;
-	--switch-knob-shadow: var(--shadow-knob);
-
-	/* Panels (cards). */
-	--panel-radius: var(--radius-lg);
-	--panel-border: none;
-
-	/* Readouts: the big note and tempo windows and their numbers. */
-	--readout-font: var(--font-mono);
-}
-
-/* Materials: colours and shadows from the roles of the mode in force, so
-   declared wherever a mode is (like the derived tokens above). */
-:root,
-[data-mode='light'],
-[data-mode='dark'] {
-	--key-bg: var(--surface);
-	--key-bg-hover: var(--surface-2);
-	--key-fg: var(--fg);
-	--key-shadow: var(--shadow-border);
-	/* A key that is on (a chip, a root, the reference string): the solid look. */
-	--key-pressed-bg: var(--solid);
-	--key-pressed-fg: var(--solid-fg);
-	--key-shadow-pressed: none;
-	/* The solid (primary) key. */
-	--key-solid-bg: var(--solid);
-	--key-solid-bg-hover: var(--solid-hover);
-	--key-solid-fg: var(--solid-fg);
-	--key-solid-shadow: none;
-
-	--seg-track-bg: var(--surface-2);
-	--seg-track-shadow: var(--shadow-border);
-	--seg-fg: var(--fg-secondary);
-	--seg-on-bg: var(--surface);
-	--seg-on-fg: var(--fg);
-	--seg-on-shadow: var(--shadow-sm);
-
-	--switch-track-bg: var(--border-strong);
-	--switch-track-on-bg: var(--accent);
-	--switch-knob-bg: var(--surface);
-
-	/* Native sliders: accent-color tints the filled track and the thumb. */
-	--range-fill: var(--accent);
-
-	--panel-bg: var(--surface);
-	--panel-shadow: var(--shadow-sm);
-
-	--readout-bg: var(--panel-bg);
-	--readout-fg: var(--fg);
-	--readout-shadow: var(--panel-shadow);
-
-	/* The "on" signal of a selected or live control: the accent ring today. */
-	--indicator-on: var(--accent);
+[data-mode='dark'],
+[data-theme='night'] [data-mode='dark'] {
+	--bg: var(--panel);
+	--surface: var(--key-face);
+	--surface-2: var(--panel-sunk);
+	--border: var(--rule);
+	--border-strong: var(--outline);
+	--fg: var(--ink);
+	--fg-secondary: var(--ink-2);
+	--fg-muted: var(--ink-3);
+	--shadow-border: 0 0 0 var(--outline-width) var(--outline);
+	--staff-bg: var(--paper);
+	--staff-ink: var(--paper-ink);
 }

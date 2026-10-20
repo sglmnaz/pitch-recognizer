@@ -1,148 +1,117 @@
-/* Mic control: waveform, big listen button, status ----------------------- */
+/*
+ * Mic control: the live waveform in an LCD window, then the Listen key (a
+ * latching key whose legend lights red while listening: key.css .key--lit),
+ * then a status line.
+ */
 .mic {
 	display: flex;
 	flex-direction: column;
 	align-items: center;
-	gap: var(--space-12);
-
-	/* Phones: a slimmer scope (and a 48 px button, button.css). */
-	@media (max-width: 600px) {
-		gap: var(--space-8);
-	}
+	gap: var(--space-10);
 }
 
+/* The waveform's window: bezel + LCD glass. */
 .wave-panel {
 	align-self: stretch;
-	padding: var(--space-8) var(--space-12);
-
-	@media (max-width: 600px) {
-		padding: var(--space-6) var(--space-12);
-	}
+	padding: 0;
+	border: 4px solid var(--window);
+	border-radius: var(--radius-lg);
+	background: var(--lcd-bg);
+	box-shadow:
+		var(--lcd-shadow),
+		0 1px 0 var(--plate-shine);
 }
 
-/* Live input waveform: muted while only noise comes in, accent on a note. */
+/* Drawn by ts/ui/waveform.ts in the element's colour: dim while only noise
+   comes in, full ink on a note. */
 .wave {
 	display: block;
 	width: 100%;
-	height: 56px;
-	color: var(--border-strong);
-	transition: color var(--dur) var(--ease);
+	height: 48px;
+	color: var(--lcd-dim);
+	filter: drop-shadow(var(--lcd-glow));
 
 	@media (min-width: 960px) {
-		height: 80px;
+		height: 72px;
 	}
 
 	@media (max-width: 600px) {
-		height: 40px;
+		height: 36px;
 	}
 
 	@media (max-width: 600px) and (max-height: 760px) {
-		height: 32px;
+		height: 30px;
 	}
 }
 
 .wave--live {
-	color: var(--fg-muted);
+	color: var(--lcd-ink);
+	opacity: 0.55;
 }
 
 .wave--voiced {
-	color: var(--accent);
+	color: var(--lcd-ink);
+	opacity: 1;
 }
 
-/* Scales' own mic toggle: mic icon + state, a tap starts or stops listening
-   (the shared block uses .mic-button, the same content on a big button). */
+/* Scales' own mic toggle: the same latching key, smaller. */
 .mic-toggle {
-	white-space: nowrap;
-	display: inline-flex;
-	align-items: center;
-	gap: 7px;
-	height: 32px;
-	padding: 0 var(--space-12);
-	border: var(--key-border);
-	border-radius: var(--radius-pill);
-	background: var(--key-bg);
-	color: var(--fg-secondary);
-	font-size: var(--text-md);
-	font-weight: var(--key-font-weight);
-	letter-spacing: var(--key-letter-spacing);
-	text-transform: var(--key-text-transform);
-	cursor: pointer;
-	box-shadow: var(--key-shadow);
-	transition:
-		color var(--dur) var(--ease),
-		background var(--dur) var(--ease),
-		box-shadow var(--dur) var(--ease);
-
-	&:hover {
-		color: var(--fg);
-	}
-
-	&[aria-pressed='true'] {
-		color: var(--fg);
-		background: var(--surface-2);
-		box-shadow: 0 0 0 1px var(--border-strong);
-	}
-
-	& svg {
-		width: 14px;
-		height: 14px;
-	}
+	height: 36px;
+	padding-inline: var(--space-12);
 
 	@media (max-width: 600px) {
 		height: var(--tap);
-		padding: 0 var(--space-16);
 	}
 }
 
-/* The shared block's control: a .btn--large with mic + state. */
-.mic-button {
-	gap: var(--space-8);
-
-	& svg {
-		width: 18px;
-		height: 18px;
-	}
+.mic-button svg {
+	width: 17px;
+	height: 17px;
 }
 
-/* Listening shows on the control itself, the big button and Scales' toggle
-   alike: its outline turns the accent blue and breathes. */
-:is(.mic-button, .mic-toggle).mic-toggle--live[aria-pressed='true'] {
-	box-shadow: 0 0 0 1px var(--indicator-on);
-	animation: mic-outline 1.8s var(--ease) infinite;
-
-	/* Reduced motion: the blue outline alone says "listening". */
-	@media (prefers-reduced-motion: reduce) {
-		animation: none;
-	}
+/* Listening: the legend and icon light up (both controls). */
+:is(.mic-button, .mic-toggle)[aria-pressed='true'] {
+	color: var(--lamp-on);
+	text-shadow: 0 0 6px var(--lamp-glow);
 }
 
-@keyframes mic-outline {
-	0%,
-	100% {
-		box-shadow:
-			0 0 0 1px var(--indicator-on),
-			0 0 0 0 color-mix(in srgb, var(--indicator-on) 40%, transparent);
-	}
-	50% {
-		box-shadow:
-			0 0 0 1px var(--indicator-on),
-			0 0 0 4px color-mix(in srgb, var(--indicator-on) 18%, transparent);
-	}
-}
-
-/* Blocked or waiting for a tap: what the toggle's label can't say. */
+/* Blocked or waiting for a tap: one LCD status line with an amber lamp. */
 .mic-hint {
+	display: flex;
+	align-items: center;
+	gap: var(--space-10);
+	align-self: stretch;
 	margin: 0;
-	font-size: var(--text-sm);
-	color: var(--fg-muted);
-	text-align: center;
-}
+	padding: var(--space-6) var(--space-10);
+	border: 4px solid var(--window);
+	border-radius: var(--radius-lg);
+	background: var(--lcd-bg);
+	color: var(--lcd-ink);
+	text-shadow: var(--lcd-glow);
+	box-shadow: var(--lcd-shadow);
+	font-family: var(--font-ui);
+	font-size: var(--text-xs);
+	font-weight: 600;
+	letter-spacing: 0.1em;
+	text-transform: uppercase;
 
+	&::before {
+		content: '';
+		flex: none;
+		width: var(--lamp-w);
+		height: var(--lamp-h);
+		border-radius: 1px;
+		background: var(--lamp-warn-on);
+		box-shadow:
+			0 0 0 var(--outline-width) var(--outline),
+			0 0 6px var(--lamp-warn-glow);
+	}
+}
 
 /* ?debug diagnostics line */
 .debug {
 	margin: 0;
-	font-family: var(--font-mono);
+	font-family: var(--font-ui);
 	font-size: var(--text-xs);
 	color: var(--fg-muted);
 	text-align: center;

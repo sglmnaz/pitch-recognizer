@@ -50,10 +50,13 @@
 	max-height: min(82dvh, 760px);
 	padding: 0;
 	border: none;
-	border-radius: var(--radius-lg);
-	background: var(--surface);
-	color: var(--fg);
-	box-shadow: var(--shadow-md);
+	border-radius: var(--radius);
+	/* A page of the operator's manual. */
+	background: var(--paper);
+	color: var(--paper-ink);
+	box-shadow:
+		0 0 0 var(--outline-width) var(--outline),
+		0 10px 24px rgba(0, 0, 0, 0.3);
 
 	&[open] {
 		display: flex;
@@ -71,18 +74,22 @@
 	align-items: center;
 	justify-content: space-between;
 	gap: var(--space-12);
-	padding: var(--space-12) var(--space-12) var(--space-12) var(--space-20);
-	border-bottom: 1px solid var(--border);
+	margin: 0 var(--space-16);
+	padding: var(--space-12) 0 var(--space-10);
+	border-bottom: 1.5px solid currentColor;
 }
 
 .help__title {
 	margin: 0;
-	font-size: var(--text-xl);
-	font-weight: 600;
+	font-family: var(--font-ui);
+	font-size: var(--text-2xl);
+	font-weight: 700;
+	letter-spacing: 0.12em;
+	text-transform: uppercase;
 }
 
 .help__close {
-	width: 40px;
+	width: 44px;
 	height: 40px;
 	padding: 0;
 	flex: none;
@@ -100,18 +107,19 @@
 
 .help__body {
 	overflow-y: auto;
-	padding: var(--space-4) var(--space-20) var(--space-20);
-	font-size: var(--text-base);
+	padding: var(--space-4) var(--space-16) var(--space-20);
+	font-family: var(--font-text);
+	font-size: var(--text-md);
 	line-height: 1.55;
 }
 
 .help__body h3 {
 	margin: var(--space-16) 0 var(--space-6);
+	font-family: var(--font-ui);
 	font-size: var(--text-sm);
-	font-weight: 600;
-	letter-spacing: 0.04em;
+	font-weight: 700;
+	letter-spacing: 0.14em;
 	text-transform: uppercase;
-	color: var(--fg-muted);
 }
 
 .help__body ul {
@@ -125,8 +133,11 @@
 
 .help__body kbd {
 	padding: 1px 5px;
-	border-radius: 4px;
-	font-family: var(--font-mono);
-	font-size: var(--text-sm);
-	box-shadow: var(--shadow-border);
+	border-radius: var(--radius-sm);
+	font-family: var(--font-ui);
+	font-size: var(--text-xs);
+	font-weight: 700;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+	box-shadow: 0 0 0 1px currentColor;
 }
