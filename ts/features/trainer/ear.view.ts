@@ -8,11 +8,14 @@ import { getClosestNote, midiOfFrequency } from '../../core/notes'
 import type { PitchReading } from '../../core/microphone'
 import type { View } from '../../ui/view'
 import { onBareKey, subscribeVisible } from '../../ui/dom'
+import { createScoreboard } from './led'
 
 // Long enough to see the green, short enough to keep the drill moving.
 const AUTO_ADVANCE_MS = 700
 // The weakest few are what to practise; the rest is noise on a phone.
 const STATS_SHOWN = 6
+// LEDs per session bar; trainer.css colours them red / amber / green by position.
+const VU_SEGMENTS = 16
 
 const DIRECTION_TEXT: Record<Ear.Direction, string> = { up: 'Ascending', down: 'Descending', harmonic: 'Harmonic' }
 
@@ -30,9 +33,7 @@ export function createEarView(root: HTMLElement): View {
 	const nextButton = panel.querySelector<HTMLButtonElement>('[data-action="next"]')!
 	const statsTotal = root.querySelector<HTMLElement>('.ear-stats__total')!
 	const statsList = root.querySelector<HTMLElement>('.ear-stats__list')!
-	const scoreValue = root.querySelector<HTMLElement>('[data-stat="score"]')!
-	const streakValue = root.querySelector<HTMLElement>('[data-stat="streak"]')!
-	const bestValue = root.querySelector<HTMLElement>('[data-stat="best"]')!
+	const showScore = createScoreboard(root)
 
 	// The exercise on screen (null until first shown); Settings may already say another.
 	let shown: Ear.Exercise | null = null
@@ -66,7 +67,7 @@ export function createEarView(root: HTMLElement): View {
 			...ids.map((id) => {
 				const button = document.createElement('button')
 				button.type = 'button'
-				button.className = 'ear-answer'
+				button.className = 'key ear-answer'
 				button.dataset.id = id
 				const short = document.createElement('span')
 				short.className = 'ear-answer__short'
@@ -86,16 +87,13 @@ export function createEarView(root: HTMLElement): View {
 		const session = Ear.getSession(exercise())
 		for (const button of buttons()) {
 			button.disabled = !played
-			if (!session.answered) delete button.dataset.state
+			if (session.answered) continue
+			delete button.dataset.state
+			button.classList.remove('is-down')
 		}
 	}
 
-	function updateScoreboard() {
-		const { score, streak, best } = Ear.getSession(exercise())
-		scoreValue.textContent = String(score)
-		streakValue.textContent = String(streak)
-		bestValue.textContent = String(best)
-	}
+	const updateScoreboard = () => showScore(Ear.getSession(exercise()))
 
 	function renderStats() {
 		const ex = exercise()
@@ -116,11 +114,16 @@ export function createEarView(root: HTMLElement): View {
 				const row = document.createElement('li')
 				row.className = 'ear-stat'
 				row.title = Ear.labelOf(ex, stat.id)
-				row.innerHTML = '<span class="ear-stat__id"></span><span class="ear-stat__bar"><span></span></span><span class="ear-stat__n"></span>'
+				row.innerHTML = '<span class="ear-stat__id"></span><span class="window vu"></span><span class="ear-stat__n"></span>'
 				row.querySelector('.ear-stat__id')!.textContent = stat.id
-				const bar = row.querySelector<HTMLElement>('.ear-stat__bar span')!
-				bar.style.width = `${Math.max(4, share * 100)}%`
-				bar.classList.toggle('ear-stat__fill--good', share >= 0.8)
+				const lit = Math.round(share * VU_SEGMENTS)
+				row.querySelector('.vu')!.replaceChildren(
+					...Array.from({ length: VU_SEGMENTS }, (_, i) => {
+						const led = document.createElement('i')
+						if (i < lit) led.className = 'is-on'
+						return led
+					})
+				)
 				row.querySelector('.ear-stat__n')!.textContent = `${stat.right}/${stat.total}`
 				row.setAttribute('aria-label', `${Ear.labelOf(ex, stat.id)}: ${stat.right} of ${stat.total} right`)
 				return row
@@ -195,6 +198,8 @@ export function createEarView(root: HTMLElement): View {
 		}
 		const { correct } = Ear.answer(ex, id)
 		for (const button of buttons()) {
+			// The right answer latches down with its green lamp; a wrong pick lights red.
+			button.classList.toggle('is-down', button.dataset.id === q.id)
 			if (button.dataset.id === q.id) button.dataset.state = 'right'
 			else if (button.dataset.id === id) button.dataset.state = 'wrong'
 		}

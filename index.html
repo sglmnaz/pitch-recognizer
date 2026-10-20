@@ -93,7 +93,8 @@
 
 		<!-- Trainer ------------------------------------------------------- -->
 		<section class="view" id="view-trainer" role="tabpanel" aria-labelledby="tab-trainer" hidden>
-			<div class="view-top">
+			<div class="plate trainer-plate">
+				<div class="plate__brand"><b>PLUCK</b><span>EAR TRAINER · ET-100</span></div>
 				<div class="segmented has-lamps trainer-mode" role="group" aria-label="Exercise">
 					<button type="button" data-exercise="notes" aria-pressed="true">Notes</button>
 					<button type="button" data-exercise="intervals" aria-pressed="false">Intervals</button>
@@ -102,28 +103,30 @@
 				</div>
 			</div>
 
-			<div class="panel scoreboard" data-only="notes ear">
+			<!-- Red LED counters (ts/features/trainer/led.ts), shared by Notes and the ear drills. -->
+			<div class="scoreboard" data-only="notes ear">
 				<div class="stat">
-					<span class="stat__value" data-stat="score">0</span>
-					<span class="stat__label">Score</span>
+					<span class="silk">Score</span>
+					<span class="window"><span class="led" data-stat="score"></span></span>
 				</div>
 				<div class="stat">
-					<span class="stat__value" data-stat="streak">0</span>
-					<span class="stat__label">Streak</span>
+					<span class="silk">Streak</span>
+					<span class="window"><span class="led" data-stat="streak"></span></span>
 				</div>
 				<div class="stat">
-					<span class="stat__value" data-stat="best">0</span>
-					<span class="stat__label">Best</span>
+					<span class="silk">Best</span>
+					<span class="window"><span class="led" data-stat="best"></span></span>
 				</div>
 			</div>
 
 			<!-- Notes exercise: data-only="notes"; Intervals / Chords: data-only="ear". -->
-			<div class="panel prompt" data-only="notes">
-				<div id="staff" class="staff"></div>
+			<div class="prompt" data-only="notes">
+				<!-- The staff on chart-recorder paper, in a window (ts/ui/music-renderer.ts draws it). -->
+				<div class="window"><div id="staff" class="staff"></div></div>
 				<div class="prompt__meta">
-					<p class="prompt__hint">Match this note</p>
-					<div class="prompt__note">--</div>
-					<div class="prompt__alt">--</div>
+					<p class="silk prompt__hint">Match this note</p>
+					<p class="prompt__target"><span class="prompt__note">--</span> <span class="prompt__alt">--</span></p>
+					<button class="btn btn--small prompt__skip" type="button" data-action="skip">Skip note</button>
 				</div>
 			</div>
 
@@ -147,12 +150,8 @@
 				<p class="a4-note" hidden></p>
 			</div>
 
-			<div class="controls" data-only="notes">
-				<button class="btn btn--block" type="button" data-action="skip">Skip note</button>
-			</div>
-
 			<!-- Ear training (ts/features/trainer/ear.view.ts): the app plays, the user names it. -->
-			<div class="panel ear" data-only="ear" hidden>
+			<div class="ear" data-only="ear" hidden>
 				<div class="ear__head">
 					<div class="ear__question">
 						<p class="ear__prompt">Which interval?</p>
@@ -167,66 +166,83 @@
 				</div>
 				<div class="ear__answers" role="group" aria-label="Answers"></div>
 				<p class="ear__feedback" aria-live="polite"></p>
-				<button class="btn btn--solid btn--block ear__next" type="button" data-action="next" aria-keyshortcuts="Enter" hidden>Next</button>
+				<button class="btn btn--block key--hot ear__next" type="button" data-action="next" aria-keyshortcuts="Enter" hidden>Next</button>
 			</div>
 
-			<div class="panel ear-stats" data-only="ear" hidden>
+			<!-- Session bars: one LED VU meter per answer, weakest first. -->
+			<div class="ear-stats" data-only="ear" hidden>
 				<div class="ear-stats__head">
-					<span class="panel__label">This session</span>
+					<span class="silk">This session</span>
 					<span class="ear-stats__total"></span>
 				</div>
 				<ol class="ear-stats__list"></ol>
 			</div>
 
 			<!-- Chord changes (ts/features/trainer/changes.view.ts): the player changes, the mic counts. -->
-			<div class="panel changes-stage" data-only="changes" hidden>
+			<div class="changes-stage" data-only="changes" hidden>
 				<div class="changes-meta">
-					<span class="changes-clock">1:00</span>
-					<span class="changes-count"><span class="changes-count__value">0</span> <span class="changes-count__label">changes</span></span>
+					<div class="changes-count">
+						<span class="silk changes-count__label">Changes</span>
+						<span class="window"><span class="led led--big changes-count__value"></span></span>
+					</div>
+					<span class="window"><span class="lcd changes-clock">1:00</span></span>
 				</div>
-				<div class="changes-target">G</div>
-				<p class="changes-next"></p>
-				<p class="changes-heard">Hearing <span>—</span></p>
-				<ol class="changes-strip" role="img" aria-label="No changes yet" hidden></ol>
-				<p class="changes-legend" aria-hidden="true" hidden>
-					<span class="changes-mark--hit">✓ on time</span>
-					<span class="changes-mark--early">← early</span>
-					<span class="changes-mark--late">→ late</span>
-					<span class="changes-mark--miss">× missed</span>
-				</p>
-				<div class="changes-result" hidden></div>
+				<div class="window changes-display">
+					<div class="lcd">
+						<div class="lcd__big changes-target">G</div>
+						<p class="changes-next"></p>
+						<p class="changes-heard">Hearing <span>—</span></p>
+						<div class="changes-result" hidden></div>
+					</div>
+				</div>
+				<!-- In time: a lamp per outcome (the last change lights its own) and a tape of the last changes. -->
+				<div class="changes-timing" hidden>
+					<div class="changes-lamps" aria-hidden="true">
+						<span class="changes-lamp"><span class="lamp lamp--warn" data-mark="early"></span><span class="silk">← Early</span></span>
+						<span class="changes-lamp"><span class="lamp lamp--ok" data-mark="hit"></span><span class="silk">✓ On time</span></span>
+						<span class="changes-lamp"><span class="lamp lamp--warn" data-mark="late"></span><span class="silk">Late →</span></span>
+						<span class="changes-lamp"><span class="lamp" data-mark="miss"></span><span class="silk">× Miss</span></span>
+					</div>
+					<div class="window">
+						<div class="lcd changes-tape">
+							<span class="changes-tape__label" aria-hidden="true">Last</span>
+							<ol class="changes-strip" role="img" aria-label="No changes yet"></ol>
+							<span class="changes-tally" aria-hidden="true"></span>
+						</div>
+					</div>
+				</div>
 				<div class="changes-shapes"></div>
-				<button class="btn btn--solid btn--large" type="button" data-action="changes-start" aria-keyshortcuts="Space">Start</button>
+				<button class="btn btn--large key--hot" type="button" data-action="changes-start" aria-keyshortcuts="Space">Start</button>
 				<p class="changes-status" aria-live="polite"></p>
 				<span class="sr-only changes-live" aria-live="polite"></span>
 			</div>
 
-			<div class="panel changes-setup" data-only="changes" hidden>
+			<div class="changes-setup" data-only="changes" hidden>
 				<div class="segmented changes-mode" role="group" aria-label="Drill">
 					<button type="button" data-changes-mode="minute" aria-pressed="true">One-minute</button>
 					<button type="button" data-changes-mode="time" aria-pressed="false">In time</button>
 				</div>
 				<!-- In time only: the tempo, right where the drill is set up. -->
 				<div class="changes-tempo" hidden>
-					<span class="panel__label" id="changesTempoLabel">Tempo</span>
-					<div class="metro-stepper" role="group" aria-labelledby="changesTempoLabel">
-						<button class="metro-step metro-step--small" type="button" data-changes-bpm="-5" aria-label="5 BPM slower">&minus;</button>
-						<span class="metro-stepper__value metro-stepper__value--wide changes-tempo__value">60 BPM</span>
-						<button class="metro-step metro-step--small" type="button" data-changes-bpm="5" aria-label="5 BPM faster">+</button>
+					<span class="silk" id="changesTempoLabel">Tempo</span>
+					<div class="changes-stepper" role="group" aria-labelledby="changesTempoLabel">
+						<button class="key key--step" type="button" data-changes-bpm="-5" aria-label="5 BPM slower">▼</button>
+						<span class="window"><span class="lcd changes-tempo__value">60 BPM</span></span>
+						<button class="key key--step" type="button" data-changes-bpm="5" aria-label="5 BPM faster">▲</button>
 					</div>
 				</div>
 				<div class="changes-group">
-					<span class="panel__label" id="changesPresetsLabel">Quick picks</span>
+					<span class="silk" id="changesPresetsLabel">Quick picks</span>
 					<div class="changes-presets" role="group" aria-labelledby="changesPresetsLabel"></div>
 				</div>
 				<div class="changes-group">
-					<div class="settings__heading">
-						<span class="panel__label" id="changesChordsLabel">Chords, in order</span>
+					<div class="changes-group__head">
+						<span class="silk" id="changesChordsLabel">Chords, in order</span>
 						<span class="changes-order"></span>
 					</div>
-					<div class="chips changes-chips" role="group" aria-labelledby="changesChordsLabel"></div>
+					<div class="chips has-lamps changes-chips" role="group" aria-labelledby="changesChordsLabel"></div>
 				</div>
-				<p class="changes-summary"></p>
+				<div class="changes-summary"></div>
 			</div>
 			<button class="help-link" type="button" data-help="trainer" aria-haspopup="dialog" aria-label="How to use the trainer"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.6 9.4a2.5 2.5 0 0 1 4.8.9c0 1.7-2.4 2.2-2.4 3.7"/><path d="M12 17.2h.01"/></svg></button>
 		</section>
