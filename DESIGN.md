@@ -75,7 +75,8 @@ the materials, so plain text and rules need nothing theme-specific.
 - **Barlow Semi Condensed** (500/600/700) for labels, keys and values:
   uppercase, tracked out like silk-screen print (`--font-ui`).
 - **Geist** for running text: hints, descriptions, the guide (`--font-text`).
-- **Doto** (dot matrix) only for large display values, roughly 28 px and up:
+- **DSEG14** (fourteen-segment, italic) for large display values, roughly 28 px and up,
+  and **DSEG7** (seven-segment) for numbers only (the tempo, LED counters):
   the note and chord name, the tempo, LED counters (`--font-display`,
   `.lcd__big`). Small values on an LCD stay in Barlow.
 - All self-hosted in `ts/styles/fonts/` with their OFL licences.

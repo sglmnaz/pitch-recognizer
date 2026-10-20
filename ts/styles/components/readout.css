@@ -1,5 +1,5 @@
 /*
- * Readout (ts/ui/readout.ts): the note in dot matrix, a line of Hz / cents /
+ * Readout (ts/ui/readout.ts): the note in segment digits, a line of Hz / cents /
  * hint under it, a green IN TUNE lamp lit when locked, and the cents meter as
  * a hi-fi tuning dial. Two arrangements of the same parts:
  *   .readout                  compact: one LCD window holding note, line and
@@ -67,7 +67,8 @@
 
 .readout__note {
 	font-family: var(--font-display);
-	font-weight: 900;
+	font-style: italic;
+	font-weight: 700;
 	font-size: var(--note-size);
 	line-height: 1;
 	letter-spacing: 0.02em;

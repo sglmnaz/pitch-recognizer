@@ -459,8 +459,9 @@
 .changes-result__big {
 	margin: 0;
 	font-family: var(--font-display);
-	font-size: 56px;
-	font-weight: 900;
+	font-style: italic;
+	font-size: 40px;
+	font-weight: 700;
 	line-height: 1;
 	text-transform: none;
 }

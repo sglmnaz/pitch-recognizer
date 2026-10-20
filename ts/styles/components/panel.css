@@ -108,10 +108,11 @@
 	text-shadow: none;
 }
 
-/* The big dot-matrix value (chord name, note, tempo). */
+/* The big segment value (chord name, note). */
 .lcd__big {
 	font-family: var(--font-display);
-	font-weight: 900;
+	font-style: italic;
+	font-weight: 700;
 	letter-spacing: 0.04em;
 	text-transform: none;
 	line-height: 1;

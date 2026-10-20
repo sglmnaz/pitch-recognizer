@@ -38,10 +38,10 @@ look is dropped, not kept as a second style.
   and a shorter front edge: the box never changes size, so nothing around a
   key moves. Variants are five custom properties (`--k-face`, `--k-hi`,
   `--k-side`, `--k-front`, `--k-ink`).
-- **Surfaces as classes**: `.plate`, `.window`, `.lcd` (+ `.lcd__big` in Doto
+- **Surfaces as classes**: `.plate`, `.window`, `.lcd` (+ `.lcd__big` in segments
   for large values only), `.paper`, `.silk`, `.rule`, `.lamp`, `.has-lamps`.
 - **Fonts**: Barlow Semi Condensed for labels and values, Geist for running
-  text, Doto (dot matrix) for large display values only. Self-hosted woff2
+  text, DSEG14 / DSEG7 segment displays for large display values only. Self-hosted woff2
   (OFL licences next to them); Geist Mono removed.
 - Selects keep the system list; the closed select reads as an LCD and
   `ts/ui/stepper.ts` can add ◀ ▶ keys.

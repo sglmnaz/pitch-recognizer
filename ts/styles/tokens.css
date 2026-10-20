@@ -36,17 +36,17 @@
 	font-display: swap;
 }
 
-/* Dot matrix: only for large display values (chord name, LED counters, big
-   numbers). Small values on an LCD stay in Barlow. */
+/* Fourteen-segment letters and digits (DSEG14, OFL): the large display values
+   (chord name, note). Small values on an LCD stay in Barlow. */
 @font-face {
-	font-family: 'Doto';
-	src: url('./fonts/Doto-900.woff2') format('woff2');
-	font-weight: 900;
+	font-family: 'DSEG14';
+	src: url('./fonts/DSEG14Classic-BoldItalic.woff2') format('woff2');
+	font-weight: 700;
+	font-style: italic;
 	font-display: swap;
 }
 
-/* Seven-segment digits (DSEG7, OFL): the metronome's tempo, like the
-   approved hardware mockup. */
+/* Seven-segment digits (DSEG7, OFL): numbers only (the tempo, LED counters). */
 @font-face {
 	font-family: 'DSEG7';
 	src: url('./fonts/DSEG7Classic-BoldItalic.woff2') format('woff2');
@@ -68,9 +68,9 @@
 	--font-ui: 'Barlow Semi Condensed', 'Arial Narrow', system-ui, sans-serif;
 	/* Running text: hints, descriptions, the guide. */
 	--font-text: 'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-	/* Big LCD and LED values. */
-	--font-display: 'Doto', var(--font-ui);
-	/* Seven-segment digits (numbers only: the tempo). */
+	/* Big LCD values: segment letters. */
+	--font-display: 'DSEG14', var(--font-ui);
+	/* Seven-segment digits (numbers only: the tempo, LED counters). */
 	--font-segment: 'DSEG7', var(--font-display);
 	/* Older names, still read by a few rules. */
 	--font-sans: var(--font-text);
