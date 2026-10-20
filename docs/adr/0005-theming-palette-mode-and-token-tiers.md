@@ -2,7 +2,9 @@
 
 ## Status
 
-Accepted, implemented: `ts/styles/tokens.css` holds the three tiers (primitive
+Superseded by ADR 0007 (old-school look: themes classic / night, a display tier; the Geist palette and its primitives removed). The tiers and forced-mode subtrees described here carry over.
+
+Originally: Accepted, implemented: `ts/styles/tokens.css` holds the three tiers (primitive
 colour scales; semantic roles per mode in `:root, [data-mode='light']` and
 `[data-mode='dark']`; component tokens, the derived ones declared on every
 `[data-mode]` so a forced subtree re-resolves them). `<html>` carries

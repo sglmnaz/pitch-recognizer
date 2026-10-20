@@ -205,26 +205,27 @@ test.describe('behaviour', () => {
 		await expect(start).toHaveText('Start')
 	})
 
-	test('the pre-palette theme key migrates; theme-color follows the mode', async ({ page, open }) => {
+	test('the oldest theme key migrates; theme-color follows the theme', async ({ page, open }) => {
 		await open('#settings')
 		const stored = await page.evaluate(() => [localStorage.getItem('theme'), localStorage.getItem('pitch-recognizer:mode')])
 		expect(stored).toEqual([null, 'light'])
 		await expect(page.locator('html')).toHaveAttribute('data-mode', 'light')
-		await expect(page.locator('meta[name="theme-color"]')).toHaveAttribute('content', '#fbfbfc')
-		await page.locator('[data-theme-choice="dark"]').click()
-		await expect(page.locator('meta[name="theme-color"]')).toHaveAttribute('content', '#0a0a0b')
+		await expect(page.locator('meta[name="theme-color"]')).toHaveAttribute('content', '#e7e1d3')
+		await page.locator('[data-theme-choice="night"]').click()
+		await expect(page.locator('meta[name="theme-color"]')).toHaveAttribute('content', '#1c222c')
 		await page.reload()
+		await expect(page.locator('html')).toHaveAttribute('data-theme', 'night')
 		await expect(page.locator('html')).toHaveAttribute('data-mode', 'dark')
 	})
 
-	// A palette is one CSS block overriding semantic tokens per mode (DESIGN.md):
-	// inject one at runtime and check tokens and components follow, including a
+	// A theme is one CSS block of materials per mode (DESIGN.md): inject one at
+	// runtime and check tokens, derived roles and components follow, including a
 	// subtree that forces its own mode (the fretboard board).
-	test('a new palette is one CSS block', async ({ page, open }) => {
+	test('a new theme is one CSS block', async ({ page, open }) => {
 		await open('#scales', { fretboardTheme: 'dark' })
 		await page.addStyleTag({
-			content: `[data-theme='test'][data-mode='light'], [data-theme='test'] [data-mode='light'] { --surface: rgb(255, 0, 0); }
-				[data-theme='test'][data-mode='dark'], [data-theme='test'] [data-mode='dark'] { --surface: rgb(0, 0, 255); }`,
+			content: `[data-theme='test'][data-mode='light'], [data-theme='test'] [data-mode='light'] { --key-face: rgb(255, 0, 0); --panel: rgb(255, 0, 0); }
+				[data-theme='test'][data-mode='dark'], [data-theme='test'] [data-mode='dark'] { --key-face: rgb(0, 0, 255); --panel: rgb(0, 0, 255); }`,
 		})
 		const read = () =>
 			page.evaluate(() => {
@@ -233,12 +234,24 @@ test.describe('behaviour', () => {
 					token: getComputedStyle(document.documentElement).getPropertyValue('--surface').trim(),
 					button: getComputedStyle(document.querySelector('.btn')!).backgroundColor,
 					board: getComputedStyle(board).getPropertyValue('--surface').trim(),
-					staffBg: getComputedStyle(board).getPropertyValue('--staff-bg').trim(),
+					boardBg: getComputedStyle(board).getPropertyValue('--bg').trim(),
 				}
 			})
 		const before = await read()
-		expect(before.button).toBe('rgb(255, 255, 255)')
+		expect(before.button).toBe('rgb(237, 231, 216)')
 		await page.evaluate(() => (document.documentElement.dataset.theme = 'test'))
-		expect(await read()).toEqual({ token: 'rgb(255, 0, 0)', button: 'rgb(255, 0, 0)', board: 'rgb(0, 0, 255)', staffBg: 'rgb(0, 0, 255)' })
+		expect(await read()).toEqual({ token: 'rgb(255, 0, 0)', button: 'rgb(255, 0, 0)', board: 'rgb(0, 0, 255)', boardBg: 'rgb(0, 0, 255)' })
+	})
+
+	// The display colour is its own axis: it recolours LCDs only, and sticks.
+	test('the display colour is independent of the theme', async ({ page, open }) => {
+		await open('#settings')
+		const color = (selector: string) => page.evaluate((s) => getComputedStyle(document.querySelector(s)!).backgroundColor, selector)
+		const keyBefore = await color('.btn')
+		await page.locator('[data-display-choice]').selectOption('amber')
+		expect(await color('.select')).toBe('rgb(20, 16, 11)')
+		expect(await color('.btn')).toBe(keyBefore)
+		await page.reload()
+		await expect(page.locator('html')).toHaveAttribute('data-display', 'amber')
 	})
 })

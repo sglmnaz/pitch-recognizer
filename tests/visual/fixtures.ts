@@ -1,6 +1,6 @@
 import { test as base, expect, type Page } from '@playwright/test'
 
-export type Options = { theme: 'light' | 'dark' }
+export type Options = { theme: 'light' | 'dark' | 'night' }
 
 /**
  * Runs in the page before any app script, on every load. Everything a
