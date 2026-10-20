@@ -419,7 +419,10 @@
 
 .chord-result__symbol {
 	flex: none;
-	width: 72px;
+	/* Room for the usual symbols; a long slash chord may take more, up to a
+	   point, then ellipsis. */
+	min-width: 72px;
+	max-width: 45%;
 	overflow: hidden;
 	font-family: var(--font-ui);
 	font-size: 20px;

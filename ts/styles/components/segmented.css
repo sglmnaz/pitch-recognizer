@@ -12,8 +12,8 @@
 }
 
 .segmented > button {
-	--key-drop: none;
-	--key-drop-down: none;
+	--key-drop: 0 0 transparent;
+	--key-drop-down: 0 0 transparent;
 
 	flex: 1;
 	height: 36px;

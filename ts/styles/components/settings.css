@@ -98,7 +98,7 @@
 
 /* Small text keys (All / None, presets). */
 .link-btn {
-	--key-drop: none;
+	--key-drop: 0 0 transparent;
 
 	height: 28px;
 	padding-inline: var(--space-8);

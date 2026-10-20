@@ -160,6 +160,7 @@
 	--key-side: #d6cfbf;
 	--key-front: #b5ad9b;
 	--key-ink: #4a463d;
+	/* Never `none`: these sit inside a box-shadow list (use `0 0 transparent`). */
 	--key-drop: 0 2.5px 3px 1px rgba(0, 0, 0, 0.22);
 	/* The panel lip's shadow across the top of a sunk key. */
 	--key-lip: rgba(40, 34, 26, 0.22);
@@ -282,7 +283,7 @@
 	--key-drop: 0 2.5px 3px 1px rgba(0, 0, 0, 0.45);
 	--key-lip: rgba(0, 0, 0, 0.4);
 	--key-down: 84%;
-	--key-drop-down: none;
+	--key-drop-down: 0 0 transparent;
 
 	--key2-face: #55524c;
 	--key2-hi: #716d66;

@@ -23,7 +23,9 @@ export default defineConfig<Options>({
 	expect: {
 		// A pixel budget, not a ratio: 0.2 % of a phone screen (~600 px) let a removed
 		// icon pass unnoticed. Rendering here is deterministic, so a few pixels suffice.
-		toHaveScreenshot: { animations: 'disabled', caret: 'hide', maxDiffPixels: 20 },
+		// threshold: the per-pixel colour tolerance (default 0.2) hid a whole bevel on the
+		// dark themes, whose shades sit close together.
+		toHaveScreenshot: { animations: 'disabled', caret: 'hide', maxDiffPixels: 20, threshold: 0.02 },
 	},
 	use: {
 		baseURL: `http://localhost:${PORT}`,

@@ -104,8 +104,8 @@
 
 /* Keys in an interlocked row or on a dark well drop their own shadow. */
 :where(.key--flat) {
-	--key-drop: none;
-	--key-drop-down: none;
+	--key-drop: 0 0 transparent;
+	--key-drop-down: 0 0 transparent;
 }
 
 a:where(.key, .btn) {
