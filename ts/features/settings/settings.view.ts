@@ -150,6 +150,20 @@ export function createSettingsView(root: HTMLElement, from: () => string | null)
 	}
 	search.addEventListener('input', filter)
 
+	// Vibration that never comes is hard to place: say whether the browser took
+	// the call (then the phone's own settings silence it) or refused it. A
+	// click comes after the finger lifts, so the page has user activation.
+	const vibrationResult = root.querySelector<HTMLElement>('[data-vibration-result]')!
+	root.querySelector('[data-action="test-vibration"]')!.addEventListener('click', () => {
+		const sent = 'vibrate' in navigator ? navigator.vibrate(300) : null
+		vibrationResult.textContent =
+			sent === null
+				? 'This browser has no vibration'
+				: sent
+					? 'Sent. Felt nothing? The phone mutes it: check its vibration and touch feedback settings'
+					: 'The browser refused it'
+	})
+
 	root.querySelector('[data-notes="all"]')!.addEventListener('click', () => Settings.enableAllNotes())
 	root.querySelector('[data-notes="none"]')!.addEventListener('click', () => Settings.disableAllNotes())
 
