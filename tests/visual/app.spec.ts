@@ -258,6 +258,21 @@ test.describe('behaviour', () => {
 		expect(await page.evaluate(() => JSON.parse(localStorage.getItem('pitch-recognizer:settings')!).leftHanded)).toBe(false)
 	})
 
+	// Sections fold; the search shows only the matching rows, open.
+	test('settings fold and search', async ({ page, open }) => {
+		await open('#settings')
+		const settings = page.locator('#view-settings')
+		await expect(settings.getByRole('button', { name: 'Fretboard', exact: true })).toHaveAttribute('aria-expanded', 'false')
+		const search = page.getByRole('searchbox', { name: 'Search settings' })
+		await search.fill('left-handed')
+		await expect(settings.getByText('Left-handed', { exact: true })).toBeVisible()
+		await expect(page.locator('[data-group="tuner"]')).toBeHidden()
+		await search.fill('zzz')
+		await expect(page.getByText('No setting matches.')).toBeVisible()
+		await search.fill('')
+		await expect(page.locator('[data-group="tuner"]')).toBeVisible()
+	})
+
 	// The display colour is its own axis: it recolours LCDs only, and sticks.
 	test('the display colour is independent of the theme', async ({ page, open }) => {
 		await open('#settings')

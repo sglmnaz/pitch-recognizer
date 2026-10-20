@@ -97,6 +97,76 @@ export function createSettingsView(root: HTMLElement, from: () => string | null)
 		group.querySelector('.settings-group__title')?.after(button)
 	}
 
+	/* Sections fold (accordion) ------------------------------------------- */
+	// Each band becomes a toggle; everything under it goes into a body that
+	// folds. All start folded but the one of the tab you came from (onActivate).
+	const groups = Array.from(root.querySelectorAll<HTMLElement>('.settings-group[data-group]')).map((group) => {
+		const title = group.querySelector<HTMLElement>('.settings-group__title')!
+		const name = group.dataset.group!
+		const toggle = document.createElement('button')
+		toggle.type = 'button'
+		toggle.className = 'settings-group__toggle'
+		toggle.setAttribute('aria-controls', `settings-${name}`)
+		const chevron = document.createElement('span')
+		chevron.className = 'settings-group__chev'
+		chevron.setAttribute('aria-hidden', 'true')
+		toggle.append(chevron, ...title.childNodes)
+		title.append(toggle)
+		const body = document.createElement('div')
+		body.className = 'settings-group__body'
+		body.id = `settings-${name}`
+		body.append(...Array.from(group.children).filter((child) => child !== title && !child.classList.contains('settings-group__reset')))
+		group.append(body)
+		const entry = { group, title, toggle, chevron, body, open: false }
+		toggle.addEventListener('click', () => setOpen(entry, !entry.open))
+		return entry
+	})
+	type Group = (typeof groups)[number]
+
+	function setOpen(entry: Group, open: boolean) {
+		entry.open = open
+		entry.toggle.setAttribute('aria-expanded', String(open))
+		entry.chevron.textContent = open ? '▾' : '▸'
+		entry.body.hidden = !open
+		entry.group.classList.toggle('is-open', open)
+	}
+	for (const entry of groups) setOpen(entry, false)
+
+	/* Search ------------------------------------------------------------------ */
+	// Filters rows (a switch row, or a block without one: chips, presets) by
+	// their text; a match on a section's name keeps the whole section. While a
+	// query is in, every section with a match is shown open; clearing it puts
+	// the folds back as they were.
+	const search = root.querySelector<HTMLInputElement>('.settings-search')!
+	const empty = root.querySelector<HTMLElement>('.settings-search__empty')!
+	const words = (el: Element) => (el.textContent ?? '').toLowerCase()
+	function filter() {
+		const query = search.value.trim().toLowerCase()
+		for (const { group, title, body, open } of groups) {
+			const units = Array.from(group.querySelectorAll<HTMLElement>('.switch, .settings__section:not(:has(.switch))'))
+			const extras = group.querySelectorAll<HTMLElement>('.settings-group__desc, .settings-group__sub')
+			if (!query) {
+				for (const el of [...units, ...extras, ...group.querySelectorAll<HTMLElement>('.settings__section')]) el.hidden = false
+				group.hidden = false
+				body.hidden = !open
+				continue
+			}
+			const named = words(title).includes(query)
+			let any = false
+			for (const unit of units) {
+				unit.hidden = !named && !words(unit).includes(query)
+				any ||= !unit.hidden
+			}
+			// A section whose rows all went is a hole with a rule: hide it too.
+			for (const section of group.querySelectorAll<HTMLElement>('.settings__section:has(.switch)')) section.hidden = !Array.from(section.querySelectorAll<HTMLElement>('.switch')).some((row) => !row.hidden)
+			for (const el of extras) el.hidden = !named
+			group.hidden = !any
+			body.hidden = !any
+		}
+		empty.hidden = !query || groups.some(({ group }) => !group.hidden)
+	}
+	search.addEventListener('input', filter)
+
 	root.querySelector('[data-notes="all"]')!.addEventListener('click', () => Settings.enableAllNotes())
 	root.querySelector('[data-notes="none"]')!.addEventListener('click', () => Settings.disableAllNotes())
 
@@ -198,8 +268,13 @@ export function createSettingsView(root: HTMLElement, from: () => string | null)
 	return {
 		onActivate() {
 			sync()
-			const tab = from()
-			if (tab) root.querySelector(`[data-group="${tab}"]`)?.scrollIntoView({ block: 'start' })
+			// The section of the tab you came from opens (Appearance when the app
+			// started here) and comes to the top.
+			const target = groups.find(({ group }) => group.dataset.group === (from() ?? 'appearance'))
+			if (target && !search.value) {
+				setOpen(target, true)
+				target.group.scrollIntoView({ block: 'start' })
+			}
 		},
 		onReading() {},
 		reset() {},
