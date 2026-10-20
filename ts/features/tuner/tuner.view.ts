@@ -6,6 +6,7 @@ import type { PitchReading } from '../../core/microphone'
 import type { View } from '../../ui/view'
 import { liveRegion, subscribeVisible } from '../../ui/dom'
 import { createReadout } from '../../ui/readout'
+import { withStepper } from '../../ui/stepper'
 
 // The tuning select's first entry: no target strings, name whatever is played.
 const CHROMATIC = 'chromatic'
@@ -22,9 +23,9 @@ export function createTunerView(root: HTMLElement): View {
 
 	let strings: TuningString[] = []
 	let builtFor = ''
-	// The chips are only reference tones: tap to hear a string. They never
-	// follow what is played; the readout and needle do that.
-	let chips: HTMLButtonElement[] = []
+	// Momentary keys, one reference tone each: they never follow what is
+	// played (the readout and needle do) and hold no state, so no lamps.
+	let keys: HTMLButtonElement[] = []
 	// The string whose reference tone is playing, and when it ends.
 	let refIndex: number | null = null
 	let refTimer = 0
@@ -32,39 +33,35 @@ export function createTunerView(root: HTMLElement): View {
 	/* Controls ------------------------------------------------------------ */
 	// Picking a tuning means tuning to its strings: cents are read off the
 	// nearest string however far it is (a drop-D low E reads against D, not as
-	// "D#"). Chromatic names the nearest note of any pitch; its chips keep the
+	// "D#"). Chromatic names the nearest note of any pitch; its keys keep the
 	// last tuning's strings as reference tones.
 	tuningSelect.add(new Option('Chromatic', CHROMATIC))
 	TUNINGS.forEach((tuning) => tuningSelect.add(new Option(tuning.name, tuning.id)))
+	// The LCD selector: ◀ ▶ step through the tunings, a tap on it opens the list.
+	withStepper(tuningSelect).classList.add('tuner-stepper')
 	tuningSelect.addEventListener('change', () =>
 		Settings.update(tuningSelect.value === CHROMATIC ? { tunerMode: 'chromatic' } : { tuning: tuningById(tuningSelect.value).id, tunerMode: 'guitar' })
 	)
 
 	stringsRow.addEventListener('click', (event) => {
-		const chip = (event.target as Element).closest<HTMLButtonElement>('.string-chip')
-		if (chip) playReference(chips.indexOf(chip))
+		const key = (event.target as Element).closest('button')
+		if (key) playReference(keys.indexOf(key))
 	})
 
 	/* Strings ------------------------------------------------------------- */
-	// Rebuilt when the tuning or A4 changes; the per-frame work only flips
-	// each chip's data-state.
+	// Rebuilt when the tuning or A4 changes.
 	function build() {
 		const { tuning, a4 } = Settings.get()
 		strings = tuningStrings(tuningById(tuning), a4)
-		chips = strings.map((string) => {
-			const chip = document.createElement('button')
-			chip.type = 'button'
-			chip.className = 'string-chip'
-			chip.dataset.state = 'idle'
-			chip.setAttribute('aria-label', `${string.name}${string.octave}, hear reference tone`)
-			chip.innerHTML = `<span class="string-chip__note">${string.name}<sub>${string.octave}</sub></span>`
-			return chip
+		keys = strings.map((string) => {
+			const key = document.createElement('button')
+			key.type = 'button'
+			key.className = 'key'
+			key.textContent = `${string.name}${string.octave}`
+			key.setAttribute('aria-label', `${string.name}${string.octave}, hear reference tone`)
+			return key
 		})
-		stringsRow.replaceChildren(...chips)
-	}
-
-	function syncChips() {
-		chips.forEach((chip, i) => (chip.dataset.state = i === refIndex ? 'ref' : 'idle'))
+		stringsRow.replaceChildren(...keys)
 	}
 
 	/** Reflects settings: rebuilds the strings if the tuning or A4 moved. */
@@ -92,9 +89,8 @@ export function createTunerView(root: HTMLElement): View {
 		clearTimeout(refTimer)
 		const ms = Sound.playTone(string.frequency, Settings.get().toneVolume)
 		refIndex = index
-		readout.show(`${string.name}${string.octave}`, `Reference · ${string.frequency.toFixed(1)} Hz`, 0, false)
+		readout.show(`${string.name}${string.octave}`, `Reference\n${string.frequency.toFixed(1)} Hz`, 0, false)
 		announce(`Playing ${string.name}${string.octave}`)
-		syncChips()
 		// While it rings the mic hears the speaker, not the guitar: readings
 		// are ignored until it has died away.
 		refTimer = window.setTimeout(() => {
@@ -112,7 +108,6 @@ export function createTunerView(root: HTMLElement): View {
 	function idle() {
 		readout.idle('Play a note to begin')
 		announce('')
-		syncChips()
 	}
 
 	sync()
@@ -140,7 +135,6 @@ export function createTunerView(root: HTMLElement): View {
 			if (!reading) {
 				readout.idle('Listening…', false)
 				announce('')
-				syncChips()
 				return
 			}
 
@@ -164,7 +158,11 @@ export function createTunerView(root: HTMLElement): View {
 			}
 
 			const inTune = Math.abs(cents) <= tolerance
-			readout.show(label, `${prefix}${reading.frequency.toFixed(1)} Hz · ${cents > 0 ? '+' : ''}${Math.round(cents)} cents`, cents, inTune)
+			// Two LCD lines (the readout's line keeps the newline): Hz, then
+			// cents with a true minus sign.
+			const rounded = Math.round(cents)
+			const signed = `${rounded > 0 ? '+' : rounded < 0 ? '−' : ''}${Math.abs(rounded)}`
+			readout.show(label, `${prefix}${reading.frequency.toFixed(1)} Hz\n${signed} cents`, cents, inTune)
 			announce(inTune ? `${label}, in tune` : label)
 		},
 	}
