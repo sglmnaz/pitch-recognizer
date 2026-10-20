@@ -4,6 +4,7 @@ import { clamp } from '../../core/math'
 import type { View } from '../../ui/view'
 import { bindSegmented, onBareKey, scoped } from '../../ui/dom'
 import { reducedMotion } from '../../ui/media'
+import { bindRotary } from '../../ui/rotary'
 import { screenLock } from '../../ui/screen-lock'
 
 const MAX_BEATS = 12
@@ -17,9 +18,9 @@ const HOLD_DELAY_MS = 400
 const REPEAT_MS = 70
 const SPEED_UP = 20
 
-// Beat dot tap targets: never smaller than MIN_DOT px, DOT_GAP apart (match .metro-dots in metronome.css).
-const MIN_DOT = 44
-const DOT_GAP = 8
+// Beat lamp tap targets: never smaller than MIN_BEAT px, BEAT_GAP apart (match .metro-beats in metronome.css).
+const MIN_BEAT = 44
+const BEAT_GAP = 8
 
 // After the user sets the tempo, beat events still queued at the old one are ignored this long.
 const USER_TEMPO_QUIET_MS = 400
@@ -36,28 +37,32 @@ const TEMPO_NAMES: [number, string][] = [
 ]
 const tempoName = (bpm: number) => TEMPO_NAMES.find(([limit]) => bpm < limit)![1]
 
-// Tapping a beat dot cycles normal → accent → mute.
+// Tapping a beat lamp cycles normal → accent → mute.
 const NEXT_ACCENT: Metronome.Accent[] = [1, 2, 0]
 
 export function createMetronomeView(root: HTMLElement): View & { stop(): void } {
 	const { $, $$ } = scoped(root)
 	const bpmValue = $<HTMLInputElement>('.metro-bpm__value')
 	const name = $<HTMLElement>('.metro-name')
-	const dotsBox = $<HTMLElement>('.metro-dots')
+	const meter = $<HTMLElement>('.metro-meter')
+	const trainerLegend = $<HTMLElement>('.metro-trn')
+	const beatsBox = $<HTMLElement>('.metro-beats')
 	const slider = $<HTMLInputElement>('.metro-slider')
 	const startButton = $<HTMLButtonElement>('[data-action="start"]')
+	const startLabel = $<HTMLElement>('.metro-start__label')
 	const tapButton = $<HTMLButtonElement>('[data-action="tap"]')
 	const beatsValue = $<HTMLElement>('[data-value="beats"]')
+	const volume = $<HTMLInputElement>('[data-action="volume"]')
 	const trainerSwitch = $<HTMLInputElement>('[data-action="trainer"]')
-	const trainerDesc = $<HTMLElement>('.metro-row__desc')
+	const trainerDesc = $<HTMLElement>('.metro-trainer .switch__desc')
 	const progress = $<HTMLElement>('.metro-progress')
 	const progressFill = $<HTMLElement>('.metro-progress__bar span')
 	const progressText = $<HTMLElement>('.metro-progress__text')
 	const trainerConfig = $<HTMLElement>('.metro-trainer__config')
 	const flash = $<HTMLElement>('.metro-flash')
 
-	let dots: HTMLButtonElement[] = []
-	let lit: HTMLButtonElement | null = null
+	let beats: HTMLButtonElement[] = []
+	let lit: HTMLElement | null = null
 	let barInStep = 0
 	let taps: number[] = []
 	// True while the engine runs from this tab's Start (not the Trainer's
@@ -143,13 +148,15 @@ export function createMetronomeView(root: HTMLElement): View & { stop(): void } 
 		if (taps.length >= 2) setBpm((60000 * (taps.length - 1)) / (taps[taps.length - 1] - taps[0]))
 	})
 
-	/* Time signature, accents, subdivision ---------------------------------- */
+	/* Time signature, accents, subdivision, sound ---------------------------- */
 	for (const button of $$('[data-beats]')) {
 		const direction = Number(button.dataset.beats)
 		onPress(button, () => Settings.update({ metroBeats: clamp(Settings.get().metroBeats + direction, 1, MAX_BEATS) }), true)
 	}
 	const showUnit = bindSegmented(root, 'data-unit', (value) => Settings.update({ metroUnit: Number(value) }))
-	const showSub = bindSegmented(root, 'data-sub', (value) => Settings.update({ metroSubdivision: Number(value) }))
+	const showSub = bindRotary($('[data-rotary="sub"]'), (value) => Settings.update({ metroSubdivision: Number(value) }))
+	const showSound = bindRotary($('[data-rotary="sound"]'), (value) => Settings.update({ metroSound: value as Metronome.Sound }))
+	volume.addEventListener('input', () => Settings.update({ metroVolume: Number(volume.value) }))
 
 	function setAccent(beat: number, accent: number) {
 		const accents = [...Settings.get().metroAccents]
@@ -157,34 +164,44 @@ export function createMetronomeView(root: HTMLElement): View & { stop(): void } 
 		Settings.update({ metroAccents: accents })
 	}
 
-	function buildDots(beats: number) {
-		dots = Array.from({ length: beats }, (_, beat) => {
-			const dot = document.createElement('button')
-			dot.type = 'button'
-			dot.className = 'metro-dot'
-			// The button is the full-size tap target; the face inside is what scales and colours.
-			const face = document.createElement('span')
-			face.className = 'metro-dot__face'
-			face.textContent = String(beat + 1)
-			dot.append(face)
-			dot.addEventListener('click', () => setAccent(beat, NEXT_ACCENT[Settings.get().metroAccents[beat] ?? 1]))
-			return dot
+	function buildBeats(count: number) {
+		beats = Array.from({ length: count }, (_, beat) => {
+			const button = document.createElement('button')
+			button.type = 'button'
+			button.className = 'metro-beat'
+			// The button is the full-size tap target; the lamp and the printed
+			// number inside are what show the beat.
+			const lamp = document.createElement('span')
+			lamp.className = 'lamp'
+			const number = document.createElement('span')
+			number.className = 'metro-beat__num'
+			number.textContent = String(beat + 1)
+			button.append(lamp, number)
+			button.addEventListener('click', () => setAccent(beat, NEXT_ACCENT[Settings.get().metroAccents[beat] ?? 1]))
+			return button
 		})
 		lit = null
-		dotsBox.replaceChildren(...dots)
-		layoutDots()
+		beatsBox.replaceChildren(...beats)
+		layoutBeats()
 	}
 
-	// Even rows, wrapping as soon as a single row would shrink the dots below a
-	// thumb-sized tap target (the CSS sizes each dot from --per-row).
-	function layoutDots() {
-		const width = dotsBox.clientWidth
-		if (!width || !dots.length) return // hidden tab: the ResizeObserver calls again
-		const fit = Math.max(1, Math.floor((width + DOT_GAP) / (MIN_DOT + DOT_GAP)))
-		const rows = Math.ceil(dots.length / fit)
-		dotsBox.style.setProperty('--per-row', String(Math.ceil(dots.length / rows)))
+	// Even rows, wrapping as soon as a single row would shrink the beats below a
+	// thumb-sized tap target (the CSS sizes each one from --per-row).
+	function layoutBeats() {
+		const width = beatsBox.clientWidth
+		if (!width || !beats.length) return // hidden tab: the ResizeObserver calls again
+		const fit = Math.max(1, Math.floor((width + BEAT_GAP) / (MIN_BEAT + BEAT_GAP)))
+		const rows = Math.ceil(beats.length / fit)
+		beatsBox.style.setProperty('--per-row', String(Math.ceil(beats.length / rows)))
 	}
-	new ResizeObserver(layoutDots).observe(dotsBox)
+	new ResizeObserver(layoutBeats).observe(beatsBox)
+
+	/** Lights the lamp of `beat` and only that one (null: none). */
+	function light(beat: number | null) {
+		lit?.classList.remove('is-on')
+		lit = beat === null ? null : (beats[beat]?.querySelector<HTMLElement>('.lamp') ?? null)
+		lit?.classList.add('is-on')
+	}
 
 	/* Run / stop ------------------------------------------------------------ */
 	// The screen stays on while it clicks; only on this tab's Start: the
@@ -204,8 +221,7 @@ export function createMetronomeView(root: HTMLElement): View & { stop(): void } 
 		owned = false
 		Metronome.stop()
 		wakeLock.release()
-		lit?.classList.remove('metro-dot--lit')
-		lit = null
+		light(null)
 		barInStep = 0
 		sync()
 	}
@@ -225,8 +241,7 @@ export function createMetronomeView(root: HTMLElement): View & { stop(): void } 
 			fitBpm()
 		}
 		slider.value = String(bpm)
-		const { metroBeats, metroUnit } = Settings.get()
-		name.textContent = `${tempoName(bpm)} · ${metroBeats}/${metroUnit}`
+		name.textContent = tempoName(bpm)
 	}
 
 	Metronome.onBeat((event) => {
@@ -235,9 +250,7 @@ export function createMetronomeView(root: HTMLElement): View & { stop(): void } 
 		// at the old tempo must not overwrite what the user just set or is dragging.
 		if (Settings.get().metroTrainerOn && !dragging && performance.now() - userTempoAt > USER_TEMPO_QUIET_MS) showBpm(event.bpm)
 		if (event.sub !== 0) return
-		lit?.classList.remove('metro-dot--lit')
-		lit = dots[event.beat] ?? null
-		lit?.classList.add('metro-dot--lit')
+		light(event.beat)
 		if (event.beat === 0) {
 			barInStep = event.bar % Settings.get().metroTrainerBars
 			// WCAG 2.3.1: never more than 3 flashes a second, and none for reduced motion.
@@ -292,6 +305,8 @@ export function createMetronomeView(root: HTMLElement): View & { stop(): void } 
 		trainerValues.target.textContent = `${target}`
 		trainerConfig.hidden = !on
 		progress.hidden = !on
+		// The TRN legend on the tempo LCD lights while the trainer is on.
+		trainerLegend.classList.toggle('lcd__dim', !on)
 		if (!on) return
 		const { running, bpm } = Metronome.getState()
 		const span = target - start
@@ -323,23 +338,26 @@ export function createMetronomeView(root: HTMLElement): View & { stop(): void } 
 				trainer: { enabled: s.metroTrainerOn, step: s.metroTrainerStep, bars: s.metroTrainerBars, target: s.metroTrainerTarget },
 			})
 
-		if (dots.length !== s.metroBeats) buildDots(s.metroBeats)
+		if (beats.length !== s.metroBeats) buildBeats(s.metroBeats)
 		const labels = ['muted', 'normal', 'accent']
-		dots.forEach((dot, beat) => {
+		beats.forEach((button, beat) => {
 			const accent = accents[beat] ?? 1
-			dot.dataset.accent = String(accent)
-			dot.setAttribute('aria-label', `Beat ${beat + 1}, ${labels[accent]}. Tap to change`)
+			button.dataset.accent = String(accent)
+			button.setAttribute('aria-label', `Beat ${beat + 1}, ${labels[accent]}. Tap to change`)
 		})
 
 		showBpm(Metronome.getState().bpm)
+		meter.textContent = `${s.metroBeats}/${s.metroUnit}`
 		beatsValue.textContent = String(s.metroBeats)
 		showUnit(s.metroUnit)
 		showSub(s.metroSubdivision)
+		showSound(s.metroSound)
+		volume.value = String(s.metroVolume)
 		trainerSwitch.checked = s.metroTrainerOn
 		renderTrainer()
 
 		const running = owned
-		startButton.textContent = running ? 'Stop' : 'Start'
+		startLabel.textContent = running ? 'Stop' : 'Start'
 		startButton.setAttribute('aria-pressed', String(running))
 	}
 

@@ -489,94 +489,137 @@
 		<section class="view view--metronome" id="view-metronome" role="tabpanel" aria-labelledby="tab-metronome" hidden>
 			<div class="metro-flash" aria-hidden="true"></div>
 
-			<div class="panel metro-hero">
-				<div class="metro-bpm">
-					<input class="metro-bpm__value" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="3" value="100" aria-label="Tempo in BPM, tap to type" />
-					<span class="metro-bpm__unit">BPM</span>
+			<!-- Front plate: tempo LCD, beat lamps, tempo keys and fader. -->
+			<div class="plate metro-plate">
+				<div class="plate__brand"><b>PLUCK</b><span>METRONOME · MT-100</span></div>
+				<div class="window">
+					<div class="lcd metro-lcd">
+						<div class="metro-lcd__line">
+							<span class="metro-name">Andante</span>
+							<span><span class="metro-meter">4/4</span> <span class="metro-trn lcd__dim">· TRN</span></span>
+						</div>
+						<div class="metro-bpm">
+							<input class="metro-bpm__value lcd__big" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="3" value="100" aria-label="Tempo in BPM, tap to type" />
+							<span class="metro-bpm__unit">BPM</span>
+						</div>
+					</div>
 				</div>
-				<div class="metro-name">Andante</div>
-				<div class="metro-dots" role="group" aria-label="Beats, tap to change the accent"></div>
+				<div class="metro-beats" role="group" aria-label="Beats, tap to change the accent"></div>
 				<div class="metro-tempo">
-					<button class="metro-step metro-step--ten" type="button" data-tempo="-10" aria-label="10 BPM slower">&minus;10</button>
-					<button class="metro-step" type="button" data-tempo="-1" aria-label="1 BPM slower">&minus;</button>
-					<input class="metro-slider" type="range" min="30" max="300" step="1" aria-label="Tempo in beats per minute" />
-					<button class="metro-step" type="button" data-tempo="1" aria-label="1 BPM faster">+</button>
-					<button class="metro-step metro-step--ten" type="button" data-tempo="10" aria-label="10 BPM faster">+10</button>
+					<button class="key key--step metro-step metro-step--ten" type="button" data-tempo="-10" aria-label="10 BPM slower">&minus;10</button>
+					<button class="key key--step metro-step" type="button" data-tempo="-1" aria-label="1 BPM slower">&minus;</button>
+					<div class="metro-fader">
+						<!-- Printed scale: a tick every 30 BPM, numbers every 90 (30 … 300 is 9 steps). -->
+						<span class="metro-fader__scale" aria-hidden="true"><span>30</span><span>120</span><span>210</span><span>300</span></span>
+						<input class="range metro-slider" type="range" min="30" max="300" step="1" aria-label="Tempo in beats per minute" />
+					</div>
+					<button class="key key--step metro-step" type="button" data-tempo="1" aria-label="1 BPM faster">+</button>
+					<button class="key key--step metro-step metro-step--ten" type="button" data-tempo="10" aria-label="10 BPM faster">+10</button>
 				</div>
 			</div>
 
+			<!-- Start latches (lamp lit, key down) while it runs. -->
 			<div class="metro-actions">
-				<button class="btn btn--solid metro-start" type="button" data-action="start">Start</button>
-				<button class="btn metro-tap" type="button" data-action="tap">Tap</button>
+				<div class="has-lamps">
+					<button class="key key--hot metro-start" type="button" data-action="start" aria-pressed="false">
+						<svg class="metro-start__play" viewBox="0 0 12 14" aria-hidden="true"><path d="M1 1 11 7 1 13Z" fill="currentColor" /></svg>
+						<svg class="metro-start__stop" viewBox="0 0 12 12" aria-hidden="true"><rect x="1" y="1" width="10" height="10" fill="currentColor" /></svg>
+						<span class="metro-start__label">Start</span>
+					</button>
+				</div>
+				<button class="key metro-tap" type="button" data-action="tap">Tap</button>
 			</div>
 
 			<div class="panel metro-options">
-				<!-- Time signature on one row: beats per bar over the beat note. Accents
-				     are set on the beat dots themselves (tap: normal, accent, mute). -->
-				<div class="metro-row metro-row--wrap">
-					<span class="metro-row__label">Time</span>
-					<div class="metro-time">
-						<div class="metro-stepper" role="group" aria-label="Beats per bar">
-							<button class="metro-step metro-step--small" type="button" data-beats="-1" aria-label="Fewer beats">&minus;</button>
-							<span class="metro-stepper__value" data-value="beats">4</span>
-							<button class="metro-step metro-step--small" type="button" data-beats="1" aria-label="More beats">+</button>
+				<!-- Time signature: beats per bar over the beat note. Accents are set on
+				     the beat lamps themselves (tap: normal, accent, mute). -->
+				<h2 class="settings-group__title">Time</h2>
+				<div class="metro-row">
+					<span class="switch__title">Beats per bar</span>
+					<div class="metro-stepper" role="group" aria-label="Beats per bar">
+						<button class="key key--step metro-step metro-step--small" type="button" data-beats="-1" aria-label="Fewer beats">&minus;</button>
+						<span class="window metro-count"><span class="lcd" data-value="beats">4</span></span>
+						<button class="key key--step metro-step metro-step--small" type="button" data-beats="1" aria-label="More beats">+</button>
+					</div>
+				</div>
+				<div class="metro-row">
+					<span class="switch__title">Beat note</span>
+					<div class="segmented has-lamps metro-unit" role="group" aria-label="Beat note">
+						<button type="button" data-unit="4"><span class="metro-glyph" aria-hidden="true">♩</span>4</button>
+						<button type="button" data-unit="8"><span class="metro-glyph" aria-hidden="true">♪</span>8</button>
+					</div>
+				</div>
+
+				<h2 class="settings-group__title">Click</h2>
+				<!-- Two rotary selectors (ts/ui/rotary.ts): radio groups drawn as a knob. -->
+				<div class="metro-knobs">
+					<div class="metro-knob">
+						<span class="silk" id="metroSubLabel">Subdivision</span>
+						<div class="rotary" role="radiogroup" aria-labelledby="metroSubLabel" data-rotary="sub">
+							<button class="rotary__pos" type="button" role="radio" data-value="1"><span class="lamp"></span>None</button>
+							<button class="rotary__pos" type="button" role="radio" data-value="2"><span class="lamp"></span>8ths</button>
+							<button class="rotary__pos" type="button" role="radio" data-value="3"><span class="lamp"></span>Triplets</button>
+							<button class="rotary__pos" type="button" role="radio" data-value="4"><span class="lamp"></span>16ths</button>
+							<span class="rotary__knob" aria-hidden="true"></span>
 						</div>
-						<span class="metro-time__over" aria-hidden="true">/</span>
-						<div class="segmented segmented--small metro-unit" role="group" aria-label="Beat note">
-							<button type="button" data-unit="4">4</button>
-							<button type="button" data-unit="8">8</button>
+					</div>
+					<div class="metro-knob">
+						<span class="silk" id="metroSoundLabel">Sound</span>
+						<div class="rotary" role="radiogroup" aria-labelledby="metroSoundLabel" data-rotary="sound">
+							<button class="rotary__pos" type="button" role="radio" data-value="click"><span class="lamp"></span>Click</button>
+							<button class="rotary__pos" type="button" role="radio" data-value="wood"><span class="lamp"></span>Wood</button>
+							<button class="rotary__pos" type="button" role="radio" data-value="beep"><span class="lamp"></span>Beep</button>
+							<span class="rotary__knob" aria-hidden="true"></span>
 						</div>
 					</div>
 				</div>
-				<div class="metro-row metro-row--stack">
-					<span class="metro-row__label">Subdivision</span>
-					<div class="segmented segmented--small" role="group" aria-label="Subdivision">
-						<button type="button" data-sub="1">None</button>
-						<button type="button" data-sub="2">8ths</button>
-						<button type="button" data-sub="3">Triplets</button>
-						<button type="button" data-sub="4">16ths</button>
-					</div>
-				</div>
+				<label class="metro-row">
+					<span class="switch__title">Volume</span>
+					<input class="range" type="range" min="0" max="1" step="0.05" data-action="volume" />
+				</label>
 			</div>
 
 			<div class="panel metro-trainer">
-				<label class="metro-row">
-					<span class="metro-row__text">
-						<span class="metro-row__label">Speed trainer</span>
-						<span class="metro-row__desc"></span>
+				<hr class="rule" />
+				<label class="switch">
+					<span class="switch__text">
+						<span class="switch__title">Speed trainer</span>
+						<span class="switch__desc"></span>
 					</span>
 					<input type="checkbox" class="switch__input" data-action="trainer" />
 					<span class="switch__track"></span>
 				</label>
 				<div class="metro-trainer__config" hidden>
 					<div class="metro-row">
-						<span class="metro-row__label">Raise by</span>
+						<span class="switch__title">Raise by</span>
 						<div class="metro-stepper">
-							<button class="metro-step metro-step--small" type="button" data-trainer="step" data-by="-1" aria-label="Raise by less">&minus;</button>
-							<span class="metro-stepper__value metro-stepper__value--wide" data-value="step"></span>
-							<button class="metro-step metro-step--small" type="button" data-trainer="step" data-by="1" aria-label="Raise by more">+</button>
+							<button class="key key--step metro-step metro-step--small" type="button" data-trainer="step" data-by="-1" aria-label="Raise by less">&minus;</button>
+							<span class="window metro-count metro-count--wide"><span class="lcd" data-value="step"></span></span>
+							<button class="key key--step metro-step metro-step--small" type="button" data-trainer="step" data-by="1" aria-label="Raise by more">+</button>
 						</div>
 					</div>
 					<div class="metro-row">
-						<span class="metro-row__label">Every</span>
+						<span class="switch__title">Every</span>
 						<div class="metro-stepper">
-							<button class="metro-step metro-step--small" type="button" data-trainer="bars" data-by="-1" aria-label="Fewer bars">&minus;</button>
-							<span class="metro-stepper__value metro-stepper__value--wide" data-value="bars"></span>
-							<button class="metro-step metro-step--small" type="button" data-trainer="bars" data-by="1" aria-label="More bars">+</button>
+							<button class="key key--step metro-step metro-step--small" type="button" data-trainer="bars" data-by="-1" aria-label="Fewer bars">&minus;</button>
+							<span class="window metro-count metro-count--wide"><span class="lcd" data-value="bars"></span></span>
+							<button class="key key--step metro-step metro-step--small" type="button" data-trainer="bars" data-by="1" aria-label="More bars">+</button>
 						</div>
 					</div>
 					<div class="metro-row">
-						<span class="metro-row__label">Up to</span>
+						<span class="switch__title">Up to</span>
 						<div class="metro-stepper">
-							<button class="metro-step metro-step--small" type="button" data-trainer="target" data-by="-1" aria-label="Lower target">&minus;</button>
-							<span class="metro-stepper__value metro-stepper__value--wide" data-value="target"></span>
-							<button class="metro-step metro-step--small" type="button" data-trainer="target" data-by="1" aria-label="Higher target">+</button>
+							<button class="key key--step metro-step metro-step--small" type="button" data-trainer="target" data-by="-1" aria-label="Lower target">&minus;</button>
+							<span class="window metro-count metro-count--wide"><span class="lcd" data-value="target"></span></span>
+							<button class="key key--step metro-step metro-step--small" type="button" data-trainer="target" data-by="1" aria-label="Higher target">+</button>
 						</div>
 					</div>
 				</div>
-				<div class="metro-progress" hidden>
-					<div class="metro-progress__bar"><span></span></div>
-					<div class="metro-progress__text"></div>
+				<div class="window metro-progress" hidden>
+					<div class="lcd">
+						<div class="metro-progress__bar"><span></span></div>
+						<div class="metro-progress__text"></div>
+					</div>
 				</div>
 			</div>
 			<button class="help-link" type="button" data-help="metronome" aria-haspopup="dialog" aria-label="How to use the metronome"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.6 9.4a2.5 2.5 0 0 1 4.8.9c0 1.7-2.4 2.2-2.4 3.7"/><path d="M12 17.2h.01"/></svg></button>
@@ -1107,8 +1150,9 @@
 		</ul>
 		<h3>Beats</h3>
 		<ul>
-			<li>Tap a beat dot to cycle it: normal, accent, muted.</li>
-			<li>Time sets the beats per bar and the beat note; Subdivision adds 8ths, triplets or 16ths.</li>
+			<li>Tap a beat lamp to cycle it: normal, accent (bigger lamp), muted (empty lamp).</li>
+			<li>Time sets the beats per bar and the beat note.</li>
+			<li>The Subdivision knob adds 8ths, triplets or 16ths, the Sound knob picks the click: tap a position, or tap the knob to turn it one step.</li>
 		</ul>
 		<h3>Speed trainer</h3>
 		<ul>
@@ -1116,7 +1160,7 @@
 		</ul>
 		<h3>Good to know</h3>
 		<ul>
-			<li>Sound, volume and the beat-1 flash are in Settings → Metronome; it keeps playing while you adjust them.</li>
+			<li>The beat-1 flash is in Settings → Metronome; it keeps playing while you adjust it.</li>
 			<li>The screen stays on while it runs; switching to any tab other than Settings stops it.</li>
 		</ul>
 	</template>
