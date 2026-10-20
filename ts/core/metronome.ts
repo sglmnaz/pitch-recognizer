@@ -23,6 +23,8 @@ export interface Config {
 	volume: number
 	/** Speed trainer: raise the tempo by `step` BPM every `bars` bars up to `target`. */
 	trainer: { enabled: boolean; step: number; bars: number; target: number }
+	/** Output delay the browser does not report (Bluetooth, some phones), in ms: beat events fire this much later. */
+	outputDelayMs: number
 }
 
 export interface BeatEvent {
@@ -92,6 +94,7 @@ const config: Config = {
 	sound: 'click',
 	volume: 0.8,
 	trainer: { enabled: false, step: 5, bars: 4, target: 160 },
+	outputDelayMs: 0,
 }
 
 let ctx: AudioContext | null = null
@@ -248,8 +251,9 @@ function click(time: number, accented: boolean, level: number) {
 /* Events: fired when the click is heard, not when it is scheduled ----------- */
 function flush() {
 	if (!ctx) return
-	// A click scheduled for `time` reaches the ears outputLatency later.
-	const now = ctx.currentTime - (ctx.outputLatency || 0)
+	// A click scheduled for `time` reaches the ears outputLatency later, plus
+	// what the device adds without telling the browser (the user's setting).
+	const now = ctx.currentTime - (ctx.outputLatency || 0) - config.outputDelayMs / 1000
 	while (pending.length && pending[0].time <= now) {
 		const event = pending.shift()!
 		heard = { bar: event.bar, beat: event.beat }

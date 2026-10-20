@@ -184,4 +184,17 @@ check(
 )
 Metronome.stop()
 
+/* The user's output delay: beat events fire that much after the click's time - */
+session(2.1, () => {
+	Metronome.configure({ beats: 4, accents: [2, 1, 1, 1], subdivision: 1, trainer: noTrainer, outputDelayMs: 150 })
+	Metronome.setTempo(120)
+})
+check(
+	'150 ms output delay: each beat is reported 150 ms after its click',
+	heard.length >= 3 && late.every((l) => l >= 0.15 && l < 0.15 + 0.075),
+	`late ${late.map((l) => l.toFixed(3)).join(' ')}`
+)
+check('the delay moves the events, not the clicks', clicks.every((c, i) => i === 0 || near(c.at - clicks[i - 1].at, 0.5)))
+Metronome.configure({ outputDelayMs: 0 })
+
 finish('All metronome checks passed')

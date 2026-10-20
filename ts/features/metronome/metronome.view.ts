@@ -331,6 +331,8 @@ export function createMetronomeView(root: HTMLElement): View & { stop(): void } 
 	function sync() {
 		const s = Settings.get()
 		const accents = s.metroAccents as Metronome.Accent[]
+		// The device's delay holds for every click, the Changes exercise's too.
+		Metronome.configure({ outputDelayMs: s.audioDelayMs })
 		// The engine is shared with the Trainer's Changes exercise, which sets its
 		// own meter: configure it only from this tab, or while its own clicks run
 		// (Settings changes the sound and volume of a running metronome).

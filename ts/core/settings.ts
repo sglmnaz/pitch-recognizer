@@ -66,6 +66,9 @@ export interface Settings {
 	metroVolume: number
 	/** Flash the screen on beat 1. */
 	metroFlash: boolean
+	/** 0–400 ms the speaker or headphones play later than the browser reports
+	 * (Bluetooth, some phones): the metronome's beats (lights, Changes judging) move by it. */
+	audioDelayMs: number
 	/** Speed trainer: +step BPM every `bars` bars until `target`. */
 	metroTrainerOn: boolean
 	metroTrainerStep: number
@@ -146,6 +149,7 @@ const defaults: Settings = {
 	metroSound: 'click',
 	metroVolume: 0.8,
 	metroFlash: false,
+	audioDelayMs: 0,
 	metroTrainerOn: false,
 	metroTrainerStep: 5,
 	metroTrainerBars: 4,
@@ -247,6 +251,7 @@ export function load(): Settings {
 		metroSound: oneOf(s.metroSound, ['click', 'wood', 'beep', 'cowbell']),
 		metroVolume: clamp(s.metroVolume, 0, 1, d.metroVolume),
 		metroFlash: bool(s.metroFlash, d.metroFlash),
+		audioDelayMs: clamp(s.audioDelayMs, 0, 400, d.audioDelayMs, true),
 		metroTrainerOn: bool(s.metroTrainerOn, d.metroTrainerOn),
 		// The ranges of the steppers in ts/features/metronome/metronome.view.ts.
 		metroTrainerStep: clamp(s.metroTrainerStep, 1, 20, d.metroTrainerStep, true),
