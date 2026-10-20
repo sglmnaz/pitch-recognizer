@@ -111,16 +111,16 @@
 .chord-root {
 	height: 36px;
 	padding: 0 2px;
-	border: none;
-	border-radius: var(--radius);
-	background: var(--surface);
+	border: var(--key-border);
+	border-radius: var(--key-radius);
+	background: var(--key-bg);
 	color: var(--fg-secondary);
 	font-family: var(--font-mono);
 	font-size: var(--text-md);
-	font-weight: 500;
+	font-weight: var(--key-font-weight);
 	white-space: nowrap;
 	cursor: pointer;
-	box-shadow: var(--shadow-border);
+	box-shadow: var(--key-shadow);
 	transition:
 		color var(--dur) var(--ease),
 		background var(--dur) var(--ease);
@@ -130,9 +130,10 @@
 	}
 
 	&[aria-pressed='true'] {
-		background: var(--solid);
-		color: var(--solid-fg);
-		box-shadow: none;
+		background: var(--key-pressed-bg);
+		color: var(--key-pressed-fg);
+		box-shadow: var(--key-shadow-pressed);
+		translate: var(--key-pressed-offset);
 	}
 }
 
@@ -271,7 +272,7 @@
 	}
 
 	&:active {
-		box-shadow: 0 0 0 1px var(--accent);
+		box-shadow: 0 0 0 1px var(--indicator-on);
 	}
 }
 

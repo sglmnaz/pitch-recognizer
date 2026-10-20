@@ -93,7 +93,7 @@
 .range {
 	flex: none;
 	width: 120px;
-	accent-color: var(--accent);
+	accent-color: var(--range-fill);
 	cursor: pointer;
 }
 

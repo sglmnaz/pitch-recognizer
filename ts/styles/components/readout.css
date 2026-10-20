@@ -2,6 +2,9 @@
 .readout {
 	padding: 28px 20px 24px;
 	text-align: center;
+	background: var(--readout-bg);
+	color: var(--readout-fg);
+	box-shadow: var(--readout-shadow);
 	transition:
 		background var(--dur) var(--ease),
 		box-shadow var(--dur) var(--ease);
@@ -21,7 +24,7 @@
 }
 
 .readout__note {
-	font-family: var(--font-mono);
+	font-family: var(--readout-font);
 	font-weight: 500;
 	font-size: 84px;
 	line-height: 0.95;
@@ -52,7 +55,7 @@
 
 .readout__sub {
 	margin-top: var(--space-6);
-	font-family: var(--font-mono);
+	font-family: var(--readout-font);
 	font-size: var(--text-base);
 	color: var(--fg-muted);
 	font-variant-numeric: tabular-nums;

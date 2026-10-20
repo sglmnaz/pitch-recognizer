@@ -60,14 +60,14 @@
 	place-items: center;
 	height: 52px;
 	padding: 0;
-	border: none;
-	border-radius: var(--radius);
+	border: var(--key-border);
+	border-radius: var(--key-radius);
 	background: var(--surface-2);
 	color: var(--fg-secondary);
-	box-shadow: var(--shadow-border);
+	box-shadow: var(--key-shadow);
 	font-family: var(--font-mono);
 	font-size: var(--text-2xl);
-	font-weight: 500;
+	font-weight: var(--key-font-weight);
 	cursor: pointer;
 	touch-action: manipulation;
 	-webkit-tap-highlight-color: transparent;
@@ -81,9 +81,10 @@
 	}
 
 	&[data-state='ref'] {
-		background: var(--solid);
-		color: var(--solid-fg);
-		box-shadow: none;
+		background: var(--key-pressed-bg);
+		color: var(--key-pressed-fg);
+		box-shadow: var(--key-shadow-pressed);
+		translate: var(--key-pressed-offset);
 	}
 
 	@media (min-width: 960px) {

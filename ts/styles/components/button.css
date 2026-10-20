@@ -7,22 +7,28 @@
 	gap: var(--space-6);
 	height: 36px;
 	padding: 0 14px;
-	border: none;
-	border-radius: var(--radius);
+	border: var(--key-border);
+	border-radius: var(--key-radius);
 	font-size: var(--text-base);
-	font-weight: 500;
+	font-weight: var(--key-font-weight);
+	letter-spacing: var(--key-letter-spacing);
+	text-transform: var(--key-text-transform);
 	cursor: pointer;
 	white-space: nowrap;
-	background: var(--surface);
-	color: var(--fg);
-	box-shadow: var(--shadow-border);
+	background: var(--key-bg);
+	color: var(--key-fg);
+	box-shadow: var(--key-shadow);
 	transition:
 		background var(--dur) var(--ease),
 		color var(--dur) var(--ease),
 		opacity var(--dur) var(--ease);
 
 	&:hover:not(:disabled) {
-		background: var(--surface-2);
+		background: var(--key-bg-hover);
+	}
+
+	&:active:not(:disabled) {
+		translate: var(--key-pressed-offset);
 	}
 
 	&:disabled {
@@ -32,12 +38,12 @@
 }
 
 .btn--solid {
-	background: var(--solid);
-	color: var(--solid-fg);
-	box-shadow: none;
+	background: var(--key-solid-bg);
+	color: var(--key-solid-fg);
+	box-shadow: var(--key-solid-shadow);
 
 	&:hover:not(:disabled) {
-		background: var(--solid-hover);
+		background: var(--key-solid-bg-hover);
 	}
 }
 
@@ -49,7 +55,7 @@
 .btn--large {
 	width: 100%;
 	height: 56px;
-	border-radius: var(--radius-lg);
+	border-radius: var(--key-radius-lg);
 	font-size: var(--text-2xl);
 	font-weight: 600;
 

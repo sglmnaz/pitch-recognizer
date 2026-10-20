@@ -7,15 +7,17 @@
 
 .chip {
 	height: 34px;
-	border: none;
-	border-radius: var(--radius);
+	border: var(--key-border);
+	border-radius: var(--key-radius);
 	background: var(--surface-2);
 	color: var(--fg-muted);
 	font-family: var(--font-mono);
 	font-size: var(--text-sm);
-	font-weight: 500;
+	font-weight: var(--key-font-weight);
+	letter-spacing: var(--key-letter-spacing);
+	text-transform: var(--key-text-transform);
 	cursor: pointer;
-	box-shadow: var(--shadow-border);
+	box-shadow: var(--key-shadow);
 	transition:
 		color var(--dur) var(--ease),
 		background var(--dur) var(--ease);
@@ -25,9 +27,10 @@
 	}
 
 	&[aria-pressed='true'] {
-		background: var(--solid);
-		color: var(--solid-fg);
-		box-shadow: none;
+		background: var(--key-pressed-bg);
+		color: var(--key-pressed-fg);
+		box-shadow: var(--key-shadow-pressed);
+		translate: var(--key-pressed-offset);
 	}
 
 	&[aria-disabled='true'] {

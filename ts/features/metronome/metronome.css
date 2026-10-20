@@ -19,6 +19,9 @@
 	flex-direction: column;
 	align-items: center;
 	padding: 22px 16px 16px;
+	background: var(--readout-bg);
+	color: var(--readout-fg);
+	box-shadow: var(--readout-shadow);
 
 	/* Phones: room for six 44 px dots in a row (6/8, 6/4) at 375 px. */
 	@media (max-width: 600px) {
@@ -50,7 +53,7 @@
 }
 
 .metro-bpm__value {
-	font-family: var(--font-mono);
+	font-family: var(--readout-font);
 	font-size: 1em;
 	font-weight: 500;
 	line-height: 0.95;
@@ -89,7 +92,7 @@ input.metro-bpm__value {
 	left: 100%;
 	bottom: 0.1em;
 	margin-left: var(--space-8);
-	font-family: var(--font-mono);
+	font-family: var(--readout-font);
 	font-size: var(--text-base);
 	color: var(--fg-muted);
 	letter-spacing: 0.04em;
@@ -220,15 +223,15 @@ input.metro-bpm__value {
 	width: 48px;
 	height: 48px;
 	padding: 0;
-	border: none;
-	border-radius: var(--radius);
+	border: var(--key-border);
+	border-radius: var(--key-radius);
 	background: var(--surface-2);
 	color: var(--fg);
 	font-family: var(--font-mono);
 	font-size: 22px;
 	line-height: 1;
 	cursor: pointer;
-	box-shadow: var(--shadow-border);
+	box-shadow: var(--key-shadow);
 	user-select: none;
 	-webkit-user-select: none;
 	-webkit-touch-callout: none;
@@ -242,6 +245,7 @@ input.metro-bpm__value {
 
 	&:active {
 		background: var(--border-strong);
+		translate: var(--key-pressed-offset);
 	}
 }
 
@@ -260,7 +264,7 @@ input.metro-bpm__value {
 	width: 100%;
 	height: 48px;
 	margin: 0;
-	accent-color: var(--accent);
+	accent-color: var(--range-fill);
 	cursor: pointer;
 }
 
@@ -274,7 +278,7 @@ input.metro-bpm__value {
 .metro-start,
 .metro-tap {
 	height: 64px;
-	border-radius: var(--radius-lg);
+	border-radius: var(--key-radius-lg);
 	font-size: var(--text-3xl);
 	font-weight: 600;
 	user-select: none;

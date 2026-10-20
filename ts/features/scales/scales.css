@@ -156,7 +156,7 @@
 	}
 
 	&[aria-pressed='true'] {
-		box-shadow: 0 0 0 1px var(--accent);
+		box-shadow: 0 0 0 1px var(--indicator-on);
 	}
 }
 
@@ -291,8 +291,8 @@
 }
 
 .harmony__loop[aria-pressed='true'] {
-	color: var(--accent);
-	box-shadow: 0 0 0 1px var(--accent);
+	color: var(--indicator-on);
+	box-shadow: 0 0 0 1px var(--indicator-on);
 }
 
 .harmony__pane {
@@ -366,7 +366,7 @@
 		background: var(--surface-2);
 		box-shadow:
 			inset 0 3px 0 var(--quality),
-			0 0 0 1px var(--accent);
+			0 0 0 1px var(--indicator-on);
 	}
 }
 

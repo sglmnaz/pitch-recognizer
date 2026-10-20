@@ -58,14 +58,16 @@
 	gap: 7px;
 	height: 32px;
 	padding: 0 var(--space-12);
-	border: none;
+	border: var(--key-border);
 	border-radius: var(--radius-pill);
-	background: var(--surface);
+	background: var(--key-bg);
 	color: var(--fg-secondary);
 	font-size: var(--text-md);
-	font-weight: 500;
+	font-weight: var(--key-font-weight);
+	letter-spacing: var(--key-letter-spacing);
+	text-transform: var(--key-text-transform);
 	cursor: pointer;
-	box-shadow: var(--shadow-border);
+	box-shadow: var(--key-shadow);
 	transition:
 		color var(--dur) var(--ease),
 		background var(--dur) var(--ease),
@@ -105,7 +107,7 @@
 /* Listening shows on the control itself, the big button and Scales' toggle
    alike: its outline turns the accent blue and breathes. */
 :is(.mic-button, .mic-toggle).mic-toggle--live[aria-pressed='true'] {
-	box-shadow: 0 0 0 1px var(--accent);
+	box-shadow: 0 0 0 1px var(--indicator-on);
 	animation: mic-outline 1.8s var(--ease) infinite;
 
 	/* Reduced motion: the blue outline alone says "listening". */
@@ -118,13 +120,13 @@
 	0%,
 	100% {
 		box-shadow:
-			0 0 0 1px var(--accent),
-			0 0 0 0 color-mix(in srgb, var(--accent) 40%, transparent);
+			0 0 0 1px var(--indicator-on),
+			0 0 0 0 color-mix(in srgb, var(--indicator-on) 40%, transparent);
 	}
 	50% {
 		box-shadow:
-			0 0 0 1px var(--accent),
-			0 0 0 4px color-mix(in srgb, var(--accent) 18%, transparent);
+			0 0 0 1px var(--indicator-on),
+			0 0 0 4px color-mix(in srgb, var(--indicator-on) 18%, transparent);
 	}
 }
 

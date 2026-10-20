@@ -204,11 +204,11 @@
 	gap: 2px;
 	min-height: 56px;
 	padding: var(--space-6) var(--space-4);
-	border: none;
-	border-radius: var(--radius);
-	background: var(--surface);
-	color: var(--fg);
-	box-shadow: var(--shadow-border);
+	border: var(--key-border);
+	border-radius: var(--key-radius);
+	background: var(--key-bg);
+	color: var(--key-fg);
+	box-shadow: var(--key-shadow);
 	cursor: pointer;
 	transition:
 		background var(--dur) var(--ease),
@@ -216,7 +216,7 @@
 		opacity var(--dur) var(--ease);
 
 	&:hover:not(:disabled) {
-		background: var(--surface-2);
+		background: var(--key-bg-hover);
 	}
 
 	&:disabled {

@@ -46,10 +46,10 @@
 	flex: 1;
 	display: flex;
 	padding: 3px;
-	gap: 2px;
-	background: var(--surface-2);
-	border-radius: var(--radius);
-	box-shadow: var(--shadow-border);
+	gap: var(--seg-gap);
+	background: var(--seg-track-bg);
+	border-radius: var(--seg-radius);
+	box-shadow: var(--seg-track-shadow);
 
 	@media (max-width: 600px) {
 		position: fixed;
@@ -86,11 +86,13 @@
 	gap: var(--space-6);
 	border: none;
 	background: transparent;
-	color: var(--fg-secondary);
+	color: var(--seg-fg);
 	font-size: var(--text-md);
-	font-weight: 500;
+	font-weight: var(--key-font-weight);
+	letter-spacing: var(--key-letter-spacing);
+	text-transform: var(--key-text-transform);
 	padding: var(--space-6) var(--space-12);
-	border-radius: 4px;
+	border-radius: var(--seg-key-radius);
 	cursor: pointer;
 	transition:
 		color var(--dur) var(--ease),
@@ -110,9 +112,9 @@
 	}
 
 	&[aria-selected='true'] {
-		color: var(--fg);
-		background: var(--surface);
-		box-shadow: var(--shadow-sm);
+		color: var(--seg-on-fg);
+		background: var(--seg-on-bg);
+		box-shadow: var(--seg-on-shadow);
 	}
 
 	/* Six tabs on one bar from 601 px: tighter sides keep them inside the column. */

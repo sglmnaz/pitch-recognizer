@@ -40,8 +40,8 @@
 	position: relative;
 	width: 36px;
 	height: 20px;
-	border-radius: var(--radius-pill);
-	background: var(--border-strong);
+	border-radius: var(--switch-radius);
+	background: var(--switch-track-bg);
 	transition: background var(--dur) var(--ease);
 
 	&::after {
@@ -51,15 +51,15 @@
 		left: 2px;
 		width: 16px;
 		height: 16px;
-		border-radius: 50%;
-		background: var(--surface);
-		box-shadow: var(--shadow-knob);
+		border-radius: var(--switch-knob-radius);
+		background: var(--switch-knob-bg);
+		box-shadow: var(--switch-knob-shadow);
 		transition: transform var(--dur) var(--ease);
 	}
 }
 
 .switch__input:checked + .switch__track {
-	background: var(--accent);
+	background: var(--switch-track-on-bg);
 
 	&::after {
 		transform: translateX(16px);
