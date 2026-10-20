@@ -51,7 +51,8 @@ test.describe('chords', () => {
 	test('library seventh', async ({ page, open }) => {
 		await open('#chords', { chordsMode: 'library' })
 		await page.locator('.chord-root', { hasText: /^G$/ }).click()
-		await page.locator('.chord-type').selectOption('7')
+		// The native select stays as the value behind the dropdown (ts/ui/dropdown.ts).
+		await page.locator('select.chord-type').selectOption('7', { force: true })
 		await scrollThrough(page)
 		await shot(page, 'chords-library-g7', { fullPage: true })
 	})
@@ -248,8 +249,11 @@ test.describe('behaviour', () => {
 		await open('#settings')
 		const color = (selector: string) => page.evaluate((s) => getComputedStyle(document.querySelector(s)!).backgroundColor, selector)
 		const keyBefore = await color('.btn')
-		await page.locator('[data-display-choice]').selectOption('amber')
-		expect(await color('.select')).toBe('rgb(20, 16, 11)')
+		// Through the dropdown itself: open it, pick Amber.
+		await page.getByRole('combobox', { name: 'Display' }).click()
+		await page.getByRole('option', { name: 'Amber' }).click()
+		await expect(page.getByRole('combobox', { name: 'Display' })).toHaveText('Amber')
+		expect(await color('.dropdown')).toBe('rgb(20, 16, 11)')
 		expect(await color('.btn')).toBe(keyBefore)
 		await page.reload()
 		await expect(page.locator('html')).toHaveAttribute('data-display', 'amber')

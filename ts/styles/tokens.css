@@ -220,6 +220,12 @@
 	--rocker-down: #2f2c29;
 	--rocker-ink: #8a847a;
 
+	/* An open dropdown: a dark card whatever the theme. */
+	--menu-bg: #2b2926;
+	--menu-ink: #d8d2c4;
+	--menu-ink-2: #8a847a;
+	--menu-rule: #45413c;
+
 	--track: #262421;
 
 	/* Red ink: needles, marks, the sounding note, focus. */
@@ -324,6 +330,11 @@
 	--rocker-down: #262421;
 	--rocker-ink: #8a847a;
 
+	--menu-bg: #1a1917;
+	--menu-ink: #d8d2c4;
+	--menu-ink-2: #7a7468;
+	--menu-rule: #34312d;
+
 	--track: #0e0d0c;
 
 	--accent: #ff5a3a;
@@ -405,6 +416,11 @@
 	--rocker-plate: #090c11;
 	--rocker-up: #4f5869;
 	--rocker-down: #262c37;
+
+	--menu-bg: #121720;
+	--menu-ink: #d5dbe6;
+	--menu-ink-2: #6c778a;
+	--menu-rule: #262c37;
 
 	--track: #090c11;
 

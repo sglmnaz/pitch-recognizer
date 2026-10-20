@@ -11,6 +11,7 @@ import type { View } from './ui/view'
 import { byId } from './ui/dom'
 import { bootMic, initMic, micNeedChanged } from './ui/mic-block'
 import { applyTheme } from './ui/theme'
+import { enhanceSelects } from './ui/dropdown'
 
 const tabButtons = Array.from(document.querySelectorAll<HTMLButtonElement>('[data-tab]'))
 
@@ -78,6 +79,9 @@ history.scrollRestoration = 'manual'
 
 /* Microphone ------------------------------------------------------------- */
 // The mic block feeds and resets whichever view is on screen.
+// Every select becomes the old-school dropdown, once the views have built theirs.
+enhanceSelects()
+
 initMic(() => views[currentName])
 
 /* Boot ------------------------------------------------------------------- */

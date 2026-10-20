@@ -1,7 +1,8 @@
 /*
  * Selects read as an LCD window: black bezel, display glass, value in Barlow.
- * The open list stays the system's own picker (accessible, comfortable on
- * phones). ts/ui/stepper.ts can add ◀ ▶ keys around one.
+ * ts/ui/dropdown.ts turns every select into a button with this look plus the
+ * dark list card below (the native select stays, hidden, as the value).
+ * ts/ui/stepper.ts can add ◀ ▶ keys around one.
  */
 .select {
 	appearance: none;
@@ -17,6 +18,10 @@
 	text-transform: uppercase;
 	color: var(--lcd-ink);
 	text-shadow: var(--lcd-glow);
+	text-align: left;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
 	cursor: pointer;
 	box-shadow:
 		var(--lcd-shadow),
@@ -71,5 +76,85 @@
 		& > .key {
 			width: var(--tap);
 		}
+	}
+}
+
+/* The open list: a dark card, groups engraved, the chosen item in LCD negative
+   with its lamp (ts/ui/dropdown.ts places it, fixed, under or over its button). */
+.dropdown__list {
+	position: fixed;
+	z-index: 50;
+	overflow-y: auto;
+	padding: 4px;
+	border-radius: var(--radius);
+	background: var(--menu-bg);
+	color: var(--menu-ink);
+	box-shadow:
+		0 0 0 var(--outline-width) var(--outline),
+		0 8px 20px rgba(0, 0, 0, 0.35);
+	font-family: var(--font-ui);
+	overscroll-behavior: contain;
+
+	&:focus {
+		outline: none;
+	}
+}
+
+.dropdown__group {
+	padding: var(--space-8) var(--space-10) 3px;
+	border-top: 1px solid var(--menu-rule);
+	font-size: var(--text-2xs);
+	font-weight: 700;
+	letter-spacing: 0.18em;
+	text-transform: uppercase;
+	color: var(--menu-ink-2);
+
+	&:first-child {
+		border-top: 0;
+	}
+}
+
+.dropdown__option {
+	display: flex;
+	align-items: center;
+	gap: var(--space-10);
+	min-height: 36px;
+	padding: var(--space-6) var(--space-10);
+	border-radius: var(--radius-sm);
+	font-size: var(--text-md);
+	font-weight: 600;
+	letter-spacing: 0.06em;
+	cursor: pointer;
+
+	@media (max-width: 600px) {
+		min-height: var(--tap);
+	}
+
+	&.is-active {
+		background: color-mix(in srgb, var(--menu-ink) 12%, transparent);
+	}
+
+	&[aria-selected='true'] {
+		background: var(--lcd-bg);
+		color: var(--lcd-ink);
+		text-shadow: var(--lcd-glow);
+
+		/* The chosen item's lamp. */
+		&::before {
+			content: '';
+			flex: none;
+			width: var(--lamp-w);
+			height: var(--lamp-h);
+			border-radius: 1px;
+			background: var(--lamp-on);
+			box-shadow:
+				0 0 0 var(--outline-width) var(--outline),
+				0 0 6px var(--lamp-glow);
+		}
+	}
+
+	&[aria-disabled='true'] {
+		opacity: 0.4;
+		cursor: not-allowed;
 	}
 }
