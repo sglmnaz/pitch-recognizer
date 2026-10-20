@@ -383,65 +383,68 @@
 
 		<!-- Scales: explorer + identifier on one fretboard (ts/features/scales/scales.view.ts). -->
 		<section class="view view--scales" id="view-scales" role="tabpanel" aria-labelledby="tab-scales" hidden>
-			<div class="view-top">
-				<div class="segmented has-lamps scales-mode" role="group" aria-label="Mode">
-					<button type="button" data-scales-mode="explore" aria-pressed="true">Explore</button>
-					<button type="button" data-scales-mode="identify" aria-pressed="false">Identify</button>
+			<div class="plate scales-plate">
+				<div class="plate__brand"><b>PLUCK</b><span>SCALE FINDER · SF-100</span></div>
+				<div class="scales-controls">
+					<div class="view-top">
+						<div class="segmented has-lamps scales-mode" role="group" aria-label="Mode">
+							<button type="button" data-scales-mode="explore" aria-pressed="true">Explore</button>
+							<button type="button" data-scales-mode="identify" aria-pressed="false">Identify</button>
+						</div>
+					</div>
+					<!-- Each select gets ◀ ▶ keys from ts/ui/stepper.ts. -->
+					<div class="scales-root-picker scales-explore">
+						<select class="select scales-root" aria-label="Root"></select>
+					</div>
+					<div class="scales-type-picker scales-explore">
+						<select class="select scales-type" aria-label="Scale"></select>
+					</div>
+					<div class="scales-marked-row scales-identify" hidden>
+						<span class="window scales-marked-window"><span class="lcd scales-marked"></span></span>
+						<button class="key" type="button" data-action="clear">Clear</button>
+					</div>
 				</div>
-			</div>
-			<div class="scales-header">
-				<div class="scales-pickers scales-explore">
-					<select class="select select--small scales-root" aria-label="Root"></select>
-					<select class="select select--small scales-type" aria-label="Scale"></select>
-				</div>
-				<div class="scales-pickers scales-identify" hidden>
-					<span class="scales-marked"></span>
-					<button class="btn btn--small" type="button" data-action="clear">Clear</button>
-				</div>
-			</div>
-
-			<div class="scale-info">
-				<h2 class="scale-info__title"></h2>
-				<!-- Degree strip; tapping a degree toggles its colour on the neck. -->
-				<div class="scale-info__notes" role="group" aria-label="Scale degrees, tap to colour"></div>
-				<p class="a4-note" hidden></p>
 			</div>
 
 			<div class="neck-card">
 				<div class="neck-board">
 					<svg class="neck" xmlns="http://www.w3.org/2000/svg"></svg>
-					<ul class="neck-legend">
-						<li class="neck-legend__root">root</li>
-						<li class="neck-legend__tone"></li>
-						<li>other scale notes</li>
-					</ul>
 				</div>
+				<ul class="neck-legend">
+					<li class="neck-legend__root">root</li>
+					<li class="neck-legend__tone"></li>
+					<li>other scale notes</li>
+				</ul>
+
+				<div class="scale-info">
+					<h2 class="scale-info__title"></h2>
+					<!-- Degree keys: latched = coloured on the neck. -->
+					<div class="scale-info__notes has-lamps" role="group" aria-label="Scale degrees, tap to colour"></div>
+					<p class="a4-note" hidden></p>
+				</div>
+
 				<div class="neck-toolbar">
-					<button class="btn btn--small" type="button" data-action="play" title="Play scale">
-						<svg viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true">
-							<path d="M7 4v16l13-8z" />
-						</svg>
-						<span>Play scale</span>
-					</button>
+					<button class="key neck-toolbar__play" type="button" data-action="play" title="Play scale"><span>▶ Play scale</span></button>
 					<div class="display">
-						<button class="btn btn--small" type="button" data-action="display" aria-expanded="false" aria-haspopup="true" title="Display options">
-							<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
-								<path d="M21 4h-7M10 4H3M21 12h-9M8 12H3M21 20h-5M12 20H3M14 2v4M8 10v4M16 18v4" />
-							</svg>
-							<span>Display</span>
-						</button>
+						<button class="key" type="button" data-action="display" aria-expanded="false" aria-haspopup="true" title="Display options">Display</button>
+						<!-- An aluminium sub-panel whose tab points at the Display key (--tab-x, set by scales.view.ts). -->
 						<div class="display__menu" role="dialog" aria-label="Display" hidden>
-							<span class="panel__label">Labels</span>
+							<span class="silk">Labels</span>
 							<div class="segmented segmented--small" role="group" aria-label="Labels">
 								<button type="button" data-labels="notes">Notes</button>
 								<button type="button" data-labels="intervals">Intervals</button>
 								<button type="button" data-labels="none">None</button>
 							</div>
-							<span class="panel__label">View</span>
+							<span class="silk">Position</span>
 							<div class="segmented segmented--small scales-positions" role="group" aria-label="Position"></div>
+							<label class="switch display__switch">
+								<span class="switch__text"><span class="switch__title">Vertical neck</span></span>
+								<input type="checkbox" class="switch__input" data-action="vertical" />
+								<span class="switch__track"></span>
+							</label>
 						</div>
 					</div>
-					<button class="position-chip" type="button" hidden aria-label="Show the whole neck"></button>
+					<button class="key position-chip" type="button" hidden aria-label="Show the whole neck"></button>
 					<button class="key mic-toggle" type="button" data-action="mic" aria-pressed="false">
 						<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
 							<rect x="9" y="2" width="6" height="12" rx="3" />
@@ -457,68 +460,65 @@
 			     circle of fifths. Identify: the scales a marked chord fits.
 			     ts/features/scales/harmony.view.ts -->
 			<section class="harmony" aria-label="Harmony">
-				<div class="harmony__head">
-					<div class="segmented segmented--small harmony__tabs" role="group" aria-label="Harmony">
-						<button type="button" data-pane="chords" aria-pressed="true">Chords</button>
-						<button type="button" data-pane="progressions" aria-pressed="false">Progressions</button>
-						<button type="button" data-pane="circle" aria-pressed="false">Circle</button>
-					</div>
-					<div class="segmented segmented--small harmony__size" role="group" aria-label="Chord size">
-						<button type="button" data-chord-view="triads">Triads</button>
-						<button type="button" data-chord-view="sevenths">7ths</button>
-					</div>
-					<button class="btn btn--small harmony__loop" type="button" data-action="loop" aria-pressed="false" title="Start over at the end">
-						<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-							<path d="M17 2l4 4-4 4M3 11V9a3 3 0 0 1 3-3h15M7 22l-4-4 4-4M21 13v2a3 3 0 0 1-3 3H3" />
-						</svg>
-						<span>Loop</span>
-					</button>
+				<hr class="rule" />
+				<div class="segmented has-lamps harmony__tabs" role="group" aria-label="Harmony">
+					<button type="button" data-pane="chords" aria-pressed="true">Chords</button>
+					<button type="button" data-pane="progressions" aria-pressed="false">Progressions</button>
+					<button type="button" data-pane="circle" aria-pressed="false">Circle</button>
 				</div>
 
 				<div class="harmony__pane" data-pane-body="chords">
+					<div class="harmony__bar">
+						<span class="harmony__title">Chords of the scale</span>
+						<div class="segmented segmented--small harmony__size" role="group" aria-label="Chord size">
+							<button type="button" data-chord-view="triads">Triads</button>
+							<button type="button" data-chord-view="sevenths">7ths</button>
+						</div>
+					</div>
 					<p class="harmony__note harmony__note--chords" hidden></p>
 					<div class="harmony-chords" role="group" aria-label="Chords of the scale, tap to hear and show"></div>
-					<ul class="harmony-legend" aria-hidden="true">
-						<li class="harmony-chord--major">major</li>
-						<li class="harmony-chord--minor">minor</li>
-						<li class="harmony-chord--dim">diminished / augmented</li>
-					</ul>
 					<div class="chord-detail" hidden>
-						<svg class="chord-detail__neck" xmlns="http://www.w3.org/2000/svg"></svg>
+						<div class="paper chord-detail__card"><svg class="chord-detail__neck" xmlns="http://www.w3.org/2000/svg"></svg></div>
 						<div class="chord-detail__text">
 							<span class="chord-detail__symbol"></span>
 							<span class="chord-detail__name"></span>
 							<span class="chord-detail__notes"></span>
 						</div>
 						<div class="chord-detail__actions">
-							<button class="btn btn--small" type="button" data-action="strum">
-								<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 4v16l13-8z" /></svg>
-								<span>Strum</span>
-							</button>
-							<a class="btn btn--small" href="#chords" data-action="open-chord">Open in Chords</a>
-							<button class="btn btn--small chord-detail__clear" type="button" data-action="chord-clear" aria-label="Back to the scale" title="Back to the scale">
-								<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" /></svg>
-							</button>
+							<button class="key" type="button" data-action="strum">▶ Strum</button>
+							<a class="key" href="#chords" data-action="open-chord">Open in Chords</a>
+							<button class="key chord-detail__clear" type="button" data-action="chord-clear" aria-label="Back to the scale" title="Back to the scale">×</button>
 						</div>
 					</div>
 				</div>
 
 				<div class="harmony__pane" data-pane-body="progressions" hidden>
-					<p class="harmony__note harmony__note--progressions"></p>
+					<div class="harmony__bar">
+						<span class="harmony__note harmony__note--progressions"></span>
+						<span class="window"><span class="lcd harmony__bpm"></span></span>
+						<label class="switch harmony__loop" title="Start over at the end">
+							<span class="switch__text"><span class="switch__title">Loop</span></span>
+							<input type="checkbox" class="switch__input" data-action="loop" />
+							<span class="switch__track"></span>
+						</label>
+					</div>
 					<ul class="progressions"></ul>
 				</div>
 
 				<div class="harmony__pane harmony__pane--circle" data-pane-body="circle" hidden>
-					<svg class="circle" viewBox="0 0 400 400" role="group" aria-label="Circle of fifths: majors outside, relative minors inside" xmlns="http://www.w3.org/2000/svg"></svg>
+					<!-- The bezel is this box (the plate's brushed metal); the face, keys and hub are the svg. -->
+					<div class="dial">
+						<svg class="circle" viewBox="0 0 290 290" role="group" aria-label="Circle of fifths: majors outside, relative minors inside" xmlns="http://www.w3.org/2000/svg"></svg>
+					</div>
 					<p class="harmony__note harmony__note--key"></p>
-					<p class="harmony__note">Tap a key to show its scale. Shaded: its neighbours, whose chords it shares.</p>
+					<p class="harmony__note">Tap a key to show its scale: majors on the outer ring, their relative minors inside.</p>
 				</div>
 
 				<p class="harmony__live sr-only" aria-live="polite"></p>
 			</section>
 
 			<div class="chord-fits" hidden>
-				<span class="chord-fits__label"><span class="chord-fits__chord"></span> chord fits</span>
+				<span class="silk chord-fits__label"><span class="chord-fits__chord"></span> chord fits</span>
 				<div class="chord-fits__list"></div>
 			</div>
 
@@ -1144,9 +1144,9 @@
 		<h3>Explore</h3>
 		<ul>
 			<li>Pick a root and a scale: the neck shows every note, coloured by degree (root, 3rd and 5th, the rest).</li>
-			<li>Tap the degree chips to choose which degrees are coloured.</li>
-			<li>▶ plays the scale; tap any note on the neck to hear it.</li>
-			<li>The sliders button opens the display options: note names or intervals, positions 1–5, neck size.</li>
+			<li>Tap the degree keys to choose which degrees are coloured (their lamps light).</li>
+			<li>▶ Play scale plays it; tap any note on the neck to hear it.</li>
+			<li>Display opens the display options: note names or intervals, positions 1–5, vertical neck.</li>
 			<li>Listen lights up the note you play on your guitar.</li>
 		</ul>
 		<h3>Chords, progressions, circle</h3>

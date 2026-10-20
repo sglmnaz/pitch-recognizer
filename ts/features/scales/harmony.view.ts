@@ -6,7 +6,7 @@
 import { createFretboard } from '../../ui/fretboard'
 import * as Settings from '../../core/settings'
 import * as Sound from '../../core/sound'
-import { chordsOfScale, identifyChords, type ChordType } from '../../music/chord-theory'
+import { chordsOfScale, identifyChords } from '../../music/chord-theory'
 import { chordShapes, shapeString, voicingSpec, type Voicing } from '../../music/chord-shapes'
 import { chordSource, keyName, keyOf, progressionsFor, resolveProgression, scalesForChord, type KeyChord } from '../../music/harmony'
 import { pitchClassOf, ROOTS, scaleTitle, spellScale, type ScaleType } from '../../music/scales'
@@ -38,8 +38,6 @@ export interface HarmonyState {
 	marked: number[]
 }
 
-const quality = (type: ChordType) => (type.formula.includes('b5') || type.formula.includes('#5') ? 'dim' : type.formula.includes('b3') ? 'minor' : 'major')
-
 // Chord symbol -> its most playable voicing (chordShapes walks ~10^5 shapes
 // the first time; every strum and redraw asks again).
 const voicings = new Map<string, Voicing | undefined>()
@@ -57,7 +55,6 @@ export function createHarmony(root: HTMLElement, host: HarmonyHost) {
 	const sizeGroup = $('.harmony__size')
 	const chordsNote = $<HTMLElement>('.harmony__note--chords')
 	const chordRow = $<HTMLElement>('.harmony-chords')
-	const legend = $<HTMLElement>('.harmony-legend')
 	const detail = $<HTMLElement>('.chord-detail')
 	const detailSymbol = $<HTMLElement>('.chord-detail__symbol')
 	const detailName = $<HTMLElement>('.chord-detail__name')
@@ -65,7 +62,8 @@ export function createHarmony(root: HTMLElement, host: HarmonyHost) {
 	const openLink = $<HTMLAnchorElement>('[data-action="open-chord"]')
 	const progNote = $<HTMLElement>('.harmony__note--progressions')
 	const keyNote = $<HTMLElement>('.harmony__note--key')
-	const loopButton = $<HTMLButtonElement>('[data-action="loop"]')
+	const bpm = $<HTMLElement>('.harmony__bpm')
+	const loopSwitch = $<HTMLInputElement>('[data-action="loop"]')
 	const progList = $<HTMLElement>('.progressions')
 	const announce = liveRegion($('.harmony__live'))
 	const fits = $<HTMLElement>('.chord-fits')
@@ -95,7 +93,7 @@ export function createHarmony(root: HTMLElement, host: HarmonyHost) {
 		})
 	)
 	const showSize = bindSegmented(sizeGroup, 'data-chord-view', (value) => Settings.update({ chordView: value as Settings.Settings['chordView'] }))
-	loopButton.addEventListener('click', () => Settings.update({ progressionLoop: !Settings.get().progressionLoop }))
+	loopSwitch.addEventListener('change', () => Settings.update({ progressionLoop: loopSwitch.checked }))
 	$<HTMLButtonElement>('[data-action="strum"]').addEventListener('click', () => {
 		if (selected === null) return
 		Sound.stopAll()
@@ -165,7 +163,7 @@ export function createHarmony(root: HTMLElement, host: HarmonyHost) {
 				...chords.map((chord, i) => {
 					const button = document.createElement('button')
 					button.type = 'button'
-					button.className = `harmony-chord harmony-chord--${quality(chord.type)}`
+					button.className = 'key harmony-chord'
 					// Starts with the visible text (voice control), then says it in words.
 					button.setAttribute('aria-label', `${chord.numeral} ${chord.symbol}, ${chord.root} ${chord.type.name}`)
 					const numeral = document.createElement('span')
@@ -195,7 +193,11 @@ export function createHarmony(root: HTMLElement, host: HarmonyHost) {
 		const voicing = voicingOf(chord)
 		detailNotes.textContent = chord.notes.join(' ') + (voicing ? `  ·  ${shapeString(voicing)}` : '')
 		openLink.setAttribute('aria-label', `Open ${chord.symbol} in Chords`)
-		if (voicing) diagram.render(voicingSpec(voicing, chord.rootPc, chord.type))
+		if (!voicing) return
+		// The printed card: finger numbers in the dots (like the Chords library's 'fingers' labels).
+		const spec = voicingSpec(voicing, chord.rootPc, chord.type, { labels: 'none', fingers: false })
+		for (const dot of spec.dots) dot.label = String(voicing.fingers[dot.string] || '')
+		diagram.render(spec)
 	}
 
 	/* Progressions -------------------------------------------------------- */
@@ -218,19 +220,22 @@ export function createHarmony(root: HTMLElement, host: HarmonyHost) {
 					name.textContent = progression.name
 					const button = document.createElement('button')
 					button.type = 'button'
-					button.className = 'btn btn--small progression__play'
+					button.className = 'key progression__play'
 					button.addEventListener('click', () => (player.playing()?.index === index ? stop(true, 'Stopped') : player.play(index, list, progression.name)))
 					head.append(name, button)
+					// A step sequencer: one key per bar, its lamp lit while the bar plays.
 					const row = document.createElement('ol')
 					row.className = 'progression__chords'
 					row.setAttribute('aria-label', list.map((c) => c.symbol).join(', '))
 					row.append(
 						...list.map((chord) => {
 							const li = document.createElement('li')
-							li.className = `progression__chord harmony-chord--${quality(chord.type)}`
-							li.innerHTML = `<span class="harmony-chord__numeral"></span><span class="harmony-chord__symbol"></span>`
-							li.children[0].textContent = chord.numeral
-							li.children[1].textContent = chord.symbol
+							li.className = 'progression__bar'
+							li.innerHTML =
+								'<span class="lamp"></span><span class="key progression__chord"><span class="harmony-chord__numeral"></span><span class="harmony-chord__symbol"></span></span>'
+							const key = li.children[1]
+							key.children[0].textContent = chord.numeral
+							key.children[1].textContent = chord.symbol
 							return li
 						})
 					)
@@ -242,26 +247,26 @@ export function createHarmony(root: HTMLElement, host: HarmonyHost) {
 		syncProgressions()
 	}
 
-	const PLAY_ICON = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 4v16l13-8z"/></svg>'
-	const STOP_ICON = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="1"/></svg>'
-
 	function syncProgressions() {
 		const { progressionBpm, progressionLoop } = Settings.get()
 		const playing = player.playing()
-		progNote.textContent = [progKeyName && `In ${progKeyName}`, `${progressionBpm} BPM`].filter(Boolean).join(' · ')
-		loopButton.setAttribute('aria-pressed', String(progressionLoop))
+		progNote.textContent = progKeyName && `In ${progKeyName}`
+		bpm.textContent = `${progressionBpm} BPM`
+		loopSwitch.checked = progressionLoop
 		Array.from(progList.children).forEach((item, index) => {
 			const on = playing?.index === index
-			item.classList.toggle('progression--playing', on)
 			const button = item.querySelector<HTMLButtonElement>('.progression__play')!
 			const name = item.querySelector('.progression__name')!.textContent
-			button.innerHTML = `${on ? STOP_ICON : PLAY_ICON}<span>${on ? 'Stop' : 'Play'}</span>`
+			button.textContent = on ? '■ Stop' : '▶ Play'
+			// Like a tape deck's transport key: down while it plays.
+			button.classList.toggle('is-down', on)
 			button.setAttribute('aria-label', `${on ? 'Stop' : 'Play'} ${name}`)
-			item.querySelectorAll('.progression__chord').forEach((chip, bar) => {
-				const now = on && bar === playing!.bar - 1
-				chip.classList.toggle('progression__chord--now', now)
-				if (now) chip.setAttribute('aria-current', 'true')
-				else chip.removeAttribute('aria-current')
+			item.querySelectorAll('.progression__bar').forEach((bar, i) => {
+				const now = on && i === playing!.bar - 1
+				bar.firstElementChild!.classList.toggle('is-on', now)
+				bar.lastElementChild!.classList.toggle('is-down', now)
+				if (now) bar.setAttribute('aria-current', 'true')
+				else bar.removeAttribute('aria-current')
 			})
 		})
 	}
@@ -285,7 +290,7 @@ export function createHarmony(root: HTMLElement, host: HarmonyHost) {
 			...scalesForChord(pcs, top!.rootPc).map((match) => {
 				const button = document.createElement('button')
 				button.type = 'button'
-				button.className = 'chord-fits__scale'
+				button.className = 'key chord-fits__scale'
 				button.textContent = scaleTitle(match.root, match.type).split(' · ')[0]
 				button.title = `Explore ${button.textContent}`
 				button.addEventListener('click', () => host.setScale(match.rootPc, match.type))
@@ -315,9 +320,6 @@ export function createHarmony(root: HTMLElement, host: HarmonyHost) {
 			b.setAttribute('aria-pressed', String(b.dataset.pane === shownPane))
 		})
 		panes.forEach((p) => (p.hidden = p.dataset.paneBody !== shownPane))
-		sizeGroup.hidden = shownPane !== 'chords'
-		loopButton.hidden = shownPane !== 'progressions'
-		legend.hidden = shownPane !== 'chords'
 	}
 
 	return {
