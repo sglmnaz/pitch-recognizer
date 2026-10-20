@@ -25,7 +25,7 @@ import type { View } from '../../ui/view'
 import { bindSegmented, scoped, setPressed, whenVisible } from '../../ui/dom'
 import { withStepper } from '../../ui/stepper'
 import { phone } from '../../ui/media'
-import { noteChip, resultButton } from '../../ui/note-chip'
+import { resultButton } from '../../ui/note-chip'
 import { micState, onMicChange, setListening } from '../../ui/mic-block'
 
 // ponytail: results capped; a couple of marked notes already narrow it to a
@@ -297,6 +297,10 @@ export function createScalesView(root: HTMLElement): View {
 			return midiAt(s, f)
 		})
 
+	const ROMAN = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII']
+	/** '3' → 'III', 'b3' → '♭III', '#4' → '♯IV'. */
+	const romanDegree = (degree: string) => degree.replace('b', '♭').replace('#', '♯').replace(/\d+/, (n) => ROMAN[(Number(n) - 1) % 7])
+
 	function renderStrip(shown: Shown, highlighted: (degree: string) => boolean) {
 		const spelled = spellScale(ROOTS[shown.rootPc], shown.type)
 		infoTitle.textContent = scaleTitle(spelled.root, shown.type)
@@ -308,7 +312,9 @@ export function createScalesView(root: HTMLElement): View {
 				const on = highlighted(degree)
 				chip.setAttribute('aria-pressed', String(on))
 				chip.title = on ? 'Tap to stop colouring this degree' : 'Tap to colour this degree on the neck'
-				noteChip(chip, spelled.notes[i], degree)
+				// Just the degree as a roman numeral (♭III): the note is on the neck.
+				chip.textContent = romanDegree(degree)
+				chip.setAttribute('aria-label', `Degree ${degree}, ${spelled.notes[i]}`)
 				chip.addEventListener('click', () => {
 					const n = degreeNumber(degree)
 					const degrees = new Set(Settings.get().scaleDegrees)

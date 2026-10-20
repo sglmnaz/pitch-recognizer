@@ -110,35 +110,22 @@
 	letter-spacing: 0.04em;
 }
 
+/* One row of equal keys, whatever the scale's length; a key down = coloured. */
 .scale-info__notes {
-	display: flex;
-	flex-wrap: wrap;
-	/* Rows keep room for the lamps of the row below. */
-	gap: calc(var(--lamp-h) + var(--space-8) + 4px) var(--space-4);
+	display: grid;
+	grid-auto-flow: column;
+	grid-auto-columns: minmax(0, 1fr);
+	gap: var(--space-4);
 }
 
 .scale-degree {
-	flex: 1 1 38px;
-	max-width: 64px;
-	height: 42px;
-	flex-direction: column;
-	gap: 2px;
+	height: 40px;
 	padding-inline: 0;
+	font-size: var(--text-sm);
 	letter-spacing: 0.02em;
-	text-transform: none;
 
 	@media (max-width: 600px) {
 		height: var(--tap);
-	}
-
-	& .scale-note__name {
-		font-size: var(--text-lg);
-	}
-
-	& .scale-note__degree {
-		font-size: var(--text-2xs);
-		font-weight: 600;
-		opacity: 0.75;
 	}
 }
 
@@ -332,49 +319,6 @@
 	font-size: var(--text-sm);
 	color: var(--fg-muted);
 	text-align: center;
-}
-
-/* Note chips of the Chords library (chord-library.view.ts: scale-note
-   chord-note); kept here because chords.css builds on them. */
-.scale-note {
-	display: flex;
-	flex-direction: column;
-	align-items: center;
-	min-width: 40px;
-	padding: 5px 8px;
-	border-radius: var(--radius);
-	background: var(--surface);
-	color: var(--fg);
-	font-family: var(--font-ui);
-	box-shadow: var(--shadow-border);
-}
-
-.scale-note__name {
-	font-size: var(--text-lg);
-	font-weight: 700;
-}
-
-.scale-note__degree {
-	font-size: var(--text-xs);
-	color: var(--fg-muted);
-}
-
-.scale-note--root {
-	background: var(--root-fill);
-	box-shadow: 0 0 0 1px var(--root-stroke);
-}
-
-.scale-note--root :is(.scale-note__name, .scale-note__degree) {
-	color: var(--root-text);
-}
-
-.scale-note--tone {
-	background: var(--tone-fill);
-	box-shadow: 0 0 0 1px var(--tone-stroke);
-}
-
-.scale-note--tone :is(.scale-note__name, .scale-note__degree) {
-	color: var(--tone-text);
 }
 
 /* Harmony (harmony.view.ts) ------------------------------------------------- */
