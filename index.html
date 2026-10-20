@@ -233,33 +233,46 @@
 
 		<!-- Tuner --------------------------------------------------------- -->
 		<section class="view" id="view-tuner" role="tabpanel" aria-labelledby="tab-tuner">
-			<!-- Tuning picker + mode; options and chips are filled by ts/features/tuner/tuner.view.ts. -->
-			<div class="tuner-head">
-				<select class="select tuner-tuning" aria-label="Tuning"></select>
-			</div>
-			<div class="panel readout">
-				<div class="readout__note readout__idle">--</div>
-				<div class="readout__sub">Play a note to begin</div>
-				<!-- Screen-reader announcement: only changes with the note or the in-tune state. -->
-				<span class="sr-only tuner-live" aria-live="polite"></span>
-				<div class="meter">
-					<div class="meter__scale">
-						<div class="meter__zones"></div>
-						<div class="meter__ticks">
-							<span class="meter__tick"></span>
-							<span class="meter__tick"></span>
-							<span class="meter__tick meter__tick--center"></span>
-							<span class="meter__tick"></span>
-							<span class="meter__tick"></span>
+			<!-- The instrument: the plate (tuning, note, dial) and the string keys.
+			     It is the view's .readout, so ts/ui/mic-block.ts puts the mic right
+			     after the strings. Options, ◀ ▶ keys and string keys are added by
+			     ts/features/tuner/tuner.view.ts. -->
+			<div class="readout readout--split">
+				<div class="plate">
+					<div class="plate__brand"><b>PLUCK</b><span>Tuner · TU-100</span></div>
+					<select class="select tuner-tuning" aria-label="Tuning"></select>
+					<div class="tuner-display">
+						<div class="window">
+							<div class="lcd tuner-lcd">
+								<div class="readout__note readout__idle">--</div>
+								<div class="readout__sub">Play a note to begin</div>
+							</div>
 						</div>
-						<span class="meter__needle"></span>
+						<div class="tuner-lock">
+							<span class="lamp lamp--ok readout__lamp"></span>
+							<span class="silk">In tune</span>
+						</div>
 					</div>
-					<div class="meter__labels"><span>-50</span><span>0</span><span>+50</span></div>
+					<!-- Screen-reader announcement: only changes with the note or the in-tune state. -->
+					<span class="sr-only tuner-live" aria-live="polite"></span>
+					<div class="meter" aria-hidden="true">
+						<div class="meter__scale">
+							<div class="meter__zones"></div>
+							<div class="meter__ticks"></div>
+							<span class="meter__needle"></span>
+						</div>
+						<div class="meter__labels"><span>−50</span><span>−40</span><span>−30</span><span>−20</span><span>−10</span><span>0</span><span>+10</span><span>+20</span><span>+30</span><span>+40</span><span>+50</span></div>
+						<div class="meter__legend"><span>♭</span><span>Cents</span><span>♯</span></div>
+					</div>
 				</div>
-				<!-- One chip per string, low to high; tap to hear it. -->
-				<div class="strings" role="group" aria-label="Strings, tap to hear"></div>
+				<div class="tuner-strings">
+					<p class="tuner-strings__title" id="tunerStringsTitle">Strings <span>tap to hear the reference</span></p>
+					<!-- One momentary key per string, low to high. -->
+					<div class="strings" role="group" aria-labelledby="tunerStringsTitle"></div>
+				</div>
+				<hr class="rule tuner-rule" />
 			</div>
-			<p class="hint">Play one string at a time and mute the others. Unplugged electric? Hold the phone close to the strings. The readout locks green within <span class="tuner-tolerance">5</span> cents.</p>
+			<p class="hint">Play one string at a time and mute the others. Unplugged electric? Hold the phone close to the strings. The In tune lamp lights within <span class="tuner-tolerance">5</span> cents.</p>
 			<button class="help-link" type="button" data-help="tuner" aria-haspopup="dialog" aria-label="How to use the tuner"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.6 9.4a2.5 2.5 0 0 1 4.8.9c0 1.7-2.4 2.2-2.4 3.7"/><path d="M12 17.2h.01"/></svg></button>
 		</section>
 
@@ -1012,7 +1025,7 @@
 			<li>Pick your tuning at the top (Standard, Drop D, DADGAD…), or <b>Chromatic</b> to name any note.</li>
 			<li>Play one string at a time and let it ring; mute the others.</li>
 			<li>Needle left of centre: the string is <b>flat</b>, tighten it. Right: <b>sharp</b>, loosen it.</li>
-			<li>The readout turns green when the string is within the tolerance (±5 cents by default).</li>
+			<li>The green <b>In tune</b> lamp lights when the string is within the tolerance (±5 cents by default, the green band on the dial).</li>
 		</ul>
 		<h3>Good to know</h3>
 		<ul>
