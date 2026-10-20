@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Pluck — old-school screens</title>
+<!--
+	Design exploration (2026-10-20): the old-school hardware style (see
+	metronome-hardware-oldschool.html) applied to the Tuner, Chords (Listen)
+	and Scales (Explore, horizontal and vertical neck). Same rules: brushed
+	aluminium front plate, cream panel, bevelled keys with centred legends,
+	rectangular lamps above keys that hold a state (momentary keys have none),
+	interlocked keys for exclusive choices, grey-green LCDs. Tuner: hi-fi
+	tuning-dial style meter (horizontal scale, vertical needle), green "in tune"
+	lamp. Mockups only, not wired to the app.
+-->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css" />
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@500;600;700&family=Geist:wght@400;500&family=Doto:wght@700;900&display=swap');
+body{margin:0;background:#f4f4f5;font-family:system-ui,sans-serif;color:#18181b}
+h1{font-size:20px;font-weight:600;max-width:900px;margin:32px auto 4px;padding:0 16px}
+.intro{max-width:900px;margin:0 auto;padding:0 16px;font-size:14px;color:#52525b}
+.grid{display:flex;flex-wrap:wrap;justify-content:center;gap:40px;padding:2rem 16px 3rem}
+.cap{width:390px;display:flex;justify-content:space-between;margin-top:10px;font-size:14px}.cap span{font-size:12px;color:#71717a}
+.phone{width:390px;height:844px;border-radius:54px;position:relative;overflow:hidden;font-family:'Barlow Semi Condensed',sans-serif;color:#2e2b25;background-color:#e7e1d3;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 .06 0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E");box-shadow:0 0 0 9px #18181a,0 0 0 10px #4a4a4d,0 24px 50px rgba(0,0,0,.28)}
+.island{position:absolute;left:50%;top:11px;width:122px;height:35px;margin-left:-61px;border-radius:20px;background:#0b0b0c;z-index:3}
+.alu{padding:0 20px 16px;background:repeating-linear-gradient(0deg,rgba(255,255,255,.18) 0 1px,rgba(0,0,0,.035) 1px 2px),linear-gradient(180deg,#d9d9d5,#c9c9c4);border-bottom:6px solid #2a2826;box-shadow:0 1px 0 rgba(255,255,255,.6)}
+.sb{height:54px;display:flex;align-items:center;justify-content:space-between;padding:0 10px 0 14px;font-family:Geist,sans-serif;font-size:16px;font-weight:500}.sb .ic{display:flex;gap:6px;font-size:17px}
+.brand{display:flex;justify-content:space-between;align-items:baseline;margin:2px 0 10px}.brand b{font-size:19px;font-weight:700;letter-spacing:4px;color:#3a3936;text-shadow:0 1px 0 rgba(255,255,255,.6)}.brand span{font-size:10px;font-weight:600;letter-spacing:2.4px;color:#55534e}
+.body{padding:14px 20px 0;display:flex;flex-direction:column}
+.win{border-radius:4px;padding:6px;background:#222120;box-shadow:inset 0 2px 3px rgba(0,0,0,.7),0 1px 0 rgba(255,255,255,.75)}
+.lcd{border-radius:2px;padding:8px 12px;background:#c7c9bb;color:#23251f;box-shadow:inset 0 4px 6px -3px rgba(0,0,0,.45)}
+.lcdt{font-size:12px;font-weight:600;letter-spacing:1.6px;text-transform:uppercase}.off{color:rgba(35,37,31,.12)}
+.dot{font-family:'Doto',monospace;font-weight:900;letter-spacing:1px}
+.silk{font-size:9.5px;font-weight:700;letter-spacing:1.8px;text-transform:uppercase;color:#5a564d;line-height:1}
+.bk{box-sizing:border-box;display:flex;align-items:center;justify-content:center;gap:8px;border-style:solid;border-width:3px 4px 6px;border-radius:3px;font-weight:700;letter-spacing:1.3px;text-transform:uppercase;flex:none;box-shadow:0 0 0 1.5px #262421,0 2.5px 3px 1px rgba(0,0,0,.22);line-height:1;position:relative}
+.cream{background:#ede7d8;color:#4a463d;border-color:#fbf8ef #d6cfbf #b5ad9b #e2dbcc}
+.gray{background:#b9b6ae;color:#2e2c28;border-color:#d6d3cc #a3a097 #858279 #ada9a0}
+/* pressed = light still from above, face sunk 3px (front edge 6 -> 3, base unmoved), darker, the panel lip shades its top (height from --h) */
+.bk.dn,.bk.lit.on{height:calc(var(--h,38px) - 3px)!important;margin-top:3px;border-bottom-width:3px;background-color:#e2dccc;background-image:linear-gradient(180deg,rgba(40,34,26,.22),rgba(40,34,26,0) 9px);border-color:#eee8da #cbc3b2 #a59d8b #cbc3b2;box-shadow:0 0 0 1.5px #262421,0 1px 2px rgba(0,0,0,.08)}
+.lamp{display:inline-block;width:14px;height:5px;border-radius:1px;background:#5a1f17;box-shadow:0 0 0 1.5px #262421,0 1px 0 1.5px rgba(255,255,255,.45);flex:none}.lamp.on{background:#ff3e22;box-shadow:0 0 0 1.5px #262421,0 1px 0 1.5px rgba(255,255,255,.45),0 0 8px rgba(255,62,34,.55)}
+.lamp.g{background:#1f4a28}
+.lamps{display:grid;justify-items:center;margin-bottom:8px}
+.ilk{display:flex;gap:2px;padding:2px;background:#262421;border-radius:3px}.ilk .bk{box-shadow:none}
+.row{display:flex;align-items:center;gap:8px}.r{display:flex;justify-content:space-between;align-items:center}
+.t1{font-size:15px;font-weight:700;letter-spacing:1.4px;text-transform:uppercase}.t2{font-family:Geist;font-size:11.5px;color:#76716a;margin-top:2px}
+.rule{height:1.5px;background:#2e2b25;opacity:.75;margin:14px 0 12px}
+.hint{font-family:Geist;font-size:12px;color:#76716a;line-height:1.5;text-align:center;margin-top:12px}
+.help{display:flex;justify-content:flex-end;color:#7d786f;font-size:19px;margin-top:8px}
+.wave{height:34px;border-radius:2px;background:#c7c9bb;box-shadow:inset 0 3px 5px -2px rgba(0,0,0,.45)}
+.tabs{position:absolute;left:0;right:0;bottom:0;padding:10px 10px 30px;display:flex;background:inherit;border-top:1.5px solid #2e2b25}
+.tab{flex:1;display:flex;flex-direction:column;align-items:center;gap:5px;font-size:10.5px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:#8a847a;padding-top:12px;position:relative}.tab i{font-size:21px}.tab.on{color:#2e2b25}.tab .lamp{position:absolute;top:0;width:12px;height:4px}
+.home{position:absolute;left:50%;bottom:8px;width:134px;height:5px;margin-left:-67px;border-radius:3px;background:#1a1a1a}
+.chips{display:grid;grid-template-columns:repeat(6,1fr);gap:6px}.chips .bk{height:44px;font-size:16px;letter-spacing:.5px}
+.neckw{border-radius:4px;padding:6px;background:#222120;box-shadow:inset 0 2px 3px rgba(0,0,0,.7),0 1px 0 rgba(255,255,255,.75)}
+.deg{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}.deg .bk{height:38px;flex-direction:column;gap:2px;font-size:13px}.deg small{font-size:9px;opacity:.75}
+.bk.lit.on{color:#e8331a;text-shadow:0 0 6px rgba(255,62,34,.55)}
+.ilk .bk.dn{box-shadow:none}
+.rk{box-sizing:border-box;display:block;width:40px;height:26px;padding:3px;border-radius:3px;background:#262421;box-shadow:0 1px 0 rgba(255,255,255,.6);flex:none}
+.rk b{display:block;height:100%;border-radius:2px;background:linear-gradient(90deg,#2f2c29 0 50%,#4a4642 50%);position:relative}
+.on .rk b{background:linear-gradient(90deg,#4a4642 0 50%,#2f2c29 50%)}
+.rk b::before{content:'I';position:absolute;right:0;width:50%;top:0;bottom:0;display:grid;place-items:center;font-size:10px;color:#8a847a}
+.on .rk b::before{color:#ff3e22;text-shadow:0 0 5px rgba(255,62,34,.8)}
+.set{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-top:1.5px solid rgba(46,43,37,.25);font-size:13px;font-weight:700;letter-spacing:1.6px;text-transform:uppercase}.set:first-of-type{border-top:0}
+.set small{display:block;font-family:Geist;font-size:11px;color:#76716a;letter-spacing:0;text-transform:none;font-weight:400;margin-top:2px}
+.ctl{width:390px;border-radius:12px;padding:16px 20px;font-family:'Barlow Semi Condensed',sans-serif;color:#2e2b25;background:#e7e1d3}
+.chk{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}.chk .bk{height:46px;flex-direction:column;gap:3px;font-size:14px;text-transform:none;letter-spacing:.5px}.chk small{font-size:10px;letter-spacing:1px;opacity:.7;text-transform:none}
+</style>
+</head>
+<body>
+<h1>Old-school screens</h1>
+<p class="intro">Tuner, Chords (Listen) and Scales (Explore, horizontal and vertical neck) in the old-school hardware style. Metronome: <a href="metronome-hardware-oldschool.html">metronome-hardware-oldschool.html</a>. Mockups only.</p>
+<div class="grid" id="g"></div>
+<script>
+const SB='<div class="island"></div><div class="sb"><span>9:41</span><span class="ic"><i class="ti ti-antenna-bars-5" aria-hidden="true"></i><i class="ti ti-wifi" aria-hidden="true"></i><i class="ti ti-battery-3" aria-hidden="true"></i></span></div>'
+const T=[['ti-gauge','Tuner'],['ti-music','Chords'],['ti-chart-bar','Scales'],['ti-ear','Trainer'],['ti-triangle','Metro'],['ti-settings','Settings']]
+const tabs=on=>`<div class="tabs">${T.map((t,i)=>`<span class="tab${i===on?' on':''}"><span class="lamp${i===on?' on':''}"></span><i class="ti ${t[0]}" aria-hidden="true"></i>${t[1]}</span>`).join('')}</div><div class="home"></div>`
+const listen=`<div class="win" style="padding:5px"><div class="wave"><svg width="100%" height="34" viewBox="0 0 300 34" preserveAspectRatio="none" aria-hidden="true"><path d="M0 17 ${Array.from({length:60},(_,i)=>`L${i*5+2.5} ${17+Math.sin(i*1.3)*(9+((i*7)%6))}`).join(' ')} L300 17" fill="none" stroke="#23251f" stroke-width="1.6"/></svg></div></div>
+<div style="display:flex;margin-top:12px"><span class="bk cream lit on" style="flex:1;--h:48px;height:48px;font-size:15px"><i class="ti ti-microphone" aria-hidden="true" style="font-size:17px"></i>Listening</span></div>`
+
+// Tuner: hi-fi tuning-dial meter, cents -50..+50
+const dial=c=>{const W=330,x=v=>20+(v+50)*(W-40)/100;let s=`<svg width="100%" viewBox="0 0 ${W} 92" aria-hidden="true" style="display:block;border-radius:2px;background:#f1ecdf;box-shadow:inset 0 5px 8px -3px rgba(0,0,0,.4)">`;
+s+=`<rect x="${x(-20)}" y="20" width="${x(20)-x(-20)}" height="34" fill="#e8c46a" opacity=".38"/><rect x="${x(-5)}" y="20" width="${x(5)-x(-5)}" height="34" fill="#4aa462" opacity=".55"/>`;
+for(let v=-50;v<=50;v+=2.5){const maj=v%10===0,mid=v%5===0;s+=`<line x1="${x(v)}" y1="20" x2="${x(v)}" y2="${maj?42:mid?34:28}" stroke="#2e2b25" stroke-width="${maj?1.5:1}"/>`}
+s+=`<line x1="${x(-50)}" y1="20" x2="${x(50)}" y2="20" stroke="#2e2b25" stroke-width="1.5"/>`;
+[-50,-40,-30,-20,-10,0,10,20,30,40,50].forEach(v=>s+=`<text x="${x(v)}" y="66" font-size="11" font-weight="600" text-anchor="middle" fill="#2e2b25" font-family="Barlow Semi Condensed">${v>0?'+'+v:v}</text>`);
+s+=`<text x="${x(-50)-4}" y="84" font-size="14" fill="#2e2b25" font-family="Geist">♭</text><text x="${x(50)-6}" y="84" font-size="14" fill="#2e2b25" font-family="Geist">♯</text><text x="${W/2}" y="84" font-size="9.5" font-weight="700" letter-spacing="2.4" text-anchor="middle" fill="#5a564d" font-family="Barlow Semi Condensed">CENTS</text>`;
+const nx=x(c);s+=`<line x1="${nx}" y1="8" x2="${nx}" y2="60" stroke="#c63a1c" stroke-width="2.4"/><path d="M${nx-5} 4 L${nx+5} 4 L${nx} 11Z" fill="#c63a1c"/>`;return s+'</svg>'}
+const tuner=`<div class="phone"><div class="alu">${SB}<div class="brand"><b>PLUCK</b><span>TUNER · TU-100</span></div>
+<div class="row"><span class="bk gray" style="width:36px;height:34px;font-size:13px">◀</span><span class="win" style="flex:1;padding:4px"><span class="lcd lcdt" style="display:flex;justify-content:space-between;padding:6px 10px"><span>Standard</span><span class="off">E A D G B E</span></span></span><span class="bk gray" style="width:36px;height:34px;font-size:13px">▶</span></div>
+<div class="row" style="margin-top:12px;align-items:stretch"><span class="win" style="flex:1"><span class="lcd" style="display:flex;align-items:center;justify-content:space-between;padding:6px 12px"><span class="dot" style="font-size:46px;line-height:1">E2</span><span class="lcdt" style="text-align:right;line-height:1.5">82.3 Hz<br>−3 cents</span></span></span><span style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;width:58px"><span class="lamp g"></span><span class="silk" style="text-align:center;line-height:1.3">In<br>tune</span></span></div>
+<div class="win" style="margin-top:12px">${dial(-3)}</div>
+</div><div class="body">
+<div class="t1">Strings <span class="t2" style="display:inline;margin-left:6px;letter-spacing:0;text-transform:none;font-weight:400">tap to hear the reference</span></div>
+<div class="chips" style="margin-top:12px"><span class="bk cream">E2</span><span class="bk cream">A2</span><span class="bk cream">D3</span><span class="bk cream">G3</span><span class="bk cream">B3</span><span class="bk cream">E4</span></div>
+<div class="rule"></div>${listen}
+<div class="hint">Play one string at a time and mute the others.</div><div class="help"><i class="ti ti-help-circle" aria-hidden="true"></i></div>
+</div>${tabs(0)}</div>`
+
+// Chords · Listen
+const chroma=[.25,.05,.15,.2,.95,.1,.05,.6,.08,1,.12,.5],pcs=['C','C♯','D','E♭','E','F','F♯','G','A♭','A','B♭','B']
+const arrow='<svg width="16" height="14" viewBox="0 0 16 14" aria-hidden="true" style="display:block"><path d="M1.5 7 H13 M8.5 2.5 L13.5 7 L8.5 11.5" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="square" stroke-linejoin="miter"/></svg>'
+const chords=`<div class="phone"><div class="alu">${SB}<div class="brand"><b>PLUCK</b><span>CHORD READER · CR-100</span></div>
+<div class="lamps" style="grid-template-columns:repeat(3,1fr)"><span class="lamp on"></span><span class="lamp"></span><span class="lamp"></span></div>
+<div class="ilk"><span class="bk cream dn" style="flex:1;--h:36px;height:36px;font-size:12px">Listen</span><span class="bk cream" style="flex:1;height:36px;font-size:12px">Library</span><span class="bk cream" style="flex:1;height:36px;font-size:12px">Identify</span></div>
+<div class="win" style="margin-top:14px"><div class="lcd" style="padding:10px 14px 12px">
+<div class="r lcdt"><span>Chord</span><span>A minor seventh</span></div>
+<div class="dot" style="font-size:78px;line-height:1;text-align:center;margin:6px 0 2px">Am7</div>
+<div class="lcdt" style="text-align:center;letter-spacing:3px">A · C · E · G</div>
+<div style="display:grid;grid-template-columns:repeat(12,1fr);gap:4px;align-items:end;height:44px;margin-top:12px">${chroma.map(v=>`<span style="height:${Math.max(6,v*44)}px;background:repeating-linear-gradient(0deg,#23251f 0 3px,transparent 3px 4px);opacity:${v>.4?1:.35}"></span>`).join('')}</div>
+<div style="display:grid;grid-template-columns:repeat(12,1fr);gap:4px;margin-top:4px;font-size:8.5px;font-weight:600;text-align:center">${pcs.map(p=>`<span>${p}</span>`).join('')}</div>
+</div></div></div><div class="body">
+<div class="r"><span><div class="t1">Open in library</div><div class="t2">Voicings, notes and keys for Am7</div></span><span class="bk cream" style="width:92px;height:40px;font-size:13px">Open ${arrow}</span></div>
+<div class="rule"></div>${listen}
+<div class="hint">Strum all strings and let them ring. Single notes aren’t named.</div><div class="help"><i class="ti ti-help-circle" aria-hidden="true"></i></div>
+</div>${tabs(1)}</div>`
+
+// Scales · shared header, degrees and tools
+const degs=[['C',1,1],['D',2,0],['E',3,1],['F',4,0],['G',5,1],['A',6,0],['B',7,0]]
+const scalesHead=`<div class="alu">${SB}<div class="brand"><b>PLUCK</b><span>SCALE FINDER · SF-100</span></div>
+<div class="lamps" style="grid-template-columns:1fr 1fr"><span class="lamp on"></span><span class="lamp"></span></div>
+<div class="ilk"><span class="bk cream dn" style="flex:1;--h:34px;height:34px;font-size:12px">Explore</span><span class="bk cream" style="flex:1;height:34px;font-size:12px">Identify</span></div>
+<div class="row" style="margin-top:12px"><span class="bk gray" style="width:32px;height:34px;font-size:12px">◀</span><span class="win" style="padding:4px"><span class="lcd dot" style="display:grid;place-items:center;width:30px;height:22px;padding:0;font-size:20px">C</span></span><span class="bk gray" style="width:32px;height:34px;font-size:12px">▶</span><span style="width:6px"></span><span class="bk gray" style="width:32px;height:34px;font-size:12px">◀</span><span class="win" style="flex:1;padding:4px"><span class="lcd lcdt" style="display:block;padding:6px 8px">Major · Ionian</span></span><span class="bk gray" style="width:32px;height:34px;font-size:12px">▶</span></div>`
+const degRow=`<div class="lamps" style="grid-template-columns:repeat(7,1fr);margin-bottom:6px">${degs.map(d=>`<span class="lamp${d[2]?' on':''}"></span>`).join('')}</div>
+<div class="deg">${degs.map(d=>`<span class="bk ${d[2]?'cream dn':'cream'}">${d[0]}<small>${d[1]}</small></span>`).join('')}</div>`
+const tools=`<div class="row" style="margin-top:12px"><span class="bk cream" style="flex:1;height:40px;font-size:12px">▶ Play scale</span><span class="bk cream" style="width:86px;height:40px;font-size:12px">Display</span><span class="bk cream lit on" style="width:100px;--h:40px;height:40px;font-size:12px"><i class="ti ti-microphone" aria-hidden="true"></i>Listen</span></div>`
+
+// horizontal neck (frets 0-5 visible)
+const hneck=()=>{const W=330,H=132,fx=[0,30,86,138,186,230,272,312],sy=i=>14+i*20.8;let s=`<svg width="100%" viewBox="0 0 ${W} ${H}" aria-hidden="true" style="display:block;border-radius:2px;background:#e9e1cc;box-shadow:inset 0 5px 8px -3px rgba(0,0,0,.35)">`;
+s+=`<rect x="26" y="8" width="6" height="${H-16}" fill="#2e2b25"/>`;fx.slice(2).forEach(x=>s+=`<line x1="${x}" y1="8" x2="${x}" y2="${H-8}" stroke="#8d8471" stroke-width="2"/>`);
+[[162,66],[251,66]].forEach(([x,y])=>s+=`<circle cx="${x}" cy="${y}" r="4" fill="#bfb49b"/>`);
+for(let i=0;i<6;i++)s+=`<line x1="26" y1="${sy(i)}" x2="${W}" y2="${sy(i)}" stroke="#4a463d" stroke-width="${1+i*0.35}"/>`
+const mid=f=>f===0?14:(fx[f]+fx[f+1])/2;const notes=[[0,0,'E','t'],[0,1,'F','n'],[0,3,'G','t'],[0,5,'A','n'],[1,0,'B','n'],[1,1,'C','r'],[1,3,'D','n'],[1,5,'E','t'],[2,0,'G','t'],[2,2,'A','n'],[2,4,'B','n'],[2,5,'C','r'],[3,0,'D','n'],[3,2,'E','t'],[3,3,'F','n'],[3,5,'G','t'],[4,0,'A','n'],[4,2,'B','n'],[4,3,'C','r'],[4,5,'D','n'],[5,0,'E','t'],[5,1,'F','n'],[5,3,'G','t'],[5,5,'A','n']];
+notes.forEach(([st,f,n,k])=>{const x=mid(f),y=sy(st);const fill=k==='r'?'#d9532d':k==='t'?'#363431':'#f6f1e4';const tx=k==='n'?'#2e2b25':'#fff4ec';s+=`<circle cx="${x}" cy="${y}" r="8.6" fill="${fill}" stroke="#2e2b25" stroke-width="${k==='n'?1.3:0}"/><text x="${x}" y="${y+3.6}" font-size="10" font-weight="700" text-anchor="middle" fill="${tx}" font-family="Barlow Semi Condensed">${n}</text>`});
+s+=`<text x="${(fx[3]+fx[4])/2}" y="${H-1}" font-size="9" text-anchor="middle" fill="#6e6658" font-family="Barlow Semi Condensed">3</text><text x="${(fx[5]+fx[6])/2}" y="${H-1}" font-size="9" text-anchor="middle" fill="#6e6658" font-family="Barlow Semi Condensed">5</text>`;return s+'</svg>'}
+const scalesH=`<div class="phone">${scalesHead}<div class="neckw" style="margin-top:12px">${hneck()}</div></div><div class="body">${degRow}${tools}
+<div class="rule"></div>
+<div class="r"><span class="t1">Chords of the scale</span><span class="ilk"><span class="bk cream dn" style="width:56px;--h:28px;height:28px;font-size:11px">Triads</span><span class="bk cream" style="width:46px;height:28px;font-size:11px">7ths</span></span></div>
+<div class="chk" style="margin-top:12px">${[['I','C'],['ii','Dm'],['iii','Em'],['IV','F'],['V','G'],['vi','Am'],['vii°','Bdim']].map(([n,c])=>`<span class="bk cream"><small>${n}</small>${c}</span>`).join('')}</div>
+</div>${tabs(2)}</div>`
+
+// vertical neck: nut on top, low E left, frets 0-7
+const vneck=()=>{const W=300,H=430,nut=26,len=H-nut-10;const fy=[nut];for(let f=1;f<=7;f++)fy.push(nut+len*(1-Math.pow(2,-f/12))/(1-Math.pow(2,-7.5/12)));const sx=i=>40+i*44;
+const tun=[40,45,50,55,59,64],scale=[0,2,4,5,7,9,11],name=['C','C♯','D','E♭','E','F','F♯','G','A♭','A','B♭','B'],role=pc=>pc===0?'r':(pc===4||pc===7)?'t':'n';
+let s=`<svg width="100%" viewBox="0 0 ${W} ${H}" aria-hidden="true" style="display:block;border-radius:2px;background:#e9e1cc;box-shadow:inset 0 5px 8px -3px rgba(0,0,0,.35)">`;
+s+=`<rect x="${sx(0)-12}" y="${nut-6}" width="${sx(5)-sx(0)+24}" height="6" fill="#2e2b25"/>`;
+for(let f=1;f<=7;f++)s+=`<line x1="${sx(0)-12}" y1="${fy[f]}" x2="${sx(5)+12}" y2="${fy[f]}" stroke="#8d8471" stroke-width="2"/>`;
+[3,5,7].forEach(f=>{const y=(fy[f-1]+fy[f])/2;s+=`<circle cx="${(sx(2)+sx(3))/2}" cy="${y}" r="5" fill="#bfb49b"/><text x="${W-14}" y="${y+4}" font-size="11" font-weight="600" text-anchor="middle" fill="#6e6658" font-family="Barlow Semi Condensed">${f}</text>`});
+for(let i=0;i<6;i++)s+=`<line x1="${sx(i)}" y1="${nut}" x2="${sx(i)}" y2="${H-6}" stroke="#4a463d" stroke-width="${2.6-i*0.35}"/>`;
+for(let i=0;i<6;i++)for(let f=0;f<=7;f++){const pc=(tun[i]+f)%12;if(!scale.includes(pc))continue;const y=f===0?nut-15:(fy[f-1]+fy[f])/2,x=sx(i),k=role(pc);const fill=k==='r'?'#d9532d':k==='t'?'#363431':'#f6f1e4',tx=k==='n'?'#2e2b25':'#fff4ec';s+=`<circle cx="${x}" cy="${y}" r="${f===0?8:11}" fill="${fill}" stroke="#2e2b25" stroke-width="${k==='n'?1.4:0}"/><text x="${x}" y="${y+4}" font-size="${f===0?10:12}" font-weight="700" text-anchor="middle" fill="${tx}" font-family="Barlow Semi Condensed">${name[pc]}</text>`}
+return s+'</svg>'}
+const scalesV=`<div class="phone">${scalesHead}</div><div class="body">${degRow}<div class="win" style="margin-top:14px">${vneck()}</div>${tools}</div>${tabs(2)}</div>`
+
+// On/off controls (2026-10-20). Rule: a latching control that is on stays pressed.
+// Listen / mic: plain cream key, down while on with legend and icon lit red (no lamp above, so rows stay aligned).
+// Every other on/off (speed trainer, loop, left-handed, flash…): horizontal rocker, O left / I right like a
+// mobile toggle; the pressed half is darker, I lights red when on.
+const row=(t,s,on)=>`<div class="set tg${on?' on':''}"><span>${t}${s?`<small>${s}</small>`:''}</span><span class="rk"><b></b></span></div>`
+const controls=`<div class="ctl"><div class="row"><span class="bk cream lit tg" style="flex:1;--h:42px;height:42px;font-size:12px"><i class="ti ti-microphone" aria-hidden="true"></i>Listen</span><span class="bk cream lit tg on" style="flex:1;--h:42px;height:42px;font-size:12px"><i class="ti ti-microphone" aria-hidden="true"></i>Listen</span></div>
+<div style="margin-top:14px">${row('Speed trainer','+5 BPM every 4 bars',false)}${row('Loop','Repeat the progression',true)}${row('Left-handed','Mirror every fretboard',false)}${row('Beat-1 flash','',true)}</div></div>`
+
+document.getElementById('g').innerHTML=[[tuner,'Tuner','tuning-dial meter, momentary string keys'],[chords,'Chords · Listen','dot-matrix LCD, chromagram'],[scalesH,'Scales · Explore','horizontal neck'],[scalesV,'Scales · Explore','vertical neck'],[controls,'On/off controls','lit key for Listen, rocker for the rest · tap to try']].map(([h,n,s])=>`<div>${h}<div class="cap">${n}<span>${s}</span></div></div>`).join('')
+document.querySelectorAll('.tg').forEach((b)=>b.addEventListener('click',()=>b.classList.toggle('on')))
+</script>
+</body>
+</html>

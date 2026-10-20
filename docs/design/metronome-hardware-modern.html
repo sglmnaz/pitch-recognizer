@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Pluck — metronome, hardware modern</title>
+<!--
+	Design exploration (2026-10-20): the real Metronome page in a restrained
+	"modern hardware" style. Every physical element maps to what the control
+	does: a glass display only for the readout, LEDs for beats and active
+	choices, a fader for the continuous tempo, keys for actions and choices,
+	a switch for the on/off speed trainer. Mockup only, not wired to the app.
+-->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css" />
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600&family=Geist+Mono:wght@300;400;500&display=swap');
+body{margin:0;background:#f4f4f5;font-family:system-ui,sans-serif}
+.stage{display:flex;justify-content:center;padding:2rem 0 3rem}
+.phone{width:390px;height:844px;border-radius:54px;background:#e8e7e3;position:relative;overflow:hidden;font-family:Geist,sans-serif;color:#2a2a28;box-shadow:0 0 0 9px #18181a,0 0 0 10px #4a4a4d,0 24px 50px rgba(0,0,0,.28)}
+.sb{height:54px;display:flex;align-items:center;justify-content:space-between;padding:0 30px 0 34px;font-size:16px;font-weight:600;letter-spacing:-.2px}.sb .ic{display:flex;gap:6px;font-size:17px}.island{position:absolute;left:50%;top:11px;width:122px;height:35px;margin-left:-61px;border-radius:20px;background:#0b0b0c}
+.body{padding:6px 16px 0;display:flex;flex-direction:column;gap:16px}
+.tray{border-radius:24px;background:linear-gradient(180deg,#f4f3f0,#edece8);box-shadow:inset 0 1px 0 #fff,0 0 0 1px rgba(0,0,0,.07),0 1px 2px rgba(0,0,0,.04)}
+.glass{position:relative;border-radius:16px;padding:16px 18px 16px;background:linear-gradient(180deg,#1c1c1e 0%,#111112 100%);box-shadow:0 0 0 1px #050506,0 1px 0 rgba(255,255,255,.9),inset 0 0 0 1px rgba(255,255,255,.05),inset 0 14px 30px rgba(0,0,0,.45);color:#f3f1ec;overflow:hidden}
+.glass::before{content:'';position:absolute;left:0;right:0;top:0;height:46%;background:linear-gradient(180deg,rgba(255,255,255,.07),rgba(255,255,255,0));pointer-events:none}
+.gtop{display:flex;justify-content:space-between;font-family:'Geist Mono';font-size:10.5px;letter-spacing:1.4px;color:#76756f}
+.num{display:flex;align-items:baseline;justify-content:center;gap:8px;margin-top:6px}.num b{font-family:'Geist Mono';font-weight:300;font-size:92px;line-height:.95;letter-spacing:-4px;text-shadow:0 0 22px rgba(255,255,255,.07)}.num span{font-family:'Geist Mono';font-size:12px;color:#8a8984;letter-spacing:1px}
+.tn{text-align:center;font-size:14px;color:#a3a29c;margin-top:6px}
+.leds{display:flex;justify-content:center;gap:26px;margin-top:16px}.ledw{display:flex;flex-direction:column;align-items:center;gap:6px;font-family:'Geist Mono';font-size:9.5px;color:#5f5e5a}
+.led{width:14px;height:14px;border-radius:50%;background:radial-gradient(circle at 50% 35%,#3a3a3c,#1d1d1f 70%);box-shadow:inset 0 1px 1px rgba(0,0,0,.7),0 1px 0 rgba(255,255,255,.06)}
+.led.acc{box-shadow:inset 0 1px 1px rgba(0,0,0,.7),0 0 0 2.5px #2a2a2c,0 0 0 3.5px #48484b}
+.led.on{background:radial-gradient(circle at 50% 38%,#ffe1cf 0 14%,#ff7a3d 34%,#f0521a 66%,#c63f0e 100%);box-shadow:0 0 0 2.5px #2a2a2c,0 0 0 3.5px #48484b,0 0 14px 3px rgba(255,98,36,.55)}
+.ledw.on{color:#ff8a55}
+.key{display:grid;place-items:center;border-radius:12px;color:#3a3a37;font-weight:500;background:linear-gradient(180deg,#fefefd 0%,#f1f0ec 100%);box-shadow:inset 0 1px 0 #fff,0 0 0 1px rgba(0,0,0,.09),0 3px 0 #d0cec7,0 4px 1px rgba(0,0,0,.05),0 6px 12px rgba(0,0,0,.07)}
+.key.dn{background:linear-gradient(180deg,#e9e8e3,#f2f1ed);transform:translateY(2px);box-shadow:inset 0 2px 4px rgba(0,0,0,.13),0 0 0 1px rgba(0,0,0,.09),0 1px 0 #fff;color:#1f1f1d}
+.key.go{color:#fff;background:linear-gradient(180deg,#ff6e30 0%,#f2541a 100%);box-shadow:inset 0 1px 0 rgba(255,255,255,.35),0 0 0 1px rgba(150,45,8,.45),0 3px 0 #bf400e,0 8px 18px rgba(242,84,26,.32)}
+.tempo{display:flex;align-items:center;gap:7px;padding:14px 12px 16px}
+.tempo .key{width:44px;height:44px;flex:none}
+.fad{flex:1;height:48px;position:relative}
+.fad .tick{position:absolute;left:8px;right:8px;top:4px;height:6px;background:repeating-linear-gradient(90deg,#b9b7b0 0 1px,transparent 1px calc((100% - 1px)/10))}
+.fad .slot{position:absolute;left:8px;right:8px;top:23px;height:6px;border-radius:3px;background:linear-gradient(180deg,#c9c7c0,#dedcd6);box-shadow:inset 0 1px 2px rgba(0,0,0,.25),0 1px 0 #fff}
+.fad .fill{position:absolute;left:8px;width:calc(23% - 8px);top:23px;height:6px;border-radius:3px;background:linear-gradient(180deg,#f2541a,#ff7a3d)}
+.fad .capf{position:absolute;left:23%;top:9px;width:22px;height:34px;margin-left:-11px;border-radius:7px;background:linear-gradient(180deg,#fefefd,#eeede9);box-shadow:inset 0 1px 0 #fff,0 0 0 1px rgba(0,0,0,.12),0 3px 0 #c9c7c0,0 5px 8px rgba(0,0,0,.14)}
+.fad .capf::before{content:'';position:absolute;left:5px;right:5px;top:8px;height:18px;background:repeating-linear-gradient(180deg,#d4d2cb 0 1px,transparent 1px 3px)}
+.fad .capf::after{content:'';position:absolute;left:4px;right:4px;top:16px;height:2px;border-radius:1px;background:#f2541a}
+.fad .lbl{position:absolute;top:36px;font-family:'Geist Mono';font-size:8.5px;color:#9b9a94}
+.acts{display:flex;gap:10px}.acts .key{height:60px;border-radius:16px;font-size:17px;gap:8px;grid-auto-flow:column}.acts i{font-size:20px}
+.rows .r{display:flex;align-items:center;justify-content:space-between;padding:14px 16px}.rows .r+.r{border-top:1px solid #e1dfd9}
+.t1{font-size:15px;font-weight:500}.t2{font-size:12px;color:#8b8a84;margin-top:2px}
+.grp{display:flex;align-items:center;gap:7px}.grp .key{width:36px;height:36px;font-size:17px;border-radius:10px}
+.win{width:38px;height:36px;border-radius:9px;display:grid;place-items:center;font-family:'Geist Mono';font-size:17px;color:#f3f1ec;background:linear-gradient(180deg,#1c1c1e,#111112);box-shadow:0 0 0 1px #050506,0 1px 0 #fff,inset 0 4px 8px rgba(0,0,0,.45)}
+.rock{display:flex;padding:3px;gap:3px;border-radius:12px;background:#e2e0da;box-shadow:inset 0 1px 3px rgba(0,0,0,.14),0 1px 0 #fff}.rock .key{width:38px;height:32px;border-radius:9px;font-size:14px;font-family:'Geist Mono'}
+.radio{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:12px}.radio .key{height:52px;border-radius:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;position:relative}.radio .gl{font-size:16px;line-height:1;font-family:'Geist Mono'}.radio .nm{font-size:11px;color:#77766f}.radio .key.dn .nm{color:#2a2a28}
+.radio .key.dn::after{content:'';position:absolute;top:7px;right:8px;width:6px;height:6px;border-radius:50%;background:radial-gradient(circle at 50% 40%,#ffd2b8,#f2541a 70%);box-shadow:0 0 6px rgba(242,84,26,.7)}
+.tog{width:54px;height:32px;border-radius:16px;background:linear-gradient(180deg,#d4d2cb,#e4e2dc);box-shadow:inset 0 1px 3px rgba(0,0,0,.22),0 1px 0 #fff;position:relative}.tog i{position:absolute;left:3px;top:3px;width:26px;height:26px;border-radius:50%;background:radial-gradient(circle at 40% 30%,#ffffff,#ecebe7 60%,#d9d7d1);box-shadow:0 0 0 1px rgba(0,0,0,.12),0 2px 4px rgba(0,0,0,.18)}
+.help{display:flex;justify-content:flex-end;color:#a3a29c;font-size:20px;padding:0 4px}
+.tabs{position:absolute;left:0;right:0;bottom:0;padding:8px 10px 30px;background:rgba(241,240,236,.94);box-shadow:0 -1px 0 rgba(0,0,0,.07);display:flex}
+.tab{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;font-size:10.5px;color:#8f8e88;padding-top:10px;position:relative}.tab i{font-size:23px}
+.tab.on{color:#232321;font-weight:500}.tab.on::before{content:'';position:absolute;top:0;width:6px;height:6px;border-radius:50%;background:radial-gradient(circle at 50% 40%,#ffd2b8,#f2541a 70%);box-shadow:0 0 8px rgba(242,84,26,.75)}
+.home{position:absolute;left:50%;bottom:8px;width:134px;height:5px;margin-left:-67px;border-radius:3px;background:#1a1a1a}
+</style>
+</head>
+<body>
+<div class="stage"><div class="phone">
+<div class="island"></div>
+<div class="sb"><span>9:41</span><span class="ic"><i class="ti ti-antenna-bars-5" aria-hidden="true"></i><i class="ti ti-wifi" aria-hidden="true"></i><i class="ti ti-battery-3" aria-hidden="true"></i></span></div>
+<div class="body">
+<div class="tray">
+<div style="padding:10px 10px 0"><div class="glass">
+<div class="gtop"><span>TEMPO</span><span>4 / 4</span></div>
+<div class="num"><b>100</b><span>BPM</span></div>
+<div class="tn">Andante</div>
+<div class="leds"><span class="ledw on"><span class="led acc on"></span>1</span><span class="ledw"><span class="led"></span>2</span><span class="ledw"><span class="led"></span>3</span><span class="ledw"><span class="led"></span>4</span></div>
+</div></div>
+<div class="tempo"><b class="key" style="font-size:13px">−10</b><b class="key" style="font-size:20px;font-weight:400">−</b>
+<span class="fad"><span class="tick"></span><span class="slot"></span><span class="fill"></span><span class="capf"></span><span class="lbl" style="left:6px">30</span><span class="lbl" style="right:4px">300</span></span>
+<b class="key" style="font-size:20px;font-weight:400">+</b><b class="key" style="font-size:13px">+10</b></div>
+</div>
+<div class="acts"><b class="key go" style="flex:1"><i class="ti ti-player-play" aria-hidden="true"></i>Start</b><b class="key" style="width:108px"><i class="ti ti-hand-finger" aria-hidden="true" style="color:#77766f"></i>Tap</b></div>
+<div class="tray rows">
+<div class="r"><span><div class="t1">Time</div><div class="t2">Beats per bar</div></span><span class="grp"><b class="key">−</b><span class="win">4</span><b class="key">+</b><span style="width:4px"></span><span class="rock"><b class="key dn">4</b><b class="key">8</b></span></span></div>
+<div class="r" style="display:block"><div class="t1">Subdivision</div><div class="radio"><b class="key dn"><span class="gl">♩</span><span class="nm">None</span></b><b class="key"><span class="gl">♫</span><span class="nm">8ths</span></b><b class="key"><span class="gl">³</span><span class="nm">Triplets</span></b><b class="key"><span class="gl">♬</span><span class="nm">16ths</span></b></div></div>
+</div>
+<div class="tray rows"><div class="r"><span><div class="t1">Speed trainer</div><div class="t2">Speeds up while you play</div></span><span class="tog"><i></i></span></div></div>
+<div class="help"><i class="ti ti-help-circle" aria-hidden="true"></i></div>
+</div>
+<div class="tabs"><span class="tab"><i class="ti ti-gauge" aria-hidden="true"></i>Tuner</span><span class="tab"><i class="ti ti-music" aria-hidden="true"></i>Chords</span><span class="tab"><i class="ti ti-chart-bar" aria-hidden="true"></i>Scales</span><span class="tab"><i class="ti ti-ear" aria-hidden="true"></i>Trainer</span><span class="tab on"><i class="ti ti-triangle" aria-hidden="true"></i>Metronome</span><span class="tab"><i class="ti ti-settings" aria-hidden="true"></i>Settings</span></div>
+<div class="home"></div>
+</div></div>
+</body>
+</html>

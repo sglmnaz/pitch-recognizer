@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Pluck — metronome, clean retro hardware</title>
+<!--
+	Design exploration (2026-10-20): the real Metronome page as a clean,
+	Braun-like retro instrument with tactile controls. Warm white panel with a
+	fine grain, a reflective LCD under glass for the readout only, keys sitting
+	in wells with visible sides (pressed = sunk), convex round buttons, a fader
+	in a slot, slide switches in channels, small red LED lenses only for state,
+	one orange-red accent on Start. Mockup only, not wired to the app.
+-->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css" />
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600&family=Geist:wght@400;500&display=swap');
+body{margin:0;background:#f4f4f5;font-family:system-ui,sans-serif}
+.stage{display:flex;justify-content:center;padding:2rem 0 3rem}
+.phone{width:390px;height:844px;border-radius:54px;position:relative;overflow:hidden;font-family:'Inter Tight',sans-serif;color:#2b2a27;background-color:#ebe8e1;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 .07 0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E");box-shadow:0 0 0 9px #18181a,0 0 0 10px #4a4a4d,0 24px 50px rgba(0,0,0,.28)}
+.sb{height:54px;display:flex;align-items:center;justify-content:space-between;padding:0 30px 0 34px;font-family:Geist,sans-serif;font-size:16px;font-weight:500}.sb .ic{display:flex;gap:6px;font-size:17px}.island{position:absolute;left:50%;top:11px;width:122px;height:35px;margin-left:-61px;border-radius:20px;background:#0b0b0c;z-index:3}
+.body{padding:4px 20px 0;display:flex;flex-direction:column}
+.lbl{font-size:9.5px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:#6f6c65}
+.seam{height:2px;margin:16px -20px 14px;background:linear-gradient(180deg,rgba(0,0,0,.16) 0 1px,rgba(255,255,255,.85) 1px 2px)}
+.r{display:flex;justify-content:space-between;align-items:center}
+.t1{font-size:14.5px;font-weight:500}.t2{font-size:11.5px;color:#7a776f;margin-top:2px;font-family:Geist}
+.bezel{border-radius:12px;padding:9px;background:linear-gradient(180deg,#3a3937,#262524);box-shadow:0 1px 0 rgba(255,255,255,.9),0 -1px 0 rgba(0,0,0,.15),inset 0 1px 0 rgba(255,255,255,.12),inset 0 -2px 3px rgba(0,0,0,.4)}
+.lcd{position:relative;border-radius:5px;padding:10px 14px 9px;background:linear-gradient(180deg,#cfd1c4,#c3c5b7);color:#23251f;box-shadow:inset 0 7px 9px -3px rgba(0,0,0,.42),inset 0 0 0 1px rgba(0,0,0,.35);overflow:hidden}
+.lcd::after{content:'';position:absolute;inset:0;background:linear-gradient(118deg,transparent 0 52%,rgba(255,255,255,.22) 53%,rgba(255,255,255,.05) 68%,transparent 69%);pointer-events:none}
+.lt{display:flex;justify-content:space-between;font-size:11px;font-weight:600;letter-spacing:1.4px}.lt .off{color:rgba(35,37,31,.12)}
+.digs{display:flex;align-items:flex-end;justify-content:center;gap:7px;margin:6px 0 5px;filter:drop-shadow(1px 1.5px 0 rgba(35,37,31,.18))}.digs .u{font-size:12px;font-weight:600;letter-spacing:1.5px;margin:0 0 4px 6px}
+.beats{display:flex;justify-content:center;gap:34px;font-size:10px;font-weight:600;letter-spacing:1px}.beats span{display:flex;flex-direction:column;align-items:center;gap:3px}.beats i{width:0;height:0;border-left:6px solid transparent;border-right:6px solid transparent;border-top:8px solid currentColor}.beats .off{color:rgba(35,37,31,.12)}
+.led{display:inline-block;width:9px;height:9px;border-radius:50%;background:radial-gradient(circle at 38% 32%,#c98a80 0 12%,#6e1d14 45%,#3a0f0a 100%);box-shadow:0 0 0 2px #2b2a27,0 0 0 3px rgba(255,255,255,.6),inset 0 -1px 1px rgba(0,0,0,.4)}
+.led.on{background:radial-gradient(circle at 38% 32%,#fff 0 10%,#ff8a72 25%,#f2321a 60%,#a51a0a 100%);box-shadow:0 0 0 2px #2b2a27,0 0 0 3px rgba(255,255,255,.6),0 0 9px 2px rgba(255,60,30,.55)}
+.kw{position:relative;display:inline-block;flex:none;border-radius:11px;background:#1d1c1a;box-shadow:inset 0 3px 4px rgba(0,0,0,.75),0 1px 0 rgba(255,255,255,.9)}
+.kc{position:absolute;left:3px;right:3px;top:2px;bottom:9px;border-radius:8px;display:flex;align-items:center;justify-content:center;gap:8px;font-weight:600;font-size:14px;letter-spacing:.4px}
+.light .kc{background:linear-gradient(180deg,#fdfcf9 0%,#f0eee8 45%,#e2dfd7 100%);color:#2f2e2b;box-shadow:inset 0 1px 0 #fff,inset 1px 0 0 rgba(255,255,255,.6),inset 0 -3px 4px rgba(0,0,0,.05),0 5px 0 #bcb8ad,0 6px 0 #9f9b91,0 9px 8px rgba(0,0,0,.28)}
+.dark .kc{background:linear-gradient(180deg,#504f4c 0%,#3a3936 45%,#2c2b29 100%);color:#f1efe9;box-shadow:inset 0 1px 0 rgba(255,255,255,.18),inset 0 -3px 4px rgba(0,0,0,.25),0 5px 0 #1e1d1b,0 6px 0 #121110,0 9px 8px rgba(0,0,0,.35)}
+.accent .kc{background:linear-gradient(180deg,#f2694a 0%,#e04a2a 50%,#cc3d1f 100%);color:#fff;box-shadow:inset 0 1px 0 rgba(255,255,255,.35),inset 0 -3px 4px rgba(0,0,0,.12),0 5px 0 #9e2c14,0 6px 0 #7a210f,0 9px 10px rgba(160,40,10,.35)}
+.kw.dn .kc{top:6px;bottom:4px}.light.dn .kc{background:linear-gradient(180deg,#ebe8e1,#f1efea);box-shadow:inset 0 2px 3px rgba(0,0,0,.18),0 1px 0 #bcb8ad,0 2px 0 #9f9b91,0 3px 3px rgba(0,0,0,.25)}
+.rw{position:relative;display:inline-block;flex:none;border-radius:50%;background:#1d1c1a;box-shadow:inset 0 3px 4px rgba(0,0,0,.75),0 1px 0 rgba(255,255,255,.9)}
+.rc{position:absolute;left:3px;right:3px;top:2px;bottom:8px;border-radius:50%;display:grid;place-items:center;font-weight:600}
+.rw.dark .rc{background:radial-gradient(circle at 36% 28%,#77766f 0%,#4a4946 28%,#2c2b29 70%,#1f1e1c 100%);color:#f1efe9;font-size:19px;box-shadow:0 5px 0 #121110,0 8px 7px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.15)}
+.rw.light .rc{background:radial-gradient(circle at 36% 28%,#ffffff 0%,#f1efea 30%,#d9d6ce 75%,#c8c4ba 100%);color:#2f2e2b;font-size:11px;box-shadow:0 5px 0 #a4a095,0 8px 7px rgba(0,0,0,.25),inset 0 1px 0 #fff}
+.tempo{display:flex;align-items:center;gap:9px}
+.fad{flex:1;height:66px;position:relative}
+.fad .sc{position:absolute;left:12px;right:12px;top:4px;height:7px;background:repeating-linear-gradient(90deg,#3a3936 0 1px,transparent 1px calc((100% - 1px)/9))}
+.fad .slot{position:absolute;left:10px;right:10px;top:28px;height:8px;border-radius:4px;background:linear-gradient(180deg,#050505,#2a2927);box-shadow:inset 0 2px 3px #000,0 1px 0 rgba(255,255,255,.9),0 -1px 0 rgba(0,0,0,.18)}
+.fad .capf{position:absolute;left:23%;top:12px;width:22px;height:30px;margin-left:-11px;border-radius:4px;background:repeating-linear-gradient(180deg,#4b4a47 0 2px,#383735 2px 4px);box-shadow:inset 0 1px 0 rgba(255,255,255,.25),0 6px 0 #1b1a18,0 7px 0 #0e0d0c,4px 11px 9px rgba(0,0,0,.35)}
+.fad .capf::after{content:'';position:absolute;left:3px;right:3px;top:13px;height:3px;border-radius:1px;background:#f4f2ec;box-shadow:0 1px 0 rgba(0,0,0,.4)}
+.fad .nb{position:absolute;top:52px;font-size:9px;font-weight:600;letter-spacing:.8px;color:#6f6c65}
+.sw{position:relative;height:26px;border-radius:5px;background:linear-gradient(180deg,#050505,#2a2927);box-shadow:inset 0 2px 3px #000,0 1px 0 rgba(255,255,255,.9)}
+.sw b{position:absolute;top:-5px;width:30px;height:30px;border-radius:5px;background:repeating-linear-gradient(90deg,#4b4a47 0 2px,#3a3936 2px 4px);box-shadow:inset 0 1px 0 rgba(255,255,255,.22),0 4px 0 #1b1a18,0 5px 0 #0e0d0c,3px 8px 7px rgba(0,0,0,.35)}
+.swl{display:flex;justify-content:space-between;font-size:9.5px;font-weight:600;letter-spacing:1.4px;color:#6f6c65;margin-top:7px}
+.mini{position:relative;width:34px;height:32px;border-radius:5px;background:linear-gradient(180deg,#3a3937,#262524);padding:4px;box-sizing:border-box;box-shadow:0 1px 0 rgba(255,255,255,.9)}.mini span{display:grid;place-items:center;height:100%;border-radius:2px;background:linear-gradient(180deg,#cfd1c4,#c3c5b7);box-shadow:inset 0 3px 4px -1px rgba(0,0,0,.4);font-size:15px;font-weight:600;color:#23251f}
+.subk{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:8px}.subk .col{display:flex;flex-direction:column;align-items:center;gap:9px}.subk .kw{width:100%;height:56px}.subk .kc{flex-direction:column;gap:3px;font-size:11.5px;font-weight:500}.subk .gl{font-family:Geist;font-size:15px;line-height:1}
+.help{display:flex;justify-content:flex-end;color:#8a8780;font-size:19px;margin-top:10px}
+.tabs{position:absolute;left:0;right:0;bottom:0;padding:12px 10px 30px;display:flex;background:inherit;box-shadow:0 -1px 0 rgba(0,0,0,.16),0 -2px 0 rgba(255,255,255,.85) inset}
+.tab{flex:1;display:flex;flex-direction:column;align-items:center;gap:5px;font-size:10.5px;font-weight:500;color:#8a8780;padding-top:14px;position:relative}.tab i{font-size:22px}.tab.on{color:#2b2a27}.tab .led{position:absolute;top:0;width:7px;height:7px}
+.home{position:absolute;left:50%;bottom:8px;width:134px;height:5px;margin-left:-67px;border-radius:3px;background:#1a1a1a}
+</style>
+</head>
+<body>
+<div class="stage"><div class="phone">
+<div class="island"></div>
+<div class="sb"><span>9:41</span><span class="ic"><i class="ti ti-antenna-bars-5" aria-hidden="true"></i><i class="ti ti-wifi" aria-hidden="true"></i><i class="ti ti-battery-3" aria-hidden="true"></i></span></div>
+<div class="body">
+<div class="r" style="margin-bottom:10px"><span class="lbl">Tempo</span><span class="lbl" style="display:flex;align-items:center;gap:8px">Run <span class="led"></span></span></div>
+<div class="bezel"><div class="lcd"><div class="lt"><span>ANDANTE</span><span>4/4 <span class="off">· TRN</span></span></div><div class="digs" id="d"></div><div class="beats"><span><i></i>1</span><span class="off"><i></i>2</span><span class="off"><i></i>3</span><span class="off"><i></i>4</span></div></div></div>
+<div class="tempo" style="margin-top:16px"><span class="rw light" style="width:42px;height:44px"><span class="rc">−10</span></span><span class="rw dark" style="width:48px;height:50px"><span class="rc">−</span></span><span class="fad"><span class="sc"></span><span class="slot"></span><span class="capf"></span><span class="nb" style="left:8px">30</span><span class="nb" style="left:44%">160</span><span class="nb" style="right:4px">300</span></span><span class="rw dark" style="width:48px;height:50px"><span class="rc">+</span></span><span class="rw light" style="width:42px;height:44px"><span class="rc">+10</span></span></div>
+<div class="r" style="gap:12px;margin-top:14px"><span class="kw accent" style="flex:1;height:62px"><span class="kc"><svg width="12" height="14" viewBox="0 0 12 14" aria-hidden="true"><path d="M1 1 L11 7 L1 13Z" fill="#fff"/></svg>Start</span></span><span class="kw dark" style="width:104px;height:62px"><span class="kc">Tap</span></span></div>
+<div class="seam"></div>
+<div class="r"><span><div class="t1">Time</div><div class="t2">Beats per bar</div></span><span style="display:flex;align-items:center;gap:14px"><span style="display:flex;align-items:center;gap:7px"><span class="rw light" style="width:34px;height:36px"><span class="rc" style="font-size:15px">−</span></span><span class="mini"><span>4</span></span><span class="rw light" style="width:34px;height:36px"><span class="rc" style="font-size:15px">+</span></span></span><span style="width:74px"><span class="sw" style="display:block"><b style="left:2px"></b></span><span class="swl"><span>4</span><span>8</span></span></span></span></div>
+<div class="seam" style="margin:12px 0 12px"></div>
+<div><div class="t1">Subdivision</div><div class="subk">
+<span class="col"><span class="led on"></span><span class="kw light dn"><span class="kc"><span class="gl">♩</span>None</span></span></span>
+<span class="col"><span class="led"></span><span class="kw light"><span class="kc"><span class="gl">♫</span>8ths</span></span></span>
+<span class="col"><span class="led"></span><span class="kw light"><span class="kc"><span class="gl">³</span>Triplets</span></span></span>
+<span class="col"><span class="led"></span><span class="kw light"><span class="kc"><span class="gl">♬</span>16ths</span></span></span></div></div>
+<div class="seam" style="margin:14px -20px 12px"></div>
+<div class="r"><span><div class="t1">Speed trainer</div><div class="t2">Speeds up while you play</div></span><span style="width:84px"><span class="sw" style="display:block"><b style="left:2px"></b></span><span class="swl"><span>Off</span><span>On</span></span></span></div>
+<div class="help"><i class="ti ti-help-circle" aria-hidden="true"></i></div>
+</div>
+<div class="tabs" id="tb"></div>
+<div class="home"></div>
+</div></div>
+<script>
+const SEG={0:'abcdef',1:'bc'},R={a:[5,0,18,4],b:[24,5,4,18],c:[24,27,4,18],d:[5,46,18,4],e:[0,27,4,18],f:[0,5,4,18],g:[5,23,18,4]}
+const dig=d=>`<svg width="38" height="64" viewBox="0 0 30 50" aria-hidden="true"><g transform="skewX(-5) translate(3 0)">${Object.entries(R).map(([s,[x,y,w,h]])=>`<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="1.4" fill="${SEG[d].includes(s)?'#23251f':'rgba(35,37,31,.07)'}"/>`).join('')}</g></svg>`
+document.getElementById('d').innerHTML=dig(1)+dig(0)+dig(0)+'<span class="u">BPM</span>'
+const T=[['ti-gauge','Tuner'],['ti-music','Chords'],['ti-chart-bar','Scales'],['ti-ear','Trainer'],['ti-triangle','Metronome'],['ti-settings','Settings']]
+document.getElementById('tb').innerHTML=T.map((t,i)=>`<span class="tab${i===4?' on':''}">${i===4?'<span class="led on"></span>':''}<i class="ti ${t[0]}" aria-hidden="true"></i>${t[1]}</span>`).join('')
+</script>
+</body>
+</html>
