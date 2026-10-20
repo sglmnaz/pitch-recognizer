@@ -61,9 +61,10 @@ const SOUNDS: Record<Kind, (at: number, v: number, on: boolean) => void> = {
 	detent: (at, v) => noise(at, 0.003, 'highpass', 5000, 0.7, 0.7 * v),
 }
 
-// Vibration lengths (ms): a rocker is a snap with a settle. Many Android
-// motors skip pulses much under ~10 ms, so nothing here is shorter.
-const BUZZ: Record<Kind, number | number[]> = { key: 15, latch: 25, rocker: [15, 40, 20], detent: 10 }
+// Vibration lengths (ms): a rocker is a snap with a settle. Android gives no
+// strength, only length: on a Xiaomi 15 ms already read as heavy, so these
+// sit near the shortest a motor still renders.
+const BUZZ: Record<Kind, number | number[]> = { key: 9, latch: 14, rocker: [9, 40, 11], detent: 6 }
 
 // iPhone: a native switch toggled from a tap ticks the Taptic Engine.
 let iosSwitch: HTMLLabelElement | null = null
