@@ -231,7 +231,8 @@ export function createFretboard(svg: SVGSVGElement, board: HTMLElement | null, o
 		const across = (a: number) => margin + (vertical ? last - a : a) * spacing
 		// Fixed distances past the outer strings, whatever the string spacing:
 		// wires, nut and position box reach 14 units out, fret numbers sit 22 out.
-		const out = 14 / spacing
+		// A chord diagram is a printed grid: its frets stop at the outer strings.
+		const out = win ? 0 : 14 / spacing
 		const numAt = last + 22 / spacing
 		const xy = (along: number, a: number) => (vertical ? [X(across(a)), along] : [X(along), across(a)])
 		const pt = (along: number, a: number, p = '') => {
@@ -283,10 +284,12 @@ export function createFretboard(svg: SVGSVGElement, board: HTMLElement | null, o
 		const top = fretAt(first - 1)
 		if (first === 1) parts.push(`<line class="neck__nut" ${line(top, -out, top, last + out)}/>`)
 		else parts.push(`<line class="neck__fret" ${line(top, -out, top, last + out)}/>`)
-		// Thicker toward the low E, like real gauges (.010–.046): 0.7 to 2.4.
-		tuning.forEach((_, s) =>
-			parts.push(`<line class="neck__string" style="stroke-width:${0.7 + s * 0.34}" ${line(top, s, win ? fretAt(lastFret) : g.length, s)}/>`)
-		)
+		// Thicker toward the low E, like real gauges (.010–.046): 0.7 to 2.4. A
+		// chord diagram prints them all alike (fretboard.css).
+		tuning.forEach((_, s) => {
+			const gauge = win ? '' : ` style="stroke-width:${0.7 + s * 0.34}"`
+			parts.push(`<line class="neck__string"${gauge} ${line(top, s, win ? fretAt(lastFret) : g.length, s)}/>`)
+		})
 		if (box) {
 			const from = box[0] === 0 ? 2 : fretAt(box[0] - 1) + 1
 			const to = fretAt(box[1]) - 1

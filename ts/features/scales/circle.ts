@@ -1,32 +1,66 @@
-// The circle of fifths under the Scales neck (Harmony → Circle): majors
-// outside, relative minors inside, the current key and its neighbours lit.
-// A tap or Enter on a key shows its scale through `onChoose`.
+// The circle of fifths under the Scales neck (Harmony → Circle), drawn as a
+// clock-face dial (docs/design/oldschool-components.html, "C7"): twelve
+// sectors on the face, majors on the outer ring, relative minors inside, the
+// current key's sector backlit, a red index on the rim pointing at it and a
+// round LCD in the hub naming it. A tap or Enter on a key shows its scale
+// through `onChoose`. Colours are classes read from the theme (scales.css);
+// the bezel is the HTML box around the svg.
 import { CIRCLE, circleIndex, keyOf, MAJOR, MINOR, signatureName } from '../../music/harmony'
 import type { ScaleType } from '../../music/scales'
 import { svgEl } from '../../ui/dom'
 
-const sig = (n: number) => (n === 0 ? '' : `${Math.abs(n)}${n > 0 ? '♯' : '♭'}`)
+// Radii in the 290 viewBox. The two rings meet at SPLIT; each is ~33 deep,
+// 34 px for a thumb on a 300 px dial (a 340 px phone column).
+const C = 145
+const FACE = 134
+const RIM = 126 // sectors end here; the 60 ticks run inward from it
+const SPLIT = 89
+const HUB = 60
+const MAJOR_TEXT = 101
+const MINOR_TEXT = 77
+const GLASS = 52 // the hub's LCD, inside a black ring up to 57
 
-// Built once; render() only moves the highlight, so focus survives a tap.
-// Rings: majors outside, relative minors inside, radii in a 400 viewBox,
-// each 63 deep: 44 px for a thumb even at a 280 px circle (a 320 px phone).
-const C = 200
-const RINGS = { major: [135, 198], minor: [72, 135] } as const
+const glyphs = (name: string) => name.replace(/#/g, '♯').replace(/([A-G])b/g, '$1♭')
+const sigShort = (n: number) => (n === 0 ? 'no ♯ / ♭' : `${Math.abs(n)} ${n > 0 ? '♯' : '♭'}`)
+// Clockwise from 12 o'clock, like the dial.
 const at = (r: number, deg: number) => [C + r * Math.sin((deg * Math.PI) / 180), C - r * Math.cos((deg * Math.PI) / 180)]
 
+/** The ring band between radii r0 < r1 from a0 to a1 degrees. */
+function band(r0: number, r1: number, a0: number, a1: number) {
+	const [x0, y0] = at(r1, a0)
+	const [x1, y1] = at(r1, a1)
+	const [x2, y2] = at(r0, a1)
+	const [x3, y3] = at(r0, a0)
+	return `M${x0} ${y0}A${r1} ${r1} 0 0 1 ${x1} ${y1}L${x2} ${y2}A${r0} ${r0} 0 0 0 ${x3} ${y3}Z`
+}
+
+const text = (attrs: Record<string, string | number>, content = '') => {
+	const el = svgEl('text', attrs)
+	el.textContent = content
+	return el
+}
+
 export function createCircle(circle: SVGSVGElement, onChoose: (rootPc: number, type: ScaleType) => void) {
+	// Built once; render() only moves the light, so focus survives a tap.
+	const glow = svgEl('radialGradient', { id: 'circle-glow', gradientUnits: 'userSpaceOnUse', r: 70 })
+	glow.append(svgEl('stop', { class: 'circle__glow-in', offset: 0 }), svgEl('stop', { class: 'circle__glow-out', offset: 1 }))
+	const defs = svgEl('defs', {})
+	defs.append(glow)
+	circle.append(defs, svgEl('circle', { class: 'circle__face', cx: C, cy: C, r: FACE }))
+
+	const sectors = CIRCLE.map((_, i) =>
+		svgEl('path', { class: `circle__sector${i % 2 ? ' circle__sector--alt' : ''}`, d: band(HUB, RIM, i * 30 - 15, i * 30 + 15) })
+	)
+	circle.append(...sectors)
+	for (let n = 0; n < 60; n++) {
+		const [x1, y1] = at(RIM, n * 6)
+		const [x2, y2] = at(n % 5 ? 122 : 118, n * 6)
+		circle.append(svgEl('line', { class: n % 5 ? 'circle__tick' : 'circle__tick circle__tick--hour', x1, y1, x2, y2 }))
+	}
+
 	const keyCells: SVGGElement[] = []
-	const center = svgEl('text', { class: 'circle__center', x: C, y: C - 6 })
-	const centerSig = svgEl('text', { class: 'circle__center-sig', x: C, y: C + 16 })
 	for (const ring of ['major', 'minor'] as const) {
-		const [r0, r1] = RINGS[ring]
 		CIRCLE.forEach((key, i) => {
-			const a0 = i * 30 - 15
-			const a1 = i * 30 + 15
-			const [x0, y0] = at(r1, a0)
-			const [x1, y1] = at(r1, a1)
-			const [x2, y2] = at(r0, a1)
-			const [x3, y3] = at(r0, a0)
 			const name = ring === 'major' ? key.major : `${key.minor}m`
 			const alt = ring === 'major' ? key.majorAlt : key.minorAlt && `${key.minorAlt}m`
 			const spoken = (n: string) =>
@@ -42,28 +76,30 @@ export function createCircle(circle: SVGSVGElement, onChoose: (rootPc: number, t
 				'data-index': i,
 				'aria-label': `${spoken(name)} ${ring}, ${signatureName(key.accidentals)}${alt ? ` (${spoken(alt)} ${ring}, ${signatureName(key.accidentals - 12)})` : ''}`,
 			})
-			g.append(svgEl('path', { d: `M${x0} ${y0}A${r1} ${r1} 0 0 1 ${x1} ${y1}L${x2} ${y2}A${r0} ${r0} 0 0 0 ${x3} ${y3}Z` }))
-			const [tx, ty] = at((r0 + r1) / 2, i * 30)
-			const label = svgEl('text', { x: tx, y: ty + (ring === 'major' ? -6 : 0) })
-			if (ring === 'minor' && alt) {
-				label.setAttribute('class', 'circle__alt')
-				label.append(svgEl('tspan', { x: tx, dy: -7 }), svgEl('tspan', { x: tx, dy: 14 }))
-				label.children[0].textContent = name
-				label.children[1].textContent = alt
-			} else label.textContent = alt ? `${name}/${alt}` : name
-			if (alt && ring === 'major') label.setAttribute('class', 'circle__alt')
-			g.append(label)
-			if (ring === 'major') {
-				const s = svgEl('text', { class: 'circle__sig', x: tx, y: ty + 12 })
-				s.textContent = alt ? `${sig(key.accidentals)}/${sig(key.accidentals - 12)}` : sig(key.accidentals) || '–'
-				g.append(s)
-			}
+			// The tap target is the whole half of the sector, not just the letters.
+			const [r0, r1] = ring === 'major' ? [SPLIT, RIM] : [HUB, SPLIT]
+			g.append(svgEl('path', { class: 'circle__hit', d: band(r0, r1, i * 30 - 15, i * 30 + 15) }))
+			const [tx, ty] = at(ring === 'major' ? MAJOR_TEXT : MINOR_TEXT, i * 30)
+			g.append(text({ class: alt ? 'circle__label circle__label--alt' : 'circle__label', x: tx, y: ty }, glyphs(alt ? `${name}/${alt}` : name)))
 			g.addEventListener('click', () => choose(g))
 			keyCells.push(g)
 			circle.append(g)
 		})
 	}
-	circle.append(center, centerSig)
+
+	// Pointing at 12 o'clock; render() turns it to the key.
+	const index = svgEl('path', { class: 'circle__index', d: `M${C - 7} ${C - 143}L${C + 7} ${C - 143}L${C} ${C - 130}Z` })
+	const hubKey = text({ class: 'circle__hub-label', x: C, y: C - 17 }, 'KEY')
+	const hubName = text({ class: 'circle__hub-name', x: C, y: C + 10 })
+	const hubSub = text({ class: 'circle__hub-sub', x: C, y: C + 28 })
+	circle.append(
+		index,
+		svgEl('circle', { class: 'circle__hub-rim', cx: C, cy: C, r: HUB - 3 }),
+		svgEl('circle', { class: 'circle__hub-glass', cx: C, cy: C, r: GLASS }),
+		hubKey,
+		hubName,
+		hubSub
+	)
 
 	function choose(g: SVGGElement) {
 		const key = CIRCLE[Number(g.dataset.index)]
@@ -99,26 +135,31 @@ export function createCircle(circle: SVGSVGElement, onChoose: (rootPc: number, t
 		render(rootPc: number, type: ScaleType) {
 			const key = keyOf(rootPc, type)
 			const family = key?.family
-			const index = key ? circleIndex(key.pc, key.family) : -1
-			const near = (i: number) => index >= 0 && [11, 0, 1].includes((i - index + 12) % 12)
-			const isCurrent = (c: SVGGElement) => Number(c.dataset.index) === index && c.dataset.ring === family
+			const current = key ? circleIndex(key.pc, key.family) : -1
+			const isCurrent = (c: SVGGElement) => Number(c.dataset.index) === current && c.dataset.ring === family
 			// The one tab stop: the key in focus, else the current key, else C.
 			const rover = keyCells.find((c) => c === document.activeElement) ?? keyCells.find(isCurrent) ?? keyCells[0]
 			keyCells.forEach((c) => {
-				const current = isCurrent(c)
-				c.classList.toggle('circle__key--current', current)
-				c.classList.toggle('circle__key--near', near(Number(c.dataset.index)) && !current)
-				c.setAttribute('aria-current', String(current))
+				c.classList.toggle('circle__key--lit', Number(c.dataset.index) === current)
+				c.setAttribute('aria-current', String(isCurrent(c)))
 				c.setAttribute('tabindex', c === rover ? '0' : '-1')
 			})
-			if (index < 0) {
-				center.textContent = 'Tap a key'
-				centerSig.textContent = ''
+			sectors.forEach((s, i) => s.classList.toggle('circle__sector--lit', i === current))
+			index.toggleAttribute('hidden', current < 0)
+			if (current < 0) {
+				hubName.textContent = '—'
+				hubSub.textContent = 'no key'
 				return
 			}
-			const k = CIRCLE[index]
-			center.textContent = family === 'major' ? k.major : k.minor
-			centerSig.textContent = `${family} · ${signatureName(k.accidentals)}`
+			// The backlight is brightest at the middle of the lit sector.
+			const [gx, gy] = at((HUB + RIM) / 2, current * 30)
+			glow.setAttribute('cx', String(gx))
+			glow.setAttribute('cy', String(gy))
+			index.setAttribute('transform', `rotate(${current * 30} ${C} ${C})`)
+			const k = CIRCLE[current]
+			const [name, relative] = family === 'major' ? [k.major, `${k.minor}m`] : [`${k.minor}m`, k.major]
+			hubName.textContent = glyphs(name)
+			hubSub.textContent = `${glyphs(relative)} · ${sigShort(k.accidentals)}`
 		},
 	}
 }

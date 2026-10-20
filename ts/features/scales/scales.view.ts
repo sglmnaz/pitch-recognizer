@@ -23,6 +23,7 @@ import {
 } from '../../music/scales'
 import type { View } from '../../ui/view'
 import { bindSegmented, scoped, setPressed, whenVisible } from '../../ui/dom'
+import { withStepper } from '../../ui/stepper'
 import { phone } from '../../ui/media'
 import { noteChip, resultButton } from '../../ui/note-chip'
 import { micState, onMicChange, setListening } from '../../ui/mic-block'
@@ -40,8 +41,8 @@ type Mode = 'explore' | 'identify'
 type Shown = { rootPc: number; type: ScaleType }
 // The mic is owned by ts/ui/mic-block.ts; the view only asks for it and shows its state.
 export function createScalesView(root: HTMLElement): View {
-	const { $ } = scoped(root)
-	const explorePickers = $<HTMLElement>('.scales-explore')
+	const { $, $$ } = scoped(root)
+	const explorePickers = $$('.scales-explore')
 	const identifyPickers = $<HTMLElement>('.scales-identify')
 	const rootSelect = $<HTMLSelectElement>('.scales-root')
 	const typeSelect = $<HTMLSelectElement>('.scales-type')
@@ -57,6 +58,7 @@ export function createScalesView(root: HTMLElement): View {
 	const playLabel = playButton.querySelector('span')!
 	const displayButton = $<HTMLButtonElement>('[data-action="display"]')
 	const displayMenu = $<HTMLElement>('.display__menu')
+	const verticalSwitch = $<HTMLInputElement>('[data-action="vertical"]')
 	const positionRow = $<HTMLElement>('.scales-positions')
 	const positionChip = $<HTMLButtonElement>('.position-chip')
 	const micButton = $<HTMLButtonElement>('[data-action="mic"]')
@@ -107,6 +109,9 @@ export function createScalesView(root: HTMLElement): View {
 		stopPlaying()
 		render()
 	})
+	// ◀ ▶ step through the list; they fire the selects' own change events.
+	withStepper(rootSelect)
+	withStepper(typeSelect)
 
 	const positionButtons = ['Neck', '1', '2', '3', '4', '5'].map((label, k) => {
 		const button = document.createElement('button')
@@ -130,9 +135,17 @@ export function createScalesView(root: HTMLElement): View {
 
 	const showLabels = bindSegmented(root, 'data-labels', (value) => Settings.update({ scaleLabels: value as Settings.Settings['scaleLabels'] }))
 
+	verticalSwitch.addEventListener('change', () => Settings.update({ fretboardVertical: verticalSwitch.checked }))
+
 	function setMenuOpen(open: boolean) {
 		displayMenu.hidden = !open
 		displayButton.setAttribute('aria-expanded', String(open))
+		// The key stays down while its panel is out.
+		displayButton.classList.toggle('is-down', open)
+		// The panel spans the toolbar; its tab points at the Display key wherever the row put it.
+		const bar = displayMenu.offsetParent?.getBoundingClientRect()
+		const key = displayButton.getBoundingClientRect()
+		if (open && bar) displayMenu.style.setProperty('--tab-x', `${key.left + key.width / 2 - bar.left}px`)
 	}
 	displayButton.addEventListener('click', (event) => {
 		event.stopPropagation()
@@ -224,7 +237,7 @@ export function createScalesView(root: HTMLElement): View {
 	// below the fold.
 	function screenHeight() {
 		const cardBox = card.getBoundingClientRect()
-		const above = board.getBoundingClientRect().top - cardBox.top + parseFloat(getComputedStyle(board).paddingTop)
+		const above = board.getBoundingClientRect().top - cardBox.top + board.clientTop + parseFloat(getComputedStyle(board).paddingTop)
 		const reserve = phone.matches ? tabBar.offsetHeight + 4 : cardBox.top + scrollY + 16
 		return Math.max(300, innerHeight - reserve - above)
 	}
@@ -240,7 +253,7 @@ export function createScalesView(root: HTMLElement): View {
 		clearTimeout(playTimer)
 		playTimer = 0
 		playingMidi = null
-		playLabel.textContent = 'Play scale'
+		playLabel.textContent = '▶ Play scale'
 		playButton.title = 'Play scale'
 		applyLit()
 	}
@@ -258,7 +271,7 @@ export function createScalesView(root: HTMLElement): View {
 			applyLit()
 			playTimer = window.setTimeout(tick, STEP_MS)
 		}
-		playLabel.textContent = 'Stop'
+		playLabel.textContent = '■ Stop'
 		playButton.title = 'Stop'
 		tick()
 	}
@@ -289,10 +302,9 @@ export function createScalesView(root: HTMLElement): View {
 			...degreesOf(shown.type).map((degree, i) => {
 				const chip = document.createElement('button')
 				chip.type = 'button'
-				chip.className = 'scale-note'
+				chip.className = 'key scale-degree'
 				const on = highlighted(degree)
 				chip.setAttribute('aria-pressed', String(on))
-				if (on) chip.classList.add(i === 0 ? 'scale-note--root' : 'scale-note--tone')
 				chip.title = on ? 'Tap to stop colouring this degree' : 'Tap to colour this degree on the neck'
 				noteChip(chip, spelled.notes[i], degree)
 				chip.addEventListener('click', () => {
@@ -403,14 +415,15 @@ export function createScalesView(root: HTMLElement): View {
 	}
 
 	function render() {
-		const { scaleDegrees, scaleLabels } = Settings.get()
+		const { scaleDegrees, scaleLabels, fretboardVertical } = Settings.get()
 		const identify = mode === 'identify'
 		showMode(mode)
-		explorePickers.hidden = identify
+		for (const picker of explorePickers) picker.hidden = identify
 		identifyPickers.hidden = !identify
 		rootSelect.value = String(rootPc)
 		typeSelect.value = String(typeIndex)
 		showLabels(scaleLabels)
+		verticalSwitch.checked = fretboardVertical
 		setPressed(positionButtons, (_, k) => k === position)
 
 		// Marked notes, lowest pitch first; the lowest is the likely root.

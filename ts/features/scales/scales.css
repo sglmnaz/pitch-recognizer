@@ -1,48 +1,101 @@
-.view--scales {
-	gap: var(--space-16);
+/*
+ * Scales (ts/features/scales/*): the SF-100 scale finder. A plate with the
+ * mode keys and the root / scale LCD selectors, the neck in its window
+ * (ts/ui/fretboard.css), degree keys with lamps, one row of tool keys, then
+ * the harmony section: chords of the scale, a step sequencer per progression
+ * and the circle-of-fifths dial. docs/design/oldschool-screens.html and
+ * oldschool-components.html are the spec.
+ *
+ * Note names keep their case everywhere (Bb is not BB): labels that show
+ * them turn off the uppercase the keys, selects and LCDs print in.
+ */
+
+/* Plate: mode keys + root on one row, the scale under them (phones and
+   tablets); everything on one row on desktops. Identify swaps the selectors
+   for the marked notes. */
+.scales-controls {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) auto;
+	grid-template-areas:
+		'mode root'
+		'type type';
+	align-items: end;
+	gap: var(--space-12) var(--space-8);
+
+	@media (min-width: 960px) {
+		grid-template-columns: 280px auto minmax(0, 420px);
+		grid-template-areas: 'mode root type';
+		/* Leftover width stays at the end instead of stretching the root column. */
+		justify-content: start;
+	}
+
+	& > .view-top {
+		grid-area: mode;
+
+		& > .segmented {
+			flex: 1;
+		}
+	}
 }
 
-/* One header line: mode, then root + scale (or the marked notes). */
-.scales-header {
-	display: flex;
-	flex-wrap: wrap;
-	align-items: center;
-	gap: var(--space-8);
+.scales-root-picker {
+	grid-area: root;
+
+	/* One note name: a small LCD without the list arrow (tapping it still
+	   opens the list), so the scale's long names keep their room. */
+	& .stepper > .select {
+		flex: none;
+		width: 52px;
+		padding: 0;
+		background: var(--lcd-bg);
+		text-align: center;
+		text-align-last: center;
+		text-transform: none;
+	}
 }
 
-.scales-pickers {
-	flex: 1 1 280px;
-	display: flex;
-	align-items: center;
-	gap: var(--space-8);
+.scales-type-picker,
+.scales-marked-row {
+	grid-area: type;
 	min-width: 0;
 }
 
-.scales-root {
-	flex: none;
-	width: 76px;
-}
+.scales-marked-row {
+	display: flex;
+	align-items: center;
+	gap: var(--space-8);
 
-.scales-type {
-	flex: 1;
+	& > .window {
+		flex: 1;
+		min-width: 0;
+		padding: 4px;
+		border-radius: var(--radius-lg);
+	}
+
+	& > .key {
+		height: 36px;
+	}
 }
 
 .scales-marked {
-	flex: 1;
-	font-family: var(--font-mono);
+	min-height: 28px;
 	font-size: var(--text-lg);
-	font-weight: 500;
+	letter-spacing: 0.06em;
 	word-spacing: 0.3em;
+	text-transform: none;
 }
 
 .scales-marked--empty {
-	font-family: var(--font-sans);
-	font-size: var(--text-md);
-	font-weight: 400;
+	font-size: var(--text-xs);
+	letter-spacing: 0.1em;
 	word-spacing: normal;
-	color: var(--fg-muted);
+	text-transform: uppercase;
+	line-height: 16px;
+	opacity: 0.6;
 }
 
+/* Degree keys: note over degree, a lamp above each; down = coloured on the
+   neck. One row up to eight notes, the chromatic scale wraps. */
 .scale-info {
 	display: flex;
 	flex-direction: column;
@@ -51,206 +104,41 @@
 
 .scale-info__title {
 	margin: 0;
-	font-size: var(--text-xl);
+	font-family: var(--font-ui);
+	font-size: var(--text-2xl);
 	font-weight: 600;
+	letter-spacing: 0.04em;
 }
 
-/* Degree strip: note over degree; tapping toggles the degree's colour. */
 .scale-info__notes {
 	display: flex;
 	flex-wrap: wrap;
-	gap: var(--space-6);
+	/* Rows keep room for the lamps of the row below. */
+	gap: calc(var(--lamp-h) + var(--space-8) + 4px) var(--space-4);
 }
 
-.scale-note {
-	appearance: none;
-	display: flex;
+.scale-degree {
+	flex: 1 1 38px;
+	max-width: 64px;
+	height: 42px;
 	flex-direction: column;
-	align-items: center;
-	min-width: 40px;
-	padding: 5px 8px;
-	border: none;
-	border-radius: var(--radius);
-	background: var(--surface);
-	color: var(--fg);
-	font-family: var(--font-mono);
-	cursor: pointer;
-	box-shadow: var(--shadow-border);
-	transition:
-		background var(--dur) var(--ease),
-		box-shadow var(--dur) var(--ease);
+	gap: 2px;
+	padding-inline: 0;
+	letter-spacing: 0.02em;
+	text-transform: none;
 
-	&:hover {
-		background: var(--surface-2);
-	}
-}
-
-.scale-note__name {
-	font-size: var(--text-lg);
-	font-weight: 500;
-}
-
-.scale-note__degree {
-	font-size: var(--text-xs);
-	color: var(--fg-muted);
-}
-
-/* Highlighted degrees wear the same colours as their dots on the neck. */
-.scale-note--root {
-	background: var(--root-fill);
-	box-shadow: 0 0 0 1px var(--root-stroke);
-}
-
-.scale-note--root .scale-note__name,
-.scale-note--root .scale-note__degree {
-	color: var(--root-text);
-}
-
-.scale-note--tone {
-	background: var(--tone-fill);
-	box-shadow: 0 0 0 1px var(--tone-stroke);
-}
-
-.scale-note--tone .scale-note__name,
-.scale-note--tone .scale-note__degree {
-	color: var(--tone-text);
-}
-
-.scale-note--root:hover,
-.scale-note--tone:hover {
-	filter: brightness(0.97);
-}
-
-/* The Scales tab's own mic toggle (ts/styles/components/mic.css) sits at the
-   end of the neck toolbar. */
-.view--scales .mic-toggle {
-	margin-left: auto;
-}
-
-.scale-results {
-	display: flex;
-	flex-direction: column;
-	gap: var(--space-6);
-	margin: 0;
-	padding: 0;
-	list-style: none;
-}
-
-.scale-result {
-	display: grid;
-	grid-template-columns: 1fr auto;
-	gap: 2px 12px;
-	width: 100%;
-	padding: 10px 14px;
-	border: none;
-	border-radius: var(--radius);
-	background: var(--surface);
-	color: var(--fg);
-	text-align: left;
-	cursor: pointer;
-	box-shadow: var(--shadow-border);
-	transition: background var(--dur) var(--ease);
-
-	&:hover {
-		background: var(--surface-2);
+	@media (max-width: 600px) {
+		height: var(--tap);
 	}
 
-	&[aria-pressed='true'] {
-		box-shadow: 0 0 0 1px var(--indicator-on);
-	}
-}
-
-.scale-result__title {
-	font-size: var(--text-base);
-	font-weight: 500;
-}
-
-.scale-result__extra {
-	font-family: var(--font-mono);
-	font-size: var(--text-sm);
-	color: var(--fg-muted);
-}
-
-.scale-result__notes {
-	grid-column: 1 / -1;
-	font-family: var(--font-mono);
-	font-size: var(--text-sm);
-	color: var(--fg-secondary);
-	word-spacing: 0.2em;
-}
-
-.scale-results__more {
-	font-size: var(--text-sm);
-	color: var(--fg-muted);
-	text-align: center;
-	padding: var(--space-4);
-}
-
-@media (min-width: 960px) {
-	/* Scales: pickers and degree strip share a row, the neck takes the full
-	   width, Identify results fill a grid of cards under it. */
-	.view--scales:not([hidden]) {
-		display: grid;
-		grid-template-columns: minmax(0, 1fr) auto;
-		grid-template-areas:
-			'top top'
-			'header info'
-			'neck neck'
-			'harmony harmony'
-			'results results';
-		gap: 20px 32px;
-		align-items: center;
+	& .scale-note__name {
+		font-size: var(--text-lg);
 	}
 
-	.view--scales > .view-top {
-		grid-area: top;
-	}
-
-	.view--scales > .scales-header {
-		grid-area: header;
-		max-width: 560px;
-	}
-
-	.view--scales > .scale-info {
-		grid-area: info;
-		align-items: flex-end;
-	}
-
-	.view--scales > .neck-card {
-		grid-area: neck;
-		margin-inline: 0;
-	}
-
-	/* Harmony (Explore) and chord fits (Identify) never show together. */
-	.view--scales > .harmony,
-	.view--scales > .chord-fits {
-		grid-area: harmony;
-		align-self: start;
-	}
-
-	.view--scales > .scale-results {
-		grid-area: results;
-		display: grid;
-		grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-		align-self: start;
-	}
-
-	/* Vertical neck: it stands on the left, controls and results beside it.
-	   The main neck only: the harmony chord diagram is vertical too. */
-	.view--scales:not([hidden]):has(> .neck-card .neck--vertical) {
-		grid-template-columns: auto minmax(0, 1fr);
-		grid-template-areas:
-			'top top'
-			'neck header'
-			'neck info'
-			'neck harmony'
-			'neck results';
-		grid-template-rows: auto auto auto auto 1fr;
-		align-items: start;
-	}
-
-	.view--scales:has(> .neck-card .neck--vertical) > .scale-info {
-		align-items: flex-start;
+	& .scale-note__degree {
+		font-size: var(--text-2xs);
+		font-weight: 600;
+		opacity: 0.75;
 	}
 }
 
@@ -259,9 +147,237 @@
 	text-align: inherit;
 }
 
-/* Scales harmony (ts/features/scales/harmony.view.ts) ------------------------------------ */
-/* Under the neck: one segmented control picks Chords, Progressions or the
-   Circle, so Explore stays one neck and one row of chords until asked. */
+/* Vertical neck: the degree keys go above it with the toolbar. */
+.neck-card:has(.neck--vertical) > .scale-info {
+	order: -3;
+}
+
+/* Tool keys: Play scale takes the room left on phones, Listen sits at the end. */
+.neck-toolbar__play {
+	min-width: 0;
+
+	@media (max-width: 600px) {
+		flex: 1;
+	}
+
+	& span {
+		overflow: hidden;
+		text-overflow: ellipsis;
+	}
+}
+
+.view--scales .mic-toggle {
+	margin-left: auto;
+}
+
+/* "Pos 5 ×" on narrow phones (the "ition" hides), so the row fits. */
+@media (max-width: 440px) {
+	.position-chip span {
+		display: none;
+	}
+}
+
+/* Display: an aluminium sub-panel opening over the board, its tab pointing at
+   the Display key (--tab-x from scales.view.ts). */
+.display__menu {
+	position: absolute;
+	bottom: calc(100% + 10px);
+	left: 0;
+	z-index: 30;
+	display: flex;
+	flex-direction: column;
+	gap: var(--space-8);
+	width: min(300px, 100%);
+	padding: var(--space-12);
+	border-radius: var(--radius);
+	background: var(--plate);
+	color: var(--plate-ink);
+	box-shadow:
+		0 0 0 var(--outline-width) var(--outline),
+		var(--key-drop);
+
+	&::after {
+		content: '';
+		position: absolute;
+		bottom: -7px;
+		left: clamp(12px, var(--tab-x, 50%) - 6px, calc(100% - 24px));
+		width: 12px;
+		height: 12px;
+		background: var(--plate);
+		border: solid var(--outline);
+		border-width: 0 var(--outline-width) var(--outline-width) 0;
+		transform: rotate(45deg);
+	}
+
+	& .silk {
+		color: var(--plate-ink-2);
+	}
+
+	& .switch {
+		padding-bottom: 0;
+		border-top: 1.5px solid var(--rule);
+	}
+}
+
+/* Vertical: the toolbar is above the neck, so the panel opens downward. */
+.neck-card:has(.neck--vertical) .display__menu {
+	top: calc(100% + 10px);
+	bottom: auto;
+
+	&::after {
+		top: -7px;
+		bottom: auto;
+		border-width: var(--outline-width) 0 0 var(--outline-width);
+	}
+}
+
+/* Identify: the matching scales as a printed index, the one shown lit. ------ */
+/* Also the Chords tab's Identify results (chord-library.view.ts). */
+.scale-results {
+	margin: 0;
+	padding: 0;
+	list-style: none;
+	border-radius: var(--radius);
+	background: var(--surface);
+	box-shadow: 0 0 0 var(--outline-width) var(--outline);
+
+	&:empty {
+		display: none;
+	}
+
+	& > li + li {
+		border-top: 1.5px solid var(--rule);
+	}
+
+	@media (min-width: 960px) {
+		max-width: 720px;
+	}
+}
+
+.scale-result {
+	display: grid;
+	grid-template-columns: auto minmax(0, 1fr) auto;
+	grid-template-areas:
+		'lamp title extra'
+		'lamp notes notes';
+	align-items: center;
+	gap: 2px var(--space-12);
+	width: 100%;
+	padding: var(--space-10) var(--space-12);
+	border: none;
+	background: none;
+	color: var(--fg);
+	font-family: var(--font-ui);
+	text-align: left;
+	cursor: pointer;
+
+	&:hover {
+		background: var(--panel-sunk);
+	}
+
+	& > :first-child {
+		grid-area: title;
+	}
+
+	/* Rows that can be chosen carry a lamp, lit on the one shown. */
+	&[aria-pressed]::before {
+		content: '';
+		grid-area: lamp;
+		width: var(--lamp-w);
+		height: var(--lamp-h);
+		border-radius: 1px;
+		background: var(--lamp-off);
+		box-shadow: var(--lamp-ring);
+	}
+
+	&[aria-pressed='true'] {
+		background: var(--panel-sunk);
+
+		&::before {
+			background: var(--lamp-on);
+			box-shadow:
+				var(--lamp-ring),
+				0 0 8px var(--lamp-glow);
+		}
+	}
+}
+
+.scale-result__title {
+	font-size: var(--text-lg);
+	font-weight: 700;
+	letter-spacing: 0.04em;
+}
+
+.scale-result__extra {
+	grid-area: extra;
+	font-size: var(--text-2xs);
+	font-weight: var(--label-weight);
+	letter-spacing: 0.16em;
+	text-transform: uppercase;
+	color: var(--fg-muted);
+}
+
+.scale-result__notes {
+	grid-area: notes;
+	font-size: var(--text-md);
+	font-weight: 600;
+	letter-spacing: 0.06em;
+	word-spacing: 0.2em;
+	color: var(--fg-secondary);
+}
+
+.scale-results__more {
+	padding: var(--space-8);
+	font-family: var(--font-text);
+	font-size: var(--text-sm);
+	color: var(--fg-muted);
+	text-align: center;
+}
+
+/* Note chips of the Chords library (chord-library.view.ts: scale-note
+   chord-note); kept here because chords.css builds on them. */
+.scale-note {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	min-width: 40px;
+	padding: 5px 8px;
+	border-radius: var(--radius);
+	background: var(--surface);
+	color: var(--fg);
+	font-family: var(--font-ui);
+	box-shadow: var(--shadow-border);
+}
+
+.scale-note__name {
+	font-size: var(--text-lg);
+	font-weight: 700;
+}
+
+.scale-note__degree {
+	font-size: var(--text-xs);
+	color: var(--fg-muted);
+}
+
+.scale-note--root {
+	background: var(--root-fill);
+	box-shadow: 0 0 0 1px var(--root-stroke);
+}
+
+.scale-note--root :is(.scale-note__name, .scale-note__degree) {
+	color: var(--root-text);
+}
+
+.scale-note--tone {
+	background: var(--tone-fill);
+	box-shadow: 0 0 0 1px var(--tone-stroke);
+}
+
+.scale-note--tone :is(.scale-note__name, .scale-note__degree) {
+	color: var(--tone-text);
+}
+
+/* Harmony (harmony.view.ts) ------------------------------------------------- */
 .harmony {
 	display: flex;
 	flex-direction: column;
@@ -269,63 +385,62 @@
 	min-width: 0;
 }
 
-.harmony__head {
-	display: flex;
-	flex-wrap: wrap;
-	align-items: center;
-	gap: var(--space-8);
-}
-
 .harmony__tabs {
-	flex: 0 1 340px;
+	max-width: 420px;
 
-	/* Phones: a row of its own. */
 	@media (max-width: 600px) {
-		flex: 1 1 100%;
+		& > button {
+			min-height: var(--tap);
+		}
 	}
-}
-
-.harmony__size,
-.harmony__loop {
-	margin-left: auto;
-}
-
-.harmony__loop[aria-pressed='true'] {
-	color: var(--indicator-on);
-	box-shadow: 0 0 0 1px var(--indicator-on);
 }
 
 .harmony__pane {
 	display: flex;
 	flex-direction: column;
-	gap: var(--space-10);
+	gap: var(--space-12);
+}
+
+/* A pane's header row: a silk title or note, its controls on the right. */
+.harmony__bar {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: var(--space-8) var(--space-12);
+}
+
+.harmony__title {
+	flex: 1;
+	font-size: var(--text-md);
+	font-weight: var(--label-weight);
+	letter-spacing: 0.1em;
+	text-transform: uppercase;
+}
+
+.harmony__bar .harmony__note {
+	flex: 1;
+}
+
+.harmony__size > button {
+	min-width: 56px;
+
+	@media (max-width: 600px) {
+		min-height: var(--tap);
+	}
 }
 
 .harmony__note {
 	margin: 0;
+	font-family: var(--font-text);
 	font-size: var(--text-sm);
 	color: var(--fg-muted);
 }
 
-/* Quality cue: a 3 px bar on top of the chip, from the degree palette:
-   major in the root blue, minor in the tone teal, diminished / augmented in
-   the warm grey. */
-.harmony-chord--major {
-	--quality: var(--root-stroke);
-}
-
-.harmony-chord--minor {
-	--quality: var(--tone-stroke);
-}
-
-.harmony-chord--dim {
-	--quality: var(--note-stroke);
-}
-
+/* Chords of the scale: numeral over symbol, the one shown latched. */
 .harmony-chords {
 	display: grid;
-	grid-template-columns: repeat(auto-fill, minmax(72px, 1fr));
-	gap: var(--space-6);
+	grid-template-columns: repeat(4, minmax(0, 1fr));
+	gap: var(--space-8) var(--space-6);
 
 	@media (min-width: 601px) {
 		grid-template-columns: repeat(7, minmax(0, 1fr));
@@ -334,100 +449,48 @@
 
 .harmony-chord,
 .progression__chord {
-	display: flex;
 	flex-direction: column;
-	align-items: center;
-	justify-content: center;
-	gap: 1px;
-	min-width: 0;
-	border: none;
-	border-radius: var(--radius);
-	background: var(--surface);
-	color: var(--fg);
-	font-family: var(--font-mono);
-	box-shadow:
-		inset 0 3px 0 var(--quality),
-		var(--shadow-border);
+	gap: 3px;
+	padding-inline: var(--space-4);
+	font-size: var(--text-lg);
+	letter-spacing: 0.02em;
+	text-transform: none;
 }
 
 .harmony-chord {
-	min-height: 52px;
-	padding: var(--space-8) var(--space-4) var(--space-6);
-	cursor: pointer;
-	transition:
-		background var(--dur) var(--ease),
-		box-shadow var(--dur) var(--ease);
-
-	&:hover {
-		background: var(--surface-2);
-	}
-
-	&[aria-pressed='true'] {
-		background: var(--surface-2);
-		box-shadow:
-			inset 0 3px 0 var(--quality),
-			0 0 0 1px var(--indicator-on);
-	}
+	height: 48px;
 }
 
 .harmony-chord__numeral {
-	font-size: var(--text-xs);
-	color: var(--fg-muted);
+	font-size: var(--text-2xs);
+	letter-spacing: 0.08em;
+	opacity: 0.7;
 }
 
 .harmony-chord__symbol {
 	max-width: 100%;
 	overflow: hidden;
 	text-overflow: ellipsis;
-	font-size: var(--text-lg);
-	font-weight: 500;
-	white-space: nowrap;
 }
 
-.harmony-legend {
-	display: flex;
-	flex-wrap: wrap;
-	gap: var(--space-4) var(--space-16);
-	margin: 0;
-	padding: 0;
-	list-style: none;
-	font-size: var(--text-sm);
-	color: var(--fg-muted);
-}
-
-.harmony-legend li::before {
-	content: '';
-	display: inline-block;
-	width: 10px;
-	height: 3px;
-	margin-right: var(--space-6);
-	vertical-align: middle;
-	border-radius: 2px;
-	background: var(--quality);
-}
-
-/* The tapped chord: its easiest shape as a chord diagram, beside its name. */
+/* The chord tapped: its easiest shape printed on a card, its name beside. */
 .chord-detail {
-	align-self: flex-start;
-	max-width: 100%;
 	display: flex;
 	flex-wrap: wrap;
 	align-items: center;
-	gap: var(--space-16);
-	padding: var(--space-12);
-	border-radius: var(--radius-lg);
-	background: var(--surface);
-	box-shadow: var(--shadow-border);
+	gap: var(--space-12) var(--space-16);
+}
 
-	@media (max-width: 600px) {
-		align-self: stretch;
-		gap: var(--space-12);
-		padding: var(--space-10);
-	}
+.chord-detail__card {
+	flex: none;
+	padding: var(--space-6);
+	box-shadow:
+		0 0 0 var(--outline-width) var(--outline),
+		var(--key-drop);
 }
 
 .chord-detail__neck {
-	flex: none;
+	display: block;
 }
 
 .chord-detail__text {
@@ -438,71 +501,89 @@
 }
 
 .chord-detail__symbol {
-	font-family: var(--font-mono);
 	font-size: 26px;
-	font-weight: 600;
-	letter-spacing: -0.02em;
+	font-weight: 700;
+	letter-spacing: 0.04em;
+	line-height: 1.1;
 }
 
 .chord-detail__name {
+	font-family: var(--font-text);
 	font-size: var(--text-md);
 	color: var(--fg-secondary);
 }
 
 .chord-detail__notes {
-	font-family: var(--font-mono);
-	font-size: var(--text-sm);
-	color: var(--fg-muted);
+	font-size: var(--text-md);
+	font-weight: 600;
+	letter-spacing: 0.06em;
 	word-spacing: 0.2em;
 	white-space: pre-wrap;
+	color: var(--fg-muted);
 }
 
 /* Beside the name on wider screens, a row of their own on phones. */
 .chord-detail__actions {
 	display: flex;
 	flex-wrap: wrap;
-	gap: var(--space-6);
+	gap: var(--space-8);
+
+	& > .key {
+		height: 36px;
+	}
 
 	@media (max-width: 600px) {
 		flex-basis: 100%;
+
+		& > .key {
+			flex: 1;
+			height: var(--tap);
+		}
+
+		& > .chord-detail__clear {
+			flex: none;
+			width: var(--tap);
+		}
 	}
 }
 
 .chord-detail__clear {
-	width: 32px;
-	padding: 0;
-
-	@media (max-width: 600px) {
-		width: var(--tap);
-	}
+	width: 36px;
+	padding-inline: 0;
+	font-size: var(--text-lg);
 }
 
-/* Progressions: a card each, one chip per bar; the bar playing gets the accent. */
+/* Progressions: a step sequencer each, one key per bar with a lamp above
+   that lights on the bar playing; BPM and Loop over the list. */
+.harmony__bpm {
+	padding: 5px 10px;
+	font-size: var(--text-md);
+}
+
+.harmony__loop {
+	gap: var(--space-8);
+	padding: 0;
+}
+
 .progressions {
 	display: grid;
 	grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-	gap: var(--space-8);
+	gap: var(--space-20) var(--space-24);
 	margin: 0;
 	padding: 0;
 	list-style: none;
 
 	@media (max-width: 600px) {
-		grid-template-columns: 1fr;
+		grid-template-columns: minmax(0, 1fr);
 	}
 }
 
 .progression {
 	display: flex;
 	flex-direction: column;
-	gap: var(--space-8);
-	padding: var(--space-10) var(--space-12) var(--space-12);
-	border-radius: var(--radius-lg);
-	background: var(--surface);
-	box-shadow: var(--shadow-border);
-}
-
-.progression--playing {
-	box-shadow: 0 0 0 1px var(--accent);
+	gap: var(--space-10);
+	padding-top: var(--space-12);
+	border-top: 1.5px solid var(--rule);
 }
 
 .progression__head {
@@ -513,65 +594,109 @@
 }
 
 .progression__name {
-	font-size: var(--text-base);
-	font-weight: 500;
+	font-size: var(--text-md);
+	font-weight: var(--label-weight);
+	letter-spacing: 0.1em;
+	text-transform: uppercase;
 }
 
-.progression--playing .progression__play {
-	color: var(--accent);
+.progression__play {
+	min-width: 88px;
+	height: 34px;
+
+	@media (max-width: 600px) {
+		height: var(--tap);
+	}
 }
 
 .progression__chords {
 	display: grid;
-	grid-template-columns: repeat(auto-fill, minmax(48px, 1fr));
-	gap: var(--space-4);
+	grid-template-columns: repeat(4, minmax(0, 1fr));
+	gap: var(--space-12) var(--space-8);
 	margin: 0;
 	padding: 0;
 	list-style: none;
 }
 
+.progression__bar {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: var(--space-8);
+}
+
+/* A step's key shows the bar; it is not pressed by hand (no sink on touch). */
 .progression__chord {
-	min-height: 40px;
-	padding: 6px 2px 4px;
-	background: var(--surface-2);
-	transition:
-		background var(--dur) var(--ease),
-		color var(--dur) var(--ease);
-
-	@media (max-width: 600px) {
-		min-height: var(--tap);
-	}
+	align-self: stretch;
+	height: 46px;
+	cursor: default;
+	pointer-events: none;
 }
 
-.progression__chord .harmony-chord__symbol {
-	font-size: var(--text-md);
-}
-
-.progression__chord--now {
-	background: var(--accent);
-	color: var(--accent-contrast);
-	box-shadow: none;
-}
-
-.progression__chord--now .harmony-chord__numeral {
-	color: inherit;
-	opacity: 0.8;
-}
-
-/* Circle of fifths: hairline sectors on the surface, the current key's
-   neighbours in a light accent wash, the key itself solid accent. */
+/* Circle of fifths: a clock-face dial (circle.ts). The bezel is this box in
+   the plate's metal; the face, sectors and print come from the theme: cream
+   face in light, black in dark and night; the key's sector backlit amber. */
 .harmony__pane--circle {
 	align-items: center;
 	text-align: center;
 }
 
+.dial {
+	width: min(100%, 340px);
+	aspect-ratio: 1;
+	border-radius: 50%;
+	background: var(--plate);
+	box-shadow:
+		0 0 0 var(--outline-width) var(--outline),
+		var(--key-drop);
+}
+
 .circle {
 	display: block;
 	width: 100%;
-	max-width: 420px;
 	height: auto;
-	font-family: var(--font-mono);
+	font-family: var(--font-ui);
 	-webkit-tap-highlight-color: transparent;
+}
+
+.circle__face {
+	fill: var(--dial-face);
+	stroke: var(--outline);
+	stroke-width: 1.5;
+}
+
+.circle__sector {
+	fill: var(--dial-face);
+	stroke: color-mix(in srgb, var(--ink) 25%, transparent);
+	stroke-width: 0.8;
+}
+
+/* Every other sector a shade off the face, like a printed dial. */
+.circle__sector--alt {
+	fill: color-mix(in srgb, var(--dial-face) 95%, var(--ink));
+}
+
+.circle__sector--lit {
+	fill: url(#circle-glow);
+	filter: drop-shadow(0 0 7px var(--lamp-warn-glow));
+}
+
+/* Backlight: the amber lamp seen through the face, brightest in the middle. */
+.circle__glow-in {
+	stop-color: color-mix(in srgb, var(--lamp-warn-on) 80%, var(--dial-face));
+}
+
+.circle__glow-out {
+	stop-color: color-mix(in srgb, var(--lamp-warn-on) 55%, var(--dial-face));
+}
+
+.circle__tick {
+	stroke: var(--ink);
+	stroke-width: 0.8;
+}
+
+.circle__tick--hour {
+	stroke-width: 1.6;
 }
 
 .circle__key {
@@ -579,101 +704,99 @@
 	outline: none;
 }
 
-.circle__key path {
-	fill: var(--surface);
-	stroke: var(--border-strong);
-	stroke-width: 1;
-	transition: fill var(--dur) var(--ease);
+.circle__hit {
+	fill: transparent;
 }
 
-.circle__key text {
-	fill: var(--fg);
-	font-size: var(--text-2xl);
-	font-weight: 500;
+.circle__key:hover .circle__hit {
+	fill: color-mix(in srgb, var(--ink) 8%, transparent);
+}
+
+.circle__key:focus-visible .circle__hit {
+	stroke: var(--accent);
+	stroke-width: 2;
+}
+
+.circle__label {
+	fill: var(--ink);
+	font-size: 18px;
+	font-weight: 700;
 	text-anchor: middle;
 	dominant-baseline: central;
 	pointer-events: none;
 }
 
-.circle__key--minor text {
-	font-size: var(--text-base);
-	fill: var(--fg-secondary);
+.circle__label--alt {
+	font-size: 12px;
 }
 
-.circle__key text.circle__alt {
-	font-size: var(--text-sm);
+.circle__key--minor .circle__label {
+	fill: var(--ink-2);
+	font-size: 11px;
 }
 
-.circle__key text.circle__sig {
-	font-size: var(--text-2xs);
-	fill: var(--fg-muted);
+.circle__key--minor .circle__label--alt {
+	font-size: 8.5px;
 }
 
-.circle__key:hover path {
-	fill: var(--surface-2);
+/* Black print on the backlit sector: readable on amber in every theme. */
+.circle__key--lit .circle__label {
+	fill: var(--outline);
 }
 
-.circle__key--near path {
-	fill: color-mix(in srgb, var(--accent) 10%, var(--surface));
-}
-
-.circle__key--near:hover path {
-	fill: color-mix(in srgb, var(--accent) 16%, var(--surface));
-}
-
-.circle__key--current path {
+.circle__index {
 	fill: var(--accent);
-	stroke: var(--accent);
+	stroke: var(--outline);
+	stroke-width: 1;
 }
 
-.circle__key--current text,
-.circle__key--current text.circle__sig {
-	fill: var(--accent-contrast);
+.circle__hub-rim {
+	fill: var(--window);
 }
 
-.circle__key:focus-visible path {
-	stroke: var(--accent);
-	stroke-width: 2.5;
+.circle__hub-glass {
+	fill: var(--lcd-bg);
 }
 
-.circle__key--current:focus-visible path {
-	stroke: var(--fg);
-}
-
-.circle__center {
-	fill: var(--fg);
-	font-size: 22px;
-	font-weight: 600;
+.circle__hub-label,
+.circle__hub-name,
+.circle__hub-sub {
+	fill: var(--lcd-ink);
+	font-weight: 700;
 	text-anchor: middle;
-	dominant-baseline: central;
+	filter: drop-shadow(var(--lcd-glow));
 }
 
-.circle__center-sig {
-	fill: var(--fg-muted);
-	font-family: var(--font-sans);
-	font-size: var(--text-xs);
-	text-anchor: middle;
-	dominant-baseline: central;
+.circle__hub-label {
+	font-size: 9px;
+	letter-spacing: 0.2em;
 }
 
-/* Identify: the scales a marked chord fits, one small row. */
+.circle__hub-name {
+	font-size: 30px;
+}
+
+.circle__hub-sub {
+	font-size: 10px;
+	letter-spacing: 0.06em;
+}
+
+/* Identify: the scales a marked chord fits, one row of keys. */
 .chord-fits {
 	display: flex;
 	flex-wrap: wrap;
 	align-items: center;
-	gap: var(--space-6);
+	gap: var(--space-8);
 }
 
 .chord-fits__label {
-	margin-right: var(--space-4);
-	font-size: var(--text-md);
-	color: var(--fg-muted);
+	flex-basis: 100%;
 }
 
 .chord-fits__chord {
-	font-family: var(--font-mono);
 	font-size: var(--text-lg);
-	font-weight: 500;
+	letter-spacing: 0.02em;
+	text-transform: none;
 	color: var(--fg);
 }
 
@@ -682,49 +805,38 @@
 }
 
 .chord-fits__scale {
-	height: 28px;
-	padding: 0 var(--space-10);
-	border: none;
-	border-radius: var(--radius-pill);
-	background: var(--surface);
-	color: var(--fg-secondary);
-	font-size: var(--text-sm);
-	font-weight: 500;
-	cursor: pointer;
-	box-shadow: var(--shadow-border);
-	transition:
-		color var(--dur) var(--ease),
-		background var(--dur) var(--ease);
-
-	&:hover {
-		color: var(--fg);
-		background: var(--surface-2);
-	}
+	height: 34px;
+	font-size: var(--text-md);
+	letter-spacing: 0.02em;
+	text-transform: none;
 
 	@media (max-width: 600px) {
 		height: var(--tap);
-		padding: 0 14px;
 	}
 }
 
-/* Phones: 44 px for every thumb target. */
-@media (max-width: 600px) {
-	.harmony__tabs button,
-	.harmony__size button {
-		min-height: var(--tap);
+/* Desktops ------------------------------------------------------------------ */
+@media (min-width: 960px) {
+	/* The neck spans the column (tablets let it grow past it, fretboard.css). */
+	.view--scales > .neck-card {
+		margin-inline: 0;
 	}
 
-	.harmony__size button {
-		min-width: 64px;
-	}
+	/* Vertical neck: it stands on the left under the plate, harmony and
+	   results beside it. */
+	.view--scales:not([hidden]):has(> .neck-card .neck--vertical) {
+		display: grid;
+		grid-template-columns: minmax(320px, auto) minmax(0, 1fr);
+		align-items: start;
+		gap: 20px 32px;
 
-	.harmony__loop,
-	.chord-detail .btn--small,
-	.progression__play {
-		height: var(--tap);
-	}
+		& > .plate {
+			grid-column: 1 / -1;
+		}
 
-	.chord-detail__actions .btn:not(.chord-detail__clear) {
-		flex: 1;
+		& > .neck-card {
+			grid-column: 1;
+			grid-row: span 3;
+		}
 	}
 }
