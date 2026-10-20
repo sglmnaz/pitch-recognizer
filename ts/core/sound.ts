@@ -120,11 +120,12 @@ export function mask(ms: number) {
 // A string to tune against needs the exact pitch, which the plucked buffers
 // cannot promise (integer delay line, up to a few cents off), and it should
 // hold steady instead of dying away. So: an oscillator at the exact
-// frequency, with a few overtones so the low strings stay audible on a phone
-// speaker, which cannot reproduce 82 Hz but does play the 3rd and 4th harmonic.
+// frequency, rich in overtones (up to the 12th) so the low strings stay audible
+// on a phone speaker: it barely reproduces anything under ~300 Hz, and the ear
+// still hears the pitch from the harmonics (the missing fundamental).
 const TONE_S = 2.2
 const TONE_HOLD_S = 1.5
-const TONE_HARMONICS = [0, 1, 0.7, 0.5, 0.3, 0.15, 0.08]
+const TONE_HARMONICS = [0, 1, 0.85, 0.8, 0.7, 0.6, 0.5, 0.45, 0.4, 0.35, 0.3, 0.25, 0.2]
 const TONE_GAIN = 0.5
 let tone: { gain: GainNode; osc: OscillatorNode } | null = null
 

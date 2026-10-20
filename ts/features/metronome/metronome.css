@@ -121,13 +121,6 @@ input.metro-bpm__value {
 	line-height: 1;
 	cursor: pointer;
 	-webkit-tap-highlight-color: transparent;
-
-	&:active .metro-beat__pad {
-		translate: 0 2px;
-		box-shadow:
-			0 0 0 var(--outline-width) var(--outline),
-			inset 0 3px 4px rgba(0, 0, 0, 0.5);
-	}
 }
 
 .metro-beat__pad {
@@ -175,7 +168,9 @@ input.metro-bpm__value {
 	opacity: 0.5;
 }
 
-/* The beat playing: a red ring round the pad, its display lit up. */
+/* The beat playing: a red ring round the pad, its lit bars brighter (the unlit
+   ones stay dark, so the beat's state still reads). No press effect: the
+   display already answers a tap. */
 .metro-beat.is-now {
 	& .metro-beat__pad {
 		box-shadow:
@@ -186,13 +181,6 @@ input.metro-bpm__value {
 			0 0 16px 3px var(--lamp-glow);
 	}
 
-	& .metro-beat__display {
-		background: color-mix(in srgb, var(--lcd-bg) 75%, var(--lcd-ink));
-
-		& i {
-			background: color-mix(in srgb, var(--lcd-dim) 60%, var(--lcd-ink));
-		}
-	}
 }
 
 .metro-beat.is-now[data-accent='2'] .metro-beat__display i,

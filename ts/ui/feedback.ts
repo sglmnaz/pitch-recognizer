@@ -96,7 +96,8 @@ export function feedback(kind: Kind, on = true) {
 
 export const detent = () => feedback('detent')
 
-// Any other control opts in with data-feedback="key|latch|detent".
+// Any other control opts in with data-feedback="key|latch|detent"; "none" silences a
+// key that makes its own sound (a reference tone).
 const KEYS = '.key, .btn, .chip, .link-btn, .segmented > button, .tab, [data-feedback]'
 // Keys that stay down: interlocked ones (one of a row) and any aria-pressed toggle.
 const INTERLOCKED = '.segmented > button, .tab'
@@ -111,7 +112,8 @@ export function initFeedback() {
 			if (event.button !== 0) return
 			const key = (event.target as Element).closest(KEYS)
 			if (!key || key.matches(':disabled, [aria-disabled="true"]')) return
-			const kind = (key as HTMLElement).dataset.feedback as Kind | undefined
+			const kind = (key as HTMLElement).dataset.feedback as Kind | 'none' | undefined
+			if (kind === 'none') return
 			if (kind) feedback(kind)
 			else if (key.matches('.key--step')) feedback('detent')
 			else if (latching(key)) {

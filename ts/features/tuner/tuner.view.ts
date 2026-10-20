@@ -57,6 +57,8 @@ export function createTunerView(root: HTMLElement): View {
 			const key = document.createElement('button')
 			key.type = 'button'
 			key.className = 'key'
+			// It plays its own note: no key click on top.
+			key.dataset.feedback = 'none'
 			key.textContent = `${string.name}${string.octave}`
 			key.setAttribute('aria-label', `${string.name}${string.octave}, hear reference tone`)
 			return key
