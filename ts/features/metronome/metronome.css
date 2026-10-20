@@ -90,30 +90,28 @@ input.metro-bpm__value {
 	font-size: var(--text-sm);
 }
 
-/* Beat lamps ------------------------------------------------------------- */
-/* One per beat. --per-row (set from the view) shares a row evenly; each button
-   keeps at least 44 px as its tap target (MIN_BEAT in the view). Normal beats
-   are a lamp, accents a taller and wider one, muted beats an empty socket. */
+/* Beat pads ------------------------------------------------------------- */
+/* One rubber pad per beat, like a drum machine's step keys, with a small
+   display: two bars = accent, one = normal, none = muted. The beat playing
+   gets a red ring and its display lights up. --per-row (set from the view)
+   shares a row evenly; each pad keeps at least 44 px (MIN_BEAT in the view). */
 .metro-beats {
 	--gap: 8px;
-	--size: min(64px, calc((100% - (var(--per-row, 4) - 1) * var(--gap)) / var(--per-row, 4)));
+	--size: min(60px, calc((100% - (var(--per-row, 4) - 1) * var(--gap)) / var(--per-row, 4)));
 	display: flex;
 	flex-wrap: wrap;
 	justify-content: center;
-	gap: 0 var(--gap);
+	gap: var(--space-8) var(--gap);
 }
 
 .metro-beat {
 	flex: none;
 	display: flex;
 	flex-direction: column;
-	/* Lamps of any height sit on one line above the numbers. */
-	justify-content: flex-end;
 	align-items: center;
 	gap: var(--space-6);
 	width: var(--size);
-	height: var(--tap);
-	padding: 0 0 var(--space-4);
+	padding: 0;
 	border: none;
 	background: none;
 	color: var(--plate-ink-2);
@@ -124,37 +122,82 @@ input.metro-bpm__value {
 	cursor: pointer;
 	-webkit-tap-highlight-color: transparent;
 
-	& .lamp {
-		--lamp-w: 22px;
-		--lamp-h: 7px;
+	&:active .metro-beat__pad {
+		translate: 0 2px;
+		box-shadow:
+			0 0 0 var(--outline-width) var(--outline),
+			inset 0 3px 4px rgba(0, 0, 0, 0.5);
+	}
+}
+
+.metro-beat__pad {
+	display: grid;
+	place-items: center;
+	width: 100%;
+	aspect-ratio: 1;
+	min-height: var(--tap);
+	border-radius: 7px;
+	background: var(--rocker-up);
+	box-shadow:
+		0 0 0 var(--outline-width) var(--outline),
+		inset 0 -4px 0 var(--rocker-down),
+		inset 0 2px 0 color-mix(in srgb, var(--rocker-up) 80%, #fff),
+		var(--key-drop);
+}
+
+.metro-beat__display {
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	align-items: center;
+	gap: 4px;
+	width: 68%;
+	height: 46%;
+	border-radius: var(--radius-sm);
+	background: var(--lcd-bg);
+	box-shadow: inset 0 2px 3px rgba(0, 0, 0, 0.6);
+
+	& i {
+		width: 70%;
+		height: 4px;
+		background: var(--lcd-dim);
+	}
+}
+
+/* Lit bars: two for an accent, the lower one for a normal beat. */
+.metro-beat[data-accent='2'] .metro-beat__display i,
+.metro-beat[data-accent='1'] .metro-beat__display i:last-child {
+	background: var(--lcd-ink);
+	box-shadow: var(--lcd-glow);
+}
+
+.metro-beat[data-accent='0'] .metro-beat__num {
+	opacity: 0.5;
+}
+
+/* The beat playing: a red ring round the pad, its display lit up. */
+.metro-beat.is-now {
+	& .metro-beat__pad {
+		box-shadow:
+			0 0 0 var(--outline-width) var(--outline),
+			inset 0 -4px 0 var(--rocker-down),
+			inset 0 2px 0 color-mix(in srgb, var(--rocker-up) 80%, #fff),
+			0 0 0 4px var(--lamp-on),
+			0 0 16px 3px var(--lamp-glow);
 	}
 
-	&[data-accent='2'] {
-		color: var(--plate-ink);
+	& .metro-beat__display {
+		background: color-mix(in srgb, var(--lcd-bg) 75%, var(--lcd-ink));
 
-		& .lamp {
-			--lamp-w: 26px;
-			--lamp-h: 13px;
+		& i {
+			background: color-mix(in srgb, var(--lcd-dim) 60%, var(--lcd-ink));
 		}
 	}
+}
 
-	/* Muted: an empty socket; when its beat passes only the rim lights, so the
-	   count stays visible without suggesting a click. */
-	&[data-accent='0'] {
-		& .lamp {
-			background: var(--hole);
-		}
-
-		& .lamp.is-on {
-			box-shadow:
-				var(--lamp-ring),
-				inset 0 0 0 2px var(--lamp-on);
-		}
-
-		& .metro-beat__num {
-			opacity: 0.5;
-		}
-	}
+.metro-beat.is-now[data-accent='2'] .metro-beat__display i,
+.metro-beat.is-now[data-accent='1'] .metro-beat__display i:last-child {
+	background: color-mix(in srgb, var(--lcd-ink) 60%, #fff);
 }
 
 /* Tempo row: −10 − fader + +10 ------------------------------------------- */

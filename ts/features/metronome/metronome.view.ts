@@ -18,7 +18,7 @@ const HOLD_DELAY_MS = 400
 const REPEAT_MS = 70
 const SPEED_UP = 20
 
-// Beat lamp tap targets: never smaller than MIN_BEAT px, BEAT_GAP apart (match .metro-beats in metronome.css).
+// Beat pad tap targets: never smaller than MIN_BEAT px, BEAT_GAP apart (match .metro-beats in metronome.css).
 const MIN_BEAT = 44
 const BEAT_GAP = 8
 
@@ -37,7 +37,7 @@ const TEMPO_NAMES: [number, string][] = [
 ]
 const tempoName = (bpm: number) => TEMPO_NAMES.find(([limit]) => bpm < limit)![1]
 
-// Tapping a beat lamp cycles normal → accent → mute.
+// Tapping a beat pad cycles normal → accent → mute.
 const NEXT_ACCENT: Metronome.Accent[] = [1, 2, 0]
 
 export function createMetronomeView(root: HTMLElement): View & { stop(): void } {
@@ -169,14 +169,19 @@ export function createMetronomeView(root: HTMLElement): View & { stop(): void } 
 			const button = document.createElement('button')
 			button.type = 'button'
 			button.className = 'metro-beat'
-			// The button is the full-size tap target; the lamp and the printed
-			// number inside are what show the beat.
-			const lamp = document.createElement('span')
-			lamp.className = 'lamp'
+			button.dataset.feedback = 'key'
+			// A rubber pad with a small display: two bars = accent, one = normal,
+			// none = muted. The printed number below counts the beats.
+			const pad = document.createElement('span')
+			pad.className = 'metro-beat__pad'
+			const display = document.createElement('span')
+			display.className = 'metro-beat__display'
+			display.append(document.createElement('i'), document.createElement('i'))
+			pad.append(display)
 			const number = document.createElement('span')
 			number.className = 'metro-beat__num'
 			number.textContent = String(beat + 1)
-			button.append(lamp, number)
+			button.append(pad, number)
 			button.addEventListener('click', () => setAccent(beat, NEXT_ACCENT[Settings.get().metroAccents[beat] ?? 1]))
 			return button
 		})
@@ -196,11 +201,11 @@ export function createMetronomeView(root: HTMLElement): View & { stop(): void } 
 	}
 	new ResizeObserver(layoutBeats).observe(beatsBox)
 
-	/** Lights the lamp of `beat` and only that one (null: none). */
+	/** Lights the pad of `beat` and only that one (null: none). */
 	function light(beat: number | null) {
-		lit?.classList.remove('is-on')
-		lit = beat === null ? null : (beats[beat]?.querySelector<HTMLElement>('.lamp') ?? null)
-		lit?.classList.add('is-on')
+		lit?.classList.remove('is-now')
+		lit = beat === null ? null : (beats[beat] ?? null)
+		lit?.classList.add('is-now')
 	}
 
 	/* Run / stop ------------------------------------------------------------ */
