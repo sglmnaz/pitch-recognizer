@@ -12,7 +12,7 @@ import { chordShapes, shapeString } from '../../music/chord-shapes'
 import { CHORD_GROUPS, keysOf, matchNotes, parseChordSymbol, ROOT_LABELS, shapeNotes, voicingCaption } from '../../music/chord-library'
 import { degreeMap, degreeRole, pitchClassOf, ROOTS, STRINGS } from '../../music/scales'
 import { OPEN_CHORD_EVENT } from '../../ui/events'
-import { bindSegmented, liveRegion, scoped, setPressed, svgEl } from '../../ui/dom'
+import { bindSegmented, liveRegion, scoped, svgEl } from '../../ui/dom'
 import { micNeedChanged } from '../../ui/mic-block'
 import { withStepper } from '../../ui/stepper'
 
@@ -114,7 +114,7 @@ export function createChordModes(root: HTMLElement): ChordModes {
 	})
 
 	/* Library ------------------------------------------------------------- */
-	const rootRow = $<HTMLElement>('.chord-roots')
+	const rootSelect = $<HTMLSelectElement>('.chord-root-select')
 	const typeSelect = $<HTMLSelectElement>('.chord-type')
 	const symbolEl = $<HTMLElement>('.chord-info__symbol')
 	const nameEl = $<HTMLElement>('.chord-info__name')
@@ -130,18 +130,18 @@ export function createChordModes(root: HTMLElement): ChordModes {
 	let diagrams: ChordDiagram[] = []
 	let drawn: ChordDiagram[] = []
 
-	const rootButtons = ROOT_LABELS.map((label, pc) => {
-		const button = document.createElement('button')
-		button.type = 'button'
-		button.className = 'key chord-root'
-		button.textContent = label
-		button.setAttribute('aria-label', spoken(label))
-		button.addEventListener('click', () => {
-			rootPc = pc
-			renderLibrary()
+	// Root: a small LCD dropdown between ◀ ▶, the type a wider one beside it.
+	rootSelect.append(
+		...ROOT_LABELS.map((label, pc) => {
+			const option = new Option(label, String(pc))
+			option.setAttribute('aria-label', spoken(label))
+			return option
 		})
-		rootRow.append(button)
-		return button
+	)
+	withStepper(rootSelect)
+	rootSelect.addEventListener('change', () => {
+		rootPc = Number(rootSelect.value)
+		renderLibrary()
 	})
 
 	for (const group of CHORD_GROUPS) {
@@ -150,8 +150,6 @@ export function createChordModes(root: HTMLElement): ChordModes {
 		for (const t of group.types) optgroup.append(new Option(`${capitalized(t.name)}${t.symbol ? ` (${t.symbol})` : ''}`, t.symbol))
 		typeSelect.append(optgroup)
 	}
-	// ◀ ▶ walk the types in picker order (commonness within each group).
-	withStepper(typeSelect)
 	typeSelect.addEventListener('change', () => {
 		type = CHORD_TYPES.find((t) => t.symbol === typeSelect.value) ?? CHORD_TYPES[0]
 		renderLibrary()
@@ -216,7 +214,7 @@ export function createChordModes(root: HTMLElement): ChordModes {
 
 	function renderLibrary() {
 		const chord = spellChord(ROOTS[rootPc], type)
-		setPressed(rootButtons, (_, pc) => pc === rootPc)
+		rootSelect.value = String(rootPc)
 		typeSelect.value = type.symbol
 		const key = `${rootPc}|${type.symbol}`
 		if (key === builtFor) return
@@ -237,11 +235,23 @@ export function createChordModes(root: HTMLElement): ChordModes {
 		keysBlock.hidden = keys.length === 0
 		keysList.replaceChildren(
 			...keys.map((use) => {
-				const chip = document.createElement('li')
-				chip.className = 'key-chip'
-				chip.setAttribute('aria-label', `${use.numeral} in ${use.minor ? `${use.key.slice(0, -1)} minor` : `${use.key} major`}`)
-				chip.append(el('small', use.numeral), use.key)
-				return chip
+				// A key that opens that key's own chord (the tonic: G, Am…).
+				const item = document.createElement('li')
+				const button = document.createElement('button')
+				button.type = 'button'
+				button.className = 'key key-chip'
+				const keyName = use.minor ? `${use.key.slice(0, -1)} minor` : `${use.key} major`
+				button.setAttribute('aria-label', `${use.numeral} in ${keyName}. Show the ${keyName} chord`)
+				button.append(el('small', use.numeral), use.key)
+				button.addEventListener('click', () => {
+					const tonic = parseChordSymbol(use.key)
+					if (!tonic) return
+					rootPc = tonic.rootPc
+					type = tonic.type
+					renderLibrary()
+				})
+				item.append(button)
+				return item
 			})
 		)
 		buildVoicings(chord.symbol)

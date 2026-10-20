@@ -50,8 +50,8 @@ test.describe('chords', () => {
 	})
 	test('library seventh', async ({ page, open }) => {
 		await open('#chords', { chordsMode: 'library' })
-		await page.locator('.chord-root', { hasText: /^G$/ }).click()
-		// The native select stays as the value behind the dropdown (ts/ui/dropdown.ts).
+		// The native selects stay as the values behind the dropdowns (ts/ui/dropdown.ts).
+		await page.locator('select.chord-root-select').selectOption('7', { force: true })
 		await page.locator('select.chord-type').selectOption('7', { force: true })
 		await scrollThrough(page)
 		await shot(page, 'chords-library-g7', { fullPage: true })

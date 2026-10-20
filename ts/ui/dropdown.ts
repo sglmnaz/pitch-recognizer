@@ -90,6 +90,9 @@ export function dropdown(select: HTMLSelectElement) {
 			row.setAttribute('aria-selected', String(option.selected))
 			if (option.disabled) row.setAttribute('aria-disabled', 'true')
 			row.textContent = option.textContent
+			// A spoken form where the printed one reads badly ("C#/Db").
+			const spoken = option.getAttribute('aria-label')
+			if (spoken) row.setAttribute('aria-label', spoken)
 			rows.push(row)
 		}
 		list.replaceChildren(...rows)
