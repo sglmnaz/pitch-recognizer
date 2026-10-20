@@ -6,6 +6,7 @@
  */
 .select {
 	appearance: none;
+	/* The height of the keys beside it; thumb-sized on phones (below). */
 	height: 36px;
 	min-width: 0;
 	padding: 0 26px 0 var(--space-10);
@@ -47,6 +48,15 @@
 	height: 32px;
 }
 
+/* Phones: every select is thumb-sized, so one beside a stepper or a key never
+   looks squashed. */
+@media (max-width: 600px) {
+	.select,
+	.select--small {
+		height: var(--tap);
+	}
+}
+
 /* A select between ◀ ▶ stepper keys (ts/ui/stepper.ts). */
 .stepper {
 	display: flex;
@@ -66,15 +76,11 @@
 		font-size: var(--text-xs);
 	}
 
-	/* Phones: thumb-sized keys and window. */
+	/* Phones: thumb-sized keys, like the window (above). */
 	@media (max-width: 600px) {
-		& > .select,
-		& > .key {
-			height: var(--tap);
-		}
-
 		& > .key {
 			width: var(--tap);
+			height: var(--tap);
 		}
 	}
 }

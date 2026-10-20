@@ -211,7 +211,6 @@
 
 @media (max-width: 600px) {
 	.view--settings .input,
-	.view--settings .select,
 	.view--settings .segmented button {
 		height: var(--tap);
 	}
