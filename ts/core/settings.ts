@@ -294,6 +294,11 @@ export function update(patch: Partial<Settings>) {
 	listeners.forEach((fn) => fn())
 }
 
+/** Puts the given settings back to their defaults (a Settings section's Reset). */
+export function reset(keys: (keyof Settings)[]) {
+	update(Object.fromEntries(keys.map((key) => [key, structuredClone(defaults[key])])) as Partial<Settings>)
+}
+
 export function subscribe(fn: () => void): () => void {
 	listeners.add(fn)
 	return () => listeners.delete(fn)

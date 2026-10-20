@@ -245,6 +245,19 @@ test.describe('behaviour', () => {
 		expect(await read()).toEqual({ token: 'rgb(255, 0, 0)', button: 'rgb(255, 0, 0)', board: 'rgb(0, 0, 255)', boardBg: 'rgb(0, 0, 255)' })
 	})
 
+	// Each section's Reset (two taps) puts what it shows back to the defaults.
+	test('a section resets to its defaults', async ({ page, open }) => {
+		await open('#settings', { leftHanded: true })
+		const group = page.locator('[data-group="fretboard"]')
+		await expect(group.locator('[data-setting="leftHanded"]')).toBeChecked()
+		const reset = group.locator('.settings-group__reset')
+		await reset.click()
+		await expect(reset).toHaveText('Sure?')
+		await reset.click()
+		await expect(group.locator('[data-setting="leftHanded"]')).not.toBeChecked()
+		expect(await page.evaluate(() => JSON.parse(localStorage.getItem('pitch-recognizer:settings')!).leftHanded)).toBe(false)
+	})
+
 	// The display colour is its own axis: it recolours LCDs only, and sticks.
 	test('the display colour is independent of the theme', async ({ page, open }) => {
 		await open('#settings')

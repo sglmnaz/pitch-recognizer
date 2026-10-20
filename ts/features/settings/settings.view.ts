@@ -50,6 +50,53 @@ export function createSettingsView(root: HTMLElement, from: () => string | null)
 		})
 	}
 
+	// A Reset key on each section's band: back to the defaults of what that
+	// section shows (read from its controls, so a new control is covered by
+	// itself). Two taps: the first arms it ("Sure?") for a few seconds.
+	for (const group of root.querySelectorAll<HTMLElement>('.settings-group[data-group]')) {
+		const keys = new Set<keyof Settings.Settings>()
+		for (const el of group.querySelectorAll<HTMLElement>('[data-setting], [data-chips]')) keys.add((el.dataset.setting ?? el.dataset.chips) as keyof Settings.Settings)
+		for (const el of group.querySelectorAll<HTMLElement>('[data-set]')) keys.add(el.dataset.set!.split(':')[0] as keyof Settings.Settings)
+		if (group.querySelector('#noteChips')) keys.add('disabledNotes')
+		const appearance = group.dataset.group === 'appearance'
+		if (!keys.size && !appearance) continue
+
+		const button = document.createElement('button')
+		button.type = 'button'
+		button.className = 'link-btn settings-group__reset'
+		const title = group.querySelector('.settings-group__title')?.textContent ?? 'section'
+		const idle = () => {
+			button.textContent = 'Reset'
+			button.setAttribute('aria-label', `Reset ${title} to the defaults`)
+			button.classList.remove('is-armed')
+		}
+		let armed = 0
+		button.addEventListener('click', () => {
+			if (!armed) {
+				button.textContent = 'Sure?'
+				button.setAttribute('aria-label', `Tap again to reset ${title}`)
+				button.classList.add('is-armed')
+				armed = window.setTimeout(() => {
+					armed = 0
+					idle()
+				}, 3000)
+				return
+			}
+			clearTimeout(armed)
+			armed = 0
+			idle()
+			if (appearance) {
+				Theme.setTheme('system')
+				Theme.setDisplay('auto')
+				themeSelect.value = Theme.getTheme()
+				displaySelect.value = Theme.getDisplay()
+			}
+			Settings.reset([...keys])
+		})
+		idle()
+		group.querySelector('.settings-group__title')?.after(button)
+	}
+
 	root.querySelector('[data-notes="all"]')!.addEventListener('click', () => Settings.enableAllNotes())
 	root.querySelector('[data-notes="none"]')!.addEventListener('click', () => Settings.disableAllNotes())
 

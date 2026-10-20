@@ -49,6 +49,26 @@
 	}
 }
 
+/* Reset sits at the right end of the band; the rule stops short of it. */
+.settings-group {
+	position: relative;
+
+	&:has(> .settings-group__reset) > .settings-group__title {
+		padding-right: 76px;
+	}
+}
+
+.settings-group__reset {
+	position: absolute;
+	top: -6px;
+	right: 0;
+	min-width: 64px;
+
+	&.is-armed {
+		color: var(--lamp-on);
+	}
+}
+
 .settings-group__desc {
 	margin: 0;
 	font-family: var(--font-text);
