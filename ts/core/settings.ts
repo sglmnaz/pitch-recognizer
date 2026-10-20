@@ -61,7 +61,7 @@ export interface Settings {
 	metroAccents: number[]
 	/** Clicks per beat: 1 none, 2 eighths, 3 triplets, 4 sixteenths. */
 	metroSubdivision: number
-	metroSound: 'click' | 'wood' | 'beep'
+	metroSound: 'click' | 'wood' | 'beep' | 'cowbell'
 	/** 0–1. */
 	metroVolume: number
 	/** Flash the screen on beat 1. */
@@ -244,7 +244,7 @@ export function load(): Settings {
 		// Always 12 slots of 0 / 1 / 2; a missing or broken slot takes the default's.
 		metroAccents: d.metroAccents.map((fallback, i) => oneOf(accents[i], [fallback, 0, 1, 2])),
 		metroSubdivision: clamp(s.metroSubdivision, 1, 4, d.metroSubdivision, true),
-		metroSound: oneOf(s.metroSound, ['click', 'wood', 'beep']),
+		metroSound: oneOf(s.metroSound, ['click', 'wood', 'beep', 'cowbell']),
 		metroVolume: clamp(s.metroVolume, 0, 1, d.metroVolume),
 		metroFlash: bool(s.metroFlash, d.metroFlash),
 		metroTrainerOn: bool(s.metroTrainerOn, d.metroTrainerOn),

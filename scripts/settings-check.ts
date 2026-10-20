@@ -35,7 +35,7 @@ const corrupt = loadFrom({
 	metroBeats: 0,
 	metroUnit: 16,
 	metroSubdivision: 2.6,
-	metroSound: 'cowbell',
+	metroSound: 'gong',
 	metroVolume: Number.NaN,
 	metroAccents: [5, 0, 'x', 2],
 	scaleDegrees: [3, 3, 9, 'b', 1],

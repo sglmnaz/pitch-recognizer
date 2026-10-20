@@ -9,7 +9,7 @@
 // before the lookahead runs dry. Nothing is ever started from a timer callback.
 
 export type Accent = 0 | 1 | 2 // mute, normal, accent
-export type Sound = 'click' | 'wood' | 'beep'
+export type Sound = 'click' | 'wood' | 'beep' | 'cowbell'
 
 export interface Config {
 	/** Beats per bar. */
@@ -74,11 +74,15 @@ interface Voice {
 	attack: number
 	decay: number
 	gain: number
+	/** A second oscillator this many times higher: two clashing square waves
+	 * are the drum machine's cowbell (TR-808: 540 and 800 Hz). */
+	ratio?: number
 }
 const VOICES: Record<Sound, Voice> = {
 	click: { type: 'square', hz: [1200, 1800], drop: 1, attack: 0.001, decay: 0.025, gain: 0.5 },
 	wood: { type: 'triangle', hz: [650, 950], drop: 2, attack: 0.001, decay: 0.07, gain: 1 },
 	beep: { type: 'sine', hz: [880, 1320], drop: 1, attack: 0.004, decay: 0.11, gain: 0.9 },
+	cowbell: { type: 'square', hz: [540, 720], drop: 1, attack: 0.001, decay: 0.14, gain: 0.25, ratio: 1.48 },
 }
 
 const config: Config = {
@@ -225,17 +229,20 @@ function click(time: number, accented: boolean, level: number) {
 	if (!ctx || !bus) return
 	const voice = VOICES[config.sound]
 	const hz = voice.hz[accented ? 1 : 0]
-	const osc = ctx.createOscillator()
 	const gain = ctx.createGain()
-	osc.type = voice.type
-	osc.frequency.setValueAtTime(hz * voice.drop, time)
-	if (voice.drop !== 1) osc.frequency.exponentialRampToValueAtTime(hz, time + 0.015)
 	gain.gain.setValueAtTime(0.0001, time)
 	gain.gain.linearRampToValueAtTime(level * voice.gain, time + voice.attack)
 	gain.gain.exponentialRampToValueAtTime(0.0001, time + voice.attack + voice.decay)
-	osc.connect(gain).connect(bus)
-	osc.start(time)
-	osc.stop(time + voice.attack + voice.decay + 0.02)
+	gain.connect(bus)
+	for (const f of voice.ratio ? [hz, hz * voice.ratio] : [hz]) {
+		const osc = ctx.createOscillator()
+		osc.type = voice.type
+		osc.frequency.setValueAtTime(f * voice.drop, time)
+		if (voice.drop !== 1) osc.frequency.exponentialRampToValueAtTime(f, time + 0.015)
+		osc.connect(gain)
+		osc.start(time)
+		osc.stop(time + voice.attack + voice.decay + 0.02)
+	}
 }
 
 /* Events: fired when the click is heard, not when it is scheduled ----------- */

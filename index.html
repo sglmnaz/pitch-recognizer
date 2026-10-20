@@ -566,15 +566,13 @@
 				</div>
 			</div>
 
-			<!-- Start latches (lamp lit, key down) while it runs. -->
+			<!-- Start latches (key down) while it runs. -->
 			<div class="metro-actions">
-				<div class="has-lamps">
-					<button class="key key--hot metro-start" type="button" data-action="start" aria-pressed="false">
-						<svg class="metro-start__play" viewBox="0 0 12 14" aria-hidden="true"><path d="M1 1 11 7 1 13Z" fill="currentColor" /></svg>
-						<svg class="metro-start__stop" viewBox="0 0 12 12" aria-hidden="true"><rect x="1" y="1" width="10" height="10" fill="currentColor" /></svg>
-						<span class="metro-start__label">Start</span>
-					</button>
-				</div>
+				<button class="key key--hot metro-start" type="button" data-action="start" aria-pressed="false">
+					<svg class="metro-start__play" viewBox="0 0 12 14" aria-hidden="true"><path d="M1 1 11 7 1 13Z" fill="currentColor" /></svg>
+					<svg class="metro-start__stop" viewBox="0 0 12 12" aria-hidden="true"><rect x="1" y="1" width="10" height="10" fill="currentColor" /></svg>
+					<span class="metro-start__label">Start</span>
+				</button>
 				<button class="key metro-tap" type="button" data-action="tap">Tap</button>
 			</div>
 
@@ -592,7 +590,7 @@
 				</div>
 				<div class="metro-row">
 					<span class="switch__title">Beat note</span>
-					<div class="segmented has-lamps metro-unit" role="group" aria-label="Beat note">
+					<div class="segmented metro-unit" role="group" aria-label="Beat note">
 						<button type="button" data-unit="4"><span class="metro-glyph" aria-hidden="true">♩</span>4</button>
 						<button type="button" data-unit="8"><span class="metro-glyph" aria-hidden="true">♪</span>8</button>
 					</div>
@@ -617,6 +615,7 @@
 							<button class="rotary__pos" type="button" role="radio" data-value="click"><span class="lamp"></span>Click</button>
 							<button class="rotary__pos" type="button" role="radio" data-value="wood"><span class="lamp"></span>Wood</button>
 							<button class="rotary__pos" type="button" role="radio" data-value="beep"><span class="lamp"></span>Beep</button>
+							<button class="rotary__pos" type="button" role="radio" data-value="cowbell"><span class="lamp"></span>Bell</button>
 							<span class="rotary__knob" aria-hidden="true"></span>
 						</div>
 					</div>
@@ -1071,6 +1070,7 @@
 								<option value="click">Click</option>
 								<option value="wood">Wood block</option>
 								<option value="beep">Beep</option>
+								<option value="cowbell">Bell</option>
 							</select>
 						</label>
 						<label class="switch">

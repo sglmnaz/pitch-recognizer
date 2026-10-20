@@ -100,10 +100,11 @@ input.metro-bpm__value {
 }
 
 /* Beat pads ------------------------------------------------------------- */
-/* One rubber pad per beat, like a drum machine's step keys, with a small
-   display: two bars = accent, one = normal, none = muted. The beat playing
-   gets a red ring and its display lights up. --per-row (set from the view)
-   shares a row evenly; each pad keeps at least 44 px (MIN_BEAT in the view). */
+/* One small display per beat, straight on the plate: two bars = accent, one =
+   normal, none = muted. The beat playing gets a red ring round its display
+   and its bars light up. The pad around it is only the hit area: --per-row
+   (set from the view) shares a row evenly; each keeps at least 44 px
+   (MIN_BEAT in the view). */
 .metro-beats {
 	--gap: 8px;
 	--size: min(60px, calc((100% - (var(--per-row, 4) - 1) * var(--gap)) / var(--per-row, 4)));
@@ -136,15 +137,7 @@ input.metro-bpm__value {
 	display: grid;
 	place-items: center;
 	width: 100%;
-	aspect-ratio: 1;
-	min-height: var(--tap);
-	border-radius: 7px;
-	background: var(--rocker-up);
-	box-shadow:
-		0 0 0 var(--outline-width) var(--outline),
-		inset 0 -4px 0 var(--rocker-down),
-		inset 0 2px 0 color-mix(in srgb, var(--rocker-up) 80%, #fff),
-		var(--key-drop);
+	height: var(--tap);
 }
 
 .metro-beat__display {
@@ -153,11 +146,13 @@ input.metro-bpm__value {
 	justify-content: center;
 	align-items: center;
 	gap: 4px;
-	width: 68%;
-	height: 46%;
+	width: 88%;
+	height: 30px;
 	border-radius: var(--radius-sm);
 	background: var(--lcd-bg);
-	box-shadow: inset 0 2px 3px rgba(0, 0, 0, 0.6);
+	box-shadow:
+		inset 0 2px 3px rgba(0, 0, 0, 0.6),
+		0 0 0 var(--outline-width) var(--outline);
 
 	& i {
 		width: 70%;
@@ -177,19 +172,15 @@ input.metro-bpm__value {
 	opacity: 0.5;
 }
 
-/* The beat playing: a red ring round the pad, its lit bars brighter (the unlit
-   ones stay dark, so the beat's state still reads). No press effect: the
-   display already answers a tap. */
-.metro-beat.is-now {
-	& .metro-beat__pad {
-		box-shadow:
-			0 0 0 var(--outline-width) var(--outline),
-			inset 0 -4px 0 var(--rocker-down),
-			inset 0 2px 0 color-mix(in srgb, var(--rocker-up) 80%, #fff),
-			0 0 0 4px var(--lamp-on),
-			0 0 16px 3px var(--lamp-glow);
-	}
-
+/* The beat playing: a red ring round the display, its lit bars brighter (the
+   unlit ones stay dark, so the beat's state still reads). No press effect:
+   the display already answers a tap. */
+.metro-beat.is-now .metro-beat__display {
+	box-shadow:
+		inset 0 2px 3px rgba(0, 0, 0, 0.6),
+		0 0 0 var(--outline-width) var(--outline),
+		0 0 0 4px var(--lamp-on),
+		0 0 14px 3px var(--lamp-glow);
 }
 
 .metro-beat.is-now[data-accent='2'] .metro-beat__display i,
