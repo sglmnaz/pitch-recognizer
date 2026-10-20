@@ -38,7 +38,7 @@ export function createTunerView(root: HTMLElement): View {
 	tuningSelect.add(new Option('Chromatic', CHROMATIC))
 	TUNINGS.forEach((tuning) => tuningSelect.add(new Option(tuning.name, tuning.id)))
 	// The LCD selector: ◀ ▶ step through the tunings, a tap on it opens the list.
-	withStepper(tuningSelect).classList.add('tuner-stepper')
+	withStepper(tuningSelect)
 	tuningSelect.addEventListener('change', () =>
 		Settings.update(tuningSelect.value === CHROMATIC ? { tunerMode: 'chromatic' } : { tuning: tuningById(tuningSelect.value).id, tunerMode: 'guitar' })
 	)
