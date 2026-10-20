@@ -45,13 +45,14 @@ function noise(at: number, dur: number, type: BiquadFilterType, frequency: numbe
 	source.stop(at + dur + 0.01)
 }
 
-// The approved sounds (chosen by ear from docs/design mockups). `v` = volume,
+// The approved sounds, chosen by ear: key K5, latch L6, rocker R1, detent D1. `v` = volume,
 // `on` = going down / switching on.
 const SOUNDS: Record<Kind, (at: number, v: number, on: boolean) => void> = {
 	key: (at, v) => noise(at, 0.007, 'bandpass', 3600, 3, 0.45 * v),
+	// A click, then the latch catching with a small metallic ring.
 	latch: (at, v, on) => {
-		noise(at, 0.005, 'bandpass', 3400, 3, 0.55 * v)
-		noise(at + (on ? 0.018 : 0.011), 0.005, 'bandpass', on ? 2600 : 3800, 3, 0.45 * v)
+		noise(at, 0.006, 'bandpass', 3000, 3, 0.55 * v)
+		noise(at + (on ? 0.022 : 0.014), 0.008, 'bandpass', on ? 4600 : 5200, 8, 0.4 * v)
 	},
 	rocker: (at, v, on) => {
 		noise(at, 0.01, 'bandpass', on ? 3200 : 2600, 5, 0.9 * v)
