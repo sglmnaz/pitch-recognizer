@@ -1103,6 +1103,14 @@
 				<h2 class="settings-group__title">Help</h2>
 				<div class="panel settings-card">
 					<div class="settings__section">
+						<!-- Fetches the newest version, then restarts (settings.view.ts). -->
+						<button class="switch help-row" type="button" data-action="reload-app">
+							<span class="switch__text">
+								<span class="switch__title">Update and reload</span>
+								<span class="switch__desc">Gets the newest version and restarts the app. It also updates by itself when you next open it.</span>
+							</span>
+							<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.3-5.6"/><path d="M20 4v5h-5"/></svg>
+						</button>
 						<button class="switch help-row" type="button" data-help="settings" aria-haspopup="dialog">
 							<span class="switch__text">
 								<span class="switch__title">Guide</span>

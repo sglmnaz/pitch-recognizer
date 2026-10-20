@@ -4,6 +4,9 @@
 
 html {
 	-webkit-text-size-adjust: 100%;
+	/* No pull-to-refresh: a drag down at the top of a page is a scroll that
+	   ends, not a reload. Settings → Help → Update and reload does that. */
+	overscroll-behavior-y: contain;
 }
 
 body {

@@ -164,6 +164,23 @@ export function createSettingsView(root: HTMLElement, from: () => string | null)
 					: 'The browser refused it'
 	})
 
+	// Update and reload: ask the service worker for a new version first. The PWA
+	// auto-updates (skipWaiting + clientsClaim), so a new worker takes over by
+	// itself; reload once it has (or after 5 s), else straight away.
+	root.querySelector('[data-action="reload-app"]')!.addEventListener('click', async () => {
+		const registration = await navigator.serviceWorker?.getRegistration()
+		if (registration) {
+			await registration.update().catch(() => {})
+			if (registration.installing || registration.waiting) {
+				await new Promise((resolve) => {
+					navigator.serviceWorker.addEventListener('controllerchange', resolve, { once: true })
+					setTimeout(resolve, 5000)
+				})
+			}
+		}
+		location.reload()
+	})
+
 	root.querySelector('[data-notes="all"]')!.addEventListener('click', () => Settings.enableAllNotes())
 	root.querySelector('[data-notes="none"]')!.addEventListener('click', () => Settings.disableAllNotes())
 
