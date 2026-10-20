@@ -151,7 +151,7 @@
 			flex: none;
 			width: var(--lamp-w);
 			height: var(--lamp-h);
-			border-radius: 1px;
+			border-radius: var(--lamp-radius);
 			background: var(--lamp-on);
 			box-shadow:
 				0 0 0 var(--outline-width) var(--outline),

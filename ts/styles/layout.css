@@ -69,6 +69,7 @@
 		padding: var(--space-8) var(--space-4) calc(var(--space-6) + env(safe-area-inset-bottom));
 		border-bottom: 0;
 		border-top: 1.5px solid var(--rule-strong);
+		border-image: var(--tabbar-edge-image);
 		background: var(--panel-grain) var(--panel);
 	}
 }
@@ -103,7 +104,7 @@
 		width: 12px;
 		height: 4px;
 		margin-left: -6px;
-		border-radius: 1px;
+		border-radius: var(--lamp-radius);
 		background: var(--lamp-off);
 		box-shadow: var(--lamp-ring);
 	}

@@ -45,6 +45,14 @@
 	font-display: swap;
 }
 
+/* Script lettering for a theme's brand (Tweed), loaded only where used. */
+@font-face {
+	font-family: 'Yellowtail';
+	src: url('./fonts/Yellowtail-400.woff2') format('woff2');
+	font-weight: 400;
+	font-display: swap;
+}
+
 @font-face {
 	font-family: 'Geist';
 	src: url('./fonts/Geist-Variable.woff2') format('woff2');
@@ -116,6 +124,27 @@
 	/* Lamps: the small rectangular indicator above (or on) a control. */
 	--lamp-w: 13px;
 	--lamp-h: 5px;
+	--lamp-radius: 1px;
+
+	/* Character a theme can add (defaults: none of it):
+	   the brand lettering on the plate, */
+	--brand-font: var(--font-ui);
+	--brand-size: var(--text-3xl);
+	--brand-spacing: 0.22em;
+	--brand-transform: uppercase;
+	--brand-paint: none;
+	--brand-ink: var(--plate-ink);
+	--brand-shadow: 0 1px 0 var(--plate-shine);
+	/* a coloured head on every key (per view: --key-head), */
+	--key-head: transparent;
+	--key-head-h: 0px;
+	/* switch rows on a strip of their own, */
+	--row-bg: none;
+	--row-pad: var(--space-8) 0;
+	--row-radius: 0;
+	/* a striped edge under the plate and over the tab bar (border-image). */
+	--plate-edge-image: none;
+	--tabbar-edge-image: none;
 }
 
 @media (max-width: 600px) {
@@ -838,6 +867,160 @@
 	--board: #2e2522;
 	--board-inlay: #45393a;
 	--dial-face: #241a18;
+}
+
+/* Tweed: a fifties amp. Tweed cloth panel, oxblood grille-cloth plate with the
+   brand in chrome script, cream keys, round jewel lamps, switch rows on strips
+   of dark leather, warm amber LCD. Light only. */
+[data-theme='tweed'],
+[data-theme='tweed'] [data-mode='light'] {
+	--panel: #cfb176;
+	--panel-grain: repeating-linear-gradient(45deg, rgba(90, 60, 20, 0.16) 0 3px, transparent 3px 8px), repeating-linear-gradient(-45deg, rgba(60, 40, 10, 0.12) 0 3px, transparent 3px 9px);
+	--panel-sunk: #c2a468;
+	--panel-raised: #d8bc84;
+	--ink: #2a1808;
+	--ink-2: #3e2812;
+	--ink-3: #5e4426;
+	--ink-4: #6e5432;
+	--rule: rgba(42, 24, 8, 0.25);
+	--rule-strong: rgba(42, 24, 8, 0.8);
+	--outline: #2a1808;
+	--hole: #2a1808;
+	--plate: repeating-linear-gradient(90deg, rgba(0, 0, 0, 0.35) 0 1px, transparent 1px 3px), repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.14) 0 1px, transparent 1px 3px), linear-gradient(#6a3324, #4a2016);
+	--plate-edge: #e2cc96;
+	--plate-ink: #f3dfb4;
+	--plate-ink-2: #d9bf8c;
+	--plate-shine: rgba(255, 255, 255, 0.12);
+	--brand-font: 'Yellowtail', cursive;
+	--brand-size: 34px;
+	--brand-spacing: 0;
+	--brand-transform: none;
+	--brand-paint: linear-gradient(180deg, #ffffff, #b8bcc0 45%, #f4f6f8 55%, #8a8f94);
+	/* The paint shows through transparent letters; a shadow would show through too. */
+	--brand-ink: transparent;
+	--brand-shadow: none;
+	--key-face: #f6ecd4;
+	--key-hi: #fffaea;
+	--key-side: #e0d0aa;
+	--key-front: #a88f60;
+	--key-ink: #3a2410;
+	--key3-face: #7a1a10;
+	--key3-hi: #a8402e;
+	--key3-side: #601008;
+	--key3-front: #360804;
+	--key3-ink: #f6ecd4;
+	--lamp-w: 10px;
+	--lamp-h: 10px;
+	--lamp-radius: 50%;
+	--lamp-off: #5a160e;
+	--lamp-on: #ff3a2a;
+	--lamp-glow: rgba(255, 58, 42, 0.6);
+	--window: #1e120a;
+	--lcd-bg: #1a0f05;
+	--lcd-ink: #ffb347;
+	--lcd-dim: rgba(255, 179, 71, 0.12);
+	--lcd-glow: 0 0 9px rgba(255, 170, 60, 0.65);
+	--lcd-shadow: inset 0 4px 8px -3px rgba(0, 0, 0, 0.9);
+	--rocker-plate: #1e120a;
+	--rocker-up: #f3e6c8;
+	--rocker-down: #a88f60;
+	--rocker-ink: #5e4426;
+	--track: #2a1808;
+	--row-bg: repeating-radial-gradient(circle at 3px 3px, rgba(255, 255, 255, 0.04) 0 1px, transparent 1px 4px), #2a1810;
+	--row-pad: var(--space-8) var(--space-12);
+	--row-radius: var(--radius-lg);
+	--menu-bg: #2a1810;
+	--menu-ink: #f3e2c4;
+	--menu-ink-2: #c9a978;
+	--menu-rule: #4a2c18;
+	--accent: #9a1c10;
+	--board: #f0e2c0;
+	--dial-face: #f6ecd4;
+}
+
+/* Rows on leather read in cream. */
+[data-theme='tweed'] .switch {
+	--fg: #f3e2c4;
+	--fg-muted: #c9a978;
+}
+
+/* Juno: an eighties synth. Anthracite panel, light grey keys with a thin
+   coloured head per section, the four-colour stripe under the plate and over
+   the tab bar, red LEDs. Dark only. */
+[data-theme='juno'],
+[data-theme='juno'] [data-mode='dark'] {
+	color-scheme: dark;
+
+	--panel: #202020;
+	--panel-sunk: #1a1a1a;
+	--panel-raised: #262626;
+	--ink: #e8e8e8;
+	--ink-2: #c8c8c8;
+	--ink-3: #9a9a9a;
+	--ink-4: #7a7a7a;
+	--rule-strong: #000000;
+	--outline: #000000;
+	--hole: #000000;
+	--plate: linear-gradient(180deg, #2c2c2c, #1c1c1c);
+	--plate-edge: #000000;
+	--plate-ink: #f2f2f2;
+	--plate-ink-2: #a8a8a8;
+	--plate-shine: rgba(255, 255, 255, 0.05);
+	--plate-edge-image: linear-gradient(90deg, #e8412c 0 25%, #f28c28 25% 50%, #f6c32b 50% 75%, #3fa7d6 75%) 1;
+	--tabbar-edge-image: linear-gradient(90deg, #e8412c 0 25%, #f28c28 25% 50%, #f6c32b 50% 75%, #3fa7d6 75%) 1;
+	--key-face: #c9c6be;
+	--key-hi: #e6e3dc;
+	--key-side: #b0ada6;
+	--key-front: #6e6b65;
+	--key-ink: #151515;
+	--key-lip: rgba(0, 0, 0, 0.25);
+	--key-down: 90%;
+	--key-head-h: 4px;
+	--key2-face: #8f8c86;
+	--key2-hi: #aaa7a0;
+	--key2-side: #7c7974;
+	--key2-front: #45433f;
+	--key2-ink: #151515;
+	--key3-face: #e8412c;
+	--key3-hi: #ff7a62;
+	--key3-side: #c8301e;
+	--key3-front: #8a1a0c;
+	--key3-ink: #ffffff;
+	--window: #000000;
+	--lcd-bg: #140404;
+	--lcd-ink: #ff3b2f;
+	--lcd-dim: rgba(255, 59, 47, 0.12);
+	--lcd-glow: 0 0 9px rgba(255, 50, 40, 0.7);
+	--rocker-plate: #000000;
+	--rocker-up: #4a4a4a;
+	--rocker-down: #1e1e1e;
+	--track: #000000;
+	--menu-bg: #141414;
+	--menu-ink: #e8e8e8;
+	--menu-ink-2: #7a7a7a;
+	--menu-rule: #2c2c2c;
+	--board: #2a2a2a;
+	--board-inlay: #3a3a3a;
+	--dial-face: #1c1c1c;
+}
+
+/* Each section's keys wear one colour of the stripe. */
+[data-theme='juno'] {
+	& #view-tuner {
+		--key-head: #e8412c;
+	}
+
+	& #view-chords {
+		--key-head: #f28c28;
+	}
+
+	& #view-scales {
+		--key-head: #f6c32b;
+	}
+
+	& :is(#view-trainer, #view-metronome, #view-settings) {
+		--key-head: #3fa7d6;
+	}
 }
 
 /* Tier 3: display ------------------------------------------------------------ */

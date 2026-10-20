@@ -272,7 +272,7 @@
 		grid-area: lamp;
 		width: var(--lamp-w);
 		height: var(--lamp-h);
-		border-radius: 1px;
+		border-radius: var(--lamp-radius);
 		background: var(--lamp-off);
 		box-shadow: var(--lamp-ring);
 	}
