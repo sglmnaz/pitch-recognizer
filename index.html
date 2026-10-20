@@ -266,63 +266,88 @@
 		<!-- Chords ------------------------------------------------------- -->
 		<section class="view" id="view-chords" role="tabpanel" aria-labelledby="tab-chords" hidden>
 			<!-- Sub-views: Listen (the recognizer, ts/features/chords/chords.view.ts), Library and
-			     Identify (ts/features/chords/chord-library.view.ts). -->
-			<div class="view-top">
-				<div class="segmented has-lamps chords-modes" role="group" aria-label="Chords mode">
-					<button type="button" data-chords-mode="listen" aria-pressed="true">Listen</button>
-					<button type="button" data-chords-mode="library" aria-pressed="false">Library</button>
-					<button type="button" data-chords-mode="identify" aria-pressed="false">Identify</button>
-				</div>
-			</div>
-			<div class="panel readout">
-				<!-- A button: the recognized chord opens in the Library. -->
-				<button type="button" class="readout__note readout__idle chord-link" disabled aria-label="No chord recognized">--</button>
-				<div class="readout__sub">Strum a chord</div>
-				<!-- Live pitch-class profile; chord tones highlight. Filled by ts/features/chords/chords.view.ts. -->
-				<div class="chroma" aria-hidden="true"></div>
-			</div>
-			<p class="hint">Strum and let it ring. Recognizes major, minor, 7, m7, maj7, 9, sus2 and sus4 chords.</p>
-
-			<div class="chord-library" hidden>
-				<div class="chord-pick">
-					<div class="chord-roots" role="group" aria-label="Root"></div>
-					<select class="select chord-type" aria-label="Chord type"></select>
-				</div>
-				<div class="chord-info">
-					<h2 class="chord-info__symbol"></h2>
-					<p class="chord-info__name"></p>
-					<!-- Notes over their degrees, coloured like the dots. -->
-					<div class="chord-info__notes" role="list" aria-label="Notes"></div>
-					<div class="chord-keys">
-						<span class="panel__label">In keys</span>
-						<ul class="chord-keys__list"></ul>
+			     Identify (ts/features/chords/chord-library.view.ts). Each [data-chords-part] shows
+			     only in its own sub-view. -->
+			<div class="plate chords-plate">
+				<div class="plate__brand"><b>Pluck</b><span>Chord reader · CR-100</span></div>
+				<div class="view-top">
+					<div class="segmented has-lamps chords-modes" role="group" aria-label="Chords mode">
+						<button type="button" data-chords-mode="listen" aria-pressed="true">Listen</button>
+						<button type="button" data-chords-mode="library" aria-pressed="false">Library</button>
+						<button type="button" data-chords-mode="identify" aria-pressed="false">Identify</button>
 					</div>
 				</div>
+
+				<!-- Listen: the recognized chord, its notes and the live pitch-class profile. -->
+				<div class="window" data-chords-part="listen">
+					<div class="lcd chord-screen chord-reader">
+						<p class="chord-screen__head"><span>Chord</span><span class="chord-reader__name"></span></p>
+						<p class="lcd__big chord-screen__symbol chord-reader__symbol lcd__dim">--</p>
+						<p class="chord-reader__notes">Strum a chord</p>
+						<!-- Filled by ts/features/chords/chords.view.ts; chord tones light fully. -->
+						<div class="chroma" aria-hidden="true"></div>
+					</div>
+				</div>
+
+				<!-- Library: root keys, type selector and the chord on the display. -->
+				<div class="chord-pick" data-chords-part="library">
+					<div class="chord-roots has-lamps" role="group" aria-label="Root"></div>
+					<select class="select chord-type" aria-label="Chord type"></select>
+				</div>
+				<div class="window" data-chords-part="library">
+					<div class="lcd chord-screen chord-info">
+						<p class="chord-screen__head"><span>Chord</span><span class="chord-info__name"></span></p>
+						<h2 class="lcd__big chord-screen__symbol chord-info__symbol"></h2>
+						<!-- Notes over their degrees. -->
+						<div class="chord-info__notes" role="list" aria-label="Notes"></div>
+					</div>
+				</div>
+			</div>
+
+			<div class="chord-listen" data-chords-part="listen">
+				<div class="chord-open">
+					<p class="chord-open__text">
+						<span class="chord-open__title">Open in library</span>
+						<span class="chord-open__sub">Voicings, notes and keys of the chord you play</span>
+					</p>
+					<button class="key chord-open__key" type="button" aria-disabled="true" aria-label="Open in the Library (no chord yet)">
+						Open
+						<svg viewBox="0 0 16 14" aria-hidden="true"><path d="M1.5 7H13M8.5 2.5 13.5 7l-5 4.5" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="square" /></svg>
+					</button>
+				</div>
+				<hr class="rule" />
+				<!-- ts/ui/mic-block.ts puts the shared mic block right after the view's first .readout;
+				     the display lives on the plate, so this empty marker places the mic here. -->
+				<span class="readout" hidden></span>
+				<p class="hint">Strum all strings and let them ring. Recognizes major, minor, 7, m7, maj7, 9, sus2 and sus4 chords; single notes aren’t named.</p>
+			</div>
+
+			<div class="chord-library" data-chords-part="library">
+				<div class="chord-keys">
+					<span class="silk">In keys</span>
+					<ul class="chord-keys__list"></ul>
+				</div>
 				<div class="chord-voicings">
-					<ol class="voicings" aria-label="Voicings, tap one to hear it"></ol>
+					<ol class="voicings" aria-label="Voicings"></ol>
 					<p class="hint voicings__empty" hidden>No playable voicing within four frets.</p>
 				</div>
 			</div>
 
-			<div class="chord-identify" hidden>
+			<div class="chord-identify" data-chords-part="identify">
 				<div class="neck-card">
 					<div class="neck-board">
 						<svg class="neck" xmlns="http://www.w3.org/2000/svg"></svg>
 					</div>
 					<div class="neck-toolbar">
-						<span class="chord-shape" aria-label="Marked shape, low string first"></span>
-						<button class="btn btn--small" type="button" data-action="strum" title="Strum the marked shape">
-							<svg viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true">
-								<path d="M7 4v16l13-8z" />
-							</svg>
-							<span>Strum</span>
-						</button>
-						<button class="btn btn--small" type="button" data-action="clear-shape">Clear</button>
+						<span class="window chord-shape-window"><span class="lcd chord-shape"></span></span>
+						<button class="btn btn--small" type="button" data-action="strum" aria-label="Strum the marked shape">▶ <span>Strum</span></button>
+						<!-- Narrow phones keep only the glyphs (fretboard.css hides the spans). -->
+						<button class="btn btn--small" type="button" data-action="clear-shape" aria-label="Clear the shape">✕ <span>Clear</span></button>
 					</div>
 				</div>
 				<!-- Announces the best match; the list itself would read out in full on every tap. -->
 				<p class="sr-only chord-identify__status" aria-live="polite"></p>
-				<ol class="scale-results chord-results"></ol>
+				<ol class="chord-results" aria-label="Matching chords"></ol>
 			</div>
 			<button class="help-link" type="button" data-help="chords" aria-haspopup="dialog" aria-label="How to use the chords tab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.6 9.4a2.5 2.5 0 0 1 4.8.9c0 1.7-2.4 2.2-2.4 3.7"/><path d="M12 17.2h.01"/></svg></button>
 		</section>
@@ -1025,18 +1050,18 @@
 		<ul>
 			<li>Strum a chord on all its strings and let it ring: the name appears once it is steady.</li>
 			<li>Recognizes major, minor, 7, m7, maj7, 9, sus2 and sus4. Single notes are not named.</li>
-			<li>Tap the chord name to open it in the Library.</li>
+			<li><b>Open</b> shows the chord in the Library.</li>
 		</ul>
 		<h3>Library</h3>
 		<ul>
 			<li>Choose a root and a chord type to see its notes, degrees and the keys it belongs to (with the roman numeral).</li>
-			<li>Below are the easiest voicings: tap a diagram to hear it.</li>
+			<li>Below are the easiest voicings: <b>Strum</b> under a diagram plays it.</li>
 			<li>Dot labels (degrees, notes, fingers) and strum or arpeggio are in Settings → Chords.</li>
 		</ul>
 		<h3>Identify</h3>
 		<ul>
 			<li>Tap one fret per string on the neck; the column before the nut is the open string. Tap again to clear. Unmarked strings count as muted.</li>
-			<li>Matching chords update as you tap; tap a result to open it in the Library. Strum plays your shape.</li>
+			<li>Matching chords update as you tap, the lamps show how closely each fits; <b>Open</b> shows one in the Library. Strum plays your shape.</li>
 		</ul>
 	</template>
 

@@ -1,9 +1,11 @@
 import * as Microphone from '../../core/microphone'
 import * as Settings from '../../core/settings'
 import * as Sound from '../../core/sound'
+import { parseChordSymbol } from '../../music/chord-library'
 import { chordModelReady, loadChordModel, PITCH_CLASSES, resetChordTracking, trackChord, withSilenceReset } from '../../music/chords'
+import { scoped } from '../../ui/dom'
 import type { View } from '../../ui/view'
-import { createChordModes } from './chord-library.view'
+import { chordName, createChordModes } from './chord-library.view'
 
 // A new label (chord or "none") must win for this long before it is shown.
 // trackChord's HMM already keeps a strum's attack and decay from flickering
@@ -15,16 +17,28 @@ const CHORD_CONFIRM_MS = 150
 const SILENCE_RESET_MS = 300
 const tracker = withSilenceReset({ track: trackChord, reset: resetChordTracking }, SILENCE_RESET_MS)
 
+const OPEN_HINT = 'Voicings, notes and keys of the chord you play'
+
+/** 'C#m7' → 'C# minor 7th', the name the Library gives it. */
+function fullName(symbol: string) {
+	const type = parseChordSymbol(symbol)?.type
+	return type ? chordName(symbol.replace(/^([A-G][#b]?).*/, '$1'), type.name) : []
+}
+
 /** Only Listen uses the mic (the modes call micNeedChanged on a switch). */
 export function createChordsView(root: HTMLElement): View {
-	const name = root.querySelector<HTMLButtonElement>('.readout__note')!
-	const sub = root.querySelector<HTMLElement>('.readout__sub')!
-	const chromaRow = root.querySelector<HTMLElement>('.chroma')!
+	const { $ } = scoped(root)
+	const symbol = $('.chord-reader__symbol')
+	const name = $('.chord-reader__name')
+	const notesLine = $('.chord-reader__notes')
+	const openKey = $<HTMLButtonElement>('.chord-open__key')
+	const openHint = $('.chord-open__sub')
 	// Listen / Library / Identify switch; the shown chord opens in the Library.
 	const modes = createChordModes(root)
-	name.addEventListener('click', () => shown && modes.openChord(shown))
+	// aria-disabled, not disabled: the key keeps focus when the chord fades out.
+	openKey.addEventListener('click', () => shown && modes.openChord(shown))
 
-	const bins = PITCH_CLASSES.map((pitchClass) => {
+	const bars = PITCH_CLASSES.map((pitchClass) => {
 		const bin = document.createElement('div')
 		bin.className = 'chroma__bin'
 		const bar = document.createElement('span')
@@ -33,8 +47,8 @@ export function createChordsView(root: HTMLElement): View {
 		label.className = 'chroma__label'
 		label.textContent = pitchClass
 		bin.append(bar, label)
-		chromaRow.append(bin)
-		return { bin, bar }
+		$('.chroma').append(bin)
+		return bin
 	})
 
 	let shown: string | null = null
@@ -42,17 +56,19 @@ export function createChordsView(root: HTMLElement): View {
 	let candidateSince = 0
 
 	function render(label: string | null, notes: string[], idleText: string) {
-		name.textContent = label ?? '--'
-		name.classList.toggle('readout__idle', label === null)
-		// The chord is a button into the Library; nothing to open while idle.
-		name.disabled = label === null
-		name.setAttribute('aria-label', label ? `Open ${label} in the Library` : 'No chord recognized')
-		sub.textContent = label ? notes.join(' · ') : idleText
+		symbol.textContent = label ?? '--'
+		symbol.classList.toggle('lcd__dim', label === null)
+		name.replaceChildren(...(label ? fullName(label) : []))
+		notesLine.textContent = label ? notes.join(' · ') : idleText
+		openKey.setAttribute('aria-disabled', String(label === null))
+		openKey.setAttribute('aria-label', label ? `Open ${label} in the Library` : 'Open in the Library (no chord yet)')
+		openHint.textContent = label ? `Voicings, notes and keys for ${label}` : OPEN_HINT
 	}
 
+	// Each column lights from the bottom up to its level (chords.css clips the dot column).
 	function drawChroma(chroma: number[], tones: string[]) {
-		bins.forEach(({ bin, bar }, i) => {
-			bar.style.transform = `scaleY(${chroma[i]})`
+		bars.forEach((bin, i) => {
+			bin.style.setProperty('--level', String(chroma[i]))
 			bin.classList.toggle('chroma__bin--tone', tones.includes(PITCH_CLASSES[i]))
 		})
 	}
