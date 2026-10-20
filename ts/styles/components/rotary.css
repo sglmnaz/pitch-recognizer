@@ -55,8 +55,11 @@
 	height: var(--rotary-knob);
 	translate: -50% -50%;
 	border-radius: 50%;
-	/* Knurled rim in the grey key material, so the knob follows the theme. */
-	background: repeating-conic-gradient(var(--key2-front) 0 2.5deg, var(--key2-hi) 2.5deg 5deg);
+	/* Knurled rim in the grey key material, so the knob follows the theme. A
+	   theme can give it its own character with --knob-rim, --knob-cap,
+	   --knob-cap-inset, --knob-cap-ring, --knob-pointer and, for a pointer that
+	   is a shape (a chicken head), --knob-pointer-shape / --knob-pointer-shadow. */
+	background: var(--knob-rim, repeating-conic-gradient(var(--key2-front) 0 2.5deg, var(--key2-hi) 2.5deg 5deg));
 	box-shadow:
 		0 0 0 var(--outline-width) var(--outline),
 		var(--key-drop);
@@ -66,12 +69,10 @@
 	&::before {
 		content: '';
 		position: absolute;
-		inset: 8px;
+		inset: var(--knob-cap-inset, 8px);
 		border-radius: 50%;
-		background:
-			radial-gradient(circle at 35% 30%, var(--plate-shine), transparent 45%),
-			repeating-radial-gradient(circle, var(--key2-hi) 0 1px, var(--key2-face) 1px 2.2px);
-		box-shadow: 0 0 0 1px var(--key2-front);
+		background: var(--knob-cap, radial-gradient(circle at 35% 30%, var(--plate-shine), transparent 45%), repeating-radial-gradient(circle, var(--key2-hi) 0 1px, var(--key2-face) 1px 2.2px));
+		box-shadow: var(--knob-cap-ring, 0 0 0 1px var(--key2-front));
 	}
 
 	/* The pointer: only it turns, so the drop shadow and the light stay put. */
@@ -80,7 +81,9 @@
 		position: absolute;
 		inset: 0;
 		border-radius: 50%;
-		background: linear-gradient(var(--key2-ink), var(--key2-ink)) 50% 11px / 4px 30% no-repeat;
+		background: var(--knob-pointer, linear-gradient(var(--key2-ink), var(--key2-ink)) 50% 11px / 4px 30% no-repeat);
+		clip-path: var(--knob-pointer-shape, none);
+		filter: var(--knob-pointer-shadow, none);
 		rotate: var(--turn, 0deg);
 		/* A short turn with a slight overshoot, like a detent. */
 		transition: rotate 0.14s cubic-bezier(0.3, 1.4, 0.6, 1);

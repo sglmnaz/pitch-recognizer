@@ -297,7 +297,7 @@ test.describe('themes', () => {
 	const remember = (page: Page, key: string, value: string) =>
 		page.evaluate(([k, v]) => localStorage.setItem(k, v), [key, value] as const).then(() => page.reload())
 
-	for (const id of ['sand', 'studio', 'mint', 'graphite', 'petrol', 'walnut', 'olive', 'stage']) {
+	for (const id of ['sand', 'studio', 'mint', 'graphite', 'petrol', 'walnut', 'olive', 'stage', 'brit', 'copper', 'citrus', 'blackstar']) {
 		test(id, async ({ page, open }) => {
 			await open('#chords')
 			await remember(page, 'pitch-recognizer:mode', id)

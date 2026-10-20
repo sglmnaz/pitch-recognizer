@@ -816,6 +816,208 @@
 	--dial-face: #241a18;
 }
 
+/* Amp-inspired themes: the colours, a faint plate weave, the knobs and the key
+   corners of a classic guitar amp. */
+
+/* British stack: brushed gold plate (brushed across), black tolex panel, black
+   keys with gold legends, black top-hat knobs with a gold cap, red LEDs. Dark only. */
+[data-theme='brit'],
+[data-theme='brit'] [data-mode='dark'] {
+	color-scheme: dark;
+	--panel: #1b1a19;
+	--panel-sunk: #151413;
+	--panel-raised: #222120;
+	--ink: #e8dfc8;
+	--ink-2: #cfc4a8;
+	--ink-3: #a39780;
+	--ink-4: #85796a;
+	--plate: repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.14) 0 1px, rgba(0, 0, 0, 0.05) 1px 2px), linear-gradient(180deg, #d6b45e, #b8953c);
+	--plate-edge: #0e0d0c;
+	--plate-ink: #1c160a;
+	--plate-ink-2: #4a3a18;
+	--plate-shine: rgba(255, 245, 210, 0.45);
+	--key-face: #2b2927;
+	--key-hi: #46423e;
+	--key-side: #23211f;
+	--key-front: #0e0d0c;
+	--key-ink: #e2bf62;
+	--key2-face: #c9a346;
+	--key2-hi: #e6c875;
+	--key2-side: #a8862e;
+	--key2-front: #6e5616;
+	--key2-ink: #1c160a;
+	--key3-face: #c9a346;
+	--key3-hi: #e6c875;
+	--key3-side: #a8862e;
+	--key3-front: #6e5616;
+	--key3-ink: #1c160a;
+	--window: #070707;
+	--lcd-bg: #1a0605;
+	--lcd-ink: #ff4a3a;
+	--lcd-dim: rgba(255, 74, 58, 0.12);
+	--lcd-glow: 0 0 8px rgba(255, 60, 40, 0.65);
+	--rocker-up: #46423e;
+	--track: #070707;
+	--knob-rim: radial-gradient(circle at 40% 30%, #4a4642, #141312 60%, #050505);
+	--knob-cap: radial-gradient(circle at 35% 30%, #fff6d0, #dcb24c 45%, #8e6c1c);
+	--knob-cap-inset: 12px;
+	--knob-cap-ring: 0 0 0 1px #3a2a08, inset 0 -2px 2px rgba(0, 0, 0, 0.35);
+	--knob-pointer: linear-gradient(#f4efe2, #f4efe2) 50% 2px / 3px 10px no-repeat;
+}
+
+[data-theme='brit'] {
+	--key-radius: 2px;
+}
+
+/* Copper top: copper plate with a faint diamond weave, dark brown panel and
+   keys, ivory chicken-head knobs (the fin is the pointer), amber LCD. Dark only. */
+[data-theme='copper'],
+[data-theme='copper'] [data-mode='dark'] {
+	color-scheme: dark;
+	--panel: #1f1b18;
+	--panel-sunk: #191613;
+	--panel-raised: #26211d;
+	--ink: #efe2d0;
+	--ink-2: #d4c2aa;
+	--ink-3: #a8957e;
+	--ink-4: #8a7864;
+	--plate: repeating-linear-gradient(45deg, rgba(0, 0, 0, 0.09) 0 1px, transparent 1px 10px), repeating-linear-gradient(-45deg, rgba(0, 0, 0, 0.09) 0 1px, transparent 1px 10px), repeating-linear-gradient(0deg, rgba(255, 230, 200, 0.06) 0 1px, transparent 1px 2px), linear-gradient(180deg, #b97c4c, #985d35);
+	--plate-edge: #120e0b;
+	--plate-ink: #fff3e4;
+	--plate-ink-2: #f2d4b0;
+	--plate-shine: rgba(255, 220, 190, 0.25);
+	--key-face: #37312c;
+	--key-hi: #544b43;
+	--key-side: #2e2924;
+	--key-front: #120f0c;
+	--key-ink: #efe2d0;
+	--key2-face: #ece2cc;
+	--key2-hi: #fbf6ea;
+	--key2-side: #d6cab0;
+	--key2-front: #a6987a;
+	--key2-ink: #3a2a1a;
+	--key3-face: #c07a45;
+	--key3-hi: #e09e6c;
+	--key3-side: #a5622f;
+	--key3-front: #643718;
+	--key3-ink: #fff3e4;
+	--window: #0c0806;
+	--knob-rim: radial-gradient(circle at 40% 32%, #fffaf0, #e4d8be 58%, #b2a486);
+	--knob-cap: radial-gradient(circle at 40% 35%, #fffaf2, #eadfc7);
+	--knob-cap-inset: 26%;
+	--knob-cap-ring: 0 1px 2px rgba(0, 0, 0, 0.25);
+	--knob-pointer: linear-gradient(#3a2a1a, #3a2a1a) 50% 8% / 2px 34% no-repeat, linear-gradient(90deg, #c9bb9c, #fffaf0 45%, #fffaf0 55%, #c9bb9c);
+	--knob-pointer-shape: polygon(36% 52%, 46% 2%, 54% 2%, 64% 52%, 50% 64%);
+	--knob-pointer-shadow: drop-shadow(0 2px 1.5px rgba(0, 0, 0, 0.5));
+}
+
+[data-theme='copper'] {
+	--key-radius: 4px;
+}
+
+/* Citrus: orange panel, beige plate with a faint grille weave, white keys,
+   black Start and knobs (glossy, flat top, bold white line), black LCD with
+   white figures. Light only. */
+[data-theme='citrus'],
+[data-theme='citrus'] [data-mode='light'] {
+	--panel: #e2671f;
+	--panel-sunk: #d45d17;
+	--panel-raised: #e8702a;
+	--ink: #1c1209;
+	--ink-2: #2e1e0e;
+	--ink-3: #4e3216;
+	--ink-4: #5e3c1a;
+	--rule: rgba(28, 18, 9, 0.28);
+	--rule-strong: rgba(28, 18, 9, 0.8);
+	--outline: #1c1209;
+	--hole: #1c1209;
+	--plate: repeating-linear-gradient(0deg, rgba(90, 70, 40, 0.07) 0 1px, transparent 1px 3px), repeating-linear-gradient(90deg, rgba(90, 70, 40, 0.06) 0 1px, transparent 1px 3px), linear-gradient(180deg, #ebe2cd, #dcd0b6);
+	--plate-edge: #1c1209;
+	--plate-ink: #1c1209;
+	--plate-ink-2: #4e3a22;
+	--key-face: #f6f2ea;
+	--key-hi: #ffffff;
+	--key-side: #e2ddd2;
+	--key-front: #aaa498;
+	--key-ink: #1c1209;
+	--key2-face: #2a2623;
+	--key2-hi: #45403b;
+	--key2-side: #211e1b;
+	--key2-front: #0c0a09;
+	--key2-ink: #f6f2ea;
+	--key3-face: #2a2623;
+	--key3-hi: #45403b;
+	--key3-side: #211e1b;
+	--key3-front: #0c0a09;
+	--key3-ink: #f6f2ea;
+	--window: #1c1209;
+	--lcd-bg: #121212;
+	--lcd-ink: #f4f1ea;
+	--lcd-dim: rgba(244, 241, 234, 0.1);
+	--lcd-glow: 0 0 5px rgba(255, 255, 255, 0.3);
+	--lcd-shadow: inset 0 4px 8px -3px rgba(0, 0, 0, 0.9);
+	--rocker-plate: #1c1209;
+	--track: #1c1209;
+	--accent: #1c1209;
+	--knob-rim: radial-gradient(circle at 40% 30%, #3a3633, #121110 62%);
+	--knob-cap: radial-gradient(circle at 38% 30%, rgba(255, 255, 255, 0.22), transparent 45%), #1a1816;
+	--knob-cap-inset: 6px;
+	--knob-cap-ring: 0 0 0 1px #000000;
+	--knob-pointer: linear-gradient(#f6f2ea, #f6f2ea) 50% 6px / 4px 38% no-repeat;
+}
+
+/* Black star: pewter-edged graphite plate with a fine perforated mesh, matte
+   black panel, graphite keys with sharp corners, a silver Start, knurled black
+   knobs with a pewter ring and a red pointer, ice-white LCD. Dark only. */
+[data-theme='blackstar'],
+[data-theme='blackstar'] [data-mode='dark'] {
+	color-scheme: dark;
+	--panel: #151517;
+	--panel-sunk: #111113;
+	--panel-raised: #1b1b1e;
+	--ink: #d6d8dc;
+	--ink-2: #b7babf;
+	--ink-3: #8b8f95;
+	--ink-4: #6f737a;
+	--rule-strong: #050506;
+	--outline: #050506;
+	--hole: #050506;
+	--plate: radial-gradient(circle, rgba(0, 0, 0, 0.32) 1.1px, transparent 1.4px) 0 0 / 6px 5.2px, radial-gradient(circle, rgba(0, 0, 0, 0.32) 1.1px, transparent 1.4px) 3px 2.6px / 6px 5.2px, linear-gradient(180deg, #4a4c50, #35373b);
+	--plate-edge: #8a8d92;
+	--plate-ink: #eceef1;
+	--plate-ink-2: #a9adb3;
+	--key-face: #2c2d31;
+	--key-hi: #47494e;
+	--key-side: #242528;
+	--key-front: #0b0b0d;
+	--key-ink: #e8eaee;
+	--key2-face: #45474c;
+	--key2-hi: #63666c;
+	--key2-side: #3a3c40;
+	--key2-front: #1c1d20;
+	--key2-ink: #eceef1;
+	--key3-face: #b8bcc2;
+	--key3-hi: #e2e4e8;
+	--key3-side: #9a9da2;
+	--key3-front: #5a5d62;
+	--key3-ink: #151517;
+	--window: #050506;
+	--lcd-bg: #d6e2ea;
+	--lcd-ink: #0e1620;
+	--lcd-dim: rgba(14, 22, 32, 0.12);
+	--lcd-glow: none;
+	--lcd-shadow: inset 0 4px 6px -3px rgba(0, 0, 0, 0.45);
+	--lamp-on: #ff2a1f;
+	--knob-rim: repeating-conic-gradient(#0c0c0e 0 2deg, #3a3c40 2deg 4deg);
+	--knob-cap: radial-gradient(circle at 38% 30%, #3a3c40, #18181b 65%);
+	--knob-cap-ring: 0 0 0 2px #9a9da2, 0 0 0 3px #050506;
+	--knob-pointer: linear-gradient(#ff2a1f, #ff2a1f) 50% 11px / 3px 28% no-repeat;
+}
+
+[data-theme='blackstar'] {
+	--key-radius: 1px;
+}
+
 /* Tier 3: display ------------------------------------------------------------ */
 /* data-display on <html> recolours the LCD windows only, whatever the theme. */
 :root[data-display='green'] {

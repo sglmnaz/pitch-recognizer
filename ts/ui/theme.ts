@@ -41,6 +41,10 @@ export const THEMES: readonly Theme[] = [
 	{ id: 'walnut', label: 'Walnut and brass', palette: 'walnut', mode: 'dark', themeColor: { dark: '#2e2219' } },
 	{ id: 'olive', label: 'Olive', palette: 'olive', mode: 'dark', themeColor: { dark: '#4b5039' } },
 	{ id: 'stage', label: 'Stage red', palette: 'stage', mode: 'dark', themeColor: { dark: '#9e2b25' } },
+	{ id: 'brit', label: 'British stack', palette: 'brit', mode: 'dark', themeColor: { dark: '#1b1a19' } },
+	{ id: 'copper', label: 'Copper top', palette: 'copper', mode: 'dark', themeColor: { dark: '#1f1b18' } },
+	{ id: 'citrus', label: 'Citrus', palette: 'citrus', mode: 'light', themeColor: { light: '#e2671f' } },
+	{ id: 'blackstar', label: 'Black star', palette: 'blackstar', mode: 'dark', themeColor: { dark: '#151517' } },
 ]
 
 /** LCD colours; 'auto' = the theme's own. */

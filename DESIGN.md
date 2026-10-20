@@ -28,6 +28,15 @@ System follows the device between Light and Dark.
 | Walnut and brass (`walnut`, dark) | brass | walnut `#2e2219` | cream | nixie orange |
 | Olive (`olive`, dark) | olive | olive `#4b5039` | khaki | green phosphor; amber lamps |
 | Stage red (`stage`, dark) | red | red `#9e2b25` | black | red LED; yellow lamps |
+| British stack (`brit`, dark) | gold, brushed across | black `#1b1a19` | black, gold legends, 2 px corners | red LED; black top-hat knobs, gold cap |
+| Copper top (`copper`, dark) | copper, diamond weave | brown `#1f1b18` | dark brown, 4 px corners | amber; ivory chicken-head knobs |
+| Citrus (`citrus`, light) | beige, grille weave | orange `#e2671f` | white; black Start | black, white figures; glossy black knobs |
+| Black star (`blackstar`, dark) | graphite, perforated mesh | black `#151517` | graphite, 1 px corners; silver Start | ice white; knurled knobs, red pointer |
+
+The amp themes also set the knob through `--knob-rim`, `--knob-cap`,
+`--knob-cap-inset`, `--knob-cap-ring`, `--knob-pointer` and, for a pointer
+that is a shape, `--knob-pointer-shape` / `--knob-pointer-shadow` (defaults in
+`rotary.css`: the knurled aluminium knob).
 
 `<html data-theme="classic|night" data-mode="light|dark"
 [data-display="green|amber|blue"]>`. The display attribute recolours only the
