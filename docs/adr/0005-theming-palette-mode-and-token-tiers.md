@@ -50,6 +50,15 @@ subtree can set its own `data-theme` / `data-mode`, as the fretboard does now.
 
 - A new palette is one primitive block plus its semantic mapping; components do
   not change.
+- Tier 3 also carries a shape and material group (`--key-*`, `--seg-*`,
+  `--switch-*`, `--range-fill`, `--panel-*`, `--readout-*`, `--indicator-on`)
+  that the base components read, with defaults equal to the Geist look. A
+  style theme (a different hardware look, e.g. `oldschool`) lives in its own
+  file under `ts/styles/themes/`, keyed on `[data-theme]`: it overrides those
+  tokens and adds only the few structural rules tokens can't express (an
+  indicator lamp, a custom slider thumb). Shapes are declared once on `:root`;
+  materials on every `[data-mode]`, so a theme overrides them for forced-mode
+  subtrees too (DESIGN.md, "Shape and material tokens").
 - More custom properties and one more indirection when tracing a colour.
 - The migration touches every colour in `style.css`; it follows ADR 0004 and is
   verified screen by screen by the visual suite (ADR 0001), which must show no

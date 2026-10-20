@@ -47,6 +47,56 @@ trainer's light staff); it keeps the active palette. Details: docs/adr/0005.
 
 With more than one entry, Settings > Appearance shows a Palette picker by itself.
 
+### Shape and material tokens
+
+A palette changes hues; a **style theme** changes what the controls are made
+of (bevelled hardware keys, an LCD readout). Tier 3 carries a shape and
+material group for that, at the end of `ts/styles/tokens.css`. The base
+components read these tokens, and the defaults resolve to exactly the Geist
+look, so a style theme is mostly overrides.
+
+| Group | Controls | Tokens |
+|-------|----------|--------|
+| Keys | `.btn` and variants, `.chip`, `.chord-root`, `.string-chip`, `.ear-answer`, `.metro-step`, `.mic-toggle` | `--key-radius`, `--key-radius-lg` (large buttons, Start / Tap), `--key-bg`, `--key-bg-hover`, `--key-fg`, `--key-border`, `--key-shadow`, `--key-font-weight`, `--key-letter-spacing`, `--key-text-transform`; held down: `--key-pressed-bg`, `--key-pressed-fg`, `--key-shadow-pressed`, `--key-pressed-offset` (a `translate`, `none` today); primary: `--key-solid-bg`, `--key-solid-bg-hover`, `--key-solid-fg`, `--key-solid-shadow` |
+| Segmented | `.segmented` and the tab bar (from 601 px; the docked phone bar keeps its own look) | `--seg-track-bg`, `--seg-track-shadow`, `--seg-gap`, `--seg-radius`, `--seg-key-radius`, `--seg-fg`, `--seg-on-bg`, `--seg-on-fg`, `--seg-on-shadow` |
+| Switch | `.switch__track` and its knob | `--switch-track-bg`, `--switch-track-on-bg`, `--switch-radius`, `--switch-knob-bg`, `--switch-knob-shadow`, `--switch-knob-radius` |
+| Range | `.range`, `.metro-slider` (native sliders) | `--range-fill` (their `accent-color`) |
+| Panels | `.panel` | `--panel-bg`, `--panel-border`, `--panel-radius`, `--panel-shadow` |
+| Readouts | the Tuner / Trainer / Chords readout, the metronome tempo hero | `--readout-bg`, `--readout-fg`, `--readout-shadow`, `--readout-font` (the note, tempo and their sub lines) |
+| Indicator | the accent ring of a selected or live control (mic listening, loop on, chosen scale or chord, a voicing being pressed) | `--indicator-on` |
+
+Shapes (radii, borders, weights, offsets, fonts) are declared once on `:root`;
+materials (colours, shadows) on every `[data-mode]`, like the derived tokens,
+so a forced-mode subtree resolves them against its own roles. A style theme
+therefore overrides them on the theme root and on any forced subtree:
+
+```css
+/* ts/styles/themes/oldschool.css, imported last in main.css */
+@layer tokens {
+	[data-theme='oldschool'][data-mode='light'],
+	[data-theme='oldschool'] [data-mode='light'] {
+		--key-bg: #d9d4c7;
+		--key-shadow: inset 0 -3px 0 rgb(0 0 0 / 0.25), 0 1px 0 rgb(0 0 0 / 0.4);
+		--key-pressed-offset: 0 2px;
+		--key-text-transform: uppercase;
+		/* ...every token that differs, and the dark block likewise */
+	}
+}
+
+@layer components {
+	/* What tokens can't express: a lamp above a key that is on. */
+	[data-theme='oldschool'] .chip[aria-pressed='true']::before {
+		content: '';
+		/* ... */
+	}
+}
+```
+
+Keep the structural part small: a few rules for what tokens can't say (an
+`::before` lamp on `[aria-pressed='true']`, `appearance: none` plus thumb
+pseudo-elements for a fader-like range, interlocked segmented keys). Anything
+two themes would both need belongs in a token instead.
+
 ## Color
 
 Near-monochrome, the Geist signature. Neutrals carry a faint cool tint (~hue 220,
