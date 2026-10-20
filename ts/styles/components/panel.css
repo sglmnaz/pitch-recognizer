@@ -124,6 +124,14 @@
 	border-radius: var(--radius-sm);
 }
 
+/* A loose card of paper lying on the panel: outlined, with the keys' drop shadow
+   (chord diagrams, the trainer staff). */
+.paper--card {
+	box-shadow:
+		var(--shadow-border),
+		var(--key-drop);
+}
+
 /* The heavier printed rule between blocks of a view. */
 .rule {
 	height: 1.5px;

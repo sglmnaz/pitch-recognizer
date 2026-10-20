@@ -199,7 +199,7 @@ export function createChordModes(root: HTMLElement): ChordModes {
 				item.className = i === 0 ? 'voicing voicing--hero' : 'voicing'
 				item.dataset.index = String(i)
 				// The diagram printed on a card with its shape; Strum under it plays it.
-				const card = el('div', '', 'paper voicing__card')
+				const card = el('div', '', 'paper paper--card voicing__card')
 				card.append(diagrams[i].el, el('span', caption.title, 'voicing__title'))
 				const strum = el('button', '▶ Strum', 'key voicing__strum')
 				strum.type = 'button'

@@ -312,7 +312,6 @@
 	align-items: center;
 	gap: var(--space-4);
 	padding: var(--space-8) var(--space-6);
-	box-shadow: var(--shadow-border), var(--key-drop);
 }
 
 /* Until it scrolls in and is drawn: a diagram's size, so the grid does not jump. */

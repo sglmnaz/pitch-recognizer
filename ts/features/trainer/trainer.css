@@ -33,17 +33,15 @@
 	gap: var(--space-4);
 }
 
-/* Chart paper: a millimetre grid printed on the paper strip (staff, history). */
-:is(.staff, .chart) {
-	--chart-grid:
-		linear-gradient(90deg, var(--paper-grid) 1px, transparent 1px) 0 0 / 10px 10px, linear-gradient(var(--paper-grid) 1px, transparent 1px) 0 0 / 10px 10px;
-}
-
+/* Chart paper: a millimetre grid printed on the history strip. */
 .chart {
-	background: var(--chart-grid), var(--paper);
+	background:
+		linear-gradient(90deg, var(--paper-grid) 1px, transparent 1px) 0 0 / 10px 10px,
+		linear-gradient(var(--paper-grid) 1px, transparent 1px) 0 0 / 10px 10px,
+		var(--paper);
 }
 
-/* Notes: the staff on chart-recorder paper ---------------------------------------- */
+/* Notes: the staff on a paper card ------------------------------------------------- */
 .prompt {
 	display: flex;
 	flex-direction: column;
@@ -51,25 +49,15 @@
 }
 
 /*
- * The paper runs between two sprocket strips, like a chart recorder's roll.
- * VexFlow draws in black; the rules below repaint it in --staff-ink, so the
- * Light staff setting (data-mode="light" on #staff) re-resolves both colours.
+ * Clean paper like the chord diagrams. VexFlow draws in black; the rules below
+ * repaint it in --staff-ink, so the Light staff setting (data-mode="light" on
+ * #staff) re-resolves both colours.
  */
 .staff {
-	--sprocket: 12px;
-	--sprocket-hole: color-mix(in srgb, var(--paper-edge) 70%, var(--staff-ink));
-
 	display: block;
-	padding-inline: var(--sprocket);
-	border-radius: var(--radius-sm);
+	padding: var(--space-6) var(--space-8);
 	color: var(--staff-ink);
-	background:
-		radial-gradient(circle, var(--sprocket-hole) 2.4px, transparent 3px) left top / var(--sprocket) 16px repeat-y,
-		radial-gradient(circle, var(--sprocket-hole) 2.4px, transparent 3px) right top / var(--sprocket) 16px repeat-y,
-		linear-gradient(var(--paper-edge), var(--paper-edge)) left / var(--sprocket) 100% no-repeat,
-		linear-gradient(var(--paper-edge), var(--paper-edge)) right / var(--sprocket) 100% no-repeat,
-		var(--chart-grid),
-		var(--staff-bg);
+	background: var(--staff-bg);
 
 	/* The renderer crops the drawing with a viewBox: it scales to the strip. */
 	& svg {
