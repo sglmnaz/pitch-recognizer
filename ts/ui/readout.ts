@@ -1,6 +1,6 @@
 // The note + needle readout of the Tuner and the Trainer's Notes: a big note
-// name, a line under it, a needle over ±CENTS_RANGE and a green IN TUNE lamp
-// (a .readout__lamp element where the markup has one, else drawn by CSS).
+// name, a line under it, a needle over ±CENTS_RANGE and an in-tune mark
+// (.readout--locked: the Tuner's check mark, the Trainer's green lamp, by CSS).
 import { clamp } from '../core/math'
 
 const CENTS_RANGE = 50
@@ -10,12 +10,7 @@ export function createReadout(root: HTMLElement) {
 	const note = root.querySelector<HTMLElement>('.readout__note')!
 	const sub = root.querySelector<HTMLElement>('.readout__sub')!
 	const needle = root.querySelector<HTMLElement>('.meter__needle')!
-	const lamp = root.querySelector<HTMLElement>('.readout__lamp')
-
-	const lock = (on: boolean) => {
-		readout.classList.toggle('readout--locked', on)
-		lamp?.classList.toggle('is-on', on)
-	}
+	const lock = (on: boolean) => readout.classList.toggle('readout--locked', on)
 
 	return {
 		/** "--" and `text`; `centre` false leaves the needle where it was (the tuner between notes). */

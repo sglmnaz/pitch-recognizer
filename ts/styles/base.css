@@ -20,6 +20,18 @@ body {
 	background: var(--panel-grain) var(--panel);
 	-webkit-font-smoothing: antialiased;
 	text-rendering: optimizeLegibility;
+	/* An instrument, not a document: a tap, a double tap or a long press on a
+	   control never selects its text or opens the callout. Text fields still do. */
+	user-select: none;
+	-webkit-user-select: none;
+	-webkit-touch-callout: none;
+	-webkit-tap-highlight-color: transparent;
+}
+
+input,
+textarea {
+	user-select: text;
+	-webkit-user-select: text;
 }
 
 button {

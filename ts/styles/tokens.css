@@ -36,17 +36,17 @@
 	font-display: swap;
 }
 
-/* Fourteen-segment letters and digits (DSEG14, OFL): the large display values
-   (chord name, note). Small values on an LCD stay in Barlow. */
+/* Chakra Petch (OFL): a squared technical face for the large display values
+   (chord name, note, tempo), chosen over segments and pixels. Small values on
+   an LCD stay in Barlow. */
 @font-face {
-	font-family: 'DSEG14';
-	src: url('./fonts/DSEG14Classic-BoldItalic.woff2') format('woff2');
-	font-weight: 700;
-	font-style: italic;
+	font-family: 'Chakra Petch';
+	src: url('./fonts/ChakraPetch-600.woff2') format('woff2');
+	font-weight: 600;
 	font-display: swap;
 }
 
-/* Seven-segment digits (DSEG7, OFL): numbers only (the tempo, LED counters). */
+/* Seven-segment digits (DSEG7, OFL): the red LED counters only (score, streak, best…). */
 @font-face {
 	font-family: 'DSEG7';
 	src: url('./fonts/DSEG7Classic-BoldItalic.woff2') format('woff2');
@@ -69,7 +69,7 @@
 	/* Running text: hints, descriptions, the guide. */
 	--font-text: 'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 	/* Big LCD values: segment letters. */
-	--font-display: 'DSEG14', var(--font-ui);
+	--font-display: 'Chakra Petch', var(--font-ui);
 	/* Seven-segment digits (numbers only: the tempo, LED counters). */
 	--font-segment: 'DSEG7', var(--font-display);
 	/* Older names, still read by a few rules. */

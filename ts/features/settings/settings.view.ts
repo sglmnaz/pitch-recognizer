@@ -5,6 +5,7 @@ import type { View } from '../../ui/view'
 import { subscribeVisible } from '../../ui/dom'
 import * as Theme from '../../ui/theme'
 import { resetKey } from '../../ui/reset-key'
+import { guardTouches } from '../../ui/touch-guard'
 
 /**
  * The Settings tab: the switches and selects of every tab, the per-note target
@@ -20,6 +21,9 @@ export function createSettingsView(root: HTMLElement, from: () => string | null)
 	const displaySelect = root.querySelector<HTMLSelectElement>('[data-display-choice]')!
 	displaySelect.replaceChildren(...Theme.DISPLAYS.map((d) => new Option(d.label, d.id, false, d.id === Theme.getDisplay())))
 	displaySelect.addEventListener('change', () => Theme.setDisplay(displaySelect.value))
+
+	// A long page scrolled with the thumb: brushing a control must not change it.
+	guardTouches(root)
 
 	// Checkbox switches store booleans, sliders and number fields numbers,
 	// selects their value (a number when marked data-type="number").

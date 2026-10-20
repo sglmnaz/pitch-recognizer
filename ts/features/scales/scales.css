@@ -10,23 +10,21 @@
  * them turn off the uppercase the keys, selects and LCDs print in.
  */
 
-/* Plate: mode keys + root on one row, the scale under them (phones and
-   tablets); everything on one row on desktops. Identify swaps the selectors
-   for the marked notes. */
+/* Plate: the mode keys full width (as on every tab, in both modes), root and
+   scale under them (one row each on a phone, where the scale's long names need
+   the width). Identify swaps the selectors for the marked notes. */
 .scales-controls {
 	display: grid;
-	grid-template-columns: minmax(0, 1fr) auto;
+	grid-template-columns: auto minmax(0, 1fr);
 	grid-template-areas:
-		'mode root'
-		'type type';
+		'mode mode'
+		'root type';
 	align-items: end;
 	gap: var(--space-12) var(--space-8);
 
-	@media (min-width: 960px) {
-		grid-template-columns: 280px auto minmax(0, 420px);
-		grid-template-areas: 'mode root type';
-		/* Leftover width stays at the end instead of stretching the root column. */
-		justify-content: start;
+	@media (max-width: 600px) {
+		grid-template-columns: minmax(0, 1fr);
+		grid-template-areas: 'mode' 'root' 'type';
 	}
 
 	& > .view-top {
@@ -51,34 +49,37 @@
 		text-align: center;
 		text-align-last: center;
 		text-transform: none;
+
+		@media (max-width: 600px) {
+			flex: 1;
+		}
 	}
 }
 
-.scales-type-picker,
-.scales-marked-row {
+.scales-type-picker {
 	grid-area: type;
 	min-width: 0;
 }
 
+/* As tall as the keys and selectors around it. */
 .scales-marked-row {
+	grid-column: 1 / -1;
+	min-width: 0;
 	display: flex;
-	align-items: center;
+	min-height: var(--tap);
 	gap: var(--space-8);
 
 	& > .window {
+		display: flex;
 		flex: 1;
 		min-width: 0;
-		padding: 4px;
-		border-radius: var(--radius-lg);
-	}
-
-	& > .key {
-		height: 36px;
 	}
 }
 
 .scales-marked {
-	min-height: 28px;
+	flex: 1;
+	display: flex;
+	align-items: center;
 	font-size: var(--text-lg);
 	letter-spacing: 0.06em;
 	word-spacing: 0.3em;

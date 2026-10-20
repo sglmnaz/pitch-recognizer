@@ -16,6 +16,22 @@
 		color: var(--lcd-dim);
 		text-shadow: none;
 	}
+
+	/* A display, not a form field: the caret shows it has focus, no ring. */
+	&:focus-visible {
+		outline: none;
+	}
+
+	/* The browser's clear key, redrawn as an × in the display's ink. */
+	&::-webkit-search-cancel-button {
+		appearance: none;
+		width: 16px;
+		height: 16px;
+		margin-left: var(--space-8);
+		background: var(--lcd-ink);
+		mask: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><path d='M3 3l10 10M13 3L3 13' stroke='black' stroke-width='2.4'/></svg>") center / contain no-repeat;
+		cursor: pointer;
+	}
 }
 
 .settings-search__empty {
@@ -233,6 +249,19 @@
 		box-shadow:
 			0 0 0 var(--outline-width) var(--outline),
 			inset 0 -3px 0 var(--key-front);
+	}
+}
+
+/* Settings on a touch screen: a finger scrolling past must not grab a fader.
+   ts/ui/touch-guard.ts moves it once the finger travels sideways; its row
+   leaves sideways moves to the page's script. */
+@media (pointer: coarse) {
+	.view--settings .range {
+		pointer-events: none;
+	}
+
+	.view--settings .switch:has(> .range) {
+		touch-action: pan-y;
 	}
 }
 

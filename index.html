@@ -265,16 +265,14 @@
 				<div class="plate">
 					<div class="plate__brand"><b>PLUCK</b><span>Tuner · TU-100</span></div>
 					<select class="select tuner-tuning" aria-label="Tuning"></select>
-					<div class="tuner-display">
-						<div class="window">
-							<div class="lcd tuner-lcd">
+					<div class="window">
+						<div class="lcd tuner-lcd">
+							<div class="tuner-note">
 								<div class="readout__note readout__idle">--</div>
-								<div class="readout__sub">Play a note to begin</div>
+								<!-- In tune: a check mark beside the note. -->
+								<span class="tuner-check" aria-hidden="true"></span>
 							</div>
-						</div>
-						<div class="tuner-lock">
-							<span class="lamp lamp--ok readout__lamp"></span>
-							<span class="silk">In tune</span>
+							<div class="readout__sub">Play a note to begin</div>
 						</div>
 					</div>
 					<!-- Screen-reader announcement: only changes with the note or the in-tune state. -->
@@ -296,7 +294,7 @@
 				</div>
 				<hr class="rule tuner-rule" />
 			</div>
-			<p class="hint">Play one string at a time and mute the others. Unplugged electric? Hold the phone close to the strings. The In tune lamp lights within <span class="tuner-tolerance">5</span> cents.</p>
+			<p class="hint">Play one string at a time and mute the others. Unplugged electric? Hold the phone close to the strings. A check mark lights beside the note within <span class="tuner-tolerance">5</span> cents.</p>
 			<button class="help-link" type="button" data-help="tuner" aria-haspopup="dialog" aria-label="How to use the tuner"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.6 9.4a2.5 2.5 0 0 1 4.8.9c0 1.7-2.4 2.2-2.4 3.7"/><path d="M12 17.2h.01"/></svg></button>
 		</section>
 
@@ -549,8 +547,6 @@
 							<span><span class="metro-meter">4/4</span> <span class="metro-trn lcd__dim">· TRN</span></span>
 						</div>
 						<div class="metro-bpm">
-							<!-- The unlit segments behind the number, as on a real seven-segment display. -->
-							<span class="metro-bpm__ghost" aria-hidden="true">888</span>
 							<input class="metro-bpm__value" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="3" value="100" aria-label="Tempo in BPM, tap to type" />
 							<span class="metro-bpm__unit">BPM</span>
 						</div>
@@ -1145,7 +1141,7 @@
 			<li>Pick your tuning at the top (Standard, Drop D, DADGAD…), or <b>Chromatic</b> to name any note.</li>
 			<li>Play one string at a time and let it ring; mute the others.</li>
 			<li>Needle left of centre: the string is <b>flat</b>, tighten it. Right: <b>sharp</b>, loosen it.</li>
-			<li>The green <b>In tune</b> lamp lights when the string is within the tolerance (±5 cents by default, the green band on the dial).</li>
+			<li>A <b>check mark</b> lights beside the note when the string is within the tolerance (±5 cents by default, the green band on the dial).</li>
 		</ul>
 		<h3>Good to know</h3>
 		<ul>

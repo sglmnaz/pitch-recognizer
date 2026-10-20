@@ -1,13 +1,13 @@
 /*
  * Readout (ts/ui/readout.ts): the note in segment digits, a line of Hz / cents /
- * hint under it, a green IN TUNE lamp lit when locked, and the cents meter as
+ * hint under it, an in-tune mark lit when locked, and the cents meter as
  * a hi-fi tuning dial. Two arrangements of the same parts:
  *   .readout                  compact: one LCD window holding note, line and
  *                             meter, the lamp in its corner (Trainer Notes;
  *                             Chords Listen borrows the window and the type)
  *   .readout.readout--split   the parts spread over the Tuner's plate: no
  *                             window of its own, the note in an .lcd, a
- *                             .readout__lamp element, the dial below
+ *                             check mark beside the note, the dial below
  *                             (ts/features/tuner/tuner.css lays it out)
  */
 .readout:not(.readout--split) {
@@ -67,8 +67,7 @@
 
 .readout__note {
 	font-family: var(--font-display);
-	font-style: italic;
-	font-weight: 700;
+	font-weight: 600;
 	font-size: var(--note-size);
 	line-height: 1;
 	letter-spacing: 0.02em;
