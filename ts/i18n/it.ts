@@ -745,7 +745,7 @@ export const it: Dictionary = {
 	'an octave off': "un'ottava fuori",
 	'{n} frets high': { one: '{n} tasto sopra', other: '{n} tasti sopra' },
 	'{n} frets low': { one: '{n} tasto sotto', other: '{n} tasti sotto' },
-	'best {bpm} BPM': 'record {bpm} BPM',
+	'Load {name}': 'Carica {name}',
 	'{clean} of {total} notes clean': '{clean} note pulite su {total}',
 	'{string} string · fret {fret}': 'corda {string} · tasto {fret}',
 	'bend to {fret}': 'bending al {fret}',

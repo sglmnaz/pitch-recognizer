@@ -59,7 +59,6 @@ export interface TabExercise {
 	how: string
 	/** Notes per beat: 1 quarters, 2 eighths, 3 triplets, 4 sixteenths. */
 	perBeat: number
-	startBpm: number
 	notes: TabNote[]
 	/** Loop length in steps: whole 4/4 bars, rests filling the last one. */
 	steps: number
@@ -189,7 +188,6 @@ function spider(): TabExercise {
 			level: 'beginner',
 			how: 'Classic warm-up: one finger per fret, two strings at a time, frets 5–8. Alternate picking.',
 			perBeat: 2,
-			startBpm: 60,
 		},
 		[...up, ...[...up].reverse()]
 	)
@@ -209,7 +207,6 @@ function chromaticShift(): TabExercise {
 			credit: 'Nita Strauss · Guitar World, 2018',
 			how: '1-2-3-4 up the strings, then a fret higher 4-3-2-1 back down. Alternate picking.',
 			perBeat: 4,
-			startBpm: 50,
 		},
 		[...up, ...down]
 	)
@@ -225,7 +222,6 @@ function pentatonicBox(): TabExercise {
 			credit: SANDERCOE,
 			how: 'A minor pentatonic at fret 5, up and down, slowly. Keep every finger close to the strings.',
 			perBeat: 2,
-			startBpm: 60,
 		},
 		[...PENTATONIC, ...PENTATONIC.slice(1, -1).reverse()]
 	)
@@ -252,7 +248,6 @@ function fingerGym(): TabExercise {
 			credit: SANDERCOE,
 			how: 'One finger per fret from fret 1: pick the first note, hammer the second just as loud. Pairs 1-2, 2-3, 3-4, 1-3, 2-4, 1-4.',
 			perBeat: 2,
-			startBpm: 60,
 		},
 		pairs.flatMap(([a, b], k) =>
 			(k % 2 ? [...strings].reverse() : strings).flatMap((s): Fingering[] => [
@@ -280,7 +275,6 @@ function bends(): TabExercise {
 		credit: 'Andy Timmons · Guitar World, 2022',
 		how: t('Whole-step bends without vibrato, each checked against the fretted note: B 12 against high E 9, G 14 against B 12.', NOTE_WORDS()),
 		perBeat: 1,
-		startBpm: 60,
 		notes,
 		steps: 8,
 	}
@@ -326,7 +320,6 @@ function giuliani(): TabExercise {
 			credit: 'Mauro Giuliani · Op. 1 No. 4 (1812)',
 			how: 'C, then G7: thumb on the bass, then index and middle, rising on every beat. Let the notes ring.',
 			perBeat: 3,
-			startBpm: 60,
 		},
 		[...c, ...g7]
 	)
@@ -344,7 +337,6 @@ function permutations(date: Date): TabExercise {
 			credit: VAI,
 			how: 'One of the 24 orders of 1-2-3-4, a new one each day. Today: {order}, frets 5–8, on every string and back.',
 			perBeat: 4,
-			startBpm: 50,
 		},
 		strings.flatMap((s) => order.map((f): Fingering => [s, POSITION + f])),
 		{ order: order.join('-') }
@@ -365,7 +357,6 @@ function rotation(): TabExercise {
 			credit: VAI,
 			how: 'One finger per fret at frets 5–8, each string starting a finger later: 1234, 2341, 3412, 4123.',
 			perBeat: 4,
-			startBpm: 50,
 		},
 		strings.flatMap((s, i) => orders[i % 4].map((f): Fingering => [s, POSITION + f]))
 	)
@@ -389,7 +380,6 @@ function pedal(): TabExercise {
 			level: 'intermediate',
 			how: 'Every other note goes back to the top note: fret 12 on the high E, then 13 on the B. Alternate picking.',
 			perBeat: 4,
-			startBpm: 50,
 		},
 		[...e, ...e, ...b, ...b]
 	)
@@ -407,7 +397,6 @@ function oneString(): TabExercise {
 			credit: SATRIANI,
 			how: 'C major up the B string from fret 1 to 13 and back down. Shift cleanly, alternate picking.',
 			perBeat: 2,
-			startBpm: 60,
 		},
 		[...frets, ...frets.slice(1, -1).reverse()].map((f): Fingering => [2, f])
 	)
@@ -424,7 +413,6 @@ function pentatonicFours(): TabExercise {
 			level: 'intermediate',
 			how: 'A minor pentatonic at fret 5, four notes from each note, up and back down.',
 			perBeat: 4,
-			startBpm: 50,
 		},
 		[...fours(PENTATONIC), ...fours([...PENTATONIC].reverse())]
 	)
@@ -444,7 +432,6 @@ function threePerString(): TabExercise {
 			level: 'intermediate',
 			how: 'G major from fret 3, three notes on every string, up and back. Alternate picking.',
 			perBeat: 3,
-			startBpm: 50,
 		},
 		[...up, ...up.slice(1, -1).reverse()]
 	)
@@ -463,7 +450,6 @@ function sixNote(): TabExercise {
 			credit: 'Paul Gilbert · Guitar One, 1999',
 			how: 'One six-note figure on the high E, alternate picking. Slow until it is perfect, then faster day by day.',
 			perBeat: 3,
-			startBpm: 60,
 		},
 		[1, 2, 3, 4].flatMap(() => figure.map((f): Fingering => [1, f]))
 	)
@@ -486,7 +472,6 @@ function thirds(): TabExercise {
 			level: 'intermediate',
 			how: 'G major at fret 2 in thirds: G-B, A-C, B-D… up two octaves and back.',
 			perBeat: 2,
-			startBpm: 60,
 		},
 		[...up, ...down].map((midi) => inPosition(midi, 2, 5))
 	)
@@ -513,7 +498,6 @@ function outside(): TabExercise {
 			credit: GILBERT,
 			how: 'A new string on every note: down on the B, up on the high E. A minor pentatonic, frets 5–13.',
 			perBeat: 4,
-			startBpm: 50,
 		},
 		[...low, ...low, ...mid, ...mid, ...high, ...high, ...mid, ...mid]
 	)
@@ -537,7 +521,6 @@ function legatoCombos(): TabExercise {
 			credit: 'John Petrucci · Total Guitar, 2020',
 			how: 'Pick the first note on each string, hammer the other two. Frets 5–8, then stretched to 5–9.',
 			perBeat: 3,
-			startBpm: 50,
 		},
 		combos.flatMap((frets) => [6, 5, 4, 3, 2, 1].flatMap((s) => frets.map((f, i): Fingering => (i ? [s, POSITION + 1 + f, 'h'] : [s, POSITION + 1 + f]))))
 	)
@@ -555,7 +538,6 @@ function trills(): TabExercise {
 			credit: SATRIANI,
 			how: 'Pick once, then only hammer-ons and pull-offs. First finger stays on fret 5.',
 			perBeat: 4,
-			startBpm: 50,
 		},
 		[...trill(6), ...trill(7), ...trill(8)]
 	)
@@ -578,7 +560,6 @@ function tapping(): TabExercise {
 			credit: 'Eddie Van Halen · Eruption (1978)',
 			how: 'Tap fret 12 with the picking hand, pull off to 5, hammer 8. No picks. Then tap 13.',
 			perBeat: 3,
-			startBpm: 60,
 		},
 		[12, 12, 12, 12, 13, 13, 12, 12].flatMap(cell)
 	)
@@ -630,7 +611,6 @@ function carcassi(): TabExercise {
 			credit: 'Matteo Carcassi · Op. 60 No. 1',
 			how: 'The first four bars: C major runs in first position, index and middle alternating.',
 			perBeat: 2,
-			startBpm: 60,
 		},
 		bars
 	)
@@ -649,7 +629,6 @@ function fives(): TabExercise {
 			credit: 'Eric Johnson · MusicRadar, 2019',
 			how: 'A minor pentatonic at fret 5, five notes down from each note, in 16ths. Accent the first of each five.',
 			perBeat: 4,
-			startBpm: 50,
 		},
 		down.slice(0, -4).flatMap((_, i) => down.slice(i, i + 5))
 	)
@@ -669,7 +648,6 @@ function fiveFour(): TabExercise {
 			credit: 'Al Di Meola, via Alex Skolnick · Guitar Player, 2023',
 			how: 'D major at fret 7: A-G-F♯-E-D, F♯-E-D-C♯, then the same from B, C♯ and D.',
 			perBeat: 3,
-			startBpm: 50,
 		},
 		[5, 6, 7, 8].flatMap(cell).map((midi) => inPosition(midi, 6, 10))
 	)
@@ -696,7 +674,6 @@ function stringSkipping(): TabExercise {
 			credit: GILBERT,
 			how: 'Three notes on the G string, three on the high E, skip the B string. Outside picking.',
 			perBeat: 3,
-			startBpm: 50,
 		},
 		[...up, ...[...up].reverse()]
 	)
@@ -726,7 +703,6 @@ function sweeps(): TabExercise {
 			credit: 'Frank Gambale · Monster Licks & Speed Picking (1988)',
 			how: 'Am F G E on the top three strings: one down stroke through G-B-E, up from E.',
 			perBeat: 4,
-			startBpm: 50,
 		},
 		chords.flatMap((c) => [...shape(c), ...shape(c)])
 	)
@@ -1106,11 +1082,11 @@ export const accuracy = (marks: Mark[]) => (marks.length ? Math.round((100 * mar
 
 const RECORD_PREFIX = 'pitch-recognizer:tab:'
 
+// The tempo is not kept per exercise: it is one setting (tabBpm), so changing
+// exercise keeps the tempo the player chose.
 export interface TabRecord {
 	/** Fastest tempo with a whole loop on time (0 = none yet). */
 	best: number
-	/** The tempo last practised at, where the next session starts. */
-	bpm: number
 }
 
 const clampBpm = (n: unknown, fallback: number) => (typeof n === 'number' && Number.isFinite(n) ? clamp(Math.round(n), MIN_BPM, MAX_BPM) : fallback)
@@ -1118,7 +1094,7 @@ const clampBpm = (n: unknown, fallback: number) => (typeof n === 'number' && Num
 export function loadRecord(exercise: TabExercise): TabRecord {
 	const stored = readJSON(RECORD_PREFIX + exercise.id, {}) as Partial<TabRecord> | null
 	const best = stored && typeof stored === 'object' ? clampBpm(stored.best, 0) : 0
-	return { best: best >= MIN_BPM ? best : 0, bpm: clampBpm(stored?.bpm, exercise.startBpm) }
+	return { best: best >= MIN_BPM ? best : 0 }
 }
 
 export function saveRecord(exercise: TabExercise, record: TabRecord) {

@@ -189,29 +189,37 @@ export function createTabView(root: HTMLElement): View {
 	filterChips(levelsBox, Tab.LEVELS, (id) => Settings.update({ tabLevel: id as Settings.Settings['tabLevel'] }))
 	const levelOf = (ex: Tab.TabExercise) => t(Tab.LEVELS.find((l) => l.id === ex.level)!.label)
 
+	// One row per exercise; its ▶ key loads it and brings the tab up, ready to start.
 	function renderList() {
 		const s = Settings.get()
 		const rows = Tab.exercises().filter((ex) => (s.tabGoal === 'all' || ex.goal === s.tabGoal) && (s.tabLevel === 'all' || ex.level === s.tabLevel))
 		list.replaceChildren(
 			...rows.map((ex) => {
+				const on = ex.id === s.tabExercise
 				const li = document.createElement('li')
-				const button = document.createElement('button')
-				button.type = 'button'
-				button.className = 'tab-ex'
-				button.setAttribute('aria-pressed', String(ex.id === s.tabExercise))
+				li.className = 'tab-ex'
+				li.classList.toggle('is-on', on)
+				li.innerHTML =
+					'<span class="tab-ex__text"><span class="tab-ex__head"><span class="tab-ex__name"></span><span class="tab-tag"></span></span><span class="tab-ex__meta"></span></span>' +
+					'<button class="key key--dark tab-ex__load" type="button">▶</button>'
 				const { best } = Tab.loadRecord(ex)
 				const goal = t(Tab.GOALS.find((g) => g.id === ex.goal)!.label)
-				button.innerHTML =
-					'<span class="lamp" aria-hidden="true"></span><span class="tab-ex__text"><span class="tab-ex__name"></span><span class="tab-ex__from"></span></span>' +
-					'<span class="tab-ex__best"><span class="silk"></span><span class="window"><span class="lcd"></span></span></span>'
-				button.querySelector('.lamp')!.classList.toggle('is-on', ex.id === s.tabExercise)
-				button.querySelector('.tab-ex__name')!.textContent = ex.name
-				button.querySelector('.tab-ex__from')!.textContent = `${levelOf(ex)} · ${Tab.subdivisionName(ex.perBeat)}`
-				button.querySelector('.tab-ex__best .silk')!.textContent = goal
-				button.querySelector('.tab-ex__best .lcd')!.textContent = best ? `${best} BPM` : '—'
-				button.setAttribute('aria-label', `${ex.name}, ${goal}, ${levelOf(ex)}${best ? `, ${t('best {bpm} BPM', { bpm: best })}` : ''}`)
-				button.addEventListener('click', () => Settings.update({ tabExercise: ex.id }))
-				li.append(button)
+				li.querySelector('.tab-ex__name')!.textContent = ex.name
+				li.querySelector('.tab-tag')!.textContent = goal
+				const meta = li.querySelector('.tab-ex__meta')!
+				meta.textContent = `${levelOf(ex)} · ${Tab.subdivisionName(ex.perBeat)}`
+				if (best) {
+					const record = document.createElement('b')
+					record.textContent = t('Best {bpm} BPM', { bpm: best })
+					meta.append(' · ', record)
+				}
+				const load = li.querySelector<HTMLButtonElement>('.tab-ex__load')!
+				load.setAttribute('aria-pressed', String(on))
+				load.setAttribute('aria-label', t('Load {name}', { name: ex.name }))
+				load.addEventListener('click', () => {
+					Settings.update({ tabExercise: ex.id })
+					window.scrollTo({ top: 0, behavior: reducedMotion.matches ? 'auto' : 'smooth' })
+				})
 				return li
 			})
 		)
@@ -221,15 +229,8 @@ export function createTabView(root: HTMLElement): View {
 	loopKey.addEventListener('click', () => Settings.update({ tabLoop: !Settings.get().tabLoop }))
 	speedUp.addEventListener('change', () => Settings.update({ tabSpeedUp: speedUp.checked }))
 
-	function setBpm(bpm: number) {
-		const ex = exercise()
-		const record = Tab.loadRecord(ex)
-		Tab.saveRecord(ex, { ...record, bpm: clamp(bpm, Tab.MIN_BPM, Tab.MAX_BPM) })
-		renderSetup()
-		renderIdle()
-	}
 	for (const button of setup.querySelectorAll<HTMLButtonElement>('[data-tab-bpm]')) {
-		button.addEventListener('click', () => setBpm(Tab.loadRecord(exercise()).bpm + Number(button.dataset.tabBpm)))
+		button.addEventListener('click', () => Settings.update({ tabBpm: clamp(Settings.get().tabBpm + Number(button.dataset.tabBpm), Tab.MIN_BPM, Tab.MAX_BPM) }))
 	}
 
 	function renderSetup() {
@@ -238,7 +239,7 @@ export function createTabView(root: HTMLElement): View {
 		setPressed([loopKey], () => s.tabLoop)
 		speedUp.checked = s.tabSpeedUp
 		speedUp.disabled = s.tabFollow === 'wait'
-		tempoValue.textContent = `${Tab.loadRecord(exercise()).bpm} BPM`
+		tempoValue.textContent = `${s.tabBpm} BPM`
 		for (const chip of goalsBox.querySelectorAll<HTMLButtonElement>('[data-filter]'))
 			chip.setAttribute('aria-pressed', String(chip.dataset.filter === s.tabGoal))
 		for (const chip of levelsBox.querySelectorAll<HTMLButtonElement>('[data-filter]'))
@@ -289,7 +290,8 @@ export function createTabView(root: HTMLElement): View {
 		const wait = s.tabFollow === 'wait'
 		// The first note waits under the playhead; Start backs the strip up a bar for the count-in.
 		placeStrip(0, ex, false)
-		const { bpm, best } = Tab.loadRecord(ex)
+		const bpm = s.tabBpm
+		const { best } = Tab.loadRecord(ex)
 		showStatus(
 			wait ? t('Wait: the tab moves when you play each note') : `♩ = ${bpm} · ${Tab.subdivisionName(ex.perBeat)}`,
 			best ? t('Best {bpm} BPM', { bpm: best }) : ''
@@ -310,7 +312,7 @@ export function createTabView(root: HTMLElement): View {
 	const session = createTabSession(
 		{
 			probe: probe.log,
-			countIn: (left) => showStatus(t('Count-in · {n}', { n: left }), `♩ = ${Metronome.getState().bpm || Tab.loadRecord(exercise()).bpm}`),
+			countIn: (left) => showStatus(t('Count-in · {n}', { n: left }), `♩ = ${Metronome.getState().bpm || Settings.get().tabBpm}`),
 			marked(index, mark, marks) {
 				const n = exercise().notes.length
 				const loop = Math.floor((marks.length - 1) / n)
@@ -391,7 +393,7 @@ export function createTabView(root: HTMLElement): View {
 		session.resetHearing()
 		onsets.reset()
 		probe.clear()
-		session.start({ exercise: ex, follow: s.tabFollow, bpm: Tab.loadRecord(ex).bpm, loop: s.tabLoop, speedUp: s.tabSpeedUp, volume: s.metroVolume, a4: s.a4 })
+		session.start({ exercise: ex, follow: s.tabFollow, bpm: s.tabBpm, loop: s.tabLoop, speedUp: s.tabSpeedUp, volume: s.metroVolume, a4: s.a4 })
 		setRunningUi(true)
 		wakeLock.hold()
 		if (s.tabFollow === 'tempo' && !frameId) frameId = requestAnimationFrame(animate)
@@ -425,7 +427,11 @@ export function createTabView(root: HTMLElement): View {
 		const before = Tab.loadRecord(ex)
 		const best = Math.max(before.best, ended.cleanBpm)
 		// The next session starts where this one ended (the speed-up included).
-		Tab.saveRecord(ex, { best, bpm: ended.bpm })
+		Tab.saveRecord(ex, { best })
+		// Quietly: the subscriber below would dismiss this report.
+		quiet = true
+		Settings.update({ tabBpm: ended.bpm })
+		quiet = false
 		const record =
 			ended.cleanBpm > before.best ? t('New best {bpm} BPM', { bpm: ended.cleanBpm }) : best ? t('Best {bpm} BPM', { bpm: best }) : t('No clean loop yet')
 		showStatus(t('{pct}% on time · ended at {bpm} BPM', { pct, bpm: ended.bpm }), record)
@@ -443,8 +449,10 @@ export function createTabView(root: HTMLElement): View {
 	// heardAt: when the click is heard, not when this callback runs (up to a frame later).
 	Metronome.onBeat((event) => session.beat(event, event.heardAt))
 
+	// Set while a finished session saves the tempo it reached.
+	let quiet = false
 	Settings.subscribe(() => {
-		if (Settings.get().trainerExercise !== 'tab' || isRunning()) return
+		if (quiet || Settings.get().trainerExercise !== 'tab' || isRunning()) return
 		if (session.phase() === 'done') {
 			session.dismiss()
 			setRunningUi(false)

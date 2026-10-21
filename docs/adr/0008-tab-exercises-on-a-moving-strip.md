@@ -145,3 +145,11 @@ Carcassi, public domain, are note for note.
   played a fret off scored a third of its notes on time. `check:tab` now
   plays every exercise but the bends through the real pipeline: played
   right, 100% on time; a fret off, 0–4%.
+- **The list** (after the user's review): one row per exercise, its goal
+  stamped in an outline on the name's line, level, subdivision and record
+  under it; only a black ▶ key loads it (a key, so it clicks and buzzes like
+  the others; lit red while loaded) and brings the page back to the top,
+  ready to start. The record's LCD and the lamp on the left are gone.
+- **One tempo** (`tabBpm`) for every exercise: changing exercise no longer
+  changes the tempo; a Tempo session ends saving the tempo it reached there.
+  Records keep only the best clean BPM.

@@ -1307,26 +1307,19 @@
 	list-style: none;
 }
 
-/* One row per exercise: the whole row is the button, ruled like a list. */
+/* One row per exercise, ruled like a list: the name with its goal stamped
+   on the same line, level and record under it, and a black ▶ key that loads
+   it (lit red while it is the one loaded). Only the key is pressable. */
 .tab-ex {
-	appearance: none;
 	display: grid;
-	grid-template-columns: auto minmax(0, 1fr) auto;
+	grid-template-columns: minmax(0, 1fr) auto;
 	align-items: center;
-	gap: var(--space-10);
-	width: 100%;
-	min-height: var(--tap);
-	padding: var(--space-10) 0;
-	border: 0;
+	gap: var(--space-12);
+	min-height: 52px;
+	padding: var(--space-6) 0;
 	border-top: 1.5px solid var(--rule);
-	background: none;
-	color: inherit;
-	font: inherit;
-	text-align: left;
-	cursor: pointer;
-	-webkit-tap-highlight-color: transparent;
 
-	li:last-child > & {
+	&:last-child {
 		border-bottom: 1.5px solid var(--rule);
 	}
 }
@@ -1338,42 +1331,65 @@
 	min-width: 0;
 }
 
+.tab-ex__head {
+	display: flex;
+	align-items: baseline;
+	justify-content: space-between;
+	gap: var(--space-8);
+	min-width: 0;
+}
+
 .tab-ex__name {
+	min-width: 0;
 	font-family: var(--font-ui);
 	font-size: var(--text-md);
 	font-weight: 700;
 	line-height: 1.2;
 	letter-spacing: 0.08em;
 	text-transform: uppercase;
+	color: var(--fg-secondary);
+
+	.tab-ex.is-on & {
+		color: var(--fg);
+	}
 }
 
-.tab-ex[aria-pressed='false'] .tab-ex__name {
+/* The goal, stamped in an outline like a label on a tape box. */
+.tab-tag {
+	flex: none;
+	padding: 1px 5px;
+	border: 1.5px solid currentColor;
+	border-radius: 2px;
+	font-family: var(--font-ui);
+	font-size: var(--text-2xs);
+	font-weight: 700;
+	line-height: 1.3;
+	letter-spacing: 0.14em;
+	text-transform: uppercase;
 	color: var(--fg-secondary);
 }
 
-.tab-ex__from {
+.tab-ex__meta {
 	font-family: var(--font-text);
 	font-size: var(--text-xs);
 	line-height: 1.35;
 	color: var(--fg-muted);
+
+	& b {
+		font-weight: 600;
+		color: var(--fg-secondary);
+	}
 }
 
-/* A grid, not a flex column: the LCD window (stretched by panel.css) stays
-   as wide as its value, not as the goal printed over it (Fingerstyle). */
-.tab-ex__best {
-	display: grid;
-	justify-items: end;
-	gap: 2px;
+.tab-ex__load {
+	width: var(--tap);
+	height: 36px;
+	padding-inline: 0;
+	font-size: var(--text-sm);
 
-	& .silk {
-		font-size: var(--text-2xs);
-	}
-
-	& .lcd {
-		min-width: 4.4em;
-		padding: 2px 6px;
-		font-size: var(--text-xs);
-		text-align: center;
+	&[aria-pressed='true'] {
+		color: var(--lamp-on);
+		text-shadow: 0 0 6px var(--lamp-glow);
 	}
 }
 

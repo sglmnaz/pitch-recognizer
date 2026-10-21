@@ -145,6 +145,8 @@ export interface Settings {
 	tabLoop: boolean
 	/** Tempo: +5 BPM after two clean loops. */
 	tabSpeedUp: boolean
+	/** Tempo: the tempo, the same for every exercise; a session ends saving the tempo it reached. */
+	tabBpm: number
 	/** The exercise list shows this goal only ('all' = every exercise). */
 	tabGoal: 'all' | Tab.Goal
 	/** And this level only ('all' = every level). */
@@ -224,6 +226,7 @@ const defaults: Settings = {
 	tabFollow: 'tempo',
 	tabLoop: true,
 	tabSpeedUp: false,
+	tabBpm: 60,
 	tabGoal: 'all',
 	tabLevel: 'all',
 }
@@ -339,6 +342,7 @@ export function load(): Settings {
 		tabFollow: oneOf(s.tabFollow, ['tempo', 'wait']),
 		tabLoop: bool(s.tabLoop, d.tabLoop),
 		tabSpeedUp: bool(s.tabSpeedUp, d.tabSpeedUp),
+		tabBpm: clamp(s.tabBpm, Tab.MIN_BPM, Tab.MAX_BPM, d.tabBpm, true),
 		tabGoal: oneOf(s.tabGoal, ['all', ...Tab.GOALS.map((g) => g.id)]),
 		tabLevel: oneOf(s.tabLevel, ['all', ...Tab.LEVELS.map((l) => l.id)]),
 	}

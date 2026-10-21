@@ -454,8 +454,9 @@ function realSession(id: string, bpm: number, late = 0, off = 0): Tab.Mark[] {
 }
 
 const share = (marks: Tab.Mark[], mark: Tab.Mark) => Math.round((100 * marks.filter((m) => m === mark).length) / Math.max(1, marks.length))
-// Every exercise but the bends (the synthetic strings cannot bend) at its own starting tempo.
-for (const { id, startBpm: bpm } of all.filter((e) => e.id !== 'bends')) {
+// Every exercise but the bends (the synthetic strings cannot bend), at 60 BPM, 50 for triplets and 16ths.
+for (const { id, perBeat } of all.filter((e) => e.id !== 'bends')) {
+	const bpm = perBeat >= 3 ? 50 : 60
 	const right = realSession(id, bpm)
 	const wrong = realSession(id, bpm, 0, 1)
 	check(
@@ -478,6 +479,6 @@ for (const { id, startBpm: bpm } of all.filter((e) => e.id !== 'bends')) {
 
 /* Records ------------------------------------------------------------------------- */
 // No storage in Node: defaults, never a throw.
-check('records: no storage reads the defaults', Tab.loadRecord(spiderEx).best === 0 && Tab.loadRecord(spiderEx).bpm === spiderEx.startBpm)
+check('records: no storage reads the defaults', Tab.loadRecord(spiderEx).best === 0)
 
 finish('All tab checks passed')
