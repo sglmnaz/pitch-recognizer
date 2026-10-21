@@ -417,11 +417,23 @@ check(
 	 * fingers liftMs before each change (quiet), the strum's own second peak
 	 * secondPeakMs after it (louder), the clicks heard 22 ms on and 3× as loud
 	 * as the strums (an unplugged electric); liftLevel: how loud the open
-	 * strings are (1: strummed on the beat before the change).
+	 * strings are (1: strummed on the beat before the change); faintChange: the
+	 * change strum sounds half the old chord until the next click, where the
+	 * new one rings full.
 	 */
 	function inTime(
 		strumOffset: number,
-		{ ms = 12_000, profiles = true, everyBeat = false, clicks = false, liftMs = 0, liftLevel = 0.08, secondPeakMs = 0, loudClicks = false } = {}
+		{
+			ms = 12_000,
+			profiles = true,
+			everyBeat = false,
+			clicks = false,
+			liftMs = 0,
+			liftLevel = 0.08,
+			secondPeakMs = 0,
+			loudClicks = false,
+			faintChange = false,
+		} = {}
 	) {
 		const h = harness()
 		h.session.start({ mode: 'time', sequence: ['G', 'C'], seconds: 60, beats: 2, bpm: 120, speedUp: true, countIn: true, volume: 1 }, 0)
@@ -450,11 +462,14 @@ check(
 			const played = (strumOffset < 0 ? coming : downbeats).filter((d) => d + strumOffset <= t).length
 			const lifting = lifts.some((l) => t >= l && t < l + liftMs)
 			const sounding = lifting ? 'open' : played ? ['G', 'C'][(played - 1) % 2] : 'G'
+			const last = (strumOffset < 0 ? coming : downbeats).filter((d) => d + strumOffset <= t).at(-1)
+			const faint = faintChange && played > 1 && last !== undefined && t < last + 22
+			const profile = faint ? CHROMA[sounding].map((v, i) => 0.6 * v + 0.4 * CHROMA[sounding === 'G' ? 'C' : 'G'][i]) : CHROMA[sounding]
 			const ring = (events: number[], level: number) => Math.max(0, ...events.filter((at) => at <= t).map((at) => level * Math.exp(-(t - at) / 150)))
 			const volume = Math.max(ring(struck, 1), ring(lifts, liftLevel), ring(seconds, 1.4), ring(heardClicks, loudClicks ? 3 : 0.05))
 			// The recognizer's name only shows as Hearing now; it names the chord 283 ms on.
 			const named = downbeats.filter((d) => d + 283 <= t).length
-			h.session.frame(t, strum, named ? ['G', 'C'][(named - 1) % 2] : 'G', profiles ? CHROMA[sounding] : null, volume)
+			h.session.frame(t, strum, named ? ['G', 'C'][(named - 1) % 2] : 'G', profiles ? profile : null, volume)
 		}
 		return h
 	}
@@ -523,6 +538,10 @@ check(
 	{
 		const offsets = offsetsOf(inTime(-100, { loudClicks: true }))
 		check('in time: clicks heard louder than the strums never take a change from them (late)', near(offsets, -115), show(offsets))
+	}
+	{
+		const offsets = offsetsOf(inTime(-100, { loudClicks: true, faintChange: true }))
+		check('in time: a faint change strum keeps its change from the next click, where the chord rings fuller (late)', near(offsets, -115), show(offsets))
 	}
 	{
 		const offsets = offsetsOf(inTime(15))

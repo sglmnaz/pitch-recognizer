@@ -178,14 +178,19 @@ export function drillChord(profile: ArrayLike<number> | null, sequence: readonly
 	return shares.filter((share) => share === best).length === 1 ? sequence[shares.indexOf(best)] : null
 }
 
-/** Flatter than this is noise (a breath, a blow), not a strum: no profile, nothing placed. */
-export const MAX_FLATNESS = 0.25
+/**
+ * Flatter than this is noise (a breath, a blow, a whisper), not a strum: no
+ * profile, nothing placed. 0.25 let whispers count in the Mic check; at 0.18,
+ * 0.15 or 0.25 the changes on six field reports read the same.
+ */
+export const MAX_FLATNESS = 0.18
 
 /**
  * Spectral flatness of a power spectrum over the guitar's band (80–1400 Hz):
  * the geometric over the arithmetic mean, near 0 for harmonic peaks (a chord),
  * near 1 for noise. Strums on three field reports: 90% under 0.06, the most
- * 0.32; a breath or a blow into the mic: 0.48 and up.
+ * 0.32; a breath or a blow into the mic: 0.48 and up; a whisper, 0.22. Notes
+ * in a Mic check: 0.13 at most.
  */
 export function spectralFlatness(power: ArrayLike<number>, binHz: number): number {
 	const from = Math.ceil(80 / binHz)

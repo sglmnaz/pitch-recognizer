@@ -13,8 +13,8 @@
 //   A4=hz            the profiles on another reference than the session's
 //   LOUDER=, LOUDER_MS=, BETTER=, BETTER_MS=, CLICK=louder|off
 //                    the In time rules' knobs (defaults: changes.session.ts; LOUDER=off, BETTER=off drop a rule)
-//   BETTER_CLICKS=1|off|peer  which later strums BETTER weighs: all (1, as the app), none on a click (off),
-//                    or on a click only when the strum it would take over is on one too (peer)
+//   BETTER_CLICKS=1|off|peer  which later strums BETTER weighs: all (1), none on a click (off),
+//                    or on a click only when the strum it would take over is on one too (peer, as the app)
 //   FLAT=x           frames flatter than this bring no profile (default Changes.MAX_FLATNESS)
 //   TUNE=1           a grid of strum-detector settings
 //   PROFILES=1       the mean pitch-class profile of each chord as played
@@ -214,7 +214,7 @@ if (slots.length) {
 	const betterMs = Number(process.env.BETTER_MS ?? 700)
 	const clickAt = beats.map((b) => b + offset.x + 22)
 	const isClick = (t: number) => process.env.CLICK !== 'off' && clickAt.some((c) => Math.abs(t - c) <= 15)
-	const betterClicks = process.env.BETTER_CLICKS ?? '1'
+	const betterClicks = process.env.BETTER_CLICKS ?? 'peer'
 	const weighs = (u: number, t: number) => betterClicks === '1' || !isClick(u) || (betterClicks === 'peer' && isClick(t))
 	const chordAt = (t: number) => drillChord(profileAfter(t, true), sequence)
 	const shareAt = (t: number, chord: string) => {

@@ -21,8 +21,10 @@ import type { ProbeEntry } from './timing-probe.ts'
 // one LOUDER times as loud within LOUDER_MS (not a click: on an unplugged
 // electric the clicks were louder than the strums and took their changes), or
 // to one within BETTER_MS sounding clearly more like that chord (the open
-// strings on beat 4 read as G, a little; the G strum after them, a lot). On
-// five field reports (scripts/replay.ts): 149 of 157 changes within ±200 ms
+// strings on beat 4 read as G, a little; the G strum after them, a lot) and
+// not on a click, unless this one is on a click too (a quiet change strum
+// lost to the next beat's click, where the chord rang fuller: a beat late).
+// On six field reports (scripts/replay.ts): 200 of 213 changes within ±200 ms
 // of the click; the clicks left out instead lost every change strummed right
 // on the click.
 const CHROMA_FROM_MS = 40
@@ -284,7 +286,7 @@ export function createChangesSession(ui: SessionUi, metronome: MetronomeControl)
 	}
 
 	/** In time: a strum, DECIDE_MS on. A change if it sounds like another of the drill's chords than the one ringing. */
-	function place(at: number) {
+	function place({ at, click }: { at: number; click: boolean }) {
 		const chord = Changes.drillChord(profileAfter(at), config.sequence)
 		if (!chord || chord === playing) return ui.probe?.({ kind: 'passed', at, symbol: chord, why: chord ? 'same' : 'none' })
 		const loud = (t: number) => Math.max(0, ...levels.filter((l) => l.at >= t && l.at <= t + LOUD_MS).map((l) => l.volume))
@@ -296,7 +298,7 @@ export function createChangesSession(ui: SessionUi, metronome: MetronomeControl)
 		if (strums.some((s) => !s.click && s.at > at && s.at <= at + LOUDER_MS && loud(s.at) >= LOUDER * loud(at)))
 			return ui.probe?.({ kind: 'passed', at, symbol: chord, why: 'louder' })
 		const mine = share(at)
-		const later = strums.filter((s) => s.at > at && s.at <= at + BETTER_MS)
+		const later = strums.filter((s) => s.at > at && s.at <= at + BETTER_MS && (!s.click || click))
 		if (later.some((s) => Changes.drillChord(profileAfter(s.at), config.sequence) === chord && share(s.at) >= mine + BETTER))
 			return ui.probe?.({ kind: 'passed', at, symbol: chord, why: 'clearer' })
 		playing = chord
@@ -337,7 +339,7 @@ export function createChangesSession(ui: SessionUi, metronome: MetronomeControl)
 			levels.push({ at: now, volume })
 			chromas = chromas.filter((c) => now - c.at < 2 * DECIDE_MS)
 			levels = levels.filter((l) => now - l.at < 2 * DECIDE_MS)
-			while (strums.length && now - strums[0].at >= DECIDE_MS) place(strums.shift()!.at)
+			while (strums.length && now - strums[0].at >= DECIDE_MS) place(strums.shift()!)
 			onsets = onsets.filter((o) => now - o.at < ONSET_KEEP_MS)
 			judgeDue(now)
 		}
