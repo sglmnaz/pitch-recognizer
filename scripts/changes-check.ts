@@ -368,12 +368,13 @@ const strums = (symbols: string[], ms: number): Segments => symbols.map((s) => [
 				if (index >= 4 && index % 2 === 0) downbeats.push(nextClick)
 				if (index >= 4) beats.push(nextClick)
 			}
-			const named = downbeats.filter((d) => d + namingMs <= t).length
-			const struck = (everyBeat ? beats : downbeats).map((d) => d + strumOffset)
-			// Lifting the fingers LIFT_MS before each change sounds the open strings, quietly
-			// (before the next downbeat too: that one is not clicked yet).
+			// The next downbeat too, not clicked yet: a recognizer may name its chord early.
 			const slot = (2 * 60_000) / h.metro.bpm
-			const lifts = liftOff ? [...downbeats, (downbeats.at(-1) ?? 2000) + slot].map((d) => d + strumOffset - LIFT_MS) : []
+			const coming = [...downbeats, (downbeats.at(-1) ?? 2000) + slot]
+			const named = coming.filter((d) => d + namingMs <= t).length
+			const struck = (everyBeat ? beats : downbeats).map((d) => d + strumOffset)
+			// Lifting the fingers LIFT_MS before each change sounds the open strings, quietly.
+			const lifts = liftOff ? coming.map((d) => d + strumOffset - LIFT_MS) : []
 			const strum = [...struck, ...lifts].some((at) => at > t - FRAME && at <= t)
 			// What the strings sound like: the chord changes at the strum on its downbeat.
 			const played = downbeats.filter((d) => d + strumOffset <= t).length
@@ -420,6 +421,18 @@ const strums = (symbols: string[], ms: number): Segments => symbols.map((s) => [
 			'in time: named a second late, strummed on every beat: dated by the strum that sounds like the new chord',
 			marks.length >= 5 && marks.every((m) => m === 'hit') && offsets.every((dt) => dt !== null && Math.abs(dt - 100) <= 35),
 			`${marks.join(' ')} | ${offsets.map((dt) => (dt === null ? '-' : dt.toFixed(0))).join(' ')}`
+		)
+	}
+	{
+		// Chords that share notes: the recognizer names the new one 250 ms before
+		// the change, while the old one still rings. Dated by the last strum (the
+		// old chord's, a beat before) it read ~-500 ms; held until a strum sounds like it.
+		const h = inTime(100, 12_000, -250, { everyBeat: true, profiles: true })
+		const offsets = h.of('offset') as (number | null)[]
+		check(
+			'in time: a chord named before it is played waits for the strum that sounds like it',
+			offsets.length >= 5 && offsets.every((dt) => dt !== null && Math.abs(dt - 100) <= 35),
+			offsets.map((dt) => (dt === null ? '-' : dt.toFixed(0))).join(' ')
 		)
 	}
 	{
