@@ -194,11 +194,7 @@
 						<span class="silk changes-count__label">Changes</span>
 						<span class="window"><span class="led led--big changes-count__value"></span></span>
 					</div>
-					<span class="changes-meta__right">
-						<!-- ts/ui/cal-key.ts: blinks until the mic is calibrated. -->
-						<span class="cal-key"><span class="lamp lamp--warn" aria-hidden="true"></span><button class="key" type="button" data-action="open-calibration" aria-label="Calibration">Cal</button></span>
-						<span class="window"><span class="lcd changes-clock">1:00</span></span>
-					</span>
+					<span class="window"><span class="lcd changes-clock">1:00</span></span>
 				</div>
 				<!-- In time lays the LCD out as a grid (trainer.css): what the mic hears on top,
 				     Now ▶ Next, then a segment per beat of the chord. -->
@@ -240,6 +236,12 @@
 						<span class="changes-miss"><span class="lamp"></span><span class="silk">Miss</span></span>
 						<span class="silk changes-tally"></span>
 					</div>
+				</div>
+				<!-- ts/ui/cal-key.ts: the way to the calibration page, and whether it is done. -->
+				<div class="cal-row">
+					<span class="lamp" aria-hidden="true"></span>
+					<span class="cal-row__text"><b class="cal-row__title"></b><span class="cal-row__desc"></span></span>
+					<button class="key" type="button" data-action="open-calibration"></button>
 				</div>
 				<div class="changes-shapes"></div>
 				<button class="btn btn--large key--hot" type="button" data-action="changes-start" aria-keyshortcuts="Space">Start</button>
@@ -303,8 +305,13 @@
 				</div>
 				<div class="tab-transport">
 					<button class="btn btn--large key--hot" type="button" data-action="tab-start" aria-keyshortcuts="Space">Start</button>
-					<span class="cal-key"><span class="lamp lamp--warn" aria-hidden="true"></span><button class="key" type="button" data-action="open-calibration" aria-label="Calibration">Cal</button></span>
 					<button class="key key--lit tab-loop" type="button" aria-pressed="true">Loop</button>
+				</div>
+				<!-- ts/ui/cal-key.ts: the way to the calibration page, and whether it is done. -->
+				<div class="cal-row">
+					<span class="lamp" aria-hidden="true"></span>
+					<span class="cal-row__text"><b class="cal-row__title"></b><span class="cal-row__desc"></span></span>
+					<button class="key" type="button" data-action="open-calibration"></button>
 				</div>
 				<p class="changes-status tab-message" aria-live="polite"></p>
 				<span class="sr-only tab-live" aria-live="polite"></span>
@@ -1308,6 +1315,13 @@
 					<span><span class="cb-title">Field report</span><span class="cb-sub">Records the mic and every timing event of each Changes In time or Tab session while on, to replay it exactly as this phone heard it. The last 3 are kept until the app closes.</span></span>
 					<label class="switch"><span class="switch__text"><span class="switch__title">Record sessions</span><span class="switch__desc" data-report-armed>Off</span></span><input type="checkbox" class="switch__input" data-report-arm /><span class="switch__track"></span></label>
 					<div class="dg-files" data-reports></div>
+					<div class="dg-file dg-file--all" data-reports-all hidden>
+						<span><b data-reports-all-label>All reports</b><span>Share: every file to one app · Download: one .zip</span></span>
+						<span class="dg-file__keys">
+							<button class="key" type="button" data-action="reports-download-all">Download</button>
+							<button class="key" type="button" data-action="reports-share-all">Share</button>
+						</span>
+					</div>
 				</div>
 
 				<div class="dg-card" data-mic-check>

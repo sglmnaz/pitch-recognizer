@@ -13,6 +13,7 @@ import { scoped } from '../../ui/dom'
 import { setListening } from '../../ui/mic-block'
 import { showCalibrationState } from '../../ui/cal-key'
 import { heardChord, resetHeard, strummed } from '../trainer/changes.recognizer'
+import { MAX_FLATNESS, spectralFlatness } from '../../music/changes'
 import { changesTimeline, lastSession, onSession, TIMELINE_AFTER, TIMELINE_BEFORE, type TimelineRow } from '../trainer/timing-probe'
 import { createDelayCalibration, createMicCalibration } from './delay-calibration'
 import * as FieldReport from './field-report'
@@ -29,6 +30,8 @@ const TAB_LABELS: Record<string, string> = {
 const RANGES = { audioDelayMs: [-200, 400], micDelayMs: [-500, 1000] } as const
 // A change further off than this is an outlier on the timeline (the on-time window is 120–200 ms).
 const OUTLIER_MS = 200
+// The mic check counts a strum once the sound this long after it shows pitch.
+const TONAL_AFTER_MS = 80
 // The mic check's level bar: dB over this range.
 const LEVEL_FLOOR_DB = -80
 const LEVEL_TOP_DB = -10
@@ -52,6 +55,8 @@ function createMicCheck(card: HTMLElement) {
 
 	let on = false
 	let strums = 0
+	// Strums wait TONAL_AFTER_MS: one counts only if the sound then has pitch (not a breath or a blow).
+	let pending: number[] = []
 	let lastStrum: number | null = null
 	let lastChord: string | null = null
 	let lampTimer = 0
@@ -59,6 +64,7 @@ function createMicCheck(card: HTMLElement) {
 	function start() {
 		on = true
 		strums = 0
+		pending = []
 		lastStrum = null
 		lastChord = null
 		strumCount.textContent = '0'
@@ -90,9 +96,14 @@ function createMicCheck(card: HTMLElement) {
 			floor.style.left = levelPercent(dB(noiseFloor))
 			levels.textContent = `${Math.round(dB(volume))} dB · ${Math.round(dB(noiseFloor))} dB`
 			soundingLamp.classList.toggle('is-on', Microphone.isSounding())
-			if (strummed(now)) {
+			if (strummed(now)) pending.push(now)
+			const power = Microphone.getFramePower()
+			const tonal = power !== null && spectralFlatness(power.power, power.binHz) < MAX_FLATNESS
+			const due = pending.filter((t) => now - t >= TONAL_AFTER_MS)
+			pending = pending.filter((t) => now - t < TONAL_AFTER_MS)
+			if (due.length && tonal) {
 				strums++
-				lastStrum = now
+				lastStrum = due[0]
 				strumCount.textContent = String(strums)
 				strumLamp.classList.add('is-on')
 				clearTimeout(lampTimer)
@@ -176,21 +187,34 @@ export function createCalibrationView(root: HTMLElement, from: () => string | nu
 				const seconds = Math.round(report.durationMs / 1000)
 				meta.textContent = `${report.when.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })} · ${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')} · audio + ${report.events} events · ${((report.audio.size + report.log.size) / 1e6).toFixed(1)} MB`
 				text.append(title, meta)
-				const share = document.createElement('button')
-				share.type = 'button'
-				share.className = 'key'
-				share.textContent = 'Share'
-				share.addEventListener('click', () => FieldReport.shareReport(report))
-				const remove = document.createElement('button')
-				remove.type = 'button'
-				remove.className = 'key'
-				remove.textContent = '✕'
-				remove.setAttribute('aria-label', `Delete the report ${report.title}`)
-				remove.addEventListener('click', () => FieldReport.deleteReport(report))
-				row.append(text, share, remove)
+				const keys = document.createElement('span')
+				keys.className = 'dg-file__keys'
+				keys.append(
+					key('Download', () => FieldReport.downloadReport(report)),
+					key('Share', () => FieldReport.shareReport(report)),
+					key('✕', () => FieldReport.deleteReport(report), `Delete the report ${report.title}`)
+				)
+				row.append(text, keys)
 				return row
 			})
 		)
+		const count = FieldReport.getReports().length
+		all.hidden = count < 2
+		allLabel.textContent = `All ${count} reports`
+	}
+	const all = $<HTMLElement>('[data-reports-all]')
+	const allLabel = $<HTMLElement>('[data-reports-all-label]')
+	$('[data-action="reports-share-all"]').addEventListener('click', () => FieldReport.shareAll())
+	$('[data-action="reports-download-all"]').addEventListener('click', () => FieldReport.downloadAll())
+
+	function key(label: string, onClick: () => void, ariaLabel?: string) {
+		const button = document.createElement('button')
+		button.type = 'button'
+		button.className = 'key'
+		button.textContent = label
+		if (ariaLabel) button.setAttribute('aria-label', ariaLabel)
+		button.addEventListener('click', onClick)
+		return button
 	}
 	FieldReport.onReports(renderReports)
 

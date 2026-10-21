@@ -164,6 +164,42 @@ export function sequenceChord(symbol: string | null, sequence: readonly string[]
 	return best >= 2 && shared.filter((n) => n === best).length === 1 ? sequence[shared.indexOf(best)] : null
 }
 
+/**
+ * The drill's chord a pitch-class profile favours: the one holding the largest
+ * share of it, or null when two tie or there is no profile. On three field
+ * reports it placed every one of 105 change strums (their profile 40–200 ms on)
+ * on the chord due; the chord recognizer named about 80.
+ */
+export function drillChord(profile: ArrayLike<number> | null, sequence: readonly string[]): string | null {
+	if (!profile) return null
+	const shares = sequence.map((chord) => chordShare(profile, chord))
+	const best = Math.max(...shares)
+	return shares.filter((share) => share === best).length === 1 ? sequence[shares.indexOf(best)] : null
+}
+
+/**
+ * Spectral flatness of a power spectrum over the guitar's band (80–1400 Hz):
+ * the geometric over the arithmetic mean, near 0 for harmonic peaks (a chord),
+ * near 1 for noise. Strums on three field reports: 90% under 0.06, the most
+ * 0.32; a breath or a blow into the mic: 0.48 and up.
+ */
+/** Flatter than this is noise (a breath, a blow), not a strum: no profile, nothing placed. */
+export const MAX_FLATNESS = 0.25
+
+export function spectralFlatness(power: ArrayLike<number>, binHz: number): number {
+	const from = Math.ceil(80 / binHz)
+	const to = Math.min(power.length - 1, Math.floor(1400 / binHz))
+	let logSum = 0
+	let sum = 0
+	for (let k = from; k <= to; k++) {
+		const v = Math.max(power[k], 1e-20)
+		logSum += Math.log(v)
+		sum += v
+	}
+	const n = to - from + 1
+	return n > 0 && sum > 0 ? Math.exp(logSum / n) / (sum / n) : 1
+}
+
 /* Strums --------------------------------------------------------------------- */
 
 // A strum is a jump in the energy of the newest samples (ts/music/tab.ts

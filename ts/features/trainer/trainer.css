@@ -397,7 +397,8 @@
 }
 
 /* Done: the result takes the place of the counter, clock and target. */
-.changes-stage[data-phase='done'] :is(.changes-meta, .changes-target, .changes-next, .changes-heard, .changes-tag, .changes-arrow, .changes-upcoming, .changes-beats) {
+.changes-stage[data-phase='done']
+:is(.changes-meta, .changes-target, .changes-next, .changes-heard, .changes-tag, .changes-arrow, .changes-upcoming, .changes-beats) {
 	display: none;
 }
 
@@ -409,14 +410,8 @@
 	gap: var(--space-12);
 }
 
-/* The CAL key and the clock (or tempo); CAL only In time (One-minute does not judge timing). */
-.changes-meta__right {
-	display: flex;
-	align-items: flex-end;
-	gap: var(--space-8);
-}
-
-.changes-stage:not([data-drill='time']) .cal-key {
+/* The calibration row only In time: One-minute does not judge timing. */
+.changes-stage:not([data-drill='time']) .cal-row {
 	display: none;
 }
 
@@ -678,8 +673,8 @@
 	position: relative;
 	height: 40px;
 	margin: var(--space-8) 0 var(--space-4);
-	background: repeating-linear-gradient(90deg, color-mix(in srgb, var(--lcd-ink) 45%, transparent) 0 1px, transparent 1px 10%) 0 100% / calc(100% + 1px) 7px
-		no-repeat;
+	background:
+		repeating-linear-gradient(90deg, color-mix(in srgb, var(--lcd-ink) 45%, transparent) 0 1px, transparent 1px 10%) 0 100% / calc(100% + 1px) 7px no-repeat;
 
 	&::before,
 	&::after {
@@ -1247,7 +1242,7 @@
 
 .tab-transport {
 	display: grid;
-	grid-template-columns: minmax(0, 1fr) auto 100px;
+	grid-template-columns: minmax(0, 1fr) 100px;
 	gap: var(--space-12);
 	align-items: end;
 }

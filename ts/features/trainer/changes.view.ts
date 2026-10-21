@@ -488,7 +488,9 @@ export function createChangesView(root: HTMLElement): View {
 		const now = performance.now()
 		// The session gets the time it was played: the mic hears it Mic delay later (Settings).
 		const power = Microphone.getFramePower()
-		const chroma = power ? Tab.chromaOf(power.power, power.binHz, Settings.get().a4) : null
+		// A profile only for a sound with pitch in it: a breath or a blow is as flat as noise.
+		const tonal = power !== null && Changes.spectralFlatness(power.power, power.binHz) < Changes.MAX_FLATNESS
+		const chroma = tonal ? Tab.chromaOf(power.power, power.binHz, Settings.get().a4) : null
 		const strum = strummed(now)
 		// The drill's own chords only: the recognizer's close relatives (Em7 for G) count as them.
 		const symbol = Changes.sequenceChord(heardChord(now)?.symbol ?? null, isRunning() ? session.config().sequence : selection())

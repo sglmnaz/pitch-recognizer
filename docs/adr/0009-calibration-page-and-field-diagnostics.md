@@ -26,23 +26,30 @@ in 567d68b). The phone's own audio and timing were the missing evidence.
   redoable:
   1. *Your ears*: tap along with the clicks (Audio delay, beat lights).
   2. *The microphone*: the phone hears its own clicks (Mic delay, Changes and Tab).
-- **Ways in**: a Calibration card on top of Settings, and a CAL key in Changes
-  In time and Tab whose lamp blinks until the mic is calibrated
-  (`ts/ui/cal-key.ts`). The delays' rows left Settings → Metronome for the
+- **Ways in**: a Calibration card on top of Settings, and a calibration row in
+  Changes In time and Tab (`ts/ui/cal-key.ts`): until the mic is calibrated a
+  blinking amber lamp, "Mic not calibrated" and Calibrate; then the Mic delay
+  and Redo. (A "CAL" key with a lamp above it broke the rows it sat in and
+  said nothing to the player.) The delays' rows left Settings → Metronome for the
   page's Fine-tune by hand.
 - **Diagnostics on the same page**:
-  - *Field report*: records the mic of the next Changes In time or Tab session
-    (MediaRecorder on the stream the app analyses, voice processing off) with
-    the session's whole timing log, settings and device, shared as two files.
-    Replayed offline through the same code, a field problem is fixed on the
-    sound that caused it. Kept in memory until the app closes.
-  - *Mic check*: live level and room noise, each strum counted with a lamp, the
-    chord heard and how long naming it took.
+  - *Field report*: while on, records the mic of every Changes In time or Tab
+    session (MediaRecorder on the stream the app analyses, voice processing
+    off) with the session's whole timing log, settings and device: two files
+    per report, each downloaded or shared to an app, or all of them in one
+    share or one .zip (`ts/core/zip.ts`, stored). The log goes as .txt: Android
+    Chrome shares neither .json nor .zip. Replayed offline through the same
+    code, a field problem is fixed on the sound that caused it. The last 3 are
+    kept in memory until the app closes.
+  - *Mic check*: live level and room noise, each strum counted with a lamp (only
+    if the sound 80 ms on is tonal: a breath or a blow is as flat as noise,
+    `Changes.spectralFlatness` ≥ 0.48 against ≤ 0.06 for strums), the chord
+    heard and how long naming it took.
   - *Last session*: the timeline (`changesTimeline`: per judged change, the
     strums around its downbeat, the one that dated it, when the chord was
     named, the offset; outliers in red), the log, Copy.
 - The timing log (`timing-probe.ts`) is always kept per session (a few entries
-  a beat); the Timing log switch only shows it under the exercise as well.
+  a beat) and shown only on this page, never under the exercise.
 
 ## Consequences
 
@@ -56,5 +63,13 @@ in 567d68b). The phone's own audio and timing were the missing evidence.
   noise, and the player strumming ~110 ms ahead of the click; the strum
   detector and the choice of strum were retuned on it (35 of 36 changes within
   60 ms of the real strum, against 30).
+- Three reports later the recognizer still dated changes late or skipped them:
+  right after a change its window holds the old chord, and it calls close
+  relatives by other names. In time now hears changes by sound alone: each
+  strum's pitch-class profile 40–200 ms on picks one of the drill's chords
+  (`Changes.drillChord`; 105 of 105 change strums right), a change is a strum
+  sounding unlike the chord ringing, unless one 3× louder follows within
+  300 ms (the lifted fingers' open strings). 103 of 105 changes within 60 ms
+  of the strum. The recognizer only shows what it hears, and runs One-minute.
 - Reports are lost when the app closes (no IndexedDB for now); sharing them is
   the way to keep one.

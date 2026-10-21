@@ -1,12 +1,14 @@
 // Calibration → Diagnostics → Field report: while on (fieldReport), the mic of
 // every Changes In time or Tab session, recorded exactly as the app hears it
 // (voice processing off), with the session's whole timing log, the settings
-// and the device. Shared as two files, it is replayed offline through the same
-// code (npm run replay) to see what went wrong on someone's phone instead of
-// guessing from summaries. The last KEEP live until the app closes.
+// and the device. Downloaded or shared as two files (or every report, zipped
+// or in one share), it is replayed offline through the same code (npm run
+// replay) to see what went wrong on someone's phone instead of guessing from
+// summaries. The last KEEP live until the app closes.
 import * as Metronome from '../../core/metronome'
 import * as Microphone from '../../core/microphone'
 import * as Settings from '../../core/settings'
+import { zip } from '../../core/zip'
 import type { ProbeSession } from '../trainer/timing-probe'
 
 // A longer session keeps its log; the recording stops here (a few MB).
@@ -102,28 +104,52 @@ export function sessionEnded(session: ProbeSession, title: string) {
 
 const extension = (type: string) => (type.includes('mp4') ? 'm4a' : type.includes('ogg') ? 'ogg' : 'webm')
 
-/** Shares the report's two files (the system sheet), or downloads them where sharing files is not supported. */
-export async function shareReport(report: FieldReport) {
+/**
+ * The report's two files. The log goes as .txt: Android Chrome shares only
+ * text, audio, video, images and PDF, not .json (nor .zip); replay reads either.
+ */
+function filesOf(report: FieldReport) {
 	const stamp = report.when.toISOString().replace(/[:.]/g, '-')
-	const files = [
+	return [
 		new File([report.audio], `pluck-report-${stamp}.${extension(report.audio.type)}`, { type: report.audio.type }),
-		new File([report.log], `pluck-report-${stamp}.json`, { type: 'application/json' }),
+		new File([report.log], `pluck-report-${stamp}.txt`, { type: 'text/plain' }),
 	]
+}
+
+function download(file: File) {
+	const link = document.createElement('a')
+	link.href = URL.createObjectURL(file)
+	link.download = file.name
+	link.click()
+	setTimeout(() => URL.revokeObjectURL(link.href), 10_000)
+}
+
+/** Sends `files` to an app (the system share sheet); downloads them where sharing files is not supported. */
+async function share(files: File[], title: string) {
 	if (navigator.canShare?.({ files })) {
 		try {
-			await navigator.share({ files, title: `Pluck report · ${report.title}` })
-			return
+			await navigator.share({ files, title })
 		} catch {
-			// Dismissed, or not allowed: download instead.
+			// Dismissed: nothing to do.
 		}
+		return
 	}
-	for (const file of files) {
-		const link = document.createElement('a')
-		link.href = URL.createObjectURL(file)
-		link.download = file.name
-		link.click()
-		setTimeout(() => URL.revokeObjectURL(link.href), 10_000)
-	}
+	for (const file of files) download(file)
+}
+
+export function downloadReport(report: FieldReport) {
+	for (const file of filesOf(report)) download(file)
+}
+
+export const shareReport = (report: FieldReport) => share(filesOf(report), `Pluck report · ${report.title}`)
+
+/** Every kept report in one share. */
+export const shareAll = () => share(reports.flatMap(filesOf), `Pluck reports · ${reports.length}`)
+
+/** Every kept report in one .zip. */
+export async function downloadAll() {
+	const stamp = new Date().toISOString().replace(/[:.]/g, '-')
+	download(new File([await zip(reports.flatMap(filesOf))], `pluck-reports-${stamp}.zip`, { type: 'application/zip' }))
 }
 
 export function deleteReport(report: FieldReport) {

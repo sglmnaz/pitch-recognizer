@@ -7,40 +7,31 @@ import * as Changes from '../../music/changes.ts'
 import type * as Metronome from '../../core/metronome.ts'
 import type { ProbeEntry } from './timing-probe.ts'
 
-// In time dates a change by its strum (Changes.createStrumDetector), not by
-// the recognizer naming the chord 160–450 ms later. Which strum, tuned on a
-// field report replayed through scripts/replay.ts (a Xiaomi, G–C at 100 BPM,
-// 36 changes: 35 within 60 ms of the strum in the sound, against 31 for the
-// first strum that sounds like the chord): of the strums after the previous
-// change, from STRUM_SEARCH_MS before the naming to NAMING_AFTER_MS after it,
-// those that sound like the new chord more than the old one (their
-// pitch-class profile from CHROMA_FROM_MS to CHROMA_TO_MS on), and of those
-// the first at least half as loud as the loudest. Old-chord re-strums sound
-// like the old chord; the open strings of lifted fingers and the clicks are
-// quiet; a strum's own second peak, often louder, comes after it. A naming may
-// even come with the strum (a chord named early while the old one rang), hence
-// the window past the naming: the change is decided DECIDE_MS after its naming.
-// That strum also makes a chord the recognizer flipped to (no gap) a played change.
-const STRUM_SEARCH_MS = 1500
-const NAMING_AFTER_MS = 100
+// In time hears each change by its sound, not by the chord recognizer: right
+// after a change its 370 ms window still holds the old chord (on field reports
+// it named the change strum the old chord, then the new one ~500 ms on, or
+// never: late outliers and skipped changes), and it calls close relatives by
+// other names. Each strum (Changes.createStrumDetector) is placed by its
+// pitch-class profile from CHROMA_FROM_MS to CHROMA_TO_MS on (Changes.drillChord;
+// noise as flat as a breath brings no profile, see the view) and is a change
+// when that chord is not the one ringing. Re-strums and clicks sound like the
+// chord ringing, so they are not. Unless a strum LOUDER times as loud follows
+// within LOUDER_MS: the fingers leaving the old chord sound the open strings
+// first. On three field reports (scripts/replay.ts): 103 of 105 changes within
+// 60 ms of the strum in the sound, against ~80 by the recognizer.
 const CHROMA_FROM_MS = 40
 const CHROMA_TO_MS = 200
-const DECIDE_MS = NAMING_AFTER_MS + CHROMA_TO_MS
+const LOUDER_MS = 300
+const LOUDER = 3
 // How loud a strum is: the peak level (RMS) over its first LOUD_MS.
 const LOUD_MS = 80
-// Profiles and levels older than this are no use to any strum still to be matched.
-const CHROMA_KEEP_MS = STRUM_SEARCH_MS + DECIDE_MS
-// The level detector fires a frame or so after the strum reaches the mic.
+// A strum is placed this long after it, once its profile and what follows are in.
+const DECIDE_MS = Math.max(CHROMA_TO_MS, LOUDER_MS + LOUD_MS)
+// The detector fires a frame or so after the strum reaches the mic.
 // Calibration knob, like Trainer → Tab's ATTACK_LATENCY_MS.
 const STRUM_LATENCY_MS = 15
-// No strum found for it (masked or too soft): the change is dated this long
-// before its naming, or by the median naming delay of this session's changes
-// that had a strum (the phone's own). 283 ms = the benchmark's median from a
-// real chord change to its first naming (bench/README.md); check:chords'
-// synthetic strums read 205 ms for a change after a pause, 372 ms from cold.
-export const RECOGNITION_LATENCY_MS = 283
-// From a chord's strum to the frame it is confirmed stable and decided, at the latest.
-const CONFIRM_MS = STRUM_SEARCH_MS + Changes.STABLE_MS + Changes.FLICKER_MS + DECIDE_MS
+// From a strum to its change being known, at the latest.
+const CONFIRM_MS = DECIDE_MS + 50
 const COUNT_IN_S = 3
 // In time: one bar of 4 clicks, a whole number of chords at 1, 2 or 4 beats each.
 const COUNT_IN_BEATS = 4
@@ -96,8 +87,6 @@ export type MetronomeControl = Pick<typeof Metronome, 'configure' | 'setTempo' |
 /** How a session ended: the result to show, or null (stopped, nothing to show). */
 export type SessionResult = { mode: 'minute'; count: number; before: Changes.ChangeRecord } | { mode: 'time'; marks: Changes.Mark[]; bpm: number } | null
 
-const median = (values: number[]) => [...values].sort((a, b) => a - b)[values.length >> 1]
-
 export const clockText = (ms: number) => {
 	const s = Math.max(0, Math.ceil(ms / 1000))
 	return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`
@@ -130,16 +119,12 @@ export function createChangesSession(ui: SessionUi, metronome: MetronomeControl)
 	let offsets: (number | null)[] = []
 	let pending: { downbeat: number; slotMs: number; target: string }[] = []
 	let onsets: Changes.Onset[] = []
-	// In time: every strum heard (clicks included) and the frames' pitch-class
-	// profiles, for dating changes; this session's naming delays; when the last
-	// change was dated (the next one's strum comes after it).
+	// In time: the strums waiting DECIDE_MS to be placed, the frames' pitch-class
+	// profiles and levels, and the chord ringing (the last change's).
 	let strums: number[] = []
 	let chromas: { at: number; chroma: Float32Array }[] = []
 	let levels: { at: number; volume: number }[] = []
-	// Chords named, waiting DECIDE_MS for the strums and profiles after their naming.
-	let named: Changes.Onset[] = []
-	let namingDelays: number[] = []
-	let lastDated = -Infinity
+	let playing: string | null = null
 	let clean = 0
 	// A speed-up waits for the next chord's first beat, so a slot never changes tempo halfway.
 	let pendingBpm = 0
@@ -159,9 +144,7 @@ export function createChangesSession(ui: SessionUi, metronome: MetronomeControl)
 		strums = []
 		chromas = []
 		levels = []
-		named = []
-		namingDelays = []
-		lastDated = -Infinity
+		playing = null
 		clean = 0
 		pendingBpm = 0
 		slot = -1
@@ -282,35 +265,16 @@ export function createChangesSession(ui: SessionUi, metronome: MetronomeControl)
 		return mean
 	}
 
-	/** In time: the strum that played `symbol`, named at `named`, or null (see STRUM_SEARCH_MS). */
-	function strumOf(symbol: string, at: number): { at: number; matched: boolean } | null {
-		const seq = config.sequence
-		const before = seq[(seq.indexOf(symbol) - 1 + seq.length) % seq.length]
-		const candidates = strums.filter((t) => t > lastDated && t >= at - STRUM_SEARCH_MS && t <= at + NAMING_AFTER_MS)
-		const sounding = candidates.filter((t) => {
-			const profile = profileAfter(t)
-			return profile !== null && Changes.chordShare(profile, symbol) > Changes.chordShare(profile, before)
-		})
-		// None sounds like it (or no profiles): only the strums close before the naming, where the old chord is not.
-		const pool = sounding.length ? sounding : candidates.filter((t) => t >= at - Changes.ATTACK_LEAD_MS)
-		if (!pool.length) return null
+	/** In time: a strum, DECIDE_MS on. A change if it sounds like another of the drill's chords than the one ringing. */
+	function place(at: number) {
+		const chord = Changes.drillChord(profileAfter(at), config.sequence)
+		if (!chord || chord === playing) return
 		const loud = (t: number) => Math.max(0, ...levels.filter((l) => l.at >= t && l.at <= t + LOUD_MS).map((l) => l.volume))
-		const top = Math.max(...pool.map(loud))
-		return { at: pool.find((t) => loud(t) >= top / 2)!, matched: sounding.length > 0 }
-	}
-
-	/** A named chord's strums and profiles are in: date it (or drop a flip no strum played). */
-	function decide(onset: Changes.Onset) {
-		const struck = strumOf(onset.symbol, onset.at)
-		// Flips of a ringing chord are not changes here either, unless a strum that sounds like the new chord played it.
-		if (!onset.fresh && !struck?.matched) return
-		if (struck && struck.at < onset.at) namingDelays.push(onset.at - struck.at)
-		const naming = namingDelays.length >= 3 ? median(namingDelays) : RECOGNITION_LATENCY_MS
-		const at = struck ? struck.at - STRUM_LATENCY_MS : onset.at - naming
-		onsets.push({ ...onset, at })
-		// The next change's strum comes after this one's (or after its naming-based date).
-		lastDated = struck?.at ?? at
-		ui.probe?.({ kind: 'named', at: onset.at, symbol: onset.symbol, struck: struck?.at ?? null })
+		// A strum this much louder soon after is the change; this one, the fingers leaving the old chord.
+		if (strums.some((t) => t > at && t <= at + LOUDER_MS && loud(t) >= LOUDER * loud(at))) return
+		playing = chord
+		onsets.push({ symbol: chord, at: at - STRUM_LATENCY_MS, fresh: true })
+		ui.probe?.({ kind: 'named', at, symbol: chord, struck: at })
 	}
 
 	/**
@@ -341,12 +305,9 @@ export function createChangesSession(ui: SessionUi, metronome: MetronomeControl)
 			}
 			if (chroma) chromas.push({ at: now, chroma })
 			levels.push({ at: now, volume })
-			strums = strums.filter((t) => now - t < CONFIRM_MS + STRUM_SEARCH_MS)
-			chromas = chromas.filter((c) => now - c.at < CHROMA_KEEP_MS)
-			levels = levels.filter((l) => now - l.at < CHROMA_KEEP_MS)
-			// Unmasked strums: one right on the click is masked above as the click, yet it is when the change was played.
-			if (onset) named.push(onset)
-			while (named.length && now - named[0].at >= DECIDE_MS) decide(named.shift()!)
+			chromas = chromas.filter((c) => now - c.at < 2 * DECIDE_MS)
+			levels = levels.filter((l) => now - l.at < 2 * DECIDE_MS)
+			while (strums.length && now - strums[0] >= DECIDE_MS) place(strums.shift()!)
 			onsets = onsets.filter((o) => now - o.at < ONSET_KEEP_MS)
 			judgeDue(now)
 		}

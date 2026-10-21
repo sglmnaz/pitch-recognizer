@@ -22,7 +22,7 @@ import {
 	validSequence,
 	type Onset,
 } from '../ts/music/changes.ts'
-import { createChangesSession, type MetronomeControl, RECOGNITION_LATENCY_MS, type SessionUi, verdict } from '../ts/features/trainer/changes.session.ts'
+import { createChangesSession, type MetronomeControl, type SessionUi, verdict } from '../ts/features/trainer/changes.session.ts'
 import { check, finish } from './check.ts'
 
 const FRAME = 1000 / 60
@@ -320,6 +320,8 @@ check(
 	const CHROMA: Record<string, Float32Array> = {
 		G: Float32Array.from({ length: 12 }, (_, pc) => ([7, 11, 2].includes(pc) ? 1 / 3 : 0)),
 		C: Float32Array.from({ length: 12 }, (_, pc) => ([0, 4, 7].includes(pc) ? 1 / 3 : 0)),
+		// The six open strings, E A D G B E: to the drill G–C they sound like G.
+		open: Float32Array.from({ length: 12 }, (_, pc) => ([4, 9, 2, 7, 11].includes(pc) ? 1 / 5 : 0)),
 	}
 
 	/** A session with a recording UI and a fake metronome (tempo, running). */
@@ -393,20 +395,19 @@ check(
 
 	/**
 	 * In time, G–C at 120 BPM, 2 beats a chord, 4 count-in clicks: the player
-	 * changes on every downbeat and strums `strumOffset` ms after it; the
-	 * recognizer names the chord `namingMs` after the downbeat, straight from
-	 * the last one (no gap), so only the strum makes it a change.
+	 * changes on every downbeat, strumming `strumOffset` ms after it; the frames
+	 * carry the profile of what the strings sound like (the chord changes at its
+	 * strum) and a level. Field cases (scripts/replay.ts) on request: a strum on
+	 * every beat, the clicks heard as strums, the open strings of the lifted
+	 * fingers liftMs before each change (quiet), the strum's own second peak
+	 * secondPeakMs after it (louder).
 	 */
-	function inTime(
-		strumOffset: number,
-		ms = 12_000,
-		namingMs = RECOGNITION_LATENCY_MS,
-		{ everyBeat = false, profiles = false, liftMs = 0, secondPeakMs = 0 } = {}
-	) {
+	function inTime(strumOffset: number, { ms = 12_000, profiles = true, everyBeat = false, clicks = false, liftMs = 0, secondPeakMs = 0 } = {}) {
 		const h = harness()
 		h.session.start({ mode: 'time', sequence: ['G', 'C'], seconds: 60, beats: 2, bpm: 120, speedUp: true, countIn: true, volume: 1 }, 0)
 		const downbeats: number[] = []
 		const beats: number[] = []
+		const clicked: number[] = []
 		let nextClick = 0
 		let index = 0
 		for (let t = 0; t < ms; t += FRAME) {
@@ -415,39 +416,43 @@ check(
 					{ time: 0, bar: Math.floor(index / 2), beat: index % 2, sub: 0, accent: 1, bpm: h.metro.bpm, heardAt: nextClick, stampedAt: null },
 					nextClick
 				)
+				clicked.push(nextClick)
 				if (index >= 4 && index % 2 === 0) downbeats.push(nextClick)
 				if (index >= 4) beats.push(nextClick)
 			}
 			// The downbeat to come too (not clicked yet): the lifted fingers sound before it.
 			const coming = [...downbeats, (downbeats.at(-1) ?? 2000) + (2 * 60_000) / h.metro.bpm]
-			const named = downbeats.filter((d) => d + namingMs <= t).length
 			const struck = (everyBeat ? beats : downbeats).map((d) => d + strumOffset)
-			// Field cases (scripts/replay.ts): the open strings of the lifted fingers, quiet, liftMs
-			// before each change, and the strum's own second peak, louder, secondPeakMs after it.
 			const lifts = liftMs ? coming.map((d) => d + strumOffset - liftMs) : []
 			const seconds = secondPeakMs ? downbeats.map((d) => d + strumOffset + secondPeakMs) : []
-			const strum = [...struck, ...lifts, ...seconds].some((at) => at > t - FRAME && at <= t)
-			// What the strings sound like: the chord changes at the strum on its downbeat.
+			const heardClicks = clicks ? clicked : []
+			const strum = [...struck, ...lifts, ...seconds, ...heardClicks].some((at) => at > t - FRAME && at <= t)
 			const played = downbeats.filter((d) => d + strumOffset <= t).length
-			const profile = profiles ? CHROMA[played ? ['G', 'C'][(played - 1) % 2] : 'G'] : null
+			const lifting = lifts.some((l) => t >= l && t < l + liftMs)
+			const sounding = lifting ? 'open' : played ? ['G', 'C'][(played - 1) % 2] : 'G'
 			const ring = (events: number[], level: number) => Math.max(0, ...events.filter((at) => at <= t).map((at) => level * Math.exp(-(t - at) / 150)))
-			const volume = Math.max(ring(struck, 1), ring(lifts, 0.08), ring(seconds, 1.4))
-			h.session.frame(t, strum, named ? ['G', 'C'][(named - 1) % 2] : 'G', profile, volume)
+			const volume = Math.max(ring(struck, 1), ring(lifts, 0.08), ring(seconds, 1.4), ring(heardClicks, 0.05))
+			// The recognizer's name only shows as Hearing now; it names the chord 283 ms on.
+			const named = downbeats.filter((d) => d + 283 <= t).length
+			h.session.frame(t, strum, named ? ['G', 'C'][(named - 1) % 2] : 'G', profiles ? CHROMA[sounding] : null, volume)
 		}
 		return h
 	}
+	const offsetsOf = (h: ReturnType<typeof inTime>) => h.of('offset') as (number | null)[]
+	const near = (offsets: (number | null)[], dt: number) => offsets.length >= 5 && offsets.every((o) => o !== null && Math.abs(o - dt) <= 20)
+	const show = (offsets: (number | null)[]) => offsets.map((o) => (o === null ? '-' : o.toFixed(0))).join(' ')
 
 	{
 		const { session, metro, of } = inTime(100)
 		const marks = of('marked')
 		check('in time: started the metronome at the session tempo', metro.running && of('countIn').join() === '4,3,2,1', of('countIn').join())
 		check('in time: strummed changes on the downbeat are hits', marks.length >= 6 && marks.every((m) => m === 'hit'), marks.join(' '))
-		const offsets = of('offset') as (number | null)[]
+		const offsets = offsetsOf({ of } as ReturnType<typeof inTime>)
 		const hitMs = of('hitMs') as number[]
 		check(
 			'in time: each mark comes with its offset, inside the window it was judged by',
 			offsets.length === marks.length && offsets.every((dt, i) => dt !== null && Math.abs(dt) <= hitMs[i]),
-			offsets.join(' ')
+			show(offsets)
 		)
 		const beats = of('beat').join('')
 		check('in time: the beats of each chord after the count-in, 0 on its first', beats.startsWith('010101'), beats)
@@ -460,51 +465,31 @@ check(
 		check('in time: ending stops the clicks and reports the tempo', !metro.running && result?.mode === 'time' && result.bpm === metro.bpm)
 	}
 	{
-		// A Xiaomi: chords named a second after the strum, strummed on every beat.
-		// The first strum that sounds like the new chord dates it; without the
-		// profiles the change would be dated by naming and read ~700 ms late.
-		const h = inTime(100, 12_000, 1100, { everyBeat: true, profiles: true })
-		const marks = h.of('marked')
-		const offsets = h.of('offset') as (number | null)[]
-		check(
-			'in time: named a second late, strummed on every beat: dated by the strum that sounds like the new chord',
-			marks.length >= 5 && marks.every((m) => m === 'hit') && offsets.every((dt) => dt !== null && Math.abs(dt - 100) <= 35),
-			`${marks.join(' ')} | ${offsets.map((dt) => (dt === null ? '-' : dt.toFixed(0))).join(' ')}`
-		)
+		const offsets = offsetsOf(inTime(100))
+		check("in time: a change is dated by its strum (minus the detector's 15 ms)", near(offsets, 85), show(offsets))
 	}
 	{
-		// A field report (scripts/replay.ts) had all three: quiet open strings as the fingers
-		// left the old chord (here 180 ms before the strum, sounding like the new chord by
-		// then), the strum's own second peak 130 ms on and louder, and a chord named right
-		// with its strum (named early while the old one rang). The first strum at least half
-		// as loud as the loudest dates it.
-		const h = inTime(100, 12_000, 103, { everyBeat: true, profiles: true, liftMs: 180, secondPeakMs: 130 })
-		const offsets = h.of('offset') as (number | null)[]
-		check(
-			'in time: not the lifted fingers, not the second peak, not missed when named with the strum: the strum',
-			offsets.length >= 5 && offsets.every((dt) => dt !== null && Math.abs(dt - 85) <= 20),
-			offsets.map((dt) => (dt === null ? '-' : dt.toFixed(0))).join(' ')
-		)
+		const offsets = offsetsOf(inTime(100, { everyBeat: true }))
+		check('in time: re-strums of the chord ringing are not changes', near(offsets, 85), show(offsets))
 	}
 	{
-		// A phone: the chord is named 600 ms after the downbeat, not the bench's 283 ms.
-		// Dated by its strum, the change still lands 100 ms after the beat.
-		const h = inTime(100, 12_000, 600)
-		const marks = h.of('marked')
-		const offsets = h.of('offset') as (number | null)[]
-		check(
-			'in time: a change is dated by its strum, however late the recognizer names it',
-			marks.length >= 6 && marks.every((m) => m === 'hit') && offsets.every((dt) => dt !== null && Math.abs(dt - 100) <= 35),
-			`${marks.join(' ')} | ${offsets.map((dt) => (dt === null ? '-' : dt.toFixed(0))).join(' ')}`
-		)
+		const offsets = offsetsOf(inTime(100, { clicks: true }))
+		check('in time: clicks heard as strums sound like the chord ringing: not changes', near(offsets, 85), show(offsets))
 	}
 	{
-		const h = inTime(0)
-		const marks = h.of('marked')
-		check('in time: a strum on a click is the click, so the change is a flip', marks.length >= 6 && marks.every((m) => m === 'miss'), marks.join(' '))
+		const offsets = offsetsOf(inTime(100, { everyBeat: true, liftMs: 180, secondPeakMs: 130 }))
+		check('in time: not the lifted fingers (a louder strum follows), not the second peak (the same chord): the strum', near(offsets, 85), show(offsets))
+	}
+	{
+		const offsets = offsetsOf(inTime(0))
+		check('in time: a strum right on the click counts (the change is in its sound, not in a name)', near(offsets, -15), show(offsets))
+	}
+	{
+		const h = inTime(100, { profiles: false })
 		check(
-			'in time: a miss has no offset',
-			h.of('offset').every((dt) => dt === null)
+			'in time: without a profile (too quiet, or as flat as a breath) nothing is a change',
+			h.of('marked').every((m) => m === 'miss') && h.of('offset').every((dt) => dt === null),
+			h.of('marked').join(' ')
 		)
 	}
 }

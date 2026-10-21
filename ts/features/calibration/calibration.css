@@ -72,7 +72,8 @@
 	display: flex;
 	flex-direction: column;
 	align-items: flex-end;
-	gap: var(--space-6);
+	/* Broadcast frames its windows and keys in a bezel a few px outside the box. */
+	gap: var(--space-12);
 
 	.lamp {
 		--lamp-w: 22px;
@@ -115,7 +116,7 @@
 	flex-wrap: wrap;
 	justify-content: space-between;
 	align-items: center;
-	gap: var(--space-8);
+	gap: var(--space-12);
 
 	.key {
 		min-width: 112px;
@@ -276,7 +277,7 @@
 .dg-card {
 	display: flex;
 	flex-direction: column;
-	gap: var(--space-8);
+	gap: var(--space-12);
 
 	.switch {
 		padding: 0;
@@ -304,12 +305,13 @@
 	}
 }
 
+/* A report: what it is above, its keys below on the right (three keys beside
+   the text would squeeze it on a phone). */
 .dg-file {
-	display: grid;
-	grid-template-columns: minmax(0, 1fr) auto auto;
-	align-items: center;
-	gap: var(--space-8);
-	padding: var(--space-8) 0;
+	display: flex;
+	flex-direction: column;
+	gap: var(--space-10);
+	padding: var(--space-10) 0;
 	border-top: 1.5px solid var(--rule);
 
 	b {
@@ -326,10 +328,21 @@
 	}
 
 	.key {
-		height: 34px;
-		padding-inline: var(--space-8);
+		height: 36px;
+		padding-inline: var(--space-10);
 		font-size: var(--text-2xs);
 	}
+}
+
+.dg-file__keys {
+	display: flex;
+	justify-content: flex-end;
+	gap: var(--space-12);
+}
+
+/* Every report at once, after the last one. */
+.dg-file--all {
+	border-top-width: 3px;
 }
 
 .dg-live {
@@ -546,7 +559,9 @@
 	overflow: auto;
 	border-radius: var(--radius-sm);
 	background: var(--panel-sunk);
-	font: var(--text-2xs) / 1.4 ui-monospace, monospace;
+	font:
+		var(--text-2xs) / 1.4 ui-monospace,
+		monospace;
 	white-space: pre-wrap;
 	user-select: text;
 }
@@ -554,7 +569,7 @@
 .dg-actions {
 	display: grid;
 	grid-template-columns: 1fr 1fr;
-	gap: var(--space-10);
+	gap: var(--space-12);
 
 	.key {
 		height: 44px;
@@ -565,7 +580,7 @@
 	display: grid;
 	grid-template-columns: minmax(0, 1fr) auto auto auto;
 	align-items: center;
-	gap: var(--space-6);
+	gap: var(--space-12);
 
 	.key {
 		width: 40px;
@@ -584,14 +599,14 @@
 .cb-card {
 	display: flex;
 	flex-direction: column;
-	gap: var(--space-8);
+	gap: var(--space-12);
 }
 
 .cb-card__row {
 	display: grid;
 	grid-template-columns: auto minmax(0, 1fr) auto;
 	align-items: center;
-	gap: var(--space-10);
+	gap: var(--space-12);
 
 	.lamp {
 		--lamp-w: 20px;
@@ -608,22 +623,53 @@
 	height: 46px;
 }
 
-/* The CAL key (ts/ui/cal-key.ts): a lamp over a small key; the lamp blinks
-   amber until the mic is calibrated. */
-.cal-key {
-	display: flex;
-	flex-direction: column;
+/* The calibration row of Changes In time and Tab (ts/ui/cal-key.ts): a lamp
+   beside the line (never above a key: that broke the rows it sat in), what
+   it means, a key. Not calibrated: the lamp blinks amber and the key is the
+   hot Calibrate; done: a quiet line with Redo. */
+.cal-row {
+	display: grid;
+	grid-template-columns: auto minmax(0, 1fr) auto;
 	align-items: center;
-	gap: var(--space-6);
+	gap: var(--space-12);
+	padding: var(--space-10) var(--space-12);
+	border-radius: var(--radius);
+	background: var(--panel-sunk);
+	box-shadow:
+		inset 0 1px 2px rgba(0, 0, 0, 0.2),
+		0 0 0 var(--outline-width) var(--rule);
+
+	.lamp {
+		--lamp-w: 12px;
+		--lamp-h: 12px;
+	}
 
 	.key {
-		height: 44px;
-		padding-inline: var(--space-10);
-		font-size: var(--text-xs);
+		height: 40px;
+		padding-inline: var(--space-12);
 	}
 }
 
-.cal-key--due .lamp {
+.cal-row__title {
+	display: block;
+	font: 700 var(--text-sm) / 1.2 var(--font-ui);
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+}
+
+.cal-row__desc {
+	display: block;
+	font: var(--text-xs) / 1.35 var(--font-text);
+	color: var(--fg-muted);
+}
+
+.cal-row--done {
+	background: transparent;
+	box-shadow: none;
+	padding-block: var(--space-4);
+}
+
+.cal-row--due .lamp {
 	animation: cal-due 1.2s step-end infinite;
 }
 
@@ -642,7 +688,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-	.cal-key--due .lamp {
+	.cal-row--due .lamp {
 		animation: none;
 		background: var(--lamp-warn-on);
 	}
