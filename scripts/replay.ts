@@ -124,6 +124,20 @@ for (let end = FFT_SIZE; end <= band.length; end += step) {
 	})
 }
 
+/* As the app (Tab.createHeldGate): a strum counts only if the sound 80 ms on is still 2 (HELD=k) times the noise floor; HELD=off keeps all. */
+if (process.env.HELD !== 'off') {
+	const k = Number(process.env.HELD ?? 2)
+	const before = appStrums.length
+	const kept = appStrums.filter((t) => {
+		const f = frames.find((x) => x.at >= t + 80)
+		const n = floors.find((x) => x.at === t)?.floor ?? 0
+		return f !== undefined && f.volume >= k * n
+	})
+	appStrums.length = 0
+	appStrums.push(...kept)
+	console.log(`held ${k}: kept ${kept.length} of ${before} strums`)
+}
+
 /* What each detector fired per real strum (−100 … +300 ms from it), and away from any. */
 function tally(name: string, fired: number[]) {
 	const per = strums.map((s) => fired.filter((t) => t >= s - 100 && t <= s + 300))
@@ -506,4 +520,25 @@ strum energy over the noise floor²: real (${sorted.length}) min ${sorted[0]?.to
 		.slice(0, 5)
 		.map((x) => x.toFixed(1))
 		.join(' ')}`)
+}
+
+/* NOISE on a Tab report: the picks nearest each note due, and how loud their sound still is 80 ms on over the floor. */
+if (process.env.NOISE && report.entries.some((e) => e.kind === 'due')) {
+	const dues = report.entries.filter((e) => e.kind === 'due').map((e) => (e.at as number) - report.recordStartedAt + offset.x)
+	const held = dues
+		.map((d) => picks.filter((p) => Math.abs(p - d) <= 150).sort((a, b) => Math.abs(a - d) - Math.abs(b - d))[0])
+		.filter((p) => p !== undefined)
+		.map((p) => {
+			const f = frames.find((x) => x.at >= p + 80)
+			const n = floors.find((x) => x.at === p)?.floor ?? Number.NaN
+			return f ? f.volume / n : Number.NaN
+		})
+		.filter(Number.isFinite)
+		.sort((a, b) => a - b)
+	console.log(
+		`tab: picks by the notes due (${held.length} of ${dues.length}), level 80 ms on over the floor, lowest 8: ${held
+			.slice(0, 8)
+			.map((x) => x.toFixed(1))
+			.join(' ')} · median ${held[held.length >> 1]?.toFixed(1)}`
+	)
 }

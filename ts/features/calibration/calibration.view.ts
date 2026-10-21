@@ -15,6 +15,7 @@ import { showCalibrationState } from '../../ui/cal-key'
 import { heardChord, resetHeard, strummed } from '../trainer/changes.recognizer'
 import type { ProbeEntry } from '../trainer/timing-probe'
 import { MAX_FLATNESS, spectralFlatness } from '../../music/changes'
+import { createHeldGate } from '../../music/tab'
 import { changesTimeline, lastSession, onSession, TIMELINE_AFTER, TIMELINE_BEFORE, type TimelineRow } from '../trainer/timing-probe'
 import { createDelayCalibration, createMicCalibration } from './delay-calibration'
 import * as FieldReport from './field-report'
@@ -31,13 +32,6 @@ const TAB_LABELS: Record<string, string> = {
 const RANGES = { audioDelayMs: [-200, 400], micDelayMs: [-500, 1000] } as const
 // A change further off than this is an outlier on the timeline (the on-time window is 120–200 ms).
 const OUTLIER_MS = 200
-// The mic check counts a strum once the sound this long after it shows pitch
-// and still stands HELD_OVER_NOISE times over the room's noise floor (RMS): a
-// strum rings, while PC fans at -58 dB swing enough for the detector now and
-// then (14 strums counted in 30 s of silence) but never held 2x their floor.
-// Single strums on three field reports: 2.6x and up, most 10-20x.
-const TONAL_AFTER_MS = 80
-const HELD_OVER_NOISE = 2.5
 // The mic check's level bar: dB over this range.
 const LEVEL_FLOOR_DB = -80
 const LEVEL_TOP_DB = -10
@@ -61,8 +55,8 @@ function createMicCheck(card: HTMLElement) {
 
 	let on = false
 	let strums = 0
-	// Strums wait TONAL_AFTER_MS: one counts only if the sound then has pitch (not a breath or a blow).
-	let pending: number[] = []
+	// A strum counts as Changes takes it, once it rings (createHeldGate), and only if the sound then has pitch (not a breath or a blow).
+	const held = createHeldGate()
 	let lastStrum: number | null = null
 	let lastChord: string | null = null
 	let lampTimer = 0
@@ -72,7 +66,7 @@ function createMicCheck(card: HTMLElement) {
 	function start() {
 		on = true
 		strums = 0
-		pending = []
+		held.reset()
 		entries = []
 		lastStrum = null
 		lastChord = null
@@ -110,15 +104,12 @@ function createMicCheck(card: HTMLElement) {
 			soundingLamp.classList.toggle('is-on', Microphone.isSounding())
 			// The mic starts after Start: recording begins with its first frame.
 			FieldReport.sessionStarted()
-			if (strummed(now)) {
-				pending.push(now)
-				entries.push({ kind: 'strum', at: now })
-			}
+			const strum = strummed(now)
+			if (strum) entries.push({ kind: 'strum', at: now })
 			const power = Microphone.getFramePower()
 			const tonal = power !== null && spectralFlatness(power.power, power.binHz) < MAX_FLATNESS
-			const due = pending.filter((t) => now - t >= TONAL_AFTER_MS)
-			pending = pending.filter((t) => now - t < TONAL_AFTER_MS)
-			if (due.length && tonal && volume >= HELD_OVER_NOISE * noiseFloor) {
+			const due = held.feed(now, strum, volume, noiseFloor)
+			if (due.length && tonal) {
 				strums++
 				lastStrum = due[0]
 				entries.push({ kind: 'counted', at: due[0] })

@@ -369,6 +369,34 @@ export interface OnsetDetector {
 	reset(): void
 }
 
+// An attack (a pick, a strum) counts once the sound HELD_MS on still stands
+// HELD_OVER_NOISE times over the room's noise floor (the mic's, RMS): strings
+// ring, noise does not. PC fans at -58 dB swung enough for the detectors to
+// fire (a Mic check counted 14 strums in 30 s of silence) but never held 1.9x
+// their floor; on field reports the strums and the notes of a Tab session (an
+// unplugged electric) held 2.6x and up, most 10-20x. Changes, Tab and the Mic
+// check all go through it; the Mic delay calibration does not (a click does
+// not ring).
+export const HELD_MS = 80
+const HELD_OVER_NOISE = 2
+
+/** Attacks confirmed HELD_MS on, at their own times; noise that did not hold is dropped. */
+export function createHeldGate() {
+	let pending: number[] = []
+	return {
+		/** One frame: whether it is an attack, its level and the noise floor (RMS). The attacks confirmed now. */
+		feed(now: number, attack: boolean, volume: number, noiseFloor: number): number[] {
+			if (attack) pending.push(now)
+			const due = pending.filter((at) => now - at >= HELD_MS)
+			pending = pending.filter((at) => now - at < HELD_MS)
+			return volume >= HELD_OVER_NOISE * noiseFloor ? due : []
+		},
+		reset() {
+			pending = []
+		},
+	}
+}
+
 export function createOnsetDetector(): OnsetDetector {
 	let history: { at: number; energy: number }[] = []
 	let last = Number.NEGATIVE_INFINITY

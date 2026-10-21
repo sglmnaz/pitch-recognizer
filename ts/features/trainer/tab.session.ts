@@ -13,7 +13,7 @@ const COUNT_IN_BEATS = Tab.BEATS_PER_BAR
 // the edge of its window is listened to for PICK_LISTEN_MS, and the follower
 // confirms a legato note STABLE_FRAMES frames after it starts and backdates it
 // by LEGATO_LATENCY_MS. Two frames of margin on top.
-const CONFIRM_MS = Math.max(Tab.ATTACK_LATENCY_MS + Tab.PICK_LISTEN_MS, Tab.LEGATO_LATENCY_MS + Tab.STABLE_FRAMES * 17) + 34
+const CONFIRM_MS = Math.max(Tab.ATTACK_LATENCY_MS + Tab.PICK_LISTEN_MS, Tab.LEGATO_LATENCY_MS + Tab.STABLE_FRAMES * 17) + 34 + Tab.HELD_MS
 // Wait: a bend counts once its note has held this long.
 const BEND_HOLD_MS = 120
 // Readings and note starts older than this cannot matter to a note still due.
@@ -83,6 +83,8 @@ export function createTabSession(ui: TabSessionUi, metronome: MetronomeControl) 
 	let phase: Phase = 'idle'
 	let config: TabSessionConfig | null = null
 	let follower = Tab.createNoteFollower()
+	// Picks wait Tab.HELD_MS for the sound to show it rings.
+	const held = Tab.createHeldGate()
 	let heard: Tab.Hearing = { picks: [], frames: [], events: [] }
 	let spent: Tab.Spent = { picks: new Set(), events: new Set() }
 	let readings: { at: number; frequency: number }[] = []
@@ -114,6 +116,7 @@ export function createTabSession(ui: TabSessionUi, metronome: MetronomeControl) 
 		config = next
 		follower = Tab.createNoteFollower()
 		heard = { picks: [], frames: [], events: [] }
+		held.reset()
 		spent = { picks: new Set(), events: new Set() }
 		readings = []
 		marks = []
@@ -264,11 +267,12 @@ export function createTabSession(ui: TabSessionUi, metronome: MetronomeControl) 
 	}
 
 	/**
-	 * One mic frame: the frame's own pitch (null = none), whether it was a pick
-	 * and its pitch-class profile (Tab.chromaOf; null = too quiet). True when a
-	 * session without loop has played its last note (the view ends it).
+	 * One mic frame: the frame's own pitch (null = none), whether it was a pick,
+	 * its pitch-class profile (Tab.chromaOf; null = too quiet), level and the
+	 * room's noise floor (RMS; 0 = none, every pick rings). True when a session
+	 * without loop has played its last note (the view ends it).
 	 */
-	function frame(now: number, frequency: number | null, attack: boolean, chroma: Float32Array | null = null): boolean {
+	function frame(now: number, frequency: number | null, attack: boolean, chroma: Float32Array | null = null, volume = 0, noise = 0): boolean {
 		if (!config || !running()) return false
 		const a4 = config.a4
 		// Through a speaker the mic hears the clicks too, and the detector may
@@ -299,9 +303,10 @@ export function createTabSession(ui: TabSessionUi, metronome: MetronomeControl) 
 			}
 			return !config.loop && target >= exercise().notes.length
 		}
-		if (attack) {
-			heard.picks.push(now - Tab.ATTACK_LATENCY_MS)
-			ui.probe?.({ kind: 'pick', at: now - Tab.ATTACK_LATENCY_MS })
+		// Picks count once they ring (Tab.createHeldGate), at their own times.
+		for (const at of held.feed(now, attack, volume, noise)) {
+			heard.picks.push(at - Tab.ATTACK_LATENCY_MS)
+			ui.probe?.({ kind: 'pick', at: at - Tab.ATTACK_LATENCY_MS })
 		}
 		if (midi !== null || chroma) heard.frames.push({ at: now, midi, chroma })
 		if (event) heard.events.push(event)

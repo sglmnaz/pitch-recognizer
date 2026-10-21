@@ -495,7 +495,8 @@ export function createChangesView(root: HTMLElement): View {
 		const strum = strummed(now)
 		// The drill's own chords only: the recognizer's close relatives (Em7 for G) count as them.
 		const symbol = Changes.sequenceChord(heardChord(now)?.symbol ?? null, isRunning() ? session.config().sequence : selection())
-		if (session.frame(now - Settings.get().micDelayMs, strum, symbol, chroma, Microphone.getStats().volume)) finish(true)
+		const { volume, noiseFloor } = Microphone.getStats()
+		if (session.frame(now - Settings.get().micDelayMs, strum, symbol, chroma, volume, noiseFloor)) finish(true)
 	}
 
 	// ?debug: fake chords drive frames while the mic is off.

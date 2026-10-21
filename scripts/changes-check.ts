@@ -22,6 +22,7 @@ import {
 	validSequence,
 	type Onset,
 } from '../ts/music/changes.ts'
+import { createHeldGate } from '../ts/music/tab.ts'
 import { createChangesSession, type MetronomeControl, type SessionUi, verdict } from '../ts/features/trainer/changes.session.ts'
 import { check, finish } from './check.ts'
 
@@ -266,6 +267,18 @@ const strums = (symbols: string[], ms: number): Segments => symbols.map((s) => [
 	check('history keeps the last few sessions', long.history.length === HISTORY && long.best === 25)
 	store.set(recordKey(['A', 'D']), '{oops')
 	check('corrupt storage reads as no record', loadRecord(['A', 'D'], 60).best === 0)
+}
+
+/* Attacks that ring (Tab.createHeldGate) --------------------------------------- */
+{
+	const run = (level: number) => {
+		const gate = createHeldGate()
+		const out: number[] = []
+		for (let t = 0; t <= 200; t += 17) out.push(...gate.feed(t, t === 34, level, 0.001))
+		return out
+	}
+	check('held: a strum still 3x the noise floor 80 ms on counts, at its own time', run(0.003).join() === '34', run(0.003).join())
+	check('held: noise that falls back to 1.5x its floor does not (PC fans in a silent Mic check)', run(0.0015).length === 0)
 }
 
 /* The drill's own chords (Changes.sequenceChord) ------------------------------ */

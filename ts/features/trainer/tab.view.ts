@@ -458,7 +458,8 @@ export function createTabView(root: HTMLElement): View {
 			const power = Microphone.getFramePower()
 			const chroma = power ? Tab.chromaOf(power.power, power.binHz, Settings.get().a4) : null
 			// The session gets the time it was played: the mic hears it Mic delay later (Settings).
-			if (session.frame(now - Settings.get().micDelayMs, frequency, attack, chroma)) finish()
+			const { volume, noiseFloor } = Microphone.getStats()
+			if (session.frame(now - Settings.get().micDelayMs, frequency, attack, chroma, volume, noiseFloor)) finish()
 		},
 	}
 }

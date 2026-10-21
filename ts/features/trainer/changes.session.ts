@@ -4,6 +4,7 @@
 // feeds it frames and beats and draws what it reports through `SessionUi`;
 // `npm run check:changes` drives it with a fake clock and metronome.
 import * as Changes from '../../music/changes.ts'
+import * as Tab from '../../music/tab.ts'
 import type * as Metronome from '../../core/metronome.ts'
 import type { ProbeEntry } from './timing-probe.ts'
 
@@ -136,6 +137,8 @@ export function createChangesSession(ui: SessionUi, metronome: MetronomeControl)
 	// In time: the strums waiting DECIDE_MS to be placed, the frames' pitch-class
 	// profiles and levels, and the chord ringing (the last change's).
 	let strums: { at: number; click: boolean }[] = []
+	// Strums count once they ring (Tab.createHeldGate): noise that swings does not.
+	const held = Tab.createHeldGate()
 	let chromas: { at: number; chroma: Float32Array }[] = []
 	let levels: { at: number; volume: number }[] = []
 	let playing: string | null = null
@@ -158,6 +161,7 @@ export function createChangesSession(ui: SessionUi, metronome: MetronomeControl)
 		pending = []
 		onsets = []
 		strums = []
+		held.reset()
 		chromas = []
 		levels = []
 		playing = null
@@ -305,10 +309,11 @@ export function createChangesSession(ui: SessionUi, metronome: MetronomeControl)
 
 	/**
 	 * One mic frame: whether it was strummed, the chord heard (null = none),
-	 * the frame's pitch-class profile (null = too quiet or not given) and level (RMS).
+	 * the frame's pitch-class profile (null = too quiet or not given), level and
+	 * the room's noise floor (RMS; 0 = none, every strum rings).
 	 * True when a One-minute session's time just ran out (the view ends it).
 	 */
-	function frame(now: number, strum: boolean, symbol: string | null, chroma: Float32Array | null = null, volume = 0): boolean {
+	function frame(now: number, strum: boolean, symbol: string | null, chroma: Float32Array | null = null, volume = 0, noise = 0): boolean {
 		const attack = strum && !(clicking && Math.abs(now - lastClickAt) <= CLICK_MASK_MS)
 		const onset = stabilizer.feed(symbol, now, attack)
 		ui.heard(stabilizer.current())
@@ -325,10 +330,12 @@ export function createChangesSession(ui: SessionUi, metronome: MetronomeControl)
 			ui.clock(clockText(left))
 			return left <= 0
 		} else if (config.mode === 'time' && running()) {
-			const click = [lastClickAt, lastClickAt + clickGap].some((at) => Math.abs(now - at - CLICK_HEARD_MS) <= CLICK_HEARD_WITHIN_MS)
-			if (strum) {
-				strums.push({ at: now, click })
-				ui.probe?.({ kind: 'strum', at: now })
+			// Confirmed HELD_MS late: a click since is the next one, hence the one before it too.
+			const isClick = (t: number) =>
+				[lastClickAt - clickGap, lastClickAt, lastClickAt + clickGap].some((at) => Math.abs(t - at - CLICK_HEARD_MS) <= CLICK_HEARD_WITHIN_MS)
+			for (const at of held.feed(now, strum, volume, noise)) {
+				strums.push({ at, click: isClick(at) })
+				ui.probe?.({ kind: 'strum', at })
 			}
 			if (chroma) chromas.push({ at: now, chroma })
 			levels.push({ at: now, volume })
