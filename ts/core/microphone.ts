@@ -146,6 +146,9 @@ const PADDED = 2 * FFT_SIZE
 const spectrumRe = new Float64Array(PADDED)
 const spectrumIm = new Float64Array(PADDED)
 const framePower = new Float64Array(PADDED)
+// Whether framePower is this frame's (silent frames skip the analysis), and its sample rate.
+let powerFresh = false
+let powerRate = 44100
 const nsdf = new Float32Array(FFT_SIZE)
 
 // Noise subtraction (spectral subtraction, as in speech enhancement): the
@@ -197,6 +200,7 @@ function findPitch(input: Float32Array, sampleRate: number): [number, number] {
 		spectrumRe[k] = clean
 		spectrumIm[k] = 0
 	}
+	powerFresh = true
 	// The FFT of the (real, even) power spectrum is PADDED x the autocorrelation.
 	fft(spectrumRe, spectrumIm)
 
@@ -270,9 +274,17 @@ export interface FrameStats {
 	volume: number
 	noiseFloor: number
 	clarity: number
+	/**
+	 * This frame's own pitch in Hz, before the median and One Euro smoothing,
+	 * at any clarity (weigh it with `clarity`; 0 = silent, below the noise gate
+	 * or out of range). The smoothing steadies the tuner's needle but glides
+	 * through the notes in between when the pitch jumps, and lags a fast line:
+	 * Trainer → Tab reads this instead.
+	 */
+	pitch: number
 	reason: 'silent' | 'below noise' | 'attack' | 'low clarity' | 'out of range' | 'reading'
 }
-const stats: FrameStats = { volume: 0, noiseFloor: 0, clarity: 0, reason: 'silent' }
+const stats: FrameStats = { volume: 0, noiseFloor: 0, clarity: 0, pitch: 0, reason: 'silent' }
 
 function rootMeanSquare(input: Float32Array): number {
 	let sumSquares = 0
@@ -384,6 +396,8 @@ function resetSmoothing() {
  * into a reading, or null for silence. Stateful: call once per frame, in order.
  */
 function processFrame(input: Float32Array, sampleRate: number, now: number): PitchReading | null {
+	powerFresh = false
+	powerRate = sampleRate
 	const volume = rootMeanSquare(input)
 	const onset = volume > ONSET_RATIO * envelope
 	envelope += ENVELOPE_ALPHA * (volume - envelope)
@@ -394,6 +408,7 @@ function processFrame(input: Float32Array, sampleRate: number, now: number): Pit
 	sounding = volume >= Math.max(MIN_VOLUME, NOISE_MARGIN * (noiseFloor ?? 0))
 	stats.volume = volume
 	stats.clarity = 0
+	stats.pitch = 0
 	stats.reason = 'silent'
 	if (volume < MIN_VOLUME) {
 		learnNoise(volume, dt)
@@ -411,6 +426,7 @@ function processFrame(input: Float32Array, sampleRate: number, now: number): Pit
 	const sustaining = filteredValue !== null && Math.abs(1200 * Math.log2(pitch / filteredValue)) < SUSTAIN_CENTS
 	const voiced = clarity >= MIN_CLARITY || (sustaining && clarity >= SUSTAIN_CLARITY)
 	stats.clarity = clarity
+	stats.pitch = pitch >= MIN_FREQUENCY && pitch <= MAX_FREQUENCY ? pitch : 0
 
 	// Only unpitched frames teach the noise floor: a note held from the moment
 	// listening starts (or sung for a long time) must never gate itself out.
@@ -420,6 +436,7 @@ function processFrame(input: Float32Array, sampleRate: number, now: number): Pit
 	stats.reason = now < attackUntil ? 'attack' : !voiced ? 'low clarity' : pitch < MIN_FREQUENCY || pitch > MAX_FREQUENCY ? 'out of range' : 'reading'
 	if (volume < (sustaining ? SUSTAIN_MARGIN : NOTE_MARGIN) * (noiseFloor ?? 0)) {
 		stats.reason = 'below noise'
+		stats.pitch = 0
 		resetSmoothing()
 		return held(now)
 	}
@@ -586,9 +603,20 @@ function getStream(): MediaStream | null {
 	return stream
 }
 
+/**
+ * The latest frame's power spectrum (the FFT_SIZE window zero-padded to 2x,
+ * no taper, before noise subtraction) and its bin width; null when that frame
+ * was too quiet to analyse. Read-only: the next frame overwrites it. Trainer →
+ * Tab checks in it whether the note due just rose, where the single pitch
+ * cannot tell two ringing strings apart.
+ */
+function getFramePower(): { power: Readonly<Float64Array>; binHz: number } | null {
+	return powerFresh ? { power: framePower, binHz: powerRate / PADDED } : null
+}
+
 /** True while the input clears the adaptive silence gate (a note or chord is sounding). */
 function isSounding(): boolean {
 	return sounding
 }
 
-export { start, stop, processFrame, getWaveform, getSpectrum, getStats, getStream, isSounding, isSuspended, resume }
+export { start, stop, processFrame, getWaveform, getSpectrum, getFramePower, getStats, getStream, isSounding, isSuspended, resume }

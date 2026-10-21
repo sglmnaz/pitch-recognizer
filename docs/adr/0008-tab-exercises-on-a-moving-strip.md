@@ -55,3 +55,43 @@ list.
 - One pitch per frame means single-note lines only: no chords in tab exercises.
 - New exercises are a builder in `tab.ts` plus a line in `exercises()`; the
   check's generic tests (whole bars, ordered, playable) cover them.
+
+## Addendum (2026-10-21): picks, raw pitch and the spectrum
+
+On the phone it was practically impossible to play in time: almost every note
+read as missed, and a note repeated on one fret counted once. Plucked strings
+rendered and sent through the real pipeline (`processFrame`) showed why:
+
+- the pipeline's attack rule (the level doubling over its envelope) caught 1
+  pick in 40 once a note rings, so repeated notes never restarted;
+- every other note was dated from the smoothed pitch (7-frame median and One
+  Euro, made for the tuner's needle), 50–120 ms late and gliding through the
+  notes in between;
+- with two strings ringing, the frame's clarity fell under the tuner's 0.85 and
+  the frame read as unpitched, or the single pitch named the other string,
+  often an octave off.
+
+So the session no longer reads the tuner's reading:
+
+- **Picks** come from `createOnsetDetector()`, on the energy of the newest
+  1024 samples of the input window: a jump over the quietest level of the last
+  100 ms and over the frame before (×1.3 both). It found about 98% of the picks,
+  repeated notes included.
+- **Pitch** is the frame's own pitch, before smoothing (`FrameStats.pitch`),
+  from clarity 0.6 (`MIN_CLARITY`), matched by **pitch class**.
+- **Judging knows the note due** (`judgeHeard`): the pick nearest it counts
+  if any frame in the 120 ms after it reads the note's pitch class (and that
+  pitch class was not already ringing, unless the tab repeats the note), or if
+  the note's pitch class rose by 8% of the frame's pitch-class profile
+  (`chromaOf`, from the power spectrum the pitch detector already computes,
+  `getFramePower()`). A pitch change to the note (a hammer-on, a pull-off, a
+  pick the detector missed) counts too.
+- The click mask is gone: a click taken for a pick counts for nothing unless
+  the frames after it read the note due. Tempo also clicks every note between
+  the beats (subdivision = notes per beat), and the note due is circled in red
+  on the strip, so the player sees and hears which note is now.
+
+`check:tab` now plays seven exercises this way: played right, 100% on time;
+a fret off, 0–13% (a trill a fret off lands on its own other note); 160 ms
+behind or ahead, late or early. Real guitars, rooms and phone mics still need
+the `?debug` recordings; the constants are commented where they were tuned.

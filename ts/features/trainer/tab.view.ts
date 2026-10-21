@@ -8,7 +8,6 @@ import * as Tab from '../../music/tab'
 import * as Metronome from '../../core/metronome'
 import * as Microphone from '../../core/microphone'
 import * as Settings from '../../core/settings'
-import type { PitchReading } from '../../core/microphone'
 import type { View } from '../../ui/view'
 import { bindSegmented, liveRegion, onBareKey, scoped, setPressed } from '../../ui/dom'
 import { reducedMotion } from '../../ui/media'
@@ -65,7 +64,8 @@ export function createTabView(root: HTMLElement): View {
 
 	// Readings arrive every frame while the mic runs and reset() runs when it stops.
 	let micLive = false
-	let wasAttack = false
+	// Picks, from the energy of the newest samples (Tab.createOnsetDetector).
+	const onsets = Tab.createOnsetDetector()
 
 	const exercise = () => Tab.exerciseById(Settings.get().tabExercise)
 	const stepPx = (ex: Tab.TabExercise) => BEAT_PX / ex.perBeat
@@ -125,6 +125,25 @@ export function createTabView(root: HTMLElement): View {
 			if (copy !== undefined && c !== copy) continue
 			for (const n of els) delete n.dataset.mark
 		}
+	}
+
+	// The note to play now, circled in red like the sounding note on the
+	// approved tab strip: the player sees which note the click belongs to.
+	let lit: HTMLElement | null = null
+	function light(el: HTMLElement | null) {
+		if (el === lit) return
+		lit?.classList.remove('tab-n--now')
+		el?.classList.add('tab-n--now')
+		lit = el
+	}
+
+	/** Tempo: the note within half a step of the playhead at `pos`, on the copy passing under it. */
+	function noteAt(pos: number, ex: Tab.TabExercise): HTMLElement | null {
+		if (pos < -0.5) return null
+		const loop = Math.floor((pos + 0.5) / ex.steps)
+		const step = pos - loop * ex.steps
+		const index = ex.notes.findIndex((n) => Math.abs(n.step - step) <= 0.5)
+		return index < 0 ? null : (noteEls[noteEls.length > 1 ? loop % 2 : 0]?.[index] ?? null)
 	}
 
 	/* Setup ---------------------------------------------------------------- */
@@ -257,8 +276,13 @@ export function createTabView(root: HTMLElement): View {
 			marked(index, mark, marks) {
 				const n = exercise().notes.length
 				const loop = Math.floor((marks.length - 1) / n)
-				const copy = noteEls.length > 1 ? loop % 2 : 0
-				if (index === 0 && marks.length > marksSeen && noteEls.length > 1) clearMarks((loop + 1) % 2)
+				// Wait steps back to the first copy at every loop; Tempo slides on, copy after copy.
+				const wait = session.config()?.follow === 'wait'
+				const copy = !wait && noteEls.length > 1 ? loop % 2 : 0
+				if (index === 0 && marks.length > marksSeen) {
+					if (wait) clearMarks(0)
+					else if (noteEls.length > 1) clearMarks((loop + 1) % 2)
+				}
 				marksSeen = marks.length
 				const el = noteEls[copy]?.[index]
 				if (el) el.dataset.mark = mark
@@ -275,6 +299,7 @@ export function createTabView(root: HTMLElement): View {
 			waiting(index, wrong) {
 				waitingText(index, wrong)
 				placeStrip(exercise().notes[index]?.step ?? 0, exercise(), true)
+				light(noteEls[0]?.[index] ?? null)
 			},
 			announce,
 		},
@@ -292,6 +317,7 @@ export function createTabView(root: HTMLElement): View {
 		const ex = config.exercise
 		const pos = session.position(performance.now())
 		placeStrip(pos, ex, false)
+		light(noteAt(pos, ex))
 		if (pos >= 0) {
 			const bar = Math.floor((pos % ex.steps) / (ex.perBeat * Tab.BEATS_PER_BAR)) + 1
 			const bars = ex.steps / (ex.perBeat * Tab.BEATS_PER_BAR)
@@ -314,7 +340,9 @@ export function createTabView(root: HTMLElement): View {
 		drawStrip(ex, s.tabLoop ? 2 : 1)
 		clearMarks()
 		renderTape([])
+		light(null)
 		session.resetHearing()
+		onsets.reset()
 		session.start({ exercise: ex, follow: s.tabFollow, bpm: Tab.loadRecord(ex).bpm, loop: s.tabLoop, speedUp: s.tabSpeedUp, volume: s.metroVolume, a4: s.a4 })
 		setRunningUi(true)
 		wakeLock.hold()
@@ -327,6 +355,7 @@ export function createTabView(root: HTMLElement): View {
 		wakeLock.release()
 		if (frameId) cancelAnimationFrame(frameId)
 		frameId = 0
+		light(null)
 		if (ended) report(ex, ended)
 		else showStatus('Stopped')
 		message.textContent = reason
@@ -388,16 +417,24 @@ export function createTabView(root: HTMLElement): View {
 		reset() {
 			micLive = false
 			session.resetHearing()
+			onsets.reset()
 			if (isRunning()) finish('Stopped: the microphone went off.')
 		},
 
-		onReading(reading: PitchReading | null) {
+		// The reading itself goes unused: it is smoothed for the tuner, which lags
+		// a fast line and glides through the notes in between. The session reads
+		// the frame's own pitch, the picks and the frame's pitch-class profile.
+		onReading() {
 			micLive = true
-			// The pipeline flags 'attack' for every frame of its blank: only the first is the pick.
-			const attackNow = Microphone.getStats().reason === 'attack'
-			const attack = attackNow && !wasAttack
-			wasAttack = attackNow
-			if (session.frame(performance.now(), reading?.frequency ?? null, attack)) finish()
+			const now = performance.now()
+			const wave = Microphone.getWaveform()
+			const attack = wave ? onsets.feed(now, Tab.newestEnergy(wave)) : false
+			if (!isRunning()) return
+			const { pitch, clarity } = Microphone.getStats()
+			const frequency = pitch && clarity >= Tab.MIN_CLARITY ? pitch : null
+			const power = Microphone.getFramePower()
+			const chroma = power ? Tab.chromaOf(power.power, power.binHz, Settings.get().a4) : null
+			if (session.frame(now, frequency, attack, chroma)) finish()
 		},
 	}
 }

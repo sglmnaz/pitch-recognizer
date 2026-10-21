@@ -8,15 +8,11 @@ import * as Tab from '../../music/tab.ts'
 import type * as Metronome from '../../core/metronome.ts'
 
 const COUNT_IN_BEATS = Tab.BEATS_PER_BAR
-// Through a speaker the mic hears each click as an attack. One within this of
-// the last click heard is the click, not a pick, or the note still ringing
-// would count again on every beat (as in Changes) - unless the tab has the
-// same note again right there: then it is the pick.
-const CLICK_MASK_MS = 40
-// A note is judged once nothing heard later can still be dated inside its
-// window: the follower confirms a note STABLE_FRAMES frames after it starts,
-// and backdates a legato one by LEGATO_LATENCY_MS.
-const CONFIRM_MS = Tab.LEGATO_LATENCY_MS + 3 * 17
+// A note is judged once nothing heard later can still count for it: a pick at
+// the edge of its window is listened to for PICK_LISTEN_MS, and the follower
+// confirms a legato note STABLE_FRAMES frames after it starts and backdates it
+// by LEGATO_LATENCY_MS. Two frames of margin on top.
+const CONFIRM_MS = Math.max(Tab.ATTACK_LATENCY_MS + Tab.PICK_LISTEN_MS, Tab.LEGATO_LATENCY_MS + Tab.STABLE_FRAMES * 17) + 34
 // Wait: a bend counts once its note has held this long.
 const BEND_HOLD_MS = 120
 // Readings and note starts older than this cannot matter to a note still due.
@@ -74,7 +70,7 @@ interface Due {
 	stepMs: number
 	/** Bends: when the time to reach the pitch runs out. */
 	until?: number
-	/** The same pitch as the note before: only its attack tells it apart. */
+	/** The same pitch class as the note before: what still rings may be this note too. */
 	repeat: boolean
 }
 
@@ -84,8 +80,8 @@ export function createTabSession(ui: TabSessionUi, metronome: MetronomeControl) 
 	let phase: Phase = 'idle'
 	let config: TabSessionConfig | null = null
 	let follower = Tab.createNoteFollower()
-	let events: Tab.NoteEvent[] = []
-	let used = new Set<number>()
+	let heard: Tab.Hearing = { picks: [], frames: [], events: [] }
+	let spent: Tab.Spent = { picks: new Set(), events: new Set() }
 	let readings: { at: number; frequency: number }[] = []
 	let marks: Tab.Mark[] = []
 	let loops = 0
@@ -93,7 +89,6 @@ export function createTabSession(ui: TabSessionUi, metronome: MetronomeControl) 
 	let cleanBpm = 0
 	// Tempo.
 	let clicking = false
-	let lastClickAt = -Infinity
 	let clock: { index: number; at: number; beatMs: number } | null = null
 	let due: Due[] = []
 	// Per loop: notes still to judge and whether all so far were on time.
@@ -105,6 +100,8 @@ export function createTabSession(ui: TabSessionUi, metronome: MetronomeControl) 
 	let wrong: number | null = null
 	let wrongCount = 0
 	let bendSince: number | null = null
+	// Wait: frames until this time may show the note just picked.
+	let listenUntil = 0
 
 	const exercise = () => config!.exercise
 	const loopBeats = () => exercise().steps / exercise().perBeat
@@ -113,8 +110,8 @@ export function createTabSession(ui: TabSessionUi, metronome: MetronomeControl) 
 	function start(next: TabSessionConfig) {
 		config = next
 		follower = Tab.createNoteFollower()
-		events = []
-		used = new Set()
+		heard = { picks: [], frames: [], events: [] }
+		spent = { picks: new Set(), events: new Set() }
 		readings = []
 		marks = []
 		loops = 0
@@ -129,17 +126,20 @@ export function createTabSession(ui: TabSessionUi, metronome: MetronomeControl) 
 		wrong = null
 		wrongCount = 0
 		bendSince = null
+		listenUntil = 0
 		if (next.follow === 'wait') {
 			phase = 'running'
 			ui.waiting(0, null)
 			ui.announce('Play the circled note', true)
 			return
 		}
-		// Each bar's first beat accented; nothing else of the Metronome tab's setup applies.
+		// Each bar's first beat accented, and a quiet click on every note between
+		// the beats, so the player hears where each note falls, not only the
+		// beat. Nothing else of the Metronome tab's setup applies.
 		metronome.configure({
 			beats: Tab.BEATS_PER_BAR,
 			accents: [2, 1, 1, 1],
-			subdivision: 1,
+			subdivision: next.exercise.perBeat,
 			sound: 'click',
 			volume: next.volume,
 			trainer: { enabled: false, step: 0, bars: 1, target: 0 },
@@ -163,9 +163,7 @@ export function createTabSession(ui: TabSessionUi, metronome: MetronomeControl) 
 
 	/** Tempo: a click heard (Metronome.onBeat). Opens the notes of that beat. */
 	function beat(event: Metronome.BeatEvent, now: number) {
-		if (!clicking || !config) return
-		lastClickAt = now
-		if (event.sub !== 0) return
+		if (!clicking || !config || event.sub !== 0) return
 		const index = event.bar * Tab.BEATS_PER_BAR + event.beat
 		const beatMs = 60000 / event.bpm
 		clock = { index, at: now, beatMs }
@@ -189,7 +187,7 @@ export function createTabSession(ui: TabSessionUi, metronome: MetronomeControl) 
 			if (Math.floor(note.step / perBeat) !== inLoop) return
 			const at = now + (note.step % perBeat) * stepMs
 			const before = notes[(i || notes.length) - 1]
-			const repeat = (i > 0 || loop > 0) && Tab.midiOf(before) === Tab.midiOf(note)
+			const repeat = (i > 0 || loop > 0) && Tab.samePitchClass(Tab.targetMidi(before), Tab.midiOf(note))
 			due.push({ index: i, loop, at, midi: Tab.targetMidi(note), stepMs, repeat, ...(note.bend ? { until: at + (note.length ?? 1) * stepMs } : {}) })
 		})
 	}
@@ -234,7 +232,7 @@ export function createTabSession(ui: TabSessionUi, metronome: MetronomeControl) 
 			}
 			if (now < item.at + reach + CONFIRM_MS) break
 			due.shift()
-			settle(item, Tab.judgeNote(item.at, item.midi, item.stepMs, events, used))
+			settle(item, Tab.judgeHeard(item.at, item.midi, item.stepMs, heard, spent, item.repeat))
 		}
 	}
 
@@ -244,6 +242,8 @@ export function createTabSession(ui: TabSessionUi, metronome: MetronomeControl) 
 		wrong = null
 		wrongCount = 0
 		bendSince = null
+		// The next note needs a pick (or a pitch change) of its own, even on the same fret.
+		listenUntil = 0
 		target++
 		if (target < exercise().notes.length) return ui.waiting(target, null)
 		loops++
@@ -258,44 +258,51 @@ export function createTabSession(ui: TabSessionUi, metronome: MetronomeControl) 
 	}
 
 	/**
-	 * One mic frame: the frequency heard (null = none) and whether it was an
-	 * attack. True when a session without loop has played its last note (the
-	 * view ends it).
+	 * One mic frame: the frame's own pitch (null = none), whether it was a pick
+	 * and its pitch-class profile (Tab.chromaOf; null = too quiet). True when a
+	 * session without loop has played its last note (the view ends it).
 	 */
-	function frame(now: number, frequency: number | null, attack: boolean): boolean {
+	function frame(now: number, frequency: number | null, attack: boolean, chroma: Float32Array | null = null): boolean {
 		if (!config || !running()) return false
 		const a4 = config.a4
-		const onClick = clicking && Math.abs(now - lastClickAt) <= CLICK_MASK_MS
-		const pick = attack && (!onClick || due.some((d) => d.repeat && Math.abs(d.at - now) <= CLICK_MASK_MS + Tab.ATTACK_LATENCY_MS))
-		const event = follower.feed(now, frequency === null ? null : midiOfFrequency(frequency, a4), pick)
+		// Through a speaker the mic hears the clicks too, and the detector may
+		// take one for a pick. Harmless: a pick only counts for a note if the
+		// frames right after it read that note.
+		const midi = frequency === null ? null : midiOfFrequency(frequency, a4)
+		const event = follower.feed(now, midi, attack)
 		if (config.follow === 'wait') {
 			const note = exercise().notes[target]
 			if (!note) return false
-			const midi = Tab.targetMidi(note)
+			const want = Tab.targetMidi(note)
 			if (note.bend) {
-				const there = frequency !== null && Math.abs(Tab.centsTo(frequency, midi, a4)) <= Tab.BEND_CENTS
+				const there = frequency !== null && Math.abs(Tab.centsTo(frequency, want, a4)) <= Tab.BEND_CENTS
 				bendSince = there ? (bendSince ?? now) : null
 				if (bendSince !== null && now - bendSince >= BEND_HOLD_MS) advance(wrongCount ? 'miss' : 'hit')
-			} else if (event) {
-				if (event.midi === midi) advance(wrongCount ? 'miss' : 'hit')
-				// The fretted note under a bend is on the way up, not a wrong note.
-				else if (!(exercise().notes[target - 1]?.bend && event.midi < midi)) {
-					wrong = event.midi
-					wrongCount++
-					ui.waiting(target, wrong)
-				}
+				return !config.loop && target >= exercise().notes.length
+			}
+			if (attack) listenUntil = now + Tab.PICK_LISTEN_MS
+			// The note just picked, read in any frame right after the pick, or a
+			// pitch change to it (a hammer-on, a pull-off).
+			const picked = now <= listenUntil && midi !== null && Tab.samePitchClass(midi, want)
+			if (picked || (event && Tab.samePitchClass(event.midi, want))) advance(wrongCount ? 'miss' : 'hit')
+			// The fretted note under a bend is on the way up, not a wrong note.
+			else if (event && !(exercise().notes[target - 1]?.bend && event.midi < want)) {
+				wrong = event.midi
+				wrongCount++
+				ui.waiting(target, wrong)
 			}
 			return !config.loop && target >= exercise().notes.length
 		}
-		if (event) events.push(event)
+		if (attack) heard.picks.push(now - Tab.ATTACK_LATENCY_MS)
+		if (midi !== null || chroma) heard.frames.push({ at: now, midi, chroma })
+		if (event) heard.events.push(event)
 		if (frequency !== null) readings.push({ at: now, frequency })
-		// Old entries go; `used` holds indexes, so trim both together.
-		const keepFrom = events.findIndex((e) => now - e.at < KEEP_MS)
-		if (keepFrom > 0) {
-			events = events.slice(keepFrom)
-			used = new Set([...used].map((i) => i - keepFrom).filter((i) => i >= 0))
+		// Old entries go, by time (Spent keeps times, not indexes).
+		if (now - (heard.frames[0]?.at ?? now) > KEEP_MS) {
+			const keep = (at: number) => now - at < KEEP_MS
+			heard = { picks: heard.picks.filter(keep), frames: heard.frames.filter((f) => keep(f.at)), events: heard.events.filter((e) => keep(e.at)) }
+			readings = readings.filter((r) => keep(r.at))
 		}
-		if (readings.length && now - readings[0].at > KEEP_MS) readings = readings.filter((r) => now - r.at < KEEP_MS)
 		judgeDue(now)
 		// Without loop: done once the first loop's notes are all judged.
 		return !config.loop && phase === 'running' && !due.length && loops >= 1

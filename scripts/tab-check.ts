@@ -1,10 +1,14 @@
 // Self-check for ts/music/tab.ts and the Trainer → Tab session: the generated
 // exercises, the note follower, note judging, and whole sessions in Tempo and
-// Wait played by a simulated guitarist against a fake metronome and clock.
+// Wait played by a simulated guitarist against a fake metronome and clock -
+// first on clean readings, then as plucked strings through the real pitch
+// pipeline (processFrame), the onset detector and the pitch-class profile.
 // Run with `npm run check:tab`.
 import * as Tab from '../ts/music/tab.ts'
 import { createTabSession, type MetronomeControl, type TabSessionUi } from '../ts/features/trainer/tab.session.ts'
 import type { BeatEvent } from '../ts/core/metronome.ts'
+import { FFT_SIZE, getFramePower, getStats, processFrame, stop as stopMic } from '../ts/core/microphone.ts'
+import { appBand } from './audio.ts'
 import { check, finish } from './check.ts'
 
 const FRAME = 1000 / 60
@@ -293,6 +297,101 @@ function waitSession(exercise: Tab.TabExercise, sounds: Sound[], until: number, 
 	const all4 = bend.notes.map((n, i): Sound => ({ start: 300 + i * 900, midi: Tab.midiOf(n), bendTo: n.bend ? Tab.targetMidi(n) : undefined }))
 	const once = waitSession(bend, all4, 5000, false)
 	check('wait without loop: ends after the last note', once.ended && once.u.marks.length === 4 && once.u.loops.length === 1)
+}
+
+/* Through the real pipeline --------------------------------------------------------- */
+// Plucked strings (decaying harmonics and pick noise) as a player plays the
+// exercise: each note stops at the next note on its string and is muted a
+// step after the next note starts (clean playing; letting notes ring gave the
+// same results). The mic's frames go through processFrame; the session reads
+// what the view gives it: the frame's own pitch, the onset detector's picks
+// and the pitch-class profile. Before this pipeline the old chain caught 1
+// pick in 40 here and marked most notes missed.
+const SR = 44100
+let pluckSeed = 7
+// Deterministic noise, so a failure reproduces.
+function pluckNoise() {
+	pluckSeed = (pluckSeed * 16807) % 2147483647
+	return (pluckSeed / 2147483647) * 2 - 1
+}
+
+interface Played {
+	t: number
+	midi: number
+	string: number
+	legato: boolean
+}
+
+function strings(played: Played[], totalS: number): Float32Array {
+	const out = new Float32Array(Math.round(totalS * SR))
+	played.forEach((n, i) => {
+		const next = played.slice(i + 1).find((m) => m.string === n.string)
+		const after = played[i + 1]
+		const end = Math.min(next ? next.t : totalS, after ? after.t + (after.t - n.t) : totalS)
+		const f0 = hz(n.midi)
+		for (let s = Math.round(n.t * SR); s < Math.min(out.length, Math.round(end * SR)); s++) {
+			const t = s / SR - n.t
+			let v = 0
+			;[0.25, 1, 0.7, 0.5, 0.35, 0.25, 0.15, 0.1].forEach((a, k) => {
+				v += a * Math.exp(-t * (1.5 + k * 0.5)) * Math.sin(2 * Math.PI * (k + 1) * f0 * t + k)
+			})
+			v *= n.legato ? 0.09 : 0.15
+			if (!n.legato) v += 0.3 * Math.exp(-t / 0.006) * pluckNoise()
+			out[s] += v
+		}
+	})
+	for (let i = 0; i < out.length; i++) out[i] += 0.002 * pluckNoise()
+	return appBand(out, SR)
+}
+
+/** Two loops of `id` at `bpm` in Tempo, each note `late` ms off and `off` semitones out. */
+function realSession(id: string, bpm: number, late = 0, off = 0): Tab.Mark[] {
+	const ex = byId(id)
+	const beatMs = 60000 / bpm
+	const stepMs = beatMs / ex.perBeat
+	const t0 = 1000
+	const top = t0 + Tab.BEATS_PER_BAR * beatMs
+	const loops = 2
+	const played: Played[] = []
+	for (let l = 0; l < loops; l++)
+		for (const n of ex.notes) played.push({ t: (top + (l * ex.steps + n.step) * stepMs + late) / 1000, midi: Tab.midiOf(n) + off, string: n.string, legato: !!n.tech })
+	const signal = strings(played, (top + loops * ex.steps * stepMs + 1500) / 1000)
+	stopMic()
+	const u = ui()
+	const session = createTabSession(u, fakeMetronome().control)
+	session.start({ exercise: ex, follow: 'tempo', bpm, loop: true, speedUp: false, volume: 0, a4: 440 })
+	const onsets = Tab.createOnsetDetector()
+	const beats = Tab.BEATS_PER_BAR + loops * (ex.steps / ex.perBeat)
+	let beat = 0
+	let jitter = 0
+	// rAF frames, 15-19 ms apart.
+	for (let end = FFT_SIZE; end <= signal.length; end += Math.round(SR * (0.0167 + ((jitter++ % 3) - 1) * 0.002))) {
+		const now = (end / SR) * 1000
+		for (; beat < beats && t0 + beat * beatMs <= now; beat++) {
+			const at = t0 + beat * beatMs
+			session.beat({ time: 0, bar: Math.floor(beat / 4), beat: beat % 4, sub: 0, accent: 1, bpm, heardAt: at }, at)
+		}
+		const window = signal.subarray(end - FFT_SIZE, end)
+		processFrame(window, SR, now)
+		const { pitch, clarity } = getStats()
+		const power = getFramePower()
+		session.frame(now, pitch && clarity >= Tab.MIN_CLARITY ? pitch : null, onsets.feed(now, Tab.newestEnergy(window)), power ? Tab.chromaOf(power.power, power.binHz) : null)
+	}
+	return u.marks
+}
+
+const share = (marks: Tab.Mark[], mark: Tab.Mark) => Math.round((100 * marks.filter((m) => m === mark).length) / Math.max(1, marks.length))
+for (const [id, bpm] of [['spider', 60], ['chromatic', 50], ['pentatonic', 50], ['skipping', 50], ['sweeps', 50], ['trills', 50], ['bursts', 70]] as [string, number][]) {
+	const right = realSession(id, bpm)
+	const wrong = realSession(id, bpm, 0, 1)
+	check(`real pipeline, ${id} at ${bpm}: played right, on time`, right.length === 2 * byId(id).notes.length && share(right, 'hit') >= 90, `${share(right, 'hit')}% on time`)
+	check(`real pipeline, ${id} at ${bpm}: a fret off, not on time`, share(wrong, 'hit') <= 20, `${share(wrong, 'hit')}% on time`)
+}
+{
+	const late = realSession('spider', 60, 160)
+	const early = realSession('spider', 60, -160)
+	const close = realSession('spider', 60, 60)
+	check('real pipeline: 160 ms behind is late, 160 ahead early, 60 behind on time', share(late, 'late') >= 90 && share(early, 'early') >= 90 && share(close, 'hit') >= 90, `${share(late, 'late')}% late · ${share(early, 'early')}% early · ${share(close, 'hit')}% on time`)
 }
 
 /* Records ------------------------------------------------------------------------- */

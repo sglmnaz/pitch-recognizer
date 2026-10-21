@@ -912,6 +912,13 @@
 	&[data-mark='miss'] {
 		color: var(--paper-red);
 	}
+
+	/* The note to play now: circled in red, the figure in paper. */
+	&.tab-n--now {
+		border-radius: 8px;
+		background: var(--paper-red);
+		color: var(--paper);
+	}
 }
 
 .tab-bar {

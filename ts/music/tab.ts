@@ -335,25 +335,91 @@ export interface NoteEvent {
 	at: number
 }
 
+/* Picks. The pitch pipeline's own attack rule (the level doubling over its
+   running envelope) suits single notes after silence, but a note picked while
+   the one before still rings rises far less: on a synthetic run of the spider
+   through the real pipeline it caught 1 pick in 40, so repeated notes counted
+   once and everything else was dated by its pitch change, late. This detector
+   watches the energy of the newest ONSET_WINDOW samples instead (23 ms at
+   44.1 kHz, two periods of the low E): a pick is a jump over the quietest
+   level of the last ONSET_LOOK_MS and over the frame before. Tuned on the
+   same synthetic runs (scripts/tab-check.ts): 1.3 and 1.3 found 98% of the
+   picks with few false ones; lower ratios fired on the beating of a ringing
+   note, higher ones missed fast repeated notes. */
+export const ONSET_WINDOW = 1024
+const ONSET_LOOK_MS = 100
+const ONSET_RISE = 1.3
+const ONSET_STEP = 1.3
+// Mean square of ~-64 dBFS: under it nothing is a pick (room noise, a click far away).
+const ONSET_FLOOR = 4e-7
+// One pick fires once: its own attack keeps rising for a frame or two.
+const ONSET_REFRACTORY_MS = 60
+
+/** Mean square of the newest `n` samples of an input window. */
+export function newestEnergy(samples: Float32Array, n = ONSET_WINDOW): number {
+	const from = Math.max(0, samples.length - n)
+	let sum = 0
+	for (let i = from; i < samples.length; i++) sum += samples[i] * samples[i]
+	return sum / Math.max(1, samples.length - from)
+}
+
+export interface OnsetDetector {
+	/** One frame's newest energy (newestEnergy): true when it is a pick. */
+	feed(now: number, energy: number): boolean
+	reset(): void
+}
+
+export function createOnsetDetector(): OnsetDetector {
+	let history: { at: number; energy: number }[] = []
+	let last = Number.NEGATIVE_INFINITY
+	return {
+		feed(now, energy) {
+			history = history.filter((h) => now - h.at <= ONSET_LOOK_MS)
+			const quietest = history.length ? Math.min(...history.map((h) => h.energy)) : Number.POSITIVE_INFINITY
+			const before = history.length ? history[history.length - 1].energy : Number.POSITIVE_INFINITY
+			history.push({ at: now, energy })
+			const pick = energy > ONSET_FLOOR && energy > ONSET_RISE * quietest && energy > ONSET_STEP * before && now - last > ONSET_REFRACTORY_MS
+			if (pick) last = now
+			return pick
+		},
+		reset() {
+			history = []
+			last = Number.NEGATIVE_INFINITY
+		},
+	}
+}
+
+// The frame's own pitch (Microphone FrameStats.pitch) counts from this clarity.
+// The tuner wants 0.85 for a new note, but two strings ringing together (the
+// note just picked over the one before) drop the clarity to 0.6–0.8 and the
+// frame read as unpitched for a whole note. On the synthetic runs 0.4–0.7 all
+// did as well; 0.6 keeps a margin above room noise (under 0.3).
+export const MIN_CLARITY = 0.6
+
 // A pitch must hold this many frames in a row to count (a frame is ~16 ms):
 // one stray frame at a string change is not a note.
 export const STABLE_FRAMES = 2
-// A picked note is dated at its attack frame: the level jumps as soon as the
-// pick noise enters the analysis window, so this is the input path plus about
-// a frame. Calibration knob: raise it if clean notes read late on real guitars.
+// A picked note is dated at its pick: the detector fires about this long after
+// the pick enters the window (median on the synthetic runs). Calibration knob:
+// raise it if clean notes read late on real guitars.
 export const ATTACK_LATENCY_MS = 15
-// A hammer-on or pull-off has no attack: only the pitch moves, and the
-// pipeline's 7-frame median takes about four frames to follow it.
+// A hammer-on or pull-off has no attack: only the pitch moves, and the frame's
+// own pitch follows once the new note fills about half the 93 ms window, then
+// holds STABLE_FRAMES. On the synthetic trills this dates them within 10 ms.
 // Calibration knob, like ATTACK_LATENCY_MS.
 export const LEGATO_LATENCY_MS = 70
 // An attack that brings no pitch (a muted pluck, a click) is forgotten after this.
 const ATTACK_KEEP_MS = 250
-// The pipeline blanks ATTACK_MS (30 ms) after an attack and repeats the last
-// reading meanwhile: that is the note before, not the one just picked. Two
-// frames on top, then the new note reads.
+// Right after a pick the input window still holds mostly the note before, so
+// its pitch is not the new note's: give the new one this long to take over.
 export const AFTER_ATTACK_MS = 45
 // After this much silence the same note picked again is a new note.
 const SILENCE_MS = 120
+
+/** Same note name in any octave. The detector reads one pitch from strings
+ * that ring together and often lands an octave off (a subharmonic of two
+ * notes, or the octave of the louder one), so notes match by pitch class. */
+export const samePitchClass = (a: number, b: number) => (((a - b) % 12) + 12) % 12 === 0
 
 export interface NoteFollower {
 	/** One mic frame: the rounded MIDI heard (null = none) and whether it was an attack. */
@@ -388,9 +454,9 @@ export function createNoteFollower(): NoteFollower {
 				return null
 			}
 			silentSince = null
-			if (candidate?.midi === midi) candidate.frames++
+			if (candidate && samePitchClass(candidate.midi, midi)) candidate.frames++
 			else candidate = { midi, since: now, frames: 1 }
-			if (candidate.frames < STABLE_FRAMES || midi === current) return null
+			if (candidate.frames < STABLE_FRAMES || (current !== null && samePitchClass(midi, current))) return null
 			current = midi
 			const at = attackAt !== null ? attackAt - ATTACK_LATENCY_MS : candidate.since - LEGATO_LATENCY_MS
 			attackAt = null
@@ -418,17 +484,139 @@ export function noteWindow(stepMs: number): { hit: number; reach: number } {
 	return { hit, reach: Math.max(hit, stepMs / 2) }
 }
 
+const markOf = (dt: number, hit: number): Mark => (dt < -hit ? 'early' : dt > hit ? 'late' : 'hit')
+
 /**
- * Judges one note due at `at`: the first event with its pitch within reach
- * decides, and is used up (`used` holds the indexes of events already spent).
+ * Judges one note due at `at` from note starts alone: the first event with its
+ * pitch class within reach decides, and is used up (`used` holds the indexes of
+ * events already spent).
  */
 export function judgeNote(at: number, midi: number, stepMs: number, events: NoteEvent[], used: Set<number>): Mark {
 	const { hit, reach } = noteWindow(stepMs)
-	const index = events.findIndex((e, i) => !used.has(i) && e.midi === midi && Math.abs(e.at - at) <= reach)
+	const index = events.findIndex((e, i) => !used.has(i) && samePitchClass(e.midi, midi) && Math.abs(e.at - at) <= reach)
 	if (index < 0) return 'miss'
 	used.add(index)
-	const dt = events[index].at - at
-	return dt < -hit ? 'early' : dt > hit ? 'late' : 'hit'
+	return markOf(events[index].at - at, hit)
+}
+
+// After a pick, the frames this long after the detector fired are searched for
+// the note's pitch class. The note just picked is the loudest thing for a
+// moment, but with other strings still ringing the detector reads it only in
+// some frames: one is enough. 120 ms = a 16th at 125 BPM.
+export const PICK_LISTEN_MS = 120
+
+// Pitch-class profile of a frame's power spectrum: each note E2–E6 scores the
+// power at its first four harmonics (weighted 1/h, best of three bins), folded
+// into its pitch class; the twelve add up to 1. Where two strings ring
+// together the single pitch reads one of them, often the wrong one; the note
+// just picked still shows as its pitch class rising here.
+const CHROMA_LOW = 40
+const CHROMA_HIGH = 88
+const CHROMA_HARMONICS = 4
+
+/** Pitch-class profile (12 shares summing to 1) of a power spectrum with bins `binHz` wide. */
+export function chromaOf(power: ArrayLike<number>, binHz: number, a4 = 440): Float32Array {
+	const out = new Float32Array(12)
+	const top = power.length / 2 - 2
+	for (let m = CHROMA_LOW; m <= CHROMA_HIGH; m++) {
+		const f0 = a4 * 2 ** ((m - 69) / 12)
+		let score = 0
+		for (let h = 1; h <= CHROMA_HARMONICS; h++) {
+			const bin = Math.round((f0 * h) / binHz)
+			if (bin > top) break
+			score += Math.max(power[bin - 1], power[bin], power[bin + 1]) / h
+		}
+		out[m % 12] += score
+	}
+	const sum = out.reduce((a, b) => a + b, 0)
+	if (sum > 0) for (let i = 0; i < 12; i++) out[i] /= sum
+	return out
+}
+
+// A pick counts for a note on the spectrum when the note's pitch class gains
+// at least CHROMA_RISE of the profile from the frames before the pick to those
+// after it, and holds at least CHROMA_SHARE of it. 0.05–0.12 and 0.12–0.2
+// scored the same: right notes all found, a fret off almost never. Tuned on synthetic ringing
+// strings (scripts/tab-check.ts) against the same runs played a fret off.
+const CHROMA_RISE = 0.08
+const CHROMA_SHARE = 0.15
+// Before = the frames this long before the pick; after = from this long after it (the window fills).
+const CHROMA_BEFORE_MS = 100
+const CHROMA_SETTLE_MS = 40
+
+/** What the mic gave a session: picks (dated), every frame's raw pitch and pitch-class profile, note starts. */
+export interface Hearing {
+	/** Pick times, ascending, already dated back by ATTACK_LATENCY_MS. */
+	picks: number[]
+	frames: { at: number; midi: number | null; chroma: Float32Array | null }[]
+	events: NoteEvent[]
+}
+
+const meanShare = (frames: Hearing['frames'], from: number, to: number, pc: number): number | null => {
+	let sum = 0
+	let n = 0
+	for (const f of frames) {
+		if (f.at < from || f.at > to || !f.chroma) continue
+		sum += f.chroma[pc]
+		n++
+	}
+	return n ? sum / n : null
+}
+
+/** Whether most frames just before the pick at `pick` already read `midi`'s pitch class. */
+function rangBefore(frames: Hearing['frames'], pick: number, midi: number): boolean {
+	const heardAt = pick + ATTACK_LATENCY_MS
+	let read = 0
+	let n = 0
+	for (const f of frames) {
+		if (f.at < heardAt - CHROMA_BEFORE_MS || f.at >= heardAt || f.midi === null) continue
+		n++
+		if (samePitchClass(f.midi, midi)) read++
+	}
+	return n > 0 && read / n >= 0.5
+}
+
+/** Whether the pick at `pick` brought pitch class `pc` up on the spectrum before `until`. */
+function risesAfter(frames: Hearing['frames'], pick: number, until: number, pc: number): boolean {
+	const heardAt = pick + ATTACK_LATENCY_MS
+	const before = meanShare(frames, heardAt - CHROMA_BEFORE_MS, heardAt - 1, pc) ?? 0
+	const after = meanShare(frames, heardAt + CHROMA_SETTLE_MS, until, pc)
+	return after !== null && after >= CHROMA_SHARE && after - before >= CHROMA_RISE
+}
+
+/** Picks and note starts a judged note used up, by time. */
+export interface Spent {
+	picks: Set<number>
+	events: Set<number>
+}
+
+/**
+ * Judges one note due at `at`, knowing which note it should be. The pick
+ * nearest the note decides if any frame right after it reads the note's pitch
+ * class (before the next pick); otherwise a note start with that pitch class
+ * (a hammer-on, a pull-off, a pick the detector missed) does. Either is used up.
+ */
+export function judgeHeard(at: number, midi: number, stepMs: number, heard: Hearing, spent: Spent, repeat = false): Mark {
+	const { hit, reach } = noteWindow(stepMs)
+	const near = heard.picks.filter((p) => !spent.picks.has(p) && Math.abs(p - at) <= reach).sort((a, b) => Math.abs(a - at) - Math.abs(b - at))
+	const pc = ((midi % 12) + 12) % 12
+	for (const pick of near) {
+		const next = heard.picks.find((p) => p > pick) ?? Number.POSITIVE_INFINITY
+		const until = Math.min(pick + ATTACK_LATENCY_MS + PICK_LISTEN_MS, next + ATTACK_LATENCY_MS)
+		const read = heard.frames.some((f) => f.at >= pick && f.at <= until && f.midi !== null && samePitchClass(f.midi, midi))
+		// A note already ringing before the pick (the one played before) is no
+		// evidence of this one, unless the tab repeats that note here.
+		const fresh = repeat || !rangBefore(heard.frames, pick, midi)
+		if (!(read && fresh) && !risesAfter(heard.frames, pick, until, pc)) continue
+		spent.picks.add(pick)
+		// The follower dates the same pick: that start is this note's too.
+		spent.events.add(pick)
+		return markOf(pick - at, hit)
+	}
+	const start = heard.events.find((e) => !spent.events.has(e.at) && samePitchClass(e.midi, midi) && Math.abs(e.at - at) <= reach)
+	if (!start) return 'miss'
+	spent.events.add(start.at)
+	return markOf(start.at - at, hit)
 }
 
 // A bend has reached its note within this many cents.
