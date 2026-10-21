@@ -1,6 +1,7 @@
-// Chord-change trainer (Trainer → Changes): pure logic. The view
-// (ts/features/trainer/changes.view.ts) feeds it the chord the mic hears every frame and the
-// metronome's downbeats; nothing here touches the DOM or the audio graph, so
+// Chord-change trainer (Trainer → Changes): pure logic. The session
+// (ts/features/trainer/changes.session.ts) feeds it the chord the mic hears,
+// the strums and their pitch-class profiles every frame, and the metronome's
+// downbeats; nothing here touches the DOM or the audio graph, so
 // `npm run check:changes` runs it in Node.
 import { readJSON, writeJSON } from '../core/storage.ts'
 import { parseChordSymbol } from './chord-library.ts'
@@ -51,7 +52,7 @@ export const STABLE_MS = 70
 // Gaps shorter than this inside a run are bridged: a frame or two of another
 // name (the relative minor, "no chord" while the spectrum refills) must not
 // restart the clock of a chord that is still ringing. Four frames at 60 fps.
-export const FLICKER_MS = 70
+const FLICKER_MS = 70
 // A run that takes over from a steady chord with less than this of anything
 // else (silence, other names) between them is a direct flip, what a held C
 // does when the recognizer swaps it for Am (they share two notes). Measured
@@ -60,7 +61,7 @@ const GAP_MS = 40
 // A strum's attack this long before a run starts still makes it a played
 // chord: the tracker names a chord ~200–370 ms after its strum (check:chords,
 // bench median 283 ms), but on a phone's input path ~600 ms: room for that.
-export const ATTACK_LEAD_MS = 800
+const ATTACK_LEAD_MS = 800
 
 export interface Onset {
 	symbol: string
@@ -177,15 +178,15 @@ export function drillChord(profile: ArrayLike<number> | null, sequence: readonly
 	return shares.filter((share) => share === best).length === 1 ? sequence[shares.indexOf(best)] : null
 }
 
+/** Flatter than this is noise (a breath, a blow), not a strum: no profile, nothing placed. */
+export const MAX_FLATNESS = 0.25
+
 /**
  * Spectral flatness of a power spectrum over the guitar's band (80–1400 Hz):
  * the geometric over the arithmetic mean, near 0 for harmonic peaks (a chord),
  * near 1 for noise. Strums on three field reports: 90% under 0.06, the most
  * 0.32; a breath or a blow into the mic: 0.48 and up.
  */
-/** Flatter than this is noise (a breath, a blow), not a strum: no profile, nothing placed. */
-export const MAX_FLATNESS = 0.25
-
 export function spectralFlatness(power: ArrayLike<number>, binHz: number): number {
 	const from = Math.ceil(80 / binHz)
 	const to = Math.min(power.length - 1, Math.floor(1400 / binHz))

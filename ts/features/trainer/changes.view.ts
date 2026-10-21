@@ -106,7 +106,7 @@ export function createChangesView(root: HTMLElement): View {
 		})
 		shapesBox.replaceChildren(...shapes.map((shape) => shape.figure))
 		// Up to four on one row; more wrap.
-		shapesBox.style.setProperty('--n', String(Math.min(4, Math.max(2, shapes.length))))
+		shapesBox.style.setProperty('--n', String(clamp(shapes.length, 2, 4)))
 		// Four across a narrow phone are ~54 px: the stylesheet wraps them 2 × 2.
 		shapesBox.dataset.n = String(shapes.length)
 	}

@@ -5,6 +5,7 @@
 // moves by itself and feeds the mic's readings to a session
 // (ts/features/trainer/tab.session.ts); nothing here touches the DOM or the
 // audio graph, so `npm run check:tab` runs it in Node.
+import { clamp } from '../core/math.ts'
 import { readJSON, writeJSON } from '../core/storage.ts'
 
 export type Goal = 'agility' | 'sync' | 'speed' | 'strings' | 'legato' | 'sweep' | 'bends'
@@ -50,7 +51,7 @@ export interface TabExercise {
 }
 
 // Standard tuning, string 1 (high E) first.
-export const OPEN_MIDI = [64, 59, 55, 50, 45, 40]
+const OPEN_MIDI = [64, 59, 55, 50, 45, 40]
 export const BEATS_PER_BAR = 4
 export const MIN_BPM = 30
 export const MAX_BPM = 240
@@ -346,7 +347,7 @@ export interface NoteEvent {
    same synthetic runs (scripts/tab-check.ts): 1.3 and 1.3 found 98% of the
    picks with few false ones; lower ratios fired on the beating of a ringing
    note, higher ones missed fast repeated notes. */
-export const ONSET_WINDOW = 1024
+const ONSET_WINDOW = 1024
 const ONSET_LOOK_MS = 100
 const ONSET_RISE = 1.3
 const ONSET_STEP = 1.3
@@ -440,7 +441,7 @@ export const LEGATO_LATENCY_MS = 70
 const ATTACK_KEEP_MS = 250
 // Right after a pick the input window still holds mostly the note before, so
 // its pitch is not the new note's: give the new one this long to take over.
-export const AFTER_ATTACK_MS = 45
+const AFTER_ATTACK_MS = 45
 // After this much silence the same note picked again is a new note.
 const SILENCE_MS = 120
 
@@ -670,8 +671,7 @@ export interface TabRecord {
 	bpm: number
 }
 
-const clampBpm = (n: unknown, fallback: number) =>
-	typeof n === 'number' && Number.isFinite(n) ? Math.min(MAX_BPM, Math.max(MIN_BPM, Math.round(n))) : fallback
+const clampBpm = (n: unknown, fallback: number) => (typeof n === 'number' && Number.isFinite(n) ? clamp(Math.round(n), MIN_BPM, MAX_BPM) : fallback)
 
 export function loadRecord(exercise: TabExercise): TabRecord {
 	const stored = readJSON(RECORD_PREFIX + exercise.id, {}) as Partial<TabRecord> | null

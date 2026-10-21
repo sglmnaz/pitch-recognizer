@@ -5,6 +5,8 @@ import { DEFAULT_INTERVALS, DEFAULT_QUALITIES, pool } from '../music/ear.ts'
 import * as Changes from '../music/changes.ts'
 import * as Tab from '../music/tab.ts'
 import { readJSON, writeJSON } from './storage.ts'
+import { clamp as limit } from './math.ts'
+import { MAX_DELAY_MS, MAX_MIC_DELAY_MS, MIN_DELAY_MS, MIN_MIC_DELAY_MS } from './latency.ts'
 
 export interface Settings {
 	/** Add sharps/flats to the pool of possible target notes. */
@@ -227,7 +229,7 @@ function oneOf<T extends string | number>(value: unknown, options: T[]): T {
 /** A finite number within min…max (rounded when `whole`), else `fallback`. */
 function clamp(value: unknown, min: number, max: number, fallback: number, whole = false): number {
 	if (typeof value !== 'number' || !Number.isFinite(value)) return fallback
-	return Math.min(max, Math.max(min, whole ? Math.round(value) : value))
+	return limit(whole ? Math.round(value) : value, min, max)
 }
 
 function bool(value: unknown, fallback: boolean): boolean {
@@ -285,8 +287,8 @@ export function load(): Settings {
 		metroSound: oneOf(s.metroSound, ['click', 'wood', 'beep', 'cowbell']),
 		metroVolume: clamp(s.metroVolume, 0, 1, d.metroVolume),
 		metroFlash: bool(s.metroFlash, d.metroFlash),
-		audioDelayMs: clamp(s.audioDelayMs, -200, 400, d.audioDelayMs, true),
-		micDelayMs: clamp(s.micDelayMs, -500, 1000, d.micDelayMs, true),
+		audioDelayMs: clamp(s.audioDelayMs, MIN_DELAY_MS, MAX_DELAY_MS, d.audioDelayMs, true),
+		micDelayMs: clamp(s.micDelayMs, MIN_MIC_DELAY_MS, MAX_MIC_DELAY_MS, d.micDelayMs, true),
 		fieldReport: bool(s.fieldReport, d.fieldReport),
 		audioCalibratedAt: clamp(s.audioCalibratedAt, 0, Number.MAX_SAFE_INTEGER, d.audioCalibratedAt, true),
 		micCalibratedAt: clamp(s.micCalibratedAt, 0, Number.MAX_SAFE_INTEGER, d.micCalibratedAt, true),

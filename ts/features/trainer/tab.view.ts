@@ -8,6 +8,7 @@ import * as Tab from '../../music/tab'
 import * as Metronome from '../../core/metronome'
 import * as Microphone from '../../core/microphone'
 import * as Settings from '../../core/settings'
+import { clamp } from '../../core/math'
 import type { View } from '../../ui/view'
 import { bindSegmented, liveRegion, onBareKey, scoped, setPressed } from '../../ui/dom'
 import { reducedMotion } from '../../ui/media'
@@ -208,7 +209,7 @@ export function createTabView(root: HTMLElement): View {
 	function setBpm(bpm: number) {
 		const ex = exercise()
 		const record = Tab.loadRecord(ex)
-		Tab.saveRecord(ex, { ...record, bpm: Math.min(Tab.MAX_BPM, Math.max(Tab.MIN_BPM, bpm)) })
+		Tab.saveRecord(ex, { ...record, bpm: clamp(bpm, Tab.MIN_BPM, Tab.MAX_BPM) })
 		renderSetup()
 		renderIdle()
 	}

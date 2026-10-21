@@ -7,6 +7,7 @@
 // LOOKAHEAD seconds on the sample-accurate audio clock. The timer may jitter
 // (GC, a busy main thread) without moving a click; it only has to wake up
 // before the lookahead runs dry. Nothing is ever started from a timer callback.
+import { clamp } from './math.ts'
 
 export type Accent = 0 | 1 | 2 // mute, normal, accent
 export type Sound = 'click' | 'wood' | 'beep' | 'cowbell'
@@ -135,7 +136,7 @@ export function configure(patch: Partial<Config>) {
 
 /** Sets the tempo now and as the one the speed trainer restarts from. */
 export function setTempo(bpm: number) {
-	baseBpm = liveBpm = Math.min(MAX_BPM, Math.max(MIN_BPM, Math.round(bpm)))
+	baseBpm = liveBpm = clamp(Math.round(bpm), MIN_BPM, MAX_BPM)
 }
 
 /** Called at the moment each click is heard (audio clock, output latency included). */

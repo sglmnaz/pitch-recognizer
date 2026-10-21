@@ -172,7 +172,7 @@ export function keyOf(rootPc: number, type: ScaleType): Key | null {
 }
 
 /** The key's name as the circle spells it: 'C major', 'D# minor'. */
-export function keyTitle(key: Key): string {
+function keyTitle(key: Key): string {
 	const k = CIRCLE[circleIndex(key.pc, key.family)]
 	return key.family === 'major' ? `${k.major} major` : `${k.minor} minor`
 }

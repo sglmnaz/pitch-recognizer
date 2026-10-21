@@ -1,6 +1,7 @@
 // Pure tuner data and maths: tunings, their string frequencies for a given A4,
 // and "which string is the player on". No DOM, so scripts/tuning-check.ts runs
 // it in Node (hence the explicit .ts import).
+import { clamp } from '../core/math.ts'
 import { centsBetween, frequencyOfMidi } from '../core/notes.ts'
 
 export interface Tuning {
@@ -80,5 +81,5 @@ export const A4_MAX = 466
 
 /** A4 within the supported 415–466 Hz; anything else (bad storage) becomes 440. */
 export function clampA4(a4: unknown): number {
-	return typeof a4 === 'number' && Number.isFinite(a4) ? Math.min(A4_MAX, Math.max(A4_MIN, a4)) : 440
+	return typeof a4 === 'number' && Number.isFinite(a4) ? clamp(a4, A4_MIN, A4_MAX) : 440
 }

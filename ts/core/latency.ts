@@ -1,7 +1,9 @@
-// Audio delay from tapping along with clicks (Settings → Metronome → Audio
-// delay → Calibrate). Pure: the Settings view feeds it the times the browser
-// says each click is heard (BeatEvent.heardAt, with no delay of ours added)
-// and the times of the taps; `npm run check:metronome` covers it.
+// Audio delay from tapping along with clicks, Mic delay from the mic hearing
+// them (the calibration page, ts/features/calibration/delay-calibration.ts).
+// Pure: the steps feed it the times the browser says each click is heard
+// (BeatEvent.heardAt, with no delay of ours added) and the times of the taps
+// or the mic's frames; `npm run check:metronome` covers it.
+import { clamp } from './math.ts'
 
 /** Clicks, tempo and window of a calibration run. */
 export const CALIBRATION_BPM = 75
@@ -9,7 +11,7 @@ export const CALIBRATION_CLICKS = 16
 /** The first clicks are for listening: taps on them are not counted. */
 export const LISTEN_CLICKS = 2
 /** Fewer counted taps than this: no answer. */
-export const MIN_TAPS = 6
+const MIN_TAPS = 6
 /** Taps further apart than this (median deviation, ms) are too uneven to trust. */
 export const MAX_SPREAD_MS = 50
 export const MIN_DELAY_MS = -200
@@ -68,7 +70,7 @@ export function estimateDelay(clicks: number[], taps: number[], beatMs: number, 
 // -445 ms for windows from -200, -300, -500). A click at full volume is the
 // loudest thing in the room; a jump under MIN_STRENGTH is not one.
 const ONSET_LOOK_MS = 100
-export const MIN_STRENGTH = 3
+const MIN_STRENGTH = 3
 
 /**
  * The mic's lag behind each click (after the listening ones): the frame with
@@ -107,5 +109,5 @@ export function estimateOnsetDelay(clicks: number[], frames: { at: number; energ
  * little high; nudge it down by hand if needed.
  */
 export function delaySetting(lag: number, max = MAX_DELAY_MS, min = MIN_DELAY_MS): number {
-	return Math.min(max, Math.max(min, Math.round(lag / 5) * 5))
+	return clamp(Math.round(lag / 5) * 5, min, max)
 }

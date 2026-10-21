@@ -7,6 +7,7 @@ import * as Metronome from '../../core/metronome'
 import * as Microphone from '../../core/microphone'
 import * as Settings from '../../core/settings'
 import { clamp } from '../../core/math'
+import * as Latency from '../../core/latency'
 import { loadChordModel } from '../../music/chords'
 import type { View } from '../../ui/view'
 import { scoped } from '../../ui/dom'
@@ -28,8 +29,11 @@ const TAB_LABELS: Record<string, string> = {
 	metronome: 'Metronome',
 	settings: 'Settings',
 }
-// The delays' ranges (core/settings.ts load()).
-const RANGES = { audioDelayMs: [-200, 400], micDelayMs: [-500, 1000] } as const
+// The delays' ranges (as core/settings.ts load() keeps them).
+const RANGES = {
+	audioDelayMs: [Latency.MIN_DELAY_MS, Latency.MAX_DELAY_MS],
+	micDelayMs: [Latency.MIN_MIC_DELAY_MS, Latency.MAX_MIC_DELAY_MS],
+} as const
 // A change further off than this is an outlier on the timeline (the on-time window is 120–200 ms).
 const OUTLIER_MS = 200
 // The mic check's level bar: dB over this range.
