@@ -6,16 +6,26 @@
 import * as Changes from '../../music/changes.ts'
 import type * as Metronome from '../../core/metronome.ts'
 
-// The tracker names a chord this long after it was strummed (its 370 ms
-// spectrum has to fill with the new chord and the HMM has to be convinced),
-// so an onset is dated this much earlier before it is judged against a
-// downbeat. 283 ms = the benchmark's median from a real chord change to its
-// first naming (bench/README.md); check:chords' synthetic strums read 205 ms
-// for a change after a pause, 372 ms from cold. Calibration knob: raise it
-// if clean changes read late on real guitars.
+// In time dates a change by its strum: the level jump the mic hears at once,
+// not the recognizer naming the chord 200–600 ms later. That naming delay
+// varies with the chord, the room and the phone's input path: dated by the
+// bench's median alone, every clean change on a phone read ~300 ms late. The
+// strum is the last one heard between Changes.ATTACK_LEAD_MS and NAMING_MIN_MS before
+// the chord was first named (check:chords' fastest naming is 205 ms).
+// Ceiling: strumming faster than NAMING_MIN_MS apart (eighths above ~200 BPM)
+// can date a change by a re-strum.
+const NAMING_MIN_MS = 150
+// The level detector fires a frame or so after the strum reaches the mic.
+// Calibration knob, like Trainer → Tab's ATTACK_LATENCY_MS.
+const STRUM_LATENCY_MS = 15
+// No strum heard for it (masked or too soft): the tracker names a chord this
+// long after it was strummed (its 370 ms spectrum has to fill with the new
+// chord and the HMM has to be convinced). 283 ms = the benchmark's median from
+// a real chord change to its first naming (bench/README.md); check:chords'
+// synthetic strums read 205 ms for a change after a pause, 372 ms from cold.
 export const RECOGNITION_LATENCY_MS = 283
-// From a chord's (backdated) onset to the frame it is confirmed stable.
-const CONFIRM_MS = RECOGNITION_LATENCY_MS + Changes.STABLE_MS + Changes.FLICKER_MS
+// From a chord's strum to the frame it is confirmed stable, at the latest.
+const CONFIRM_MS = Changes.ATTACK_LEAD_MS + Changes.STABLE_MS + Changes.FLICKER_MS
 const COUNT_IN_S = 3
 // In time: one bar of 4 clicks, a whole number of chords at 1, 2 or 4 beats each.
 const COUNT_IN_BEATS = 4
@@ -101,6 +111,8 @@ export function createChangesSession(ui: SessionUi, metronome: MetronomeControl)
 	let offsets: (number | null)[] = []
 	let pending: { downbeat: number; slotMs: number; target: string }[] = []
 	let onsets: Changes.Onset[] = []
+	// In time: every strum heard (clicks included), for dating changes.
+	let strums: number[] = []
 	let clean = 0
 	// A speed-up waits for the next chord's first beat, so a slot never changes tempo halfway.
 	let pendingBpm = 0
@@ -117,6 +129,7 @@ export function createChangesSession(ui: SessionUi, metronome: MetronomeControl)
 		offsets = []
 		pending = []
 		onsets = []
+		strums = []
 		clean = 0
 		pendingBpm = 0
 		slot = -1
@@ -244,8 +257,14 @@ export function createChangesSession(ui: SessionUi, metronome: MetronomeControl)
 			ui.clock(clockText(left))
 			return left <= 0
 		} else if (config.mode === 'time' && running()) {
+			if (strum) strums.push(now)
+			strums = strums.filter((t) => now - t < Changes.ATTACK_LEAD_MS + CONFIRM_MS)
 			// Flips of a ringing chord (not fresh) are not changes here either.
-			if (onset?.fresh) onsets.push({ ...onset, at: onset.at - RECOGNITION_LATENCY_MS })
+			if (onset?.fresh) {
+				// Unmasked: a strum right on the click is masked above as the click, yet it is when the change was played.
+				const struck = strums.filter((t) => t >= onset.at - Changes.ATTACK_LEAD_MS && t <= onset.at - NAMING_MIN_MS).pop()
+				onsets.push({ ...onset, at: struck === undefined ? onset.at - RECOGNITION_LATENCY_MS : struck - STRUM_LATENCY_MS })
+			}
 			onsets = onsets.filter((o) => now - o.at < ONSET_KEEP_MS)
 			judgeDue(now)
 		}

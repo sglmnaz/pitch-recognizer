@@ -340,10 +340,10 @@ const strums = (symbols: string[], ms: number): Segments => symbols.map((s) => [
 	/**
 	 * In time, G–C at 120 BPM, 2 beats a chord, 4 count-in clicks: the player
 	 * changes on every downbeat and strums `strumOffset` ms after it; the
-	 * recognizer names the chord RECOGNITION_LATENCY_MS later, straight from
+	 * recognizer names the chord `namingMs` after the downbeat, straight from
 	 * the last one (no gap), so only the strum makes it a change.
 	 */
-	function inTime(strumOffset: number, ms = 12_000) {
+	function inTime(strumOffset: number, ms = 12_000, namingMs = RECOGNITION_LATENCY_MS) {
 		const h = harness()
 		h.session.start({ mode: 'time', sequence: ['G', 'C'], seconds: 60, beats: 2, bpm: 120, speedUp: true, countIn: true, volume: 1 }, 0)
 		const downbeats: number[] = []
@@ -354,7 +354,7 @@ const strums = (symbols: string[], ms: number): Segments => symbols.map((s) => [
 				h.session.beat({ time: 0, bar: Math.floor(index / 2), beat: index % 2, sub: 0, accent: 1, bpm: h.metro.bpm, heardAt: nextClick }, nextClick)
 				if (index >= 4 && index % 2 === 0) downbeats.push(nextClick)
 			}
-			const named = downbeats.filter((d) => d + RECOGNITION_LATENCY_MS <= t).length
+			const named = downbeats.filter((d) => d + namingMs <= t).length
 			const strum = downbeats.some((d) => d + strumOffset > t - FRAME && d + strumOffset <= t)
 			h.session.frame(t, strum, named ? ['G', 'C'][(named - 1) % 2] : 'G')
 		}
@@ -382,6 +382,18 @@ const strums = (symbols: string[], ms: number): Segments => symbols.map((s) => [
 		)
 		const result = session.end(false)
 		check('in time: ending stops the clicks and reports the tempo', !metro.running && result?.mode === 'time' && result.bpm === metro.bpm)
+	}
+	{
+		// A phone: the chord is named 600 ms after the downbeat, not the bench's 283 ms.
+		// Dated by its strum, the change still lands 100 ms after the beat.
+		const h = inTime(100, 12_000, 600)
+		const marks = h.of('marked')
+		const offsets = h.of('offset') as (number | null)[]
+		check(
+			'in time: a change is dated by its strum, however late the recognizer names it',
+			marks.length >= 6 && marks.every((m) => m === 'hit') && offsets.every((dt) => dt !== null && Math.abs(dt - 100) <= 35),
+			`${marks.join(' ')} | ${offsets.map((dt) => (dt === null ? '-' : dt.toFixed(0))).join(' ')}`
+		)
 	}
 	{
 		const h = inTime(0)

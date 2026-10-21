@@ -57,8 +57,8 @@ export const FLICKER_MS = 70
 const GAP_MS = 40
 // A strum's attack this long before a run starts still makes it a played
 // chord: the tracker names a chord ~200–370 ms after its strum (check:chords,
-// bench median 283 ms), with room to spare.
-const ATTACK_LEAD_MS = 500
+// bench median 283 ms), but on a phone's input path ~600 ms: room for that.
+export const ATTACK_LEAD_MS = 800
 
 export interface Onset {
 	symbol: string
@@ -84,6 +84,8 @@ export function createStabilizer(): Stabilizer {
 	let stable = false
 	let direct = false
 	let lastAttack = -Infinity
+	// When the run before this one started: a strum before it was that chord's, not this one's.
+	let previousSince = -Infinity
 	// Whether the last frame was the run's chord, and when the frames stopped being it.
 	let onRun = true
 	let gapStart = 0
@@ -110,6 +112,7 @@ export function createStabilizer(): Stabilizer {
 				}
 				if (now - seen > FLICKER_MS) {
 					direct = stable && symbol !== null && challengerSince - gapStart < GAP_MS
+					previousSince = since
 					symbol = challenger
 					since = challengerSince
 					seen = now
@@ -122,7 +125,7 @@ export function createStabilizer(): Stabilizer {
 			// Measured to the last frame it was heard: the bridge over a gap does not make a blip longer.
 			if (symbol === null || stable || seen - since < STABLE_MS) return null
 			stable = true
-			return { symbol, at: since, fresh: !direct || lastAttack >= since - ATTACK_LEAD_MS }
+			return { symbol, at: since, fresh: !direct || (lastAttack >= since - ATTACK_LEAD_MS && lastAttack > previousSince) }
 		},
 		current: () => (stable ? symbol : null),
 	}
