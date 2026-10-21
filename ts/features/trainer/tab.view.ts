@@ -137,14 +137,26 @@ export function createTabView(root: HTMLElement): View {
 		lit = el
 	}
 
-	/** Tempo: the note within half a step of the playhead at `pos`, on the copy passing under it. */
+	/**
+	 * Tempo: the note within half a step of the playhead at `pos`. placeStrip
+	 * wraps every loop back onto the first copy, so the playhead runs over
+	 * copy 0; the second copy only shows the next loop coming in.
+	 */
 	function noteAt(pos: number, ex: Tab.TabExercise): HTMLElement | null {
 		if (pos < -0.5) return null
-		const loop = Math.floor((pos + 0.5) / ex.steps)
-		const step = pos - loop * ex.steps
-		const index = ex.notes.findIndex((n) => Math.abs(n.step - step) <= 0.5)
-		return index < 0 ? null : (noteEls[noteEls.length > 1 ? loop % 2 : 0]?.[index] ?? null)
+		// Where the playhead is on the strip, as placeStrip puts it; just before
+		// the wrap the next loop's first note is on copy 1, right after copy 0.
+		const at = pos < 0 ? pos : pos % ex.steps
+		for (const [copy, els] of noteEls.entries()) {
+			const index = ex.notes.findIndex((n) => Math.abs(n.step + copy * ex.steps - at) <= 0.5)
+			if (index >= 0) return els[index] ?? null
+		}
+		return null
 	}
+
+	// Tempo: the loop the strip is showing (floor of position / loop length).
+	// A new loop wipes the marks off copy 0 before its notes come round again.
+	let shownLoop = 0
 
 	/* Setup ---------------------------------------------------------------- */
 	goalsBox.replaceChildren(
@@ -267,24 +279,23 @@ export function createTabView(root: HTMLElement): View {
 		startButton.classList.toggle('key--hot', !running)
 	}
 
-	// Marks arrive loop by loop in order: the first of a loop clears the copy
-	// it will be drawn on next time round.
-	let marksSeen = 0
+	// Marks arrive loop by loop, in order, a little after each note.
 	const session = createTabSession(
 		{
 			countIn: (left) => showStatus(`Count-in · ${left}`, `♩ = ${Metronome.getState().bpm || Tab.loadRecord(exercise()).bpm}`),
 			marked(index, mark, marks) {
 				const n = exercise().notes.length
 				const loop = Math.floor((marks.length - 1) / n)
-				// Wait steps back to the first copy at every loop; Tempo slides on, copy after copy.
-				const wait = session.config()?.follow === 'wait'
-				const copy = !wait && noteEls.length > 1 ? loop % 2 : 0
-				if (index === 0 && marks.length > marksSeen) {
-					if (wait) clearMarks(0)
-					else if (noteEls.length > 1) clearMarks((loop + 1) % 2)
+				// The strip always shows the loop on copy 0 (placeStrip wraps). Wait
+				// starts a loop at its first note; in Tempo a late mark of the loop
+				// before must not land on notes still to come.
+				if (session.config()?.follow === 'wait') {
+					if (index === 0) clearMarks(0)
+				} else if (loop !== shownLoop) {
+					renderTape(marks)
+					return
 				}
-				marksSeen = marks.length
-				const el = noteEls[copy]?.[index]
+				const el = noteEls[0]?.[index]
 				if (el) el.dataset.mark = mark
 				renderTape(marks)
 			},
@@ -317,6 +328,11 @@ export function createTabView(root: HTMLElement): View {
 		const ex = config.exercise
 		const pos = session.position(performance.now())
 		placeStrip(pos, ex, false)
+		const loopNow = Math.max(0, Math.floor(pos / ex.steps))
+		if (loopNow !== shownLoop) {
+			shownLoop = loopNow
+			clearMarks(0)
+		}
 		light(noteAt(pos, ex))
 		if (pos >= 0) {
 			const bar = Math.floor((pos % ex.steps) / (ex.perBeat * Tab.BEATS_PER_BAR)) + 1
@@ -336,7 +352,7 @@ export function createTabView(root: HTMLElement): View {
 		const s = Settings.get()
 		const ex = exercise()
 		message.textContent = ''
-		marksSeen = 0
+		shownLoop = 0
 		drawStrip(ex, s.tabLoop ? 2 : 1)
 		clearMarks()
 		renderTape([])
