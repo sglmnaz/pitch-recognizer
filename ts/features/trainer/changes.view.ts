@@ -248,7 +248,8 @@ export function createChangesView(root: HTMLElement): View {
 	function renderIdle() {
 		const s = Settings.get()
 		const chords = selection()
-		stage.dataset.mode = s.changesMode
+		// data-drill, not data-mode: that attribute is the theme's light/dark (ts/ui/theme.ts) and resets the LCD colours.
+		stage.dataset.drill = s.changesMode
 		timing.hidden = s.changesMode !== 'time'
 		renderBeats(s.changesBeats)
 		sizeCounter(s.changesMode !== 'time')
@@ -381,7 +382,7 @@ export function createChangesView(root: HTMLElement): View {
 		resetHeard()
 		result.hidden = true
 		status.textContent = ''
-		stage.dataset.mode = mode
+		stage.dataset.drill = mode
 		timing.hidden = mode !== 'time'
 		renderMeter([], [], Changes.hitWindow((s.changesBeats * 60000) / s.changesBpm))
 		renderBeats(s.changesBeats)

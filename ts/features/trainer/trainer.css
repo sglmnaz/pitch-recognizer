@@ -504,11 +504,11 @@
 
 /* In time: the LCD as a grid. What the mic hears on top, the chord to play
    and the next one side by side, as large, then a segment per beat of the chord. */
-.changes-stage:not([data-mode='time']) :is(.changes-tag, .changes-arrow, .changes-upcoming, .changes-beats) {
+.changes-stage:not([data-drill='time']) :is(.changes-tag, .changes-arrow, .changes-upcoming, .changes-beats) {
 	display: none;
 }
 
-.changes-stage[data-mode='time'] {
+.changes-stage[data-drill='time'] {
 	.changes-display > .lcd {
 		display: grid;
 		grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
