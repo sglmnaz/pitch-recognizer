@@ -5,8 +5,9 @@
 	position: relative;
 	flex: none;
 	display: block;
-	width: 112px;
-	height: 40px;
+	/* The size of the settings' other small keys, a little longer for its legend. */
+	width: 88px;
+	height: 32px;
 	overflow: hidden;
 	border-radius: var(--key-radius);
 	background: var(--outline);
@@ -14,10 +15,6 @@
 	touch-action: pan-y;
 	user-select: none;
 	-webkit-user-select: none;
-
-	@media (max-width: 600px) {
-		height: var(--tap);
-	}
 }
 
 .guard__confirm,
@@ -31,8 +28,8 @@
 	padding: 0;
 	border: 0;
 	border-radius: max(0px, calc(var(--key-radius) - 1px));
-	font: 600 var(--text-sm) / 1 var(--font-ui);
-	letter-spacing: 0.2em;
+	font: 600 var(--text-2xs) / 1 var(--font-ui);
+	letter-spacing: 0.16em;
 	text-transform: uppercase;
 	cursor: pointer;
 	-webkit-tap-highlight-color: transparent;
@@ -67,17 +64,17 @@
 	&::before {
 		content: '';
 		position: absolute;
-		top: 4px;
-		left: 10px;
+		top: 3px;
+		left: 8px;
 		right: 40%;
-		height: 5px;
+		height: 4px;
 		border-radius: 3px;
 		background: linear-gradient(90deg, rgba(255, 255, 255, 0.28), transparent);
 	}
 
 	& svg {
-		width: 14px;
-		height: 14px;
+		width: 11px;
+		height: 11px;
 	}
 
 	.guard.is-open & {
