@@ -273,8 +273,6 @@
 	--success-bg: rgba(76, 207, 92, 0.16);
 	--warning: #b8640d;
 
-
-
 	--dial-face: #f1ecdf;
 	--dial-near: rgba(232, 196, 106, 0.38);
 	--dial-ok: rgba(74, 164, 98, 0.55);
@@ -372,8 +370,6 @@
 	--success-bg: rgba(94, 194, 122, 0.14);
 	--warning: #f5a623;
 
-
-
 	--dial-face: #1f1e1c;
 	--dial-near: rgba(232, 196, 106, 0.22);
 	--dial-ok: rgba(94, 194, 122, 0.35);
@@ -438,8 +434,6 @@
 	--menu-rule: #262c37;
 
 	--track: #090c11;
-
-
 
 	--dial-face: #161b23;
 }
@@ -897,7 +891,10 @@
 	--ink-2: #d4c2aa;
 	--ink-3: #a8957e;
 	--ink-4: #8a7864;
-	--plate: repeating-linear-gradient(45deg, rgba(0, 0, 0, 0.09) 0 1px, transparent 1px 10px), repeating-linear-gradient(-45deg, rgba(0, 0, 0, 0.09) 0 1px, transparent 1px 10px), repeating-linear-gradient(0deg, rgba(255, 230, 200, 0.06) 0 1px, transparent 1px 2px), linear-gradient(180deg, #b97c4c, #985d35);
+	--plate:
+		repeating-linear-gradient(45deg, rgba(0, 0, 0, 0.09) 0 1px, transparent 1px 10px),
+		repeating-linear-gradient(-45deg, rgba(0, 0, 0, 0.09) 0 1px, transparent 1px 10px),
+		repeating-linear-gradient(0deg, rgba(255, 230, 200, 0.06) 0 1px, transparent 1px 2px), linear-gradient(180deg, #b97c4c, #985d35);
 	--plate-edge: #120e0b;
 	--plate-ink: #fff3e4;
 	--plate-ink-2: #f2d4b0;
@@ -947,7 +944,9 @@
 	--rule-strong: rgba(28, 18, 9, 0.8);
 	--outline: #1c1209;
 	--hole: #1c1209;
-	--plate: repeating-linear-gradient(0deg, rgba(90, 70, 40, 0.07) 0 1px, transparent 1px 3px), repeating-linear-gradient(90deg, rgba(90, 70, 40, 0.06) 0 1px, transparent 1px 3px), linear-gradient(180deg, #ebe2cd, #dcd0b6);
+	--plate:
+		repeating-linear-gradient(0deg, rgba(90, 70, 40, 0.07) 0 1px, transparent 1px 3px),
+		repeating-linear-gradient(90deg, rgba(90, 70, 40, 0.06) 0 1px, transparent 1px 3px), linear-gradient(180deg, #ebe2cd, #dcd0b6);
 	--plate-edge: #1c1209;
 	--plate-ink: #1c1209;
 	--plate-ink-2: #4e3a22;
@@ -998,7 +997,9 @@
 	--rule-strong: #050506;
 	--outline: #050506;
 	--hole: #050506;
-	--plate: radial-gradient(circle, rgba(0, 0, 0, 0.32) 1.1px, transparent 1.4px) 0 0 / 6px 5.2px, radial-gradient(circle, rgba(0, 0, 0, 0.32) 1.1px, transparent 1.4px) 3px 2.6px / 6px 5.2px, linear-gradient(180deg, #4a4c50, #35373b);
+	--plate:
+		radial-gradient(circle, rgba(0, 0, 0, 0.32) 1.1px, transparent 1.4px) 0 0 / 6px 5.2px,
+		radial-gradient(circle, rgba(0, 0, 0, 0.32) 1.1px, transparent 1.4px) 3px 2.6px / 6px 5.2px, linear-gradient(180deg, #4a4c50, #35373b);
 	--plate-edge: #8a8d92;
 	--plate-ink: #eceef1;
 	--plate-ink-2: #a9adb3;
@@ -1056,7 +1057,15 @@
 	--lcd-dim: rgba(141, 255, 176, 0.11);
 	--lcd-glow: 0 0 2px #7dffa8, 0 0 8px rgba(43, 224, 106, 0.4);
 	--lcd-shadow: inset 0 0 18px 4px #000;
-	--scope: radial-gradient(110% 130% at 50% 45%, #0a2e1d, #04170d 62%, #010804);
+	/* The glass: lit a little by its own ink in the middle, darker at the rim.
+	   Built from --lcd-bg / --lcd-ink, so a display colour (tier 3) recolours it. */
+	--scope: radial-gradient(
+		110% 130% at 50% 45%,
+		color-mix(in srgb, var(--lcd-bg) 92%, var(--lcd-ink)),
+		var(--lcd-bg) 62%,
+		color-mix(in srgb, var(--lcd-bg) 45%, #000)
+	);
+	--scope-rim: color-mix(in srgb, var(--lcd-bg) 25%, rgba(0, 0, 0, 0.85));
 	--lamp-off: #4a1410;
 	--lamp-on: #ff3b2f;
 	--lamp-glow: rgba(255, 59, 47, 0.67);

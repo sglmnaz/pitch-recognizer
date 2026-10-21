@@ -7,8 +7,10 @@
  */
 
 /* Screens --------------------------------------------------------------------- */
-/* Every display is a vector oscilloscope: dark green phosphor glass, no
-   raster lines. The big screens add a glass reflection and a dark rim. */
+/* Every display is a vector oscilloscope: phosphor glass, no raster lines.
+   The big screens add a glass reflection and a dark rim. Every colour comes
+   from the display's tokens (--lcd-*), so a display colour picked in
+   Settings → Appearance recolours the whole scope, not just its text. */
 [data-theme='regia'] :is(.lcd, .readout:not(.readout--split), .metro-beat__display) {
 	background-image: var(--scope);
 }
@@ -18,7 +20,7 @@
 	letter-spacing: 0.16em;
 
 	& .lcd__dim {
-		color: rgba(141, 255, 176, 0.4);
+		color: color-mix(in srgb, var(--lcd-ink) 40%, transparent);
 	}
 }
 
@@ -33,7 +35,7 @@
 		pointer-events: none;
 		border-radius: inherit;
 		background: radial-gradient(120% 70% at 30% -10%, rgba(255, 255, 255, 0.1), transparent 55%);
-		box-shadow: inset 0 0 14px 3px rgba(0, 0, 0, 0.85);
+		box-shadow: inset 0 0 14px 3px var(--scope-rim);
 	}
 }
 
@@ -41,9 +43,20 @@
 [data-theme='regia'] .metro-lcd {
 	border-radius: 8px / 11px;
 	background-image:
-		linear-gradient(90deg, transparent calc(50% - 0.5px), rgba(141, 255, 176, 0.15) calc(50% - 0.5px) calc(50% + 0.5px), transparent calc(50% + 0.5px)),
-		linear-gradient(0deg, transparent calc(50% - 0.5px), rgba(141, 255, 176, 0.15) calc(50% - 0.5px) calc(50% + 0.5px), transparent calc(50% + 0.5px)),
-		linear-gradient(90deg, rgba(141, 255, 176, 0.07) 1px, transparent 1px), linear-gradient(0deg, rgba(141, 255, 176, 0.07) 1px, transparent 1px), var(--scope);
+		linear-gradient(
+			90deg,
+			transparent calc(50% - 0.5px),
+			color-mix(in srgb, var(--lcd-ink) 15%, transparent) calc(50% - 0.5px) calc(50% + 0.5px),
+			transparent calc(50% + 0.5px)
+		),
+		linear-gradient(
+			0deg,
+			transparent calc(50% - 0.5px),
+			color-mix(in srgb, var(--lcd-ink) 15%, transparent) calc(50% - 0.5px) calc(50% + 0.5px),
+			transparent calc(50% + 0.5px)
+		),
+		linear-gradient(90deg, color-mix(in srgb, var(--lcd-ink) 7%, transparent) 1px, transparent 1px),
+		linear-gradient(0deg, color-mix(in srgb, var(--lcd-ink) 7%, transparent) 1px, transparent 1px), var(--scope);
 	background-size:
 		auto,
 		auto,
@@ -87,7 +100,12 @@
 		text-align: center;
 		border-radius: 3px / 5px;
 		background-image:
-			linear-gradient(0deg, transparent calc(50% - 0.5px), rgba(141, 255, 176, 0.1) calc(50% - 0.5px) calc(50% + 0.5px), transparent calc(50% + 0.5px)),
+			linear-gradient(
+				0deg,
+				transparent calc(50% - 0.5px),
+				color-mix(in srgb, var(--lcd-ink) 10%, transparent) calc(50% - 0.5px) calc(50% + 0.5px),
+				transparent calc(50% + 0.5px)
+			),
 			var(--scope);
 		font-family: var(--font-display);
 		font-size: 27px;
@@ -95,16 +113,27 @@
 		letter-spacing: 0;
 
 		&::after {
-			box-shadow: inset 0 0 8px 2px rgba(0, 0, 0, 0.85);
+			box-shadow: inset 0 0 8px 2px var(--scope-rim);
 		}
 	}
+}
+
+/* The speed trainer's wide windows hold words ("+5", "4 bars"): the big
+   numeral would not fit, so they keep the small LCD lettering. */
+[data-theme='regia'] .metro-count--wide .lcd {
+	min-width: 5em;
+	padding: 0 var(--space-8);
+	font-family: var(--font-ui);
+	font-size: var(--text-xl);
+	font-weight: 500;
+	letter-spacing: 0.08em;
 }
 
 /* Beat lights: small scope screens, the two elements drawn as traces. */
 [data-theme='regia'] .metro-beat__display {
 	gap: 8px;
 	border-radius: 5px / 7px;
-	background-image: linear-gradient(90deg, rgba(141, 255, 176, 0.06) 1px, transparent 1px), var(--scope);
+	background-image: linear-gradient(90deg, color-mix(in srgb, var(--lcd-ink) 6%, transparent) 1px, transparent 1px), var(--scope);
 	background-size:
 		25% 100%,
 		auto;
@@ -112,13 +141,13 @@
 		0 0 0 1px #000,
 		0 0 0 3px var(--scope-bezel),
 		0 1px 0 3px var(--plate-shine),
-		inset 0 0 8px rgba(0, 0, 0, 0.9);
+		inset 0 0 8px var(--scope-rim);
 
 	& i {
 		height: 1.5px;
 		width: 74%;
 		border-radius: 1px;
-		background: rgba(141, 255, 176, 0.13);
+		background: color-mix(in srgb, var(--lcd-ink) 13%, transparent);
 	}
 }
 
@@ -126,16 +155,14 @@
 	box-shadow:
 		0 0 0 1px #000,
 		0 0 0 3px var(--scope-bezel),
-		inset 0 0 8px rgba(0, 0, 0, 0.9);
+		inset 0 0 8px var(--scope-rim);
 }
 
 /* Lit: one crisp phosphor line, a tight bloom. */
 [data-theme='regia'] :is(.metro-beat[data-accent='2'] .metro-beat__display i, .metro-beat[data-accent='1'] .metro-beat__display i:last-child) {
 	height: 2px;
-	background: #b6ffcf;
-	box-shadow:
-		0 0 2px #4dff88,
-		0 0 6px rgba(43, 224, 106, 0.53);
+	background: color-mix(in srgb, var(--lcd-ink) 75%, #fff);
+	box-shadow: var(--lcd-glow);
 }
 
 /* Keys --------------------------------------------------------------------------- */
@@ -318,18 +345,28 @@
 	}
 
 	&::after {
-		background:
-			radial-gradient(ellipse 30% 40% at 22% 35%, rgba(255, 255, 255, 0.95), transparent 70%),
-			linear-gradient(180deg, #fff, #d3d7d5 30%, #7c817f 58%, #aeb3b1 80%, #e4e7e5);
+		background: var(--bat-chrome);
 		box-shadow: none;
 	}
 }
 
+[data-theme='regia'] .switch--slide {
+	--bat-chrome:
+		radial-gradient(ellipse 30% 40% at 22% 35%, rgba(255, 255, 255, 0.95), transparent 70%),
+		linear-gradient(180deg, #fff, #d3d7d5 30%, #7c817f 58%, #aeb3b1 80%, #e4e7e5);
+}
+
+/* On: the same lever, flipped to the other side. The slide's own on-state
+   rule (switch.css) is more specific and repaints the cap: paint it back. */
 [data-theme='regia'] .switch--slide:has(.switch__input:checked) .switch__track {
 	&::before,
 	&::after {
 		left: 2px;
 		transform: scaleX(-1);
+	}
+
+	&::after {
+		background: var(--bat-chrome);
 	}
 }
 
