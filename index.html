@@ -196,28 +196,45 @@
 					</div>
 					<span class="window"><span class="lcd changes-clock">1:00</span></span>
 				</div>
+				<!-- In time lays the LCD out as a grid (trainer.css): what the mic hears on top,
+				     Now ▶ Next, then a segment per beat of the chord. -->
 				<div class="window changes-display">
 					<div class="lcd">
 						<div class="lcd__big changes-target">G</div>
 						<p class="changes-next"></p>
 						<p class="changes-heard">Hearing <span>—</span></p>
+						<span class="changes-tag changes-tag--now" aria-hidden="true">Now</span>
+						<span class="changes-arrow" aria-hidden="true">▶</span>
+						<span class="changes-tag changes-tag--next" aria-hidden="true">Next</span>
+						<div class="lcd__big changes-upcoming" aria-hidden="true"></div>
+						<div class="changes-beats" aria-hidden="true"></div>
 						<div class="changes-result" hidden></div>
 					</div>
 				</div>
-				<!-- In time: a lamp per outcome (the last change lights its own) and a tape of the last changes. -->
+				<!-- In time: a needle for the last change, early to the left of the on-time zone and late to
+				     the right, dots for the ones before; a missed change lights the Miss lamp instead. -->
 				<div class="changes-timing" hidden>
-					<div class="changes-lamps" aria-hidden="true">
-						<span class="changes-lamp"><span class="lamp lamp--warn" data-mark="early"></span><span class="silk">← Early</span></span>
-						<span class="changes-lamp"><span class="lamp lamp--ok" data-mark="hit"></span><span class="silk">✓ On time</span></span>
-						<span class="changes-lamp"><span class="lamp lamp--warn" data-mark="late"></span><span class="silk">Late →</span></span>
-						<span class="changes-lamp"><span class="lamp" data-mark="miss"></span><span class="silk">× Miss</span></span>
-					</div>
 					<div class="window">
-						<div class="lcd changes-tape">
-							<span class="changes-tape__label" aria-hidden="true">Last</span>
-							<ol class="changes-strip" role="img" aria-label="No changes yet"></ol>
-							<span class="changes-tally" aria-hidden="true"></span>
+						<div class="lcd changes-meter">
+							<div class="changes-meter__line">
+								<span>Last change</span>
+								<span class="changes-meter__value">—</span>
+							</div>
+							<div class="changes-scale" role="img" aria-label="No changes yet">
+								<span class="changes-zone"><span>On time</span></span>
+								<span class="changes-ghosts"></span>
+								<span class="changes-needle" hidden></span>
+							</div>
+							<div class="changes-meter__line changes-meter__ends" aria-hidden="true">
+								<span>← Early · 500 ms</span>
+								<span>0</span>
+								<span>500 ms · Late →</span>
+							</div>
 						</div>
+					</div>
+					<div class="changes-under" aria-hidden="true">
+						<span class="changes-miss"><span class="lamp"></span><span class="silk">Miss</span></span>
+						<span class="silk changes-tally"></span>
 					</div>
 				</div>
 				<div class="changes-shapes"></div>
@@ -1344,7 +1361,7 @@
 		<ul>
 			<li>Pick a pair of chords (or up to four) and press Start with the mic on.</li>
 			<li><b>One minute</b>: switch back and forth as fast as you can; every clean change counts. Beat your best.</li>
-			<li><b>In time</b>: change on the metronome's beat; each change is marked hit, early, late or missed. Headphones work best.</li>
+			<li><b>In time</b>: change on the metronome's beat. The display shows what the mic hears, the chord to play and the next one, and lights the beat of the chord you are on. The needle under it shows how far your last change was from the beat: left of the green zone is early, right is late; the dots are the changes before. A missed change lights the Miss lamp. Headphones work best.</li>
 		</ul>
 		<h3>Tab</h3>
 		<ul>

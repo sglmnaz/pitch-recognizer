@@ -3,7 +3,7 @@
  * the Changes drill, as an old-school ear-trainer unit (docs/design/
  * oldschool-components.html): the exercise switch on the aluminium plate, red
  * LED counters, the staff and the history on chart paper, LED VU meters for the
- * session, timing lamps and an LCD tape for In time. Colours are tokens only.
+ * session, beat segments and a timing meter for In time. Colours are tokens only.
  */
 
 /* Plate: brand and the exercise switch ----------------------------------------- */
@@ -397,7 +397,7 @@
 }
 
 /* Done: the result takes the place of the counter, clock and target. */
-.changes-stage[data-phase='done'] :is(.changes-meta, .changes-target, .changes-next, .changes-heard) {
+.changes-stage[data-phase='done'] :is(.changes-meta, .changes-target, .changes-next, .changes-heard, .changes-tag, .changes-arrow, .changes-upcoming, .changes-beats) {
 	display: none;
 }
 
@@ -502,57 +502,276 @@
 	}
 }
 
-/* In time: four lamps (the last change lights its own) and the tape. */
-.changes-timing {
-	display: flex;
-	flex-direction: column;
-	gap: var(--space-12);
+/* In time: the LCD as a grid. What the mic hears on top, the chord to play
+   and the next one side by side, as large, then a segment per beat of the chord. */
+.changes-stage:not([data-mode='time']) :is(.changes-tag, .changes-arrow, .changes-upcoming, .changes-beats) {
+	display: none;
 }
 
-.changes-lamps {
-	--lamp-w: 16px;
-	--lamp-h: 16px;
+.changes-stage[data-mode='time'] {
+	.changes-display > .lcd {
+		display: grid;
+		grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+		grid-template-areas:
+			'heard heard heard'
+			'tag-now . tag-next'
+			'now arrow next'
+			'beats beats beats'
+			'result result result';
+		align-items: center;
+		gap: var(--space-4) var(--space-8);
+		padding: var(--space-10) var(--space-12) var(--space-12);
+	}
 
+	.changes-next {
+		display: none;
+	}
+
+	.changes-heard {
+		grid-area: heard;
+		margin-bottom: var(--space-4);
+		padding-bottom: var(--space-6);
+		border-bottom: 1px dashed var(--lcd-dim);
+		font-size: var(--text-sm);
+	}
+
+	.changes-heard span {
+		font-size: var(--text-lg);
+	}
+
+	.changes-target,
+	.changes-upcoming {
+		font-size: 64px;
+
+		@media (min-width: 601px) {
+			font-size: 80px;
+		}
+
+		@media (min-width: 960px) {
+			font-size: 96px;
+		}
+	}
+
+	.changes-target {
+		grid-area: now;
+	}
+
+	/* The next chord as large, fainter: what to play is the bright one. */
+	.changes-upcoming {
+		grid-area: next;
+		opacity: 0.5;
+	}
+
+	.changes-result {
+		grid-area: result;
+	}
+}
+
+.changes-tag {
+	font-size: var(--text-2xs);
+	letter-spacing: 0.2em;
+}
+
+.changes-tag--now {
+	grid-area: tag-now;
+}
+
+.changes-tag--next {
+	grid-area: tag-next;
+}
+
+.changes-arrow {
+	grid-area: arrow;
+	font-size: var(--text-xl);
+	opacity: 0.6;
+}
+
+/* A segment per beat of the chord (changes.view.ts), lit while its click is heard; the first, where the change falls, taller. */
+.changes-beats {
+	grid-area: beats;
 	display: grid;
-	grid-template-columns: repeat(4, minmax(0, 1fr));
+	grid-template-columns: repeat(var(--beats, 4), minmax(0, 1fr));
+	align-items: end;
 	gap: var(--space-8);
-}
-
-.changes-lamp {
-	display: flex;
-	flex-direction: column;
-	align-items: center;
-	gap: var(--space-6);
-	text-align: center;
-}
-
-.changes-tape {
-	display: flex;
-	align-items: center;
-	gap: var(--space-8);
-}
-
-.changes-tape__label,
-.changes-tally {
-	flex: none;
+	margin-top: var(--space-6);
 	font-size: var(--text-2xs);
 }
 
-.changes-tally {
-	margin-left: auto;
+.changes-beat {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 3px;
+	font-style: normal;
+
+	&::before {
+		content: '';
+		width: 100%;
+		height: 8px;
+		background: var(--lcd-dim);
+	}
+
+	&:first-child::before {
+		height: 12px;
+	}
+
+	&.is-on::before {
+		background: var(--lcd-ink);
+		box-shadow: var(--lcd-glow);
+	}
 }
 
-.changes-strip {
+/* In time: the timing meter and, under it, the Miss lamp and the tally. */
+.changes-timing {
 	display: flex;
-	gap: var(--space-6);
-	min-width: 0;
-	min-height: 1.2em;
-	margin: 0;
-	padding: 0;
-	overflow: hidden;
-	list-style: none;
+	flex-direction: column;
+	gap: var(--space-10);
+}
+
+/* The verdict colours on the LCD: the theme's success / warning / accent inks. */
+.changes-meter {
+	--mark-hit: var(--success);
+	--mark-off: var(--warning);
+	--mark-miss: var(--accent);
+
+	padding: var(--space-10) var(--space-12) var(--space-8);
+}
+
+.changes-meter__line {
+	display: flex;
+	justify-content: space-between;
+	align-items: baseline;
+	gap: var(--space-8);
+	font-size: var(--text-2xs);
+}
+
+.changes-meter__ends {
+	opacity: 0.7;
+}
+
+.changes-meter__value {
 	font-size: var(--text-lg);
-	letter-spacing: 0;
+}
+
+.changes-meter[data-mark='hit'] .changes-meter__value {
+	color: var(--mark-hit);
+}
+
+.changes-meter:is([data-mark='early'], [data-mark='late']) .changes-meter__value {
+	color: var(--mark-off);
+}
+
+.changes-meter[data-mark='miss'] .changes-meter__value {
+	color: var(--mark-miss);
+}
+
+/* ±500 ms full scale (SCALE_MS in changes.view.ts), a tick every 100 ms, 0 in the middle;
+   the view sets the on-time zone (--hit) and each mark's place (--x) in % of the half scale. */
+.changes-scale {
+	position: relative;
+	height: 40px;
+	margin: var(--space-8) 0 var(--space-4);
+	background: repeating-linear-gradient(90deg, color-mix(in srgb, var(--lcd-ink) 45%, transparent) 0 1px, transparent 1px 10%) 0 100% / calc(100% + 1px) 7px
+		no-repeat;
+
+	&::before,
+	&::after {
+		content: '';
+		position: absolute;
+		bottom: 0;
+	}
+
+	&::before {
+		left: 0;
+		right: 0;
+		height: 1.5px;
+		background: color-mix(in srgb, var(--lcd-ink) 60%, transparent);
+	}
+
+	&::after {
+		left: 50%;
+		width: 1.5px;
+		height: 14px;
+		margin-left: -0.75px;
+		background: var(--lcd-ink);
+	}
+}
+
+.changes-zone {
+	position: absolute;
+	inset-block: 0;
+	left: calc(50% - var(--hit, 20) * 0.5%);
+	width: calc(var(--hit, 20) * 1%);
+	background: color-mix(in srgb, var(--mark-hit) 16%, transparent);
+	border-inline: 1px dashed color-mix(in srgb, var(--mark-hit) 70%, transparent);
+
+	span {
+		position: absolute;
+		top: 2px;
+		left: 5px;
+		font-size: 9px;
+		letter-spacing: 0.16em;
+		white-space: nowrap;
+		color: var(--mark-hit);
+	}
+}
+
+.changes-ghost,
+.changes-needle {
+	position: absolute;
+	left: calc(50% + var(--x) * 0.5%);
+}
+
+/* The changes before the last one, fainter the older. */
+.changes-ghost {
+	bottom: 10px;
+	width: 6px;
+	height: 6px;
+	margin-left: -3px;
+	border-radius: 50%;
+	background: var(--mark-off);
+	opacity: var(--o, 0.5);
+
+	&[data-mark='hit'] {
+		background: var(--mark-hit);
+	}
+}
+
+.changes-needle {
+	top: 2px;
+	bottom: 0;
+	width: 3px;
+	margin-left: -1.5px;
+	color: var(--mark-off);
+	background: currentColor;
+
+	&::before {
+		content: '';
+		position: absolute;
+		top: -4px;
+		left: -5px;
+		border: 6.5px solid transparent;
+		border-top: 8px solid currentColor;
+		border-bottom: 0;
+	}
+}
+
+.changes-meter[data-mark='hit'] .changes-needle {
+	color: var(--mark-hit);
+}
+
+.changes-under {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	gap: var(--space-12);
+	padding-inline: var(--space-4);
+}
+
+.changes-miss {
+	display: flex;
+	align-items: center;
+	gap: var(--space-8);
 }
 
 /* Chord diagrams of the chosen chords, scaled to fit (up to four across). */

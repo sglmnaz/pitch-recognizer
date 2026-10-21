@@ -198,11 +198,19 @@ export const HIT_FLOOR_MS = 120
  * those within half a slot count; the first one decides.
  */
 export function judge(downbeat: number, slotMs: number, onsets: number[]): Mark {
-	const hit = Math.max(HIT_FLOOR_MS, Math.min(HIT_MS, slotMs / 4))
-	const inSlot = onsets.filter((t) => t >= downbeat - slotMs / 2 && t < downbeat + slotMs / 2)
-	if (!inSlot.length) return 'miss'
-	const dt = Math.min(...inSlot) - downbeat
+	const dt = offset(downbeat, slotMs, onsets)
+	if (dt === null) return 'miss'
+	const hit = hitWindow(slotMs)
 	return dt < -hit ? 'early' : dt > hit ? 'late' : 'hit'
+}
+
+/** Half the on-time window of a slot `slotMs` long: on time = within this of the downbeat. */
+export const hitWindow = (slotMs: number) => Math.max(HIT_FLOOR_MS, Math.min(HIT_MS, slotMs / 4))
+
+/** How far the change `judge` decides on was from the downbeat, in ms (negative = early); null = none, a miss. */
+export function offset(downbeat: number, slotMs: number, onsets: number[]): number | null {
+	const inSlot = onsets.filter((t) => t >= downbeat - slotMs / 2 && t < downbeat + slotMs / 2)
+	return inSlot.length ? Math.min(...inSlot) - downbeat : null
 }
 
 // Auto speed-up: +SPEED_STEP BPM after CLEAN_PASSES passes through the

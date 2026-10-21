@@ -22,10 +22,10 @@ import { clockText, createChangesSession, verdict } from './changes.session'
 
 // Screen readers hear the count at most this often (a change can come every 250 ms).
 const ANNOUNCE_MS = 4000
-const STRIP_MARKS = 12
+// In time's meter: ±SCALE_MS full scale (index.html labels its ends), dots for the GHOSTS changes before the last.
+const SCALE_MS = 500
+const GHOSTS = 8
 
-// Arrows point the way the change was off the beat (the timing lamps' labels say so).
-const MARK_GLYPH: Record<Changes.Mark, string> = { hit: '✓', early: '←', late: '→', miss: '×' }
 const MARK_TEXT: Record<Changes.Mark, string> = { hit: 'on time', early: 'early', late: 'late', miss: 'missed' }
 
 const pairLabel = (sequence: string[]) => sequence.join('–')
@@ -41,11 +41,18 @@ export function createChangesView(root: HTMLElement): View {
 	const countLabel = $<HTMLElement>('.changes-count__label')
 	const target = $<HTMLElement>('.changes-target')
 	const next = $<HTMLElement>('.changes-next')
+	const upcoming = $<HTMLElement>('.changes-upcoming')
+	const beatsBox = $<HTMLElement>('.changes-beats')
 	const heardText = $<HTMLElement>('.changes-heard span')
 	const timing = $<HTMLElement>('.changes-timing')
-	const strip = $<HTMLElement>('.changes-strip')
+	const meter = $<HTMLElement>('.changes-meter')
+	const meterValue = $<HTMLElement>('.changes-meter__value')
+	const scale = $<HTMLElement>('.changes-scale')
+	const zone = $<HTMLElement>('.changes-zone')
+	const ghosts = $<HTMLElement>('.changes-ghosts')
+	const needle = $<HTMLElement>('.changes-needle')
+	const missLamp = $<HTMLElement>('.changes-miss .lamp')
 	const tally = $<HTMLElement>('.changes-tally')
-	const lamps = timing.querySelectorAll<HTMLElement>('[data-mark]')
 	const result = $<HTMLElement>('.changes-result')
 	const shapesBox = $<HTMLElement>('.changes-shapes')
 	const startButton = $<HTMLButtonElement>('[data-action="changes-start"]')
@@ -205,11 +212,33 @@ export function createChangesView(root: HTMLElement): View {
 	}
 
 	/* Stage ------------------------------------------------------------------ */
+	// The chords in play: the running session's, else the chosen ones (never repeated, see the chips).
+	const sequence = () => (isRunning() ? session.config().sequence : selection())
+
 	function setTarget(symbol: string, then: string) {
 		target.textContent = symbol
 		target.classList.remove('changes-target--count')
 		next.textContent = then
+		const seq = sequence()
+		upcoming.textContent = seq[(seq.indexOf(symbol) + 1) % seq.length]
 		markTargetShape(symbol)
+	}
+
+	/** In time: a segment per beat of the chord, numbered, none lit. */
+	function renderBeats(count: number) {
+		beatsBox.style.setProperty('--beats', String(count))
+		beatsBox.replaceChildren(
+			...Array.from({ length: count }, (_, i) => {
+				const beat = document.createElement('i')
+				beat.className = 'changes-beat'
+				beat.textContent = String(i + 1)
+				return beat
+			})
+		)
+	}
+
+	function lightBeat(index: number | null) {
+		beatsBox.querySelectorAll('.changes-beat').forEach((beat, i) => beat.classList.toggle('is-on', i === index))
 	}
 
 	// One minute: the change count is the hero, a big LED. In time: the on-time
@@ -219,7 +248,9 @@ export function createChangesView(root: HTMLElement): View {
 	function renderIdle() {
 		const s = Settings.get()
 		const chords = selection()
+		stage.dataset.mode = s.changesMode
 		timing.hidden = s.changesMode !== 'time'
+		renderBeats(s.changesBeats)
 		sizeCounter(s.changesMode !== 'time')
 		if (s.changesMode === 'time') {
 			clock.textContent = `${s.changesBpm} BPM`
@@ -237,6 +268,7 @@ export function createChangesView(root: HTMLElement): View {
 			renderShapes(chords)
 			target.textContent = '–'
 			next.textContent = ''
+			upcoming.textContent = ''
 		}
 		startButton.disabled = !valid()
 	}
@@ -266,28 +298,48 @@ export function createChangesView(root: HTMLElement): View {
 	}
 	stage.addEventListener('animationend', () => stage.classList.remove('changes-stage--flash'))
 
-	function renderStrip(marks: Changes.Mark[]) {
-		strip.replaceChildren(
-			...marks.slice(-STRIP_MARKS).map((mark) => {
-				const li = document.createElement('li')
-				li.className = `changes-mark changes-mark--${mark}`
-				li.textContent = MARK_GLYPH[mark]
-				li.title = MARK_TEXT[mark]
-				return li
+	const signed = (ms: number) => `${ms < 0 ? '−' : '+'}${Math.abs(ms)} ms`
+	// % of the meter's half scale, pinned to its ends.
+	const onScale = (ms: number) => clamp((ms / SCALE_MS) * 100, -100, 100).toFixed(1)
+
+	/** In time: the needle on the last change, dots on the ones before, the Miss lamp and the tally. */
+	function renderMeter(marks: Changes.Mark[], offsets: (number | null)[], hitMs: number) {
+		const last = marks.length - 1
+		const mark = marks[last]
+		const dt = offsets[last] ?? null
+		const shown = dt === null ? null : Math.round(dt)
+		if (mark) meter.dataset.mark = mark
+		else delete meter.dataset.mark
+		zone.style.setProperty('--hit', onScale(hitMs))
+		meterValue.textContent = !mark ? '—' : shown === null ? 'Missed' : `${signed(shown)} · ${MARK_TEXT[mark]}`
+		needle.hidden = shown === null
+		if (shown !== null) needle.style.setProperty('--x', onScale(shown))
+		const before = offsets.slice(Math.max(0, last - GHOSTS), Math.max(0, last))
+		ghosts.replaceChildren(
+			...before.flatMap((ms, i) => {
+				if (ms === null) return []
+				const dot = document.createElement('i')
+				dot.className = 'changes-ghost'
+				dot.dataset.mark = marks[last - before.length + i]
+				dot.style.setProperty('--x', onScale(ms))
+				// Older fainter: up to 0.7 for the one just before the needle.
+				dot.style.setProperty('--o', (0.25 + (0.45 * (i + 1)) / before.length).toFixed(2))
+				return [dot]
 			})
 		)
+		missLamp.classList.toggle('is-on', mark === 'miss')
 		const hits = marks.filter((m) => m === 'hit').length
-		strip.setAttribute('aria-label', `${hits} of ${marks.length} changes on time`)
-		tally.textContent = marks.length ? `${hits} / ${marks.length}` : ''
-		// The last change's lamp stays lit until the next one.
-		const last = marks[marks.length - 1]
-		for (const lamp of lamps) lamp.classList.toggle('is-on', lamp.dataset.mark === last)
+		const misses = marks.filter((m) => m === 'miss').length
+		tally.textContent = marks.length ? `On time ${hits} / ${marks.length}${misses ? ` · ${misses} missed` : ''}` : ''
+		const lastText = shown === null ? 'missed' : `${MARK_TEXT[mark]}, ${Math.abs(shown)} ms ${shown < 0 ? 'before' : 'after'} the beat`
+		scale.setAttribute('aria-label', mark ? `Last change ${lastText}. ${hits} of ${marks.length} changes on time.` : 'No changes yet')
 	}
 
 	function showCount(left: number, first: string) {
 		target.textContent = String(left)
 		target.classList.add('changes-target--count')
 		next.textContent = `Get ready on ${first}`
+		upcoming.textContent = first
 	}
 
 	const session = createChangesSession(
@@ -295,14 +347,15 @@ export function createChangesView(root: HTMLElement): View {
 			heard: showHeard,
 			countIn: showCount,
 			target: setTarget,
+			beat: lightBeat,
 			clock: (text) => (clock.textContent = text),
 			counted(count) {
 				showLed(countValue, count)
 				flash()
 				announce(`${count} ${count === 1 ? 'change' : 'changes'}`)
 			},
-			marked(marks) {
-				renderStrip(marks)
+			marked(marks, offsets, hitMs) {
+				renderMeter(marks, offsets, hitMs)
 				showLed(countValue, Changes.accuracy(marks))
 				if (marks[marks.length - 1] === 'hit') flash()
 			},
@@ -328,8 +381,10 @@ export function createChangesView(root: HTMLElement): View {
 		resetHeard()
 		result.hidden = true
 		status.textContent = ''
+		stage.dataset.mode = mode
 		timing.hidden = mode !== 'time'
-		renderStrip([])
+		renderMeter([], [], Changes.hitWindow((s.changesBeats * 60000) / s.changesBpm))
+		renderBeats(s.changesBeats)
 		sizeCounter(mode === 'minute')
 		if (mode === 'minute') {
 			showLed(countValue, 0)

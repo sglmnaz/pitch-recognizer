@@ -9,8 +9,10 @@ import {
 	createStabilizer,
 	DEFAULT_SEQUENCE,
 	HISTORY,
+	hitWindow,
 	judge,
 	loadRecord,
+	offset,
 	recordKey,
 	REFRACTORY_MS,
 	saveSession,
@@ -197,6 +199,8 @@ const strums = (symbols: string[], ms: number): Segments => symbols.map((s) => [
 	check('no onset is a miss', judge(10_000, slot, []) === 'miss')
 	check('an onset past half the slot belongs to the next downbeat: miss', judge(10_000, slot, [11_100]) === 'miss')
 	check('the first onset decides (a later re-strum does not rescue it)', judge(10_000, slot, [10_900, 10_500]) === 'late')
+	check('offset: the deciding onset off the downbeat, null for a miss', offset(10_000, slot, [10_900, 9_700]) === -300 && offset(10_000, slot, []) === null)
+	check('hit window: a quarter slot, between 120 and 200 ms', hitWindow(4000) === 200 && hitWindow(600) === 150 && hitWindow(375) === 120)
 	// At 160 BPM, 1 beat per chord (375 ms), a quarter slot is 94 ms: the window floors at 120.
 	check('fast tempo: 100 ms off is still a hit', judge(10_000, 375, [10_100]) === 'hit')
 	check('fast tempo: 150 ms off is late', judge(10_000, 375, [10_150]) === 'late')
@@ -274,7 +278,12 @@ const strums = (symbols: string[], ms: number): Segments => symbols.map((s) => [
 			target: (symbol) => void events.push(['target', symbol]),
 			clock() {},
 			counted: (count) => void events.push(['counted', count]),
-			marked: (marks) => void events.push(['marked', marks[marks.length - 1]]),
+			beat: (index) => void events.push(['beat', index]),
+			marked(marks, offsets, hitMs) {
+				events.push(['marked', marks[marks.length - 1]])
+				events.push(['offset', offsets[offsets.length - 1]])
+				events.push(['hitMs', hitMs])
+			},
 			announce: (text) => void events.push(['announce', text]),
 		}
 		const metronome: MetronomeControl = {
@@ -357,6 +366,15 @@ const strums = (symbols: string[], ms: number): Segments => symbols.map((s) => [
 		const marks = of('marked')
 		check('in time: started the metronome at the session tempo', metro.running && of('countIn').join() === '4,3,2,1', of('countIn').join())
 		check('in time: strummed changes on the downbeat are hits', marks.length >= 6 && marks.every((m) => m === 'hit'), marks.join(' '))
+		const offsets = of('offset') as (number | null)[]
+		const hitMs = of('hitMs') as number[]
+		check(
+			'in time: each mark comes with its offset, inside the window it was judged by',
+			offsets.length === marks.length && offsets.every((dt, i) => dt !== null && Math.abs(dt) <= hitMs[i]),
+			offsets.join(' ')
+		)
+		const beats = of('beat').join('')
+		check('in time: the beats of each chord after the count-in, 0 on its first', beats.startsWith('010101'), beats)
 		check(
 			'in time: two clean passes speed it up on a downbeat',
 			metro.bpm > 120 && of('announce').includes('Two clean passes. Up to 125 BPM.'),
@@ -366,8 +384,13 @@ const strums = (symbols: string[], ms: number): Segments => symbols.map((s) => [
 		check('in time: ending stops the clicks and reports the tempo', !metro.running && result?.mode === 'time' && result.bpm === metro.bpm)
 	}
 	{
-		const marks = inTime(0).of('marked')
+		const h = inTime(0)
+		const marks = h.of('marked')
 		check('in time: a strum on a click is the click, so the change is a flip', marks.length >= 6 && marks.every((m) => m === 'miss'), marks.join(' '))
+		check(
+			'in time: a miss has no offset',
+			h.of('offset').every((dt) => dt === null)
+		)
 	}
 }
 

@@ -52,8 +52,14 @@ export interface SessionUi {
 	clock(text: string): void
 	/** One-minute: a change counted. */
 	counted(count: number): void
-	/** In time: a slot judged (the last of `marks`). */
-	marked(marks: Changes.Mark[]): void
+	/** In time: a beat of the chord's slot heard (0 = the chord's first beat, where the change falls). */
+	beat(index: number): void
+	/**
+	 * In time: a slot judged (the last of `marks`); `offsets` runs beside it,
+	 * ms off the downbeat (negative = early, null = missed), `hitMs` = that
+	 * slot's on-time window either side.
+	 */
+	marked(marks: Changes.Mark[], offsets: (number | null)[], hitMs: number): void
 	announce(text: string, force?: boolean): void
 }
 
@@ -92,6 +98,7 @@ export function createChangesSession(ui: SessionUi, metronome: MetronomeControl)
 	// In time.
 	let slot = -1
 	let marks: Changes.Mark[] = []
+	let offsets: (number | null)[] = []
 	let pending: { downbeat: number; slotMs: number; target: string }[] = []
 	let onsets: Changes.Onset[] = []
 	let clean = 0
@@ -107,6 +114,7 @@ export function createChangesSession(ui: SessionUi, metronome: MetronomeControl)
 		config = next
 		counter = Changes.createChangeCounter(config.sequence)
 		marks = []
+		offsets = []
 		pending = []
 		onsets = []
 		clean = 0
@@ -179,6 +187,7 @@ export function createChangesSession(ui: SessionUi, metronome: MetronomeControl)
 		const index = event.bar * config.beats + event.beat
 		if (index < lead) return ui.countIn(lead - index, config.sequence[0])
 		phase = 'running'
+		ui.beat((index - lead) % config.beats)
 		if ((index - lead) % config.beats) return
 		if (pendingBpm) {
 			// Takes effect from the next beat line: this chord's first beat is already scheduled.
@@ -204,7 +213,8 @@ export function createChangesSession(ui: SessionUi, metronome: MetronomeControl)
 			const times = onsets.filter((o) => o.symbol === due.target).map((o) => o.at)
 			const mark = Changes.judge(due.downbeat, due.slotMs, times)
 			marks.push(mark)
-			ui.marked(marks)
+			offsets.push(Changes.offset(due.downbeat, due.slotMs, times))
+			ui.marked(marks, offsets, Changes.hitWindow(due.slotMs))
 			if (!config.speedUp) continue
 			const step = Changes.afterMark(clean, mark, config.sequence.length)
 			clean = step.clean
