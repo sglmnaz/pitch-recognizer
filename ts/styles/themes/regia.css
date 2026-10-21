@@ -181,7 +181,11 @@
 	}
 }
 
-/* Room for the bezels between neighbouring keys (Metronome). */
+/* Room for the bezels. A bezel stands 5 px out of its key or screen, so two
+   of them need 10 px between their boxes just to touch; 12 px, as in the
+   mockup's Metronome, leaves a line of panel between the frames. These are
+   the rows that had less, measured on every tab at phone, tablet and
+   desktop width. */
 [data-theme='regia'] .metro-tempo,
 [data-theme='regia'] .metro-stepper {
 	gap: 12px;
@@ -189,6 +193,14 @@
 
 [data-theme='regia'] .metro-actions {
 	gap: 14px;
+}
+
+[data-theme='regia'] :is(.strings, .neck-toolbar, .chord-keys__list, .scales-marked-row, .changes-stepper, .stepper, .harmony-chords, .scoreboard) {
+	gap: 12px;
+}
+
+[data-theme='regia'] :is(.ear__answers, .scales-controls) {
+	column-gap: 12px;
 }
 
 /* Start: a backlit ON AIR cap, translucent red with a lit centre, brighter while it runs. */
