@@ -284,6 +284,18 @@ test.describe('behaviour', () => {
 		await expect(page.locator('[data-group="tuner"]')).toBeVisible()
 	})
 
+	// Coming back to Settings from another tab opens that tab's section only: one left open closes.
+	test('settings open the section of the tab you came from, only', async ({ page, open }) => {
+		await open('#scales')
+		await page.evaluate(() => (location.hash = '#settings'))
+		const band = (name: string) => page.locator('#view-settings').getByRole('button', { name, exact: true })
+		await expect(band('Scales')).toHaveAttribute('aria-expanded', 'true')
+		await page.evaluate(() => (location.hash = '#tuner'))
+		await page.evaluate(() => (location.hash = '#settings'))
+		await expect(band('Tuner')).toHaveAttribute('aria-expanded', 'true')
+		await expect(band('Scales')).toHaveAttribute('aria-expanded', 'false')
+	})
+
 	// The display colour is its own axis: it recolours LCDs only, and sticks.
 	test('the display colour is independent of the theme', async ({ page, open }) => {
 		await open('#settings')

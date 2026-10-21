@@ -31,8 +31,13 @@ const TAB_LABELS: Record<string, string> = {
 const RANGES = { audioDelayMs: [-200, 400], micDelayMs: [-500, 1000] } as const
 // A change further off than this is an outlier on the timeline (the on-time window is 120–200 ms).
 const OUTLIER_MS = 200
-// The mic check counts a strum once the sound this long after it shows pitch.
+// The mic check counts a strum once the sound this long after it shows pitch
+// and still stands HELD_OVER_NOISE times over the room's noise floor (RMS): a
+// strum rings, while PC fans at -58 dB swing enough for the detector now and
+// then (14 strums counted in 30 s of silence) but never held 2x their floor.
+// Single strums on three field reports: 2.6x and up, most 10-20x.
 const TONAL_AFTER_MS = 80
+const HELD_OVER_NOISE = 2.5
 // The mic check's level bar: dB over this range.
 const LEVEL_FLOOR_DB = -80
 const LEVEL_TOP_DB = -10
@@ -113,7 +118,7 @@ function createMicCheck(card: HTMLElement) {
 			const tonal = power !== null && spectralFlatness(power.power, power.binHz) < MAX_FLATNESS
 			const due = pending.filter((t) => now - t >= TONAL_AFTER_MS)
 			pending = pending.filter((t) => now - t < TONAL_AFTER_MS)
-			if (due.length && tonal) {
+			if (due.length && tonal && volume >= HELD_OVER_NOISE * noiseFloor) {
 				strums++
 				lastStrum = due[0]
 				entries.push({ kind: 'counted', at: due[0] })

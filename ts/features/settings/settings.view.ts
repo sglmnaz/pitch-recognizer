@@ -304,11 +304,11 @@ export function createSettingsView(root: HTMLElement, from: () => string | null)
 		onActivate() {
 			setLocked(true)
 			sync()
-			// The section of the tab you came from opens (Appearance when the app
-			// started here) and comes to the top.
+			// Only the section of the tab you came from opens (Appearance when the
+			// app started here) and comes to the top; the ones left open close.
 			const target = groups.find(({ group }) => group.dataset.group === (from() ?? 'appearance'))
 			if (target && !search.value) {
-				setOpen(target, true)
+				for (const entry of groups) setOpen(entry, entry === target)
 				target.group.scrollIntoView({ block: 'start' })
 			}
 		},

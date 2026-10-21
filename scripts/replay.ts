@@ -88,6 +88,8 @@ const levelStrums: number[] = []
 const attackStrums: number[] = []
 const picks: number[] = []
 // Per frame: its level and pitch-class profile (as the Changes view feeds the session).
+// The mic's learned noise floor (RMS) per frame.
+const floors: { at: number; floor: number }[] = []
 // Every pitched frame's cents off the nearest semitone on the session's A4: how the guitar is tuned.
 const cents: number[] = []
 const frames: { at: number; volume: number; chroma: Float32Array | null; flatness: number | null }[] = []
@@ -98,7 +100,8 @@ for (let end = FFT_SIZE; end <= band.length; end += step) {
 	const at = ms(end)
 	const frame = band.subarray(Math.round(end) - FFT_SIZE, Math.round(end))
 	processFrame(frame, SR, at)
-	const { reason, volume, pitch } = getStats()
+	const { reason, volume, pitch, noiseFloor } = getStats()
+	floors.push({ at, floor: noiseFloor })
 	if (pitch > 0) cents.push(((((1200 * Math.log2(pitch / (Number(report.settings.a4) || 440)) + 50) % 100) + 100) % 100) - 50)
 	levels.push({ at, volume })
 	levels = levels.filter((l) => l.at >= at - STRUM_WINDOW_MS)
@@ -469,4 +472,38 @@ if (process.env.FLOOR) {
 	console.log(
 		`\nstrum energy over the room's: real (${real.length}) ${q(real)} | stray (${stray.length}) ${q(stray)} · room ${room(newest.at(-1)!.at).toExponential(1)}`
 	)
+}
+
+/* NOISE: each strum's newest energy over the mic's learned noise floor (squared), real strums against stray fires. */
+if (process.env.NOISE) {
+	const over = (t: number) => {
+		const e = newest.find((n) => n.at === t)?.energy ?? Number.NaN
+		const f = floors.find((n) => n.at === t)?.floor ?? Number.NaN
+		return e / (f * f)
+	}
+	const real = appStrums.filter((t) => strums.some((s) => Math.abs(t - s) < 60)).map(over)
+	const sorted = real.filter(Number.isFinite).sort((a, b) => a - b)
+	// How loud the sound still is AFTER ms on (frame RMS over the floor): a strum rings, a noise spike does not.
+	const after = Number(process.env.AFTER ?? 100)
+	const held = (t: number) => {
+		const f = frames.find((x) => x.at >= t + after)
+		const n = floors.find((x) => x.at === t)?.floor ?? Number.NaN
+		return f ? f.volume / n : Number.NaN
+	}
+	const ring = appStrums
+		.filter((t) => strums.some((s) => Math.abs(t - s) < 60))
+		.map(held)
+		.filter(Number.isFinite)
+		.sort((a, b) => a - b)
+	console.log(
+		`level ${after} ms on over the floor: real (${ring.length}) lowest 5: ${ring
+			.slice(0, 5)
+			.map((x) => x.toFixed(1))
+			.join(' ')} · median ${ring[ring.length >> 1]?.toFixed(0)}`
+	)
+	console.log(`
+strum energy over the noise floor²: real (${sorted.length}) min ${sorted[0]?.toFixed(1)} · 5% ${sorted[Math.floor(sorted.length * 0.05)]?.toFixed(1)} · 10% ${sorted[Math.floor(sorted.length * 0.1)]?.toFixed(1)} · median ${sorted[sorted.length >> 1]?.toFixed(0)} · lowest 5: ${sorted
+		.slice(0, 5)
+		.map((x) => x.toFixed(1))
+		.join(' ')}`)
 }
