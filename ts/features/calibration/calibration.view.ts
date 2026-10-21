@@ -2,7 +2,8 @@
 // your ears (Audio delay, tapping) and the microphone (Mic delay, the phone
 // hearing its own clicks), then Diagnostics: the field report, a live mic
 // check, the last session's timeline and log, fine-tuning by hand. Opened from
-// the Settings card and the CAL keys; Back returns where you came from.
+// the Settings section and the Timing calibration link of Changes and Tab;
+// Back returns where you came from.
 import * as Metronome from '../../core/metronome'
 import * as Microphone from '../../core/microphone'
 import * as Settings from '../../core/settings'
@@ -12,7 +13,7 @@ import { loadChordModel } from '../../music/chords'
 import type { View } from '../../ui/view'
 import { scoped } from '../../ui/dom'
 import { setListening } from '../../ui/mic-block'
-import { showCalibrationState } from '../../ui/cal-key'
+import { showCalibrationState } from './calibration-state'
 import { heardChord, resetHeard, strummed } from '../trainer/changes.recognizer'
 import type { ProbeEntry } from '../trainer/timing-probe'
 import { MAX_FLATNESS, spectralFlatness } from '../../music/changes'

@@ -1,10 +1,11 @@
-// The way to the calibration page: the Calibrate keys of Changes In time and
-// Tab and the Settings card's Calibrate key, and the state they show. A key's
-// lamp blinks amber until the mic is calibrated on this phone, then is green.
-import * as Settings from '../core/settings'
+// The ways to the calibration page (the Settings section's Calibrate key, the
+// "Timing calibration" link of Changes and Tab) and the state of its two steps
+// as the Settings section and the page show it: the value, when it was done,
+// a lamp green once done, amber until then.
+import * as Settings from '../../core/settings'
 
-/** Wires every [data-action="open-calibration"] under `root`, and keeps the Calibrate keys' lamps in step. */
-export function bindCalKeys(root: ParentNode) {
+/** Wires every [data-action="open-calibration"] under `root` to open the page. */
+export function bindCalibrationLinks(root: ParentNode) {
 	for (const button of root.querySelectorAll<HTMLElement>('[data-action="open-calibration"]')) {
 		button.addEventListener('click', () => {
 			location.hash = '#calibration'
@@ -15,12 +16,7 @@ export function bindCalKeys(root: ParentNode) {
 const signed = (ms: number) => `${ms < 0 ? '−' : ms > 0 ? '+' : ''}${Math.abs(ms)} ms`
 const day = (at: number) => new Date(at).toLocaleDateString(undefined, { day: 'numeric', month: 'short' })
 
-const NOT_DONE = {
-	audio: 'Not done: the beat lights may drift from the clicks',
-	mic: 'Not done: Changes and Tab will misjudge your timing',
-}
-
-/** Fills the [data-cal-*] parts under `root` (lamp, value, when, desc) for both steps. */
+/** Fills the [data-cal-*] parts under `root` (lamp, value, when) for both steps. */
 export function showCalibrationState(root: ParentNode) {
 	const s = Settings.get()
 	const steps = {
@@ -36,6 +32,5 @@ export function showCalibrationState(root: ParentNode) {
 		}
 		for (const el of root.querySelectorAll<HTMLElement>(`[data-cal-value="${key}"]`)) el.textContent = done ? signed(ms) : (el.dataset.calEmpty ?? '— —')
 		for (const el of root.querySelectorAll<HTMLElement>(`[data-cal-when="${key}"]`)) el.textContent = done ? `Done ${day(at)}` : 'Not done'
-		for (const el of root.querySelectorAll<HTMLElement>(`[data-cal-desc="${key}"]`)) el.textContent = done ? `Done ${day(at)}` : NOT_DONE[key]
 	}
 }

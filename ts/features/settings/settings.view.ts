@@ -6,7 +6,7 @@ import { subscribeVisible, svgEl } from '../../ui/dom'
 import * as Theme from '../../ui/theme'
 import { resetKey } from '../../ui/reset-key'
 import { guardTouches } from '../../ui/touch-guard'
-import { showCalibrationState } from '../../ui/cal-key'
+import { showCalibrationState } from '../calibration/calibration-state'
 
 /**
  * The Settings tab: the switches and selects of every tab, the per-note target
@@ -292,7 +292,7 @@ export function createSettingsView(root: HTMLElement, from: () => string | null)
 		renderChips()
 		syncEarChips()
 		syncA4Notes()
-		// The Calibration card on top (the page itself is #calibration).
+		// The Calibration section on top (the page itself is #calibration).
 		showCalibrationState(root)
 	}
 
