@@ -18,6 +18,7 @@ import { createTabSession, type TabResult } from './tab.session'
 import { createProbe } from './timing-probe'
 import { noteName } from '../../music/note-names'
 import * as FieldReport from '../calibration/field-report'
+import { plural, t } from '../../core/i18n'
 
 // One beat takes this much paper whatever the subdivision, so 16ths sit
 // closer than 8ths and a bar always reads as a bar.
@@ -32,16 +33,19 @@ const STRING_GAP = 16
 const TAPE_MARKS = 16
 
 const MARK_GLYPH: Record<Tab.Mark, string> = { hit: '✓', early: '←', late: '→', miss: '×' }
-const STRING_NAME = ['', 'high E', 'B', 'G', 'D', 'A', 'low E']
+const STRING_NOTE = ['', 'E', 'B', 'G', 'D', 'A', 'E']
+/** 'high E', 'B'…, 'low E', named in the chosen system. */
+const stringName = (string: number) =>
+	string === 1 ? t('high {note}', { note: noteName('E') }) : string === 6 ? t('low {note}', { note: noteName('E') }) : noteName(STRING_NOTE[string])
 const NOTE_NAMES = ['C', 'C♯', 'D', 'D♯', 'E', 'F', 'F♯', 'G', 'G♯', 'A', 'A♯', 'B']
 const pitchName = (midi: number) => noteName(`${NOTE_NAMES[midi % 12]}${Math.floor(midi / 12) - 1}`)
 
 /** How far off a wrong note is, in frets on the string being played. */
 function offBy(heard: number, wanted: number): string {
 	const d = heard - wanted
-	if (Math.abs(d) === 12) return 'an octave off'
+	if (Math.abs(d) === 12) return t('an octave off')
 	const n = Math.abs(d)
-	return `${n} ${n === 1 ? 'fret' : 'frets'} ${d > 0 ? 'high' : 'low'}`
+	return d > 0 ? plural(n, '{n} fret high', '{n} frets high') : plural(n, '{n} fret low', '{n} frets low')
 }
 
 export function createTabView(root: HTMLElement): View {
@@ -170,12 +174,12 @@ export function createTabView(root: HTMLElement): View {
 	// Two filters over one list: a goal and a level, each with All first.
 	function filterChips(box: HTMLElement, options: { id: string; label: string }[], pick: (id: string) => void) {
 		box.replaceChildren(
-			...[{ id: 'all', label: 'All' }, ...options].map((option) => {
+			...[{ id: 'all', label: 'filter|All' }, ...options].map((option) => {
 				const chip = document.createElement('button')
 				chip.type = 'button'
 				chip.className = 'chip'
 				chip.dataset.filter = option.id
-				chip.textContent = option.label
+				chip.textContent = t(option.label)
 				chip.addEventListener('click', () => pick(option.id))
 				return chip
 			})
@@ -183,7 +187,7 @@ export function createTabView(root: HTMLElement): View {
 	}
 	filterChips(goalsBox, Tab.GOALS, (id) => Settings.update({ tabGoal: id as Settings.Settings['tabGoal'] }))
 	filterChips(levelsBox, Tab.LEVELS, (id) => Settings.update({ tabLevel: id as Settings.Settings['tabLevel'] }))
-	const levelOf = (ex: Tab.TabExercise) => Tab.LEVELS.find((l) => l.id === ex.level)!.label
+	const levelOf = (ex: Tab.TabExercise) => t(Tab.LEVELS.find((l) => l.id === ex.level)!.label)
 
 	function renderList() {
 		const s = Settings.get()
@@ -196,7 +200,7 @@ export function createTabView(root: HTMLElement): View {
 				button.className = 'tab-ex'
 				button.setAttribute('aria-pressed', String(ex.id === s.tabExercise))
 				const { best } = Tab.loadRecord(ex)
-				const goal = Tab.GOALS.find((g) => g.id === ex.goal)!.label
+				const goal = t(Tab.GOALS.find((g) => g.id === ex.goal)!.label)
 				button.innerHTML =
 					'<span class="lamp" aria-hidden="true"></span><span class="tab-ex__text"><span class="tab-ex__name"></span><span class="tab-ex__from"></span></span>' +
 					'<span class="tab-ex__best"><span class="silk"></span><span class="window"><span class="lcd"></span></span></span>'
@@ -205,7 +209,7 @@ export function createTabView(root: HTMLElement): View {
 				button.querySelector('.tab-ex__from')!.textContent = `${levelOf(ex)} · ${Tab.subdivisionName(ex.perBeat)}`
 				button.querySelector('.tab-ex__best .silk')!.textContent = goal
 				button.querySelector('.tab-ex__best .lcd')!.textContent = best ? `${best} BPM` : '—'
-				button.setAttribute('aria-label', `${ex.name}, ${goal}, ${levelOf(ex)}${best ? `, best ${best} BPM` : ''}`)
+				button.setAttribute('aria-label', `${ex.name}, ${goal}, ${levelOf(ex)}${best ? `, ${t('best {bpm} BPM', { bpm: best })}` : ''}`)
 				button.addEventListener('click', () => Settings.update({ tabExercise: ex.id }))
 				li.append(button)
 				return li
@@ -258,7 +262,7 @@ export function createTabView(root: HTMLElement): View {
 			})
 		)
 		const hits = marks.filter((m) => m === 'hit').length
-		tape.setAttribute('aria-label', marks.length ? `${hits} of ${marks.length} notes clean` : 'No notes yet')
+		tape.setAttribute('aria-label', marks.length ? t('{clean} of {total} notes clean', { clean: hits, total: marks.length }) : t('No notes yet'))
 		tally.textContent = marks.length ? `${Tab.accuracy(marks)}%` : ''
 	}
 
@@ -266,27 +270,30 @@ export function createTabView(root: HTMLElement): View {
 		const note = exercise().notes[index]
 		if (!note) return
 		const want = Tab.targetMidi(note)
-		const where = `${STRING_NAME[note.string]} string · fret ${note.fret}${note.bend ? ` bend to ${note.fret + note.bend}` : ''}`
-		showStatus(`${where} · ${pitchName(want)}`, wrong === null ? 'Waiting' : `${pitchName(wrong)} · ${offBy(wrong, want)}`)
+		const where = `${t('{string} string · fret {fret}', { string: stringName(note.string), fret: note.fret })}${note.bend ? ` ${t('bend to {fret}', { fret: note.fret + note.bend })}` : ''}`
+		showStatus(`${where} · ${pitchName(want)}`, wrong === null ? t('Waiting') : `${pitchName(wrong)} · ${offBy(wrong, want)}`)
 	}
 
 	function renderIdle() {
 		const ex = exercise()
 		const s = Settings.get()
-		const goal = Tab.GOALS.find((g) => g.id === ex.goal)!.label
+		const goal = t(Tab.GOALS.find((g) => g.id === ex.goal)!.label)
 		goalText.textContent = `${goal} · ${levelOf(ex)}`
 		title.textContent = ex.name
 		how.textContent = ex.how
 		credit.textContent = ex.credit ?? ''
 		credit.hidden = !ex.credit
-		paper.setAttribute('aria-label', `Tab: ${ex.name}. ${ex.how}`)
+		paper.setAttribute('aria-label', t('Tab: {name}. {how}', { name: ex.name, how: ex.how }))
 		drawStrip(ex, s.tabLoop ? 2 : 1)
 		clearMarks()
 		const wait = s.tabFollow === 'wait'
 		// The first note waits under the playhead; Start backs the strip up a bar for the count-in.
 		placeStrip(0, ex, false)
 		const { bpm, best } = Tab.loadRecord(ex)
-		showStatus(wait ? 'Wait: the tab moves when you play each note' : `♩ = ${bpm} · ${Tab.subdivisionName(ex.perBeat)}`, best ? `Best ${best} BPM` : '')
+		showStatus(
+			wait ? t('Wait: the tab moves when you play each note') : `♩ = ${bpm} · ${Tab.subdivisionName(ex.perBeat)}`,
+			best ? t('Best {bpm} BPM', { bpm: best }) : ''
+		)
 		startButton.disabled = false
 	}
 
@@ -294,7 +301,7 @@ export function createTabView(root: HTMLElement): View {
 		stage.dataset.phase = session.phase()
 		setup.hidden = running
 		root.classList.toggle('trainer--running', running)
-		startButton.textContent = running ? 'Stop' : session.phase() === 'done' ? 'Start again' : 'Start'
+		startButton.textContent = running ? t('Stop') : session.phase() === 'done' ? t('Start again') : t('Start')
 		startButton.classList.toggle('key--hot', !running)
 	}
 
@@ -303,7 +310,7 @@ export function createTabView(root: HTMLElement): View {
 	const session = createTabSession(
 		{
 			probe: probe.log,
-			countIn: (left) => showStatus(`Count-in · ${left}`, `♩ = ${Metronome.getState().bpm || Tab.loadRecord(exercise()).bpm}`),
+			countIn: (left) => showStatus(t('Count-in · {n}', { n: left }), `♩ = ${Metronome.getState().bpm || Tab.loadRecord(exercise()).bpm}`),
 			marked(index, mark, marks) {
 				const n = exercise().notes.length
 				const loop = Math.floor((marks.length - 1) / n)
@@ -322,10 +329,10 @@ export function createTabView(root: HTMLElement): View {
 			},
 			looped(loops, clean) {
 				if (session.config()?.follow === 'wait') {
-					announce(`Loop ${loops}${clean ? ', all clean' : ''}`)
+					announce(clean ? t('Loop {n}, all clean', { n: loops }) : t('Loop {n}', { n: loops }))
 					return
 				}
-				announce(clean ? `Loop ${loops} clean` : `Loop ${loops}`)
+				announce(clean ? t('Loop {n} clean', { n: loops }) : t('Loop {n}', { n: loops }))
 			},
 			tempo: (bpm) => announce(`${bpm} BPM`),
 			waiting(index, wrong) {
@@ -359,14 +366,17 @@ export function createTabView(root: HTMLElement): View {
 			const bar = Math.floor((pos % ex.steps) / (ex.perBeat * Tab.BEATS_PER_BAR)) + 1
 			const bars = ex.steps / (ex.perBeat * Tab.BEATS_PER_BAR)
 			const loop = Math.floor(pos / ex.steps) + 1
-			showStatus(`Bar ${bar} / ${bars}${config.loop ? ` · loop ${loop}` : ''}`, `♩ = ${Metronome.getState().bpm} · ${Tab.subdivisionName(ex.perBeat)}`)
+			showStatus(
+				`${t('Bar {n} / {bars}', { n: bar, bars })}${config.loop ? ` · ${t('loop {n}', { n: loop })}` : ''}`,
+				`♩ = ${Metronome.getState().bpm} · ${Tab.subdivisionName(ex.perBeat)}`
+			)
 		}
 		frameId = requestAnimationFrame(animate)
 	}
 
 	function start() {
 		if (!micLive) {
-			message.textContent = 'The microphone is off. Press Listen, then Start.'
+			message.textContent = t('The microphone is off. Press Listen, then Start.')
 			focusMicButton()
 			return
 		}
@@ -397,7 +407,7 @@ export function createTabView(root: HTMLElement): View {
 		frameId = 0
 		light(null)
 		if (ended) report(ex, ended)
-		else showStatus('Stopped')
+		else showStatus(t('Stopped'))
 		message.textContent = reason
 		setRunningUi(false)
 		renderSetup()
@@ -408,17 +418,18 @@ export function createTabView(root: HTMLElement): View {
 		const pct = Tab.accuracy(marks)
 		const clean = marks.filter((m) => m === 'hit').length
 		if (ended.follow === 'wait') {
-			showStatus(`${clean} of ${marks.length} notes clean`, `${ended.loops} ${ended.loops === 1 ? 'loop' : 'loops'}`)
-			announce(`${clean} of ${marks.length} notes clean.`, true)
+			showStatus(t('{clean} of {total} notes clean', { clean, total: marks.length }), plural(ended.loops, '{n} loop', '{n} loops'))
+			announce(`${t('{clean} of {total} notes clean', { clean, total: marks.length })}.`, true)
 			return
 		}
 		const before = Tab.loadRecord(ex)
 		const best = Math.max(before.best, ended.cleanBpm)
 		// The next session starts where this one ended (the speed-up included).
 		Tab.saveRecord(ex, { best, bpm: ended.bpm })
-		const record = ended.cleanBpm > before.best ? `New best ${ended.cleanBpm} BPM` : best ? `Best ${best} BPM` : 'No clean loop yet'
-		showStatus(`${pct}% on time · ended at ${ended.bpm} BPM`, record)
-		announce(`${pct} percent on time. ${record}.`, true)
+		const record =
+			ended.cleanBpm > before.best ? t('New best {bpm} BPM', { bpm: ended.cleanBpm }) : best ? t('Best {bpm} BPM', { bpm: best }) : t('No clean loop yet')
+		showStatus(t('{pct}% on time · ended at {bpm} BPM', { pct, bpm: ended.bpm }), record)
+		announce(t('{pct} percent on time. {record}.', { pct, record }), true)
 	}
 
 	startButton.addEventListener('click', () => (isRunning() ? finish() : start()))
@@ -426,7 +437,7 @@ export function createTabView(root: HTMLElement): View {
 
 	// Hidden page or locked screen: the mic and the timers stall, so no mark from here on would mean anything.
 	document.addEventListener('visibilitychange', () => {
-		if (document.hidden && isRunning()) finish('Stopped: the page was hidden.')
+		if (document.hidden && isRunning()) finish(t('Stopped: the page was hidden.'))
 	})
 
 	// heardAt: when the click is heard, not when this callback runs (up to a frame later).
@@ -458,7 +469,7 @@ export function createTabView(root: HTMLElement): View {
 			micLive = false
 			session.resetHearing()
 			onsets.reset()
-			if (isRunning()) finish('Stopped: the microphone went off.')
+			if (isRunning()) finish(t('Stopped: the microphone went off.'))
 		},
 
 		// The reading itself goes unused: it is smoothed for the tuner, which lags

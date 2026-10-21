@@ -9,6 +9,8 @@
 // audio graph, so `npm run check:tab` runs it in Node.
 import { clamp } from '../core/math.ts'
 import { readJSON, writeJSON } from '../core/storage.ts'
+import { t } from '../core/i18n.ts'
+import { noteName } from './note-names.ts'
 
 export type Goal = 'agility' | 'sync' | 'speed' | 'strings' | 'legato' | 'sweep' | 'bends' | 'fingerstyle'
 
@@ -73,19 +75,27 @@ export const midiOf = (note: TabNote) => OPEN_MIDI[note.string - 1] + note.fret
 /** The pitch the note has to sound at: a bend's target, otherwise the fretted note. */
 export const targetMidi = (note: TabNote) => midiOf(note) + (note.bend ?? 0)
 
-export const subdivisionName = (perBeat: number) => ({ 1: 'quarters', 2: '8ths', 3: 'triplets', 4: '16ths' })[perBeat] ?? ''
+export const subdivisionName = (perBeat: number) => t(({ 1: 'quarters', 2: '8ths', 3: 'triplets', 4: '16ths' } as Record<number, string>)[perBeat] ?? '')
 
 /* Builders ------------------------------------------------------------------- */
 
 type Fingering = [string: number, fret: number, tech?: TabNote['tech']]
 
-/** One note per step from step 0, then the loop padded to whole bars. */
-function exercise(base: Omit<TabExercise, 'notes' | 'steps'>, played: (Fingering | null)[]): TabExercise {
+/** The seven note letters as placeholders ({A} → 'La'): a translation names the notes of its sentence in the chosen system. */
+const NOTE_WORDS = () => Object.fromEntries([...'CDEFGAB'].map((letter) => [letter, noteName(letter)]))
+
+/**
+ * One note per step from step 0, then the loop padded to whole bars. Name and
+ * instructions in the app's language (t() at call time; `vars` fill the
+ * instructions' own placeholders).
+ */
+function exercise(base: Omit<TabExercise, 'notes' | 'steps'>, played: (Fingering | null)[], vars: Record<string, string> = {}): TabExercise {
 	const notes: TabNote[] = []
 	played.forEach((n, step) => {
 		if (n) notes.push({ string: n[0], fret: n[1], step, ...(n[2] ? { tech: n[2] } : {}) })
 	})
-	return { ...base, notes, steps: wholeBars(played.length, base.perBeat) }
+	const words = NOTE_WORDS()
+	return { ...base, name: t(base.name, words), how: t(base.how, { ...words, ...vars }), notes, steps: wholeBars(played.length, base.perBeat) }
 }
 
 const wholeBars = (steps: number, perBeat: number) => Math.ceil(steps / (perBeat * BEATS_PER_BAR)) * perBeat * BEATS_PER_BAR
@@ -264,11 +274,11 @@ function bends(): TabExercise {
 	]
 	return {
 		id: 'bends',
-		name: 'Bend to pitch',
+		name: t('Bend to pitch'),
 		goal: 'bends',
 		level: 'beginner',
 		credit: 'Andy Timmons · Guitar World, 2022',
-		how: 'Whole-step bends without vibrato, each checked against the fretted note: B 12 against high E 9, G 14 against B 12.',
+		how: t('Whole-step bends without vibrato, each checked against the fretted note: B 12 against high E 9, G 14 against B 12.', NOTE_WORDS()),
 		perBeat: 1,
 		startBpm: 60,
 		notes,
@@ -332,11 +342,12 @@ function permutations(date: Date): TabExercise {
 			goal: 'agility',
 			level: 'intermediate',
 			credit: VAI,
-			how: `One of the 24 orders of 1-2-3-4, a new one each day. Today: ${order.join('-')}, frets 5–8, on every string and back.`,
+			how: 'One of the 24 orders of 1-2-3-4, a new one each day. Today: {order}, frets 5–8, on every string and back.',
 			perBeat: 4,
 			startBpm: 50,
 		},
-		strings.flatMap((s) => order.map((f): Fingering => [s, POSITION + f]))
+		strings.flatMap((s) => order.map((f): Fingering => [s, POSITION + f])),
+		{ order: order.join('-') }
 	)
 }
 

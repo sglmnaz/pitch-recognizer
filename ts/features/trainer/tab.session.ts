@@ -7,6 +7,7 @@
 import * as Tab from '../../music/tab.ts'
 import type * as Metronome from '../../core/metronome.ts'
 import type { ProbeEntry } from './timing-probe.ts'
+import { t } from '../../core/i18n.ts'
 
 const COUNT_IN_BEATS = Tab.BEATS_PER_BAR
 // A note is judged once nothing heard later can still count for it: a pick at
@@ -136,7 +137,7 @@ export function createTabSession(ui: TabSessionUi, metronome: MetronomeControl) 
 		if (next.follow === 'wait') {
 			phase = 'running'
 			ui.waiting(0, null)
-			ui.announce('Play the circled note', true)
+			ui.announce(t('Play the circled note'), true)
 			return
 		}
 		// Each bar's first beat accented, and a quiet click on every note between
@@ -155,7 +156,7 @@ export function createTabSession(ui: TabSessionUi, metronome: MetronomeControl) 
 		clicking = true
 		phase = 'countin'
 		ui.countIn(COUNT_IN_BEATS)
-		ui.announce('One bar to count in', true)
+		ui.announce(t('One bar to count in'), true)
 	}
 
 	function end(): TabResult | null {
@@ -184,7 +185,7 @@ export function createTabSession(ui: TabSessionUi, metronome: MetronomeControl) 
 			// Lands on the next beat: this one is already scheduled at the old tempo.
 			metronome.setTempo(pendingBpm)
 			ui.tempo(pendingBpm)
-			ui.announce(`Two clean loops. Up to ${pendingBpm} BPM.`, true)
+			ui.announce(t('Two clean loops. Up to {bpm} BPM.', { bpm: pendingBpm }), true)
 			pendingBpm = 0
 		}
 		const { perBeat, notes } = exercise()

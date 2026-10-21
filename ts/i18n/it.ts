@@ -724,4 +724,116 @@ export const it: Dictionary = {
 	/* Mic check lamp; Play as (all strings at once) */
 	'lamp|Strum': 'Pennata',
 	'play|Strum': 'Pennata',
+
+	/* Trainer: Tab */
+	Agility: 'Agilità',
+	Sync: 'Sincronia',
+	Speed: 'Velocità',
+	Legato: 'Legato',
+	Sweep: 'Sweep',
+	Bends: 'Bending',
+	Fingerstyle: 'Fingerstyle',
+	Beginner: 'Base',
+	Intermediate: 'Intermedio',
+	Advanced: 'Avanzato',
+	Level: 'Livello',
+	'filter|All': 'Tutti',
+	quarters: 'quarti',
+	triplets: 'terzine',
+	'high {note}': '{note} cantino',
+	'low {note}': '{note} basso',
+	'an octave off': "un'ottava fuori",
+	'{n} frets high': { one: '{n} tasto sopra', other: '{n} tasti sopra' },
+	'{n} frets low': { one: '{n} tasto sotto', other: '{n} tasti sotto' },
+	'best {bpm} BPM': 'record {bpm} BPM',
+	'{clean} of {total} notes clean': '{clean} note pulite su {total}',
+	'{string} string · fret {fret}': 'corda {string} · tasto {fret}',
+	'bend to {fret}': 'bending al {fret}',
+	Waiting: 'In attesa',
+	'Tab: {name}. {how}': 'Tab: {name}. {how}',
+	'Wait: the tab moves when you play each note': 'Attendi: la tab avanza quando suoni ogni nota',
+	'Best {bpm} BPM': 'Record {bpm} BPM',
+	'Count-in · {n}': 'Conteggio · {n}',
+	'Loop {n}, all clean': 'Giro {n}, tutto pulito',
+	'Loop {n}': 'Giro {n}',
+	'Loop {n} clean': 'Giro {n} pulito',
+	'Bar {n} / {bars}': 'Misura {n} / {bars}',
+	'loop {n}': 'giro {n}',
+	'{n} loops': { one: '{n} giro', other: '{n} giri' },
+	'New best {bpm} BPM': 'Nuovo record {bpm} BPM',
+	'No clean loop yet': 'Ancora nessun giro pulito',
+	'{pct}% on time · ended at {bpm} BPM': '{pct}% a tempo · finito a {bpm} BPM',
+	'{pct} percent on time. {record}.': '{pct} per cento a tempo. {record}.',
+	'Play the circled note': 'Suona la nota cerchiata',
+	'One bar to count in': 'Una misura di conteggio',
+	'Two clean loops. Up to {bpm} BPM.': 'Due giri puliti. Si sale a {bpm} BPM.',
+
+	/* Trainer: Tab exercises (ts/music/tab.ts; {A}…{G} are note names) */
+	'Spider 1-3 / 2-4': 'Ragno 1-3 / 2-4',
+	'Classic warm-up: one finger per fret, two strings at a time, frets 5–8. Alternate picking.':
+		'Riscaldamento classico: un dito per tasto, due corde alla volta, tasti 5–8. Pennata alternata.',
+	'Chromatic shift': 'Cromatico spostato',
+	'1-2-3-4 up the strings, then a fret higher 4-3-2-1 back down. Alternate picking.':
+		'1-2-3-4 salendo sulle corde, poi un tasto più su 4-3-2-1 scendendo. Pennata alternata.',
+	'Minor pentatonic box': 'Box pentatonica minore',
+	'A minor pentatonic at fret 5, up and down, slowly. Keep every finger close to the strings.':
+		'{A} minore pentatonica al tasto 5, su e giù, lentamente. Tieni ogni dito vicino alle corde.',
+	'Finger Gym': 'Ginnastica delle dita',
+	'One finger per fret from fret 1: pick the first note, hammer the second just as loud. Pairs 1-2, 2-3, 3-4, 1-3, 2-4, 1-4.':
+		'Un dito per tasto dal tasto 1: penna la prima nota, fai la seconda in hammer-on con lo stesso volume. Coppie 1-2, 2-3, 3-4, 1-3, 2-4, 1-4.',
+	'Bend to pitch': 'Bending intonato',
+	'Whole-step bends without vibrato, each checked against the fretted note: B 12 against high E 9, G 14 against B 12.':
+		'Bending di un tono senza vibrato, ognuno confrontato con la nota tastata: {B} 12 contro {E} cantino 9, {G} 14 contro {B} 12.',
+	'Arpeggios p-i-m': 'Arpeggi p-i-m',
+	'C, then G7: thumb on the bass, then index and middle, rising on every beat. Let the notes ring.':
+		'{C}, poi {G}7: pollice sul basso, poi indice e medio, salendo a ogni battito. Lascia risuonare le note.',
+	'Finger permutations': 'Permutazioni delle dita',
+	'One of the 24 orders of 1-2-3-4, a new one each day. Today: {order}, frets 5–8, on every string and back.':
+		'Uno dei 24 ordini di 1-2-3-4, uno nuovo ogni giorno. Oggi: {order}, tasti 5–8, su ogni corda e ritorno.',
+	'Rotating 1-2-3-4': '1-2-3-4 a rotazione',
+	'One finger per fret at frets 5–8, each string starting a finger later: 1234, 2341, 3412, 4123.':
+		'Un dito per tasto ai tasti 5–8, ogni corda parte da un dito dopo: 1234, 2341, 3412, 4123.',
+	'Pedal tone': 'Nota pedale',
+	'Every other note goes back to the top note: fret 12 on the high E, then 13 on the B. Alternate picking.':
+		'Una nota sì e una no torna alla nota più alta: tasto 12 sul {E} cantino, poi 13 sul {B}. Pennata alternata.',
+	'Major scale on one string': 'Scala maggiore su una corda',
+	'C major up the B string from fret 1 to 13 and back down. Shift cleanly, alternate picking.':
+		'{C} maggiore sulla corda {B} dal tasto 1 al 13 e ritorno. Spostamenti puliti, pennata alternata.',
+	'Pentatonic in fours': 'Pentatonica a quattro',
+	'A minor pentatonic at fret 5, four notes from each note, up and back down.': '{A} minore pentatonica al tasto 5, quattro note da ogni nota, su e poi giù.',
+	'Three notes per string': 'Tre note per corda',
+	'G major from fret 3, three notes on every string, up and back. Alternate picking.':
+		'{G} maggiore dal tasto 3, tre note su ogni corda, su e ritorno. Pennata alternata.',
+	'Six-note lick': 'Lick di sei note',
+	'One six-note figure on the high E, alternate picking. Slow until it is perfect, then faster day by day.':
+		'Una figura di sei note sul {E} cantino, pennata alternata. Lenta finché è perfetta, poi più veloce giorno dopo giorno.',
+	'Major scale in thirds': 'Scala maggiore per terze',
+	'G major at fret 2 in thirds: G-B, A-C, B-D… up two octaves and back.':
+		'{G} maggiore al tasto 2 per terze: {G}-{B}, {A}-{C}, {B}-{D}… su per due ottave e ritorno.',
+	'Outside picking, B and E': 'Outside picking, {B} e {E}',
+	'A new string on every note: down on the B, up on the high E. A minor pentatonic, frets 5–13.':
+		'Una corda nuova a ogni nota: in giù sul {B}, in su sul {E} cantino. {A} minore pentatonica, tasti 5–13.',
+	'Legato 1-3-4 / 1-2-4': 'Legato 1-3-4 / 1-2-4',
+	'Pick the first note on each string, hammer the other two. Frets 5–8, then stretched to 5–9.':
+		'Penna la prima nota di ogni corda, le altre due in hammer-on. Tasti 5–8, poi allargato a 5–9.',
+	'Anchored trills': 'Trilli ancorati',
+	'Pick once, then only hammer-ons and pull-offs. First finger stays on fret 5.': "Una sola pennata, poi solo hammer-on e pull-off. L'indice resta al tasto 5.",
+	'Tapping triplets': 'Terzine in tapping',
+	'Tap fret 12 with the picking hand, pull off to 5, hammer 8. No picks. Then tap 13.':
+		"Tapping al tasto 12 con la mano destra, pull-off al 5, hammer-on all'8. Nessuna pennata. Poi tapping al 13.",
+	'Scale study in C': 'Studio sulla scala di {C}',
+	'The first four bars: C major runs in first position, index and middle alternating.':
+		'Le prime quattro misure: scale di {C} maggiore in prima posizione, alternando indice e medio.',
+	'Pentatonic in fives': 'Pentatonica a cinque',
+	'A minor pentatonic at fret 5, five notes down from each note, in 16ths. Accent the first of each five.':
+		'{A} minore pentatonica al tasto 5, cinque note in discesa da ogni nota, in sedicesimi. Accenta la prima di ogni cinque.',
+	'Five and four, down': 'Cinque e quattro, in discesa',
+	'D major at fret 7: A-G-F♯-E-D, F♯-E-D-C♯, then the same from B, C♯ and D.':
+		'{D} maggiore al tasto 7: {A}-{G}-{F}♯-{E}-{D}, {F}♯-{E}-{D}-{C}♯, poi lo stesso da {B}, {C}♯ e {D}.',
+	'G major on strings 1 and 3': '{G} maggiore sulle corde 1 e 3',
+	'Three notes on the G string, three on the high E, skip the B string. Outside picking.':
+		'Tre note sulla corda {G}, tre sul {E} cantino, salta la corda {B}. Outside picking.',
+	'Three-string sweeps': 'Sweep su tre corde',
+	'Am F G E on the top three strings: one down stroke through G-B-E, up from E.':
+		'{A}m {F} {G} {E} sulle tre corde acute: una pennata in giù su {G}-{B}-{E}, in su dal {E}.',
 }

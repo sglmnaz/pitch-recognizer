@@ -88,7 +88,11 @@ for (const [key, value] of Object.entries(it)) {
 	const want = holes(english(key), isPlural)
 	for (const form of isPlural ? Object.values(value as PluralForms) : [value]) {
 		if (!form.trim()) check(`"${key}": not empty`, false)
-		if (holes(form, isPlural) !== want) {
+		if (
+			holes(form, isPlural)
+				.replace(/\b[A-G]\b,?/g, '')
+				.replace(/,$/, '') !== want
+		) {
 			broken++
 			check(`"${key}": placeholders {${want}}`, false, form)
 		}
