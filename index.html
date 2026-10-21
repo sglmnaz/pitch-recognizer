@@ -1396,10 +1396,14 @@
 	</main>
 
 	<!-- A new version is ready (ts/ui/update-prompt.ts): Update reloads into it. -->
+	<!-- New version (ts/ui/update-prompt.ts): a small aluminium unit, a lamp, an LCD, two keys. -->
 	<div class="update-bar" role="status" aria-live="polite" hidden>
-		<span class="window"><span class="lcd update-bar__text">New version ready</span></span>
-		<button class="key key--hot update-bar__go" type="button" data-action="update-now">Update</button>
-		<button class="foot-key" type="button" data-action="update-later">Later</button>
+		<div class="update-bar__head"><b>Pluck</b><span class="lamp lamp--warn is-on"></span></div>
+		<span class="window"><span class="lcd update-bar__text">New version<small>Ready to install</small></span></span>
+		<div class="update-bar__keys">
+			<button class="key key--step" type="button" data-action="update-later">Later</button>
+			<button class="key key--hot" type="button" data-action="update-now">Update</button>
+		</div>
 	</div>
 
 	<!-- Guide: one dialog, filled from the template of the tab whose ? was tapped (ts/ui/help.ts). -->

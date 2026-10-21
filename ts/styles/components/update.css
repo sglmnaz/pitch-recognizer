@@ -1,32 +1,63 @@
-/* The new-version bar (ts/ui/update-prompt.ts): a small panel floating over
-   the page, above the docked tab bar on phones, bottom centre elsewhere. */
+/* The new-version prompt (ts/ui/update-prompt.ts): a small unit of its own,
+   an aluminium plate like the top of every view, floating over the page
+   (above the docked tab bar on phones, bottom centre elsewhere): PLUCK and an
+   amber lamp engraved on top, an LCD as wide as the plate, then two keys of
+   one size, Later grey and Update hot. */
 .update-bar {
 	position: fixed;
 	z-index: 30;
 	left: 50%;
 	bottom: calc(24px + env(safe-area-inset-bottom));
 	translate: -50% 0;
-	display: flex;
-	align-items: center;
+	display: grid;
 	gap: var(--space-12);
-	width: max-content;
-	max-width: calc(100% - 2 * var(--space-16));
-	padding: var(--space-12);
+	width: min(320px, calc(100% - 2 * var(--space-16)));
+	padding: var(--space-12) var(--space-16) var(--space-16);
 	border-radius: var(--radius-lg);
-	background: var(--panel-grain) var(--panel);
+	background: var(--plate);
+	color: var(--plate-ink);
 	box-shadow:
 		0 0 0 var(--outline-width) var(--outline),
-		0 8px 24px rgba(0, 0, 0, 0.35);
+		inset 0 1px 0 var(--plate-shine),
+		inset 0 -4px 0 var(--plate-edge),
+		0 10px 28px rgba(0, 0, 0, 0.4);
 
 	@media (max-width: 600px) {
 		bottom: calc(88px + env(safe-area-inset-bottom));
 	}
+}
 
-	.lcd {
-		white-space: nowrap;
+.update-bar__head {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	font: 700 var(--text-lg) / 1 var(--font-ui);
+	letter-spacing: 0.22em;
+	text-transform: uppercase;
+	text-shadow: 0 1px 0 var(--plate-shine);
+}
+
+/* A flex column: the small-display rule (panel.css) makes the glass a flex box. */
+.update-bar__text {
+	flex-direction: column;
+	gap: var(--space-4);
+	padding-block: var(--space-10);
+	text-align: center;
+	font-size: var(--text-md);
+
+	& small {
+		font-size: var(--text-2xs);
+		font-weight: 500;
+		opacity: 0.75;
 	}
+}
 
-	.update-bar__go {
-		height: 40px;
+.update-bar__keys {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: var(--space-12);
+
+	& > .key {
+		height: var(--tap);
 	}
 }
