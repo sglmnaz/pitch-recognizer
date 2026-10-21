@@ -199,6 +199,16 @@ check(
 	'the delay moves the events, not the clicks',
 	clicks.every((c, i) => i === 0 || near(c.at - clicks[i - 1].at, 0.5))
 )
+// Negative: the browser over-reports its latency, so beats are reported ahead of the click time.
+session(2.1, () => {
+	Metronome.configure({ outputDelayMs: -60 })
+	Metronome.setTempo(120)
+})
+check(
+	'−60 ms output delay: each beat is reported 60 ms before its click',
+	heard.length >= 3 && late.every((l) => l >= -0.0601 && l < -0.06 + 0.075),
+	`late ${late.map((l) => l.toFixed(3)).join(' ')}`
+)
 Metronome.configure({ outputDelayMs: 0 })
 
 /* Calibration: the delay read from taps along with the clicks ------------- */
@@ -226,15 +236,16 @@ check(
 	)?.lag === 450
 )
 check(
-	'taps a little ahead of the click read as 0 ms',
+	'taps 30 ms ahead of the click set −30 ms',
 	Latency.delaySetting(
 		Latency.estimateDelay(
 			clickTimes,
 			clickTimes.slice(2).map((c) => c - 30),
 			beatMs
 		)!.lag
-	) === 0
+	) === -30
 )
+check('the setting stays within −200…400 ms', Latency.delaySetting(-260) === -200 && Latency.delaySetting(520) === 400)
 check('too few taps: no answer', Latency.estimateDelay(clickTimes, steady.slice(0, 5), beatMs) === null)
 const uneven = Latency.estimateDelay(
 	clickTimes,

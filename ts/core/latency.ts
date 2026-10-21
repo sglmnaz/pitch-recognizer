@@ -12,10 +12,11 @@ export const LISTEN_CLICKS = 2
 export const MIN_TAPS = 6
 /** Taps further apart than this (median deviation, ms) are too uneven to trust. */
 export const MAX_SPREAD_MS = 50
+export const MIN_DELAY_MS = -200
 export const MAX_DELAY_MS = 400
 
 export interface DelayEstimate {
-	/** Median lag of the taps behind the clicks, ms (may be negative: taps ahead). */
+	/** Median lag of the taps behind the clicks, ms (negative: taps ahead). */
 	lag: number
 	/** Median absolute deviation of the lags, ms. */
 	spread: number
@@ -51,10 +52,12 @@ export function estimateDelay(clicks: number[], taps: number[], beatMs: number):
 }
 
 /**
- * The setting for a lag: rounded to the slider's 5 ms steps, never below 0.
- * The lag includes the touchscreen's own delay (some tens of ms on a phone),
- * so it can come out a little high; nudge it down by hand if needed.
+ * The setting for a lag: rounded to the slider's 5 ms steps, within the
+ * setting's range. Negative when taps land ahead of where the browser places
+ * the click (it over-reports its output latency). The lag includes the
+ * touchscreen's own delay (some tens of ms on a phone), so it can come out a
+ * little high; nudge it down by hand if needed.
  */
 export function delaySetting(lag: number): number {
-	return Math.min(MAX_DELAY_MS, Math.max(0, Math.round(lag / 5) * 5))
+	return Math.min(MAX_DELAY_MS, Math.max(MIN_DELAY_MS, Math.round(lag / 5) * 5))
 }

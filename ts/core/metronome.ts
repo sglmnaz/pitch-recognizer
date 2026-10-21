@@ -23,7 +23,8 @@ export interface Config {
 	volume: number
 	/** Speed trainer: raise the tempo by `step` BPM every `bars` bars up to `target`. */
 	trainer: { enabled: boolean; step: number; bars: number; target: number }
-	/** Output delay the browser does not report (Bluetooth, some phones), in ms: beat events fire this much later. */
+	/** Output delay the browser does not report (Bluetooth, some phones), in ms: beat events fire this much
+	 * later. Negative fires them earlier, but never before the click is scheduled (LOOKAHEAD ahead of it). */
 	outputDelayMs: number
 }
 

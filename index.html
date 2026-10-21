@@ -1098,13 +1098,13 @@
 						<div class="switch switch--wrap">
 							<span class="switch__text">
 								<span class="switch__title">Audio delay</span>
-								<span class="switch__desc">Clicks heard late (Bluetooth, some phones)? Shifts the beat lights and the Changes timing to match</span>
+								<span class="switch__desc">Beat lights out of step with the clicks (Bluetooth, some phones)? Shifts them and the Changes timing; negative moves them earlier</span>
 							</span>
 							<span class="number">
-								<input type="number" class="input" min="0" max="400" step="5" inputmode="numeric" data-setting="audioDelayMs" aria-label="Audio delay in milliseconds, number field" />
+								<input type="number" class="input" min="-200" max="400" step="5" inputmode="numeric" data-setting="audioDelayMs" aria-label="Audio delay in milliseconds, number field" />
 								<span class="number__unit">ms</span>
 							</span>
-							<input type="range" class="range switch__wide" min="0" max="400" step="5" data-setting="audioDelayMs" aria-label="Audio delay, slider" />
+							<input type="range" class="range switch__wide" min="-200" max="400" step="5" data-setting="audioDelayMs" aria-label="Audio delay, slider" />
 							<span class="switch__wide settings__presets">
 								<span class="switch__desc">Or let the app measure it: tap along with the clicks</span>
 								<button class="link-btn" type="button" data-action="calibrate-delay">Calibrate</button>
