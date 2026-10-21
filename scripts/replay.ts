@@ -13,6 +13,9 @@
 //   A4=hz            the profiles on another reference than the session's
 //   LOUDER=, LOUDER_MS=, BETTER=, BETTER_MS=, CLICK=louder|off
 //                    the In time rules' knobs (defaults: changes.session.ts; LOUDER=off, BETTER=off drop a rule)
+//   BETTER_CLICKS=1|off|peer  which later strums BETTER weighs: all (1, as the app), none on a click (off),
+//                    or on a click only when the strum it would take over is on one too (peer)
+//   FLAT=x           frames flatter than this bring no profile (default Changes.MAX_FLATNESS)
 //   TUNE=1           a grid of strum-detector settings
 //   PROFILES=1       the mean pitch-class profile of each chord as played
 //   DUMP=n           the first n strums with their level and drill-chord shares
@@ -91,6 +94,7 @@ const nearestStrum = (click: number) => strums.filter((s) => Math.abs(s - click)
 
 /* The app's front end on the recording, one frame every 1000/fps ms. */
 const a4 = Number(process.env.A4) || Number(report.settings.a4) || 440
+const maxFlatness = Number(process.env.FLAT ?? MAX_FLATNESS)
 const picker = createOnsetDetector()
 const strumDetector = createStrumDetector()
 // As the Changes session: a strum counts once it rings (Tab.createHeldGate).
@@ -128,7 +132,7 @@ console.log(`held: kept ${appStrums.length} of ${fired} strums`)
 
 /** Mean pitch-class profile of the frames 40–200 ms after `t` (only those with pitch, as the session, when `tonal`); null if none. */
 function profileAfter(t: number, tonal = false): Float32Array | null {
-	const near = frames.filter((f) => f.chroma && f.at >= t + 40 && f.at <= t + 200 && (!tonal || (f.flatness !== null && f.flatness < MAX_FLATNESS)))
+	const near = frames.filter((f) => f.chroma && f.at >= t + 40 && f.at <= t + 200 && (!tonal || (f.flatness !== null && f.flatness < maxFlatness)))
 	if (!near.length) return null
 	const mean = new Float32Array(12)
 	for (const f of near) for (let i = 0; i < 12; i++) mean[i] += f.chroma![i] / near.length
@@ -210,6 +214,8 @@ if (slots.length) {
 	const betterMs = Number(process.env.BETTER_MS ?? 700)
 	const clickAt = beats.map((b) => b + offset.x + 22)
 	const isClick = (t: number) => process.env.CLICK !== 'off' && clickAt.some((c) => Math.abs(t - c) <= 15)
+	const betterClicks = process.env.BETTER_CLICKS ?? '1'
+	const weighs = (u: number, t: number) => betterClicks === '1' || !isClick(u) || (betterClicks === 'peer' && isClick(t))
 	const chordAt = (t: number) => drillChord(profileAfter(t, true), sequence)
 	const shareAt = (t: number, chord: string) => {
 		const p = profileAfter(t, true)
@@ -222,7 +228,7 @@ if (slots.length) {
 		if (!chord || chord === playing) continue
 		if (appStrums.some((u) => u > t && u <= t + louderMs && !isClick(u) && loud(u) >= louder * loud(t))) continue
 		const mine = shareAt(t, chord)
-		if (appStrums.some((u) => u > t && u <= t + betterMs && chordAt(u) === chord && shareAt(u, chord) >= mine + better)) continue
+		if (appStrums.some((u) => u > t && u <= t + betterMs && weighs(u, t) && chordAt(u) === chord && shareAt(u, chord) >= mine + better)) continue
 		changes.push({ at: t, chord })
 		playing = chord
 	}
