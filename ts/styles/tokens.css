@@ -340,11 +340,13 @@
 	--window: #0b0a09;
 	--window-shadow: inset 0 2px 3px rgba(0, 0, 0, 0.9), 0 1px 0 rgba(255, 255, 255, 0.07);
 
-	--lcd-bg: #14100b;
-	--lcd-ink: #ffb347;
-	--lcd-dim: rgba(255, 179, 71, 0.12);
-	--lcd-glow: 0 0 8px rgba(255, 170, 60, 0.55);
-	--lcd-shadow: inset 0 4px 8px -3px rgba(0, 0, 0, 0.9);
+	/* The amber backlight of the app icon (as data-display='backlit'); the
+	   amber-on-black LCD this theme had is data-display='amber'. */
+	--lcd-bg: #f5a742;
+	--lcd-ink: #3a1e08;
+	--lcd-dim: rgba(58, 30, 8, 0.14);
+	--lcd-glow: none;
+	--lcd-shadow: inset 0 6px 8px -4px rgba(0, 0, 0, 0.6);
 
 	--paper: #ddd6c4;
 	--paper-ink: #24221e;
@@ -418,6 +420,7 @@
 	--lcd-ink: #eef4ff;
 	--lcd-dim: rgba(238, 244, 255, 0.14);
 	--lcd-glow: 0 0 8px rgba(220, 235, 255, 0.55);
+	--lcd-shadow: inset 0 4px 8px -3px rgba(0, 0, 0, 0.9);
 
 	--paper: #d9dde5;
 	--paper-ink: #1c222c;
@@ -884,6 +887,12 @@
 [data-theme='copper'],
 [data-theme='copper'] [data-mode='dark'] {
 	color-scheme: dark;
+	/* Amber on black, the LCD Dark had before it took the amber backlight. */
+	--lcd-bg: #14100b;
+	--lcd-ink: #ffb347;
+	--lcd-dim: rgba(255, 179, 71, 0.12);
+	--lcd-glow: 0 0 8px rgba(255, 170, 60, 0.55);
+	--lcd-shadow: inset 0 4px 8px -3px rgba(0, 0, 0, 0.9);
 	--panel: #1f1b18;
 	--panel-sunk: #191613;
 	--panel-raised: #26211d;
