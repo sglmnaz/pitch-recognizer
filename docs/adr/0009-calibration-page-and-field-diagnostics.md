@@ -75,9 +75,9 @@ in 567d68b). The phone's own audio and timing were the missing evidence.
 - An unplugged electric then read 17 of 30 changes. Its report showed two
   causes: the guitar was tuned a quarter tone off A4 = 440 (tuned with the
   accidental A4 = 451), splitting every note over two pitch classes, and the
-  clicks the mic heard were louder than its strums. The profile now uses the
-  guitar's own A4 (`Changes.createTuningTracker`) and the clicks heard are no
-  strums: 28 of 30 with the guitar's A4, the acoustic reports unchanged. A
-  guitar exactly half a semitone off stays ambiguous: retune it.
+  clicks the mic heard were louder than its strums. The clicks heard are no
+  strums now: 28 of 30 replayed on the guitar's A4, the acoustic reports
+  unchanged. The guitar must be tuned on the Tuner's A4 (estimating its
+  tuning from what it plays was tried and left out).
 - Reports are lost when the app closes (no IndexedDB for now); sharing them is
   the way to keep one.

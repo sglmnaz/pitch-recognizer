@@ -788,13 +788,6 @@
 	}
 }
 
-/* Four diagrams in one row of a narrow phone would be ~54–66 px: two rows of two. */
-@media (max-width: 440px) {
-	.changes-shapes[data-n='4'] {
-		grid-template-columns: repeat(2, minmax(0, 100px));
-	}
-}
-
 .changes-shape {
 	margin: 0;
 	text-align: center;

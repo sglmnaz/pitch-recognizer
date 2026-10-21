@@ -8,7 +8,6 @@ import {
 	createChangeCounter,
 	createStabilizer,
 	createStrumDetector,
-	createTuningTracker,
 	DEFAULT_SEQUENCE,
 	HISTORY,
 	hitWindow,
@@ -267,23 +266,6 @@ const strums = (symbols: string[], ms: number): Segments => symbols.map((s) => [
 	check('history keeps the last few sessions', long.history.length === HISTORY && long.best === 25)
 	store.set(recordKey(['A', 'D']), '{oops')
 	check('corrupt storage reads as no record', loadRecord(['A', 'D'], 60).best === 0)
-}
-
-/* The guitar's own A4 (Changes.createTuningTracker) ---------------------------- */
-{
-	const notes = [40, 45, 50, 55, 59, 64, 47, 52, 57, 60]
-	const play = (cents: number, frames = 300) => {
-		const tracker = createTuningTracker(440)
-		for (let i = 0; i < frames; i++) tracker.feed(440 * 2 ** ((notes[i % notes.length] - 69 + cents / 100 + Math.sin(i) * 0.08) / 12))
-		return tracker
-	}
-	check('tuning: a guitar in tune reads A4 = 440', Math.abs(play(0).a4() - 440) < 1, play(0).a4().toFixed(1))
-	check('tuning: tuned with A4 = 451 (+43 cents) reads ~451', Math.abs(play(43).a4() - 451) < 1.5, play(43).a4().toFixed(1))
-	check('tuning: 20 cents flat reads ~435', Math.abs(play(-20).a4() - 434.9) < 1.5, play(-20).a4().toFixed(1))
-	const scattered = createTuningTracker(440)
-	for (let i = 0; i < 300; i++) scattered.feed(440 * 2 ** (((i * 37) % 100) / 1200))
-	check('tuning: pitches that do not agree leave A4 alone', scattered.a4() === 440, scattered.a4().toFixed(1))
-	check('tuning: nothing heard leaves A4 alone', createTuningTracker(440).a4() === 440)
 }
 
 /* The drill's own chords (Changes.sequenceChord) ------------------------------ */

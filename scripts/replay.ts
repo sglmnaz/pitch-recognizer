@@ -10,7 +10,7 @@ import { readFileSync } from 'node:fs'
 import { appBand, decode } from './audio.ts'
 import { FFT_SIZE, getStats, isSounding, processFrame } from '../ts/core/microphone.ts'
 import { chromaOf, createOnsetDetector, newestEnergy } from '../ts/music/tab.ts'
-import { chordShare, createStrumDetector, createTuningTracker, spectralFlatness } from '../ts/music/changes.ts'
+import { chordShare, createStrumDetector, spectralFlatness } from '../ts/music/changes.ts'
 import { getFramePower } from '../ts/core/microphone.ts'
 
 const args = process.argv.slice(2)
@@ -88,8 +88,6 @@ const levelStrums: number[] = []
 const attackStrums: number[] = []
 const picks: number[] = []
 // Per frame: its level and pitch-class profile (as the Changes view feeds the session).
-// The guitar's own A4 from the frames' pitches as they come, as the app does (Changes.createTuningTracker); A4=… fixes it instead.
-const tuning = createTuningTracker(Number(report.settings.a4) || 440)
 // Every pitched frame's cents off the nearest semitone on the session's A4: how the guitar is tuned.
 const cents: number[] = []
 const frames: { at: number; volume: number; chroma: Float32Array | null; flatness: number | null }[] = []
@@ -101,7 +99,6 @@ for (let end = FFT_SIZE; end <= band.length; end += step) {
 	const frame = band.subarray(Math.round(end) - FFT_SIZE, Math.round(end))
 	processFrame(frame, SR, at)
 	const { reason, volume, pitch } = getStats()
-	if (pitch > 0) tuning.feed(pitch)
 	if (pitch > 0) cents.push(((((1200 * Math.log2(pitch / (Number(report.settings.a4) || 440)) + 50) % 100) + 100) % 100) - 50)
 	levels.push({ at, volume })
 	levels = levels.filter((l) => l.at >= at - STRUM_WINDOW_MS)
@@ -119,7 +116,7 @@ for (let end = FFT_SIZE; end <= band.length; end += step) {
 	frames.push({
 		at,
 		volume,
-		chroma: power ? chromaOf(power.power, power.binHz, process.env.A4 ? a4 : tuning.a4()) : null,
+		chroma: power ? chromaOf(power.power, power.binHz, a4) : null,
 		flatness: power ? spectralFlatness(power.power, power.binHz) : null,
 	})
 }
@@ -411,7 +408,7 @@ if (slots.length && process.env.PROFILES) {
 	const at = (p: number) => sorted[Math.floor(p * (sorted.length - 1))]?.toFixed(0)
 	const bins = new Array(10).fill(0)
 	for (const c of cents) bins[Math.min(9, Math.floor((c + 50) / 10))]++
-	if (process.env.HIST) console.log(`cents −50…+50 by 10: ${bins.join(' ')} · online estimate at the end ${tuning.cents().toFixed(0)}`)
+	if (process.env.HIST) console.log(`cents −50…+50 by 10: ${bins.join(' ')}`)
 	console.log(`
 tuning: ${cents.length} pitched frames, cents off the nearest semitone (A4 ${report.settings.a4}) 25/50/75%: ${at(0.25)} / ${at(0.5)} / ${at(0.75)}`)
 }
@@ -432,4 +429,25 @@ if (slots.length && process.env.DUMP) {
 			`${(t / 1000).toFixed(2).padStart(6)}s ${String(Math.round(t - click)).padStart(5)} ms ${due ? `▼${due.padEnd(3)}` : '    '} lvl ${level.toFixed(4)} flat ${near.length ? '' : 'none'} ${sequence.map((c) => `${c} ${near.length ? chordShare(m, c).toFixed(2) : '-'}`).join(' ')}`
 		)
 	}
+}
+
+/* FLOOR: each strum's newest energy over the room's (10th percentile of the 3 s before), real strums against stray fires. */
+if (process.env.FLOOR) {
+	const room = (t: number) => {
+		const e = newest
+			.filter((n) => n.at >= t - 3000 && n.at < t - 100)
+			.map((n) => n.energy)
+			.sort((a, b) => a - b)
+		return e.length ? e[Math.floor(e.length * 0.1)] : Number.NaN
+	}
+	const ratio = (t: number) => (newest.find((n) => n.at === t)?.energy ?? Number.NaN) / room(t)
+	const real = appStrums.filter((t) => strums.some((s) => Math.abs(t - s) < 60)).map(ratio)
+	const stray = appStrums.filter((t) => !strums.some((s) => t >= s - 100 && t <= s + 300)).map(ratio)
+	const q = (v: number[]) => {
+		const s = v.filter((x) => Number.isFinite(x)).sort((a, b) => a - b)
+		return s.length ? `min ${s[0].toFixed(0)} · 5% ${s[Math.floor(s.length * 0.05)].toFixed(0)} · median ${s[s.length >> 1].toFixed(0)}` : '–'
+	}
+	console.log(
+		`\nstrum energy over the room's: real (${real.length}) ${q(real)} | stray (${stray.length}) ${q(stray)} · room ${room(newest.at(-1)!.at).toExponential(1)}`
+	)
 }

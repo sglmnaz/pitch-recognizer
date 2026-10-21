@@ -44,7 +44,7 @@ export function arm(on: boolean) {
 	changed()
 }
 
-/** A Changes In time or Tab session started: record it if armed (the mic is on by then). */
+/** A Changes In time, Tab or Mic check session started: record it if armed and the mic is on (else nothing; safe to call again). */
 export function sessionStarted() {
 	const stream = Microphone.getStream()
 	if (!isArmed() || recording || !stream || typeof MediaRecorder === 'undefined') return
@@ -56,7 +56,7 @@ export function sessionStarted() {
 }
 
 /** The session ended: its report is the recording plus `session`'s log. */
-export function sessionEnded(session: ProbeSession, title: string) {
+export function sessionEnded(session: Pick<ProbeSession, 'entries' | 'summary'>, title: string) {
 	const run = recording
 	if (!run) return
 	recording = null

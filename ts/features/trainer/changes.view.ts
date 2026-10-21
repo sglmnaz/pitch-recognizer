@@ -72,9 +72,6 @@ export function createChangesView(root: HTMLElement): View {
 
 	// Readings arrive every frame while the mic runs and reset() runs when it stops.
 	let micLive = false
-	// The A4 the guitar is tuned to, from what it plays (a guitar off A4 smears every profile); new when A4 changes.
-	let tuning = Changes.createTuningTracker(Settings.get().a4)
-	let tuningFor = Settings.get().a4
 
 	const selection = () => Settings.get().changesChords
 	const valid = () => selection().length >= 2
@@ -108,7 +105,8 @@ export function createChangesView(root: HTMLElement): View {
 			return { symbol, figure, diagram }
 		})
 		shapesBox.replaceChildren(...shapes.map((shape) => shape.figure))
-		shapesBox.style.setProperty('--n', String(Math.max(2, shapes.length)))
+		// Up to four on one row; more wrap.
+		shapesBox.style.setProperty('--n', String(Math.min(4, Math.max(2, shapes.length))))
 		// Four across a narrow phone are ~54 px: the stylesheet wraps them 2 × 2.
 		shapesBox.dataset.n = String(shapes.length)
 	}
@@ -493,17 +491,10 @@ export function createChangesView(root: HTMLElement): View {
 		const power = Microphone.getFramePower()
 		// A profile only for a sound with pitch in it: a breath or a blow is as flat as noise.
 		const tonal = power !== null && Changes.spectralFlatness(power.power, power.binHz) < Changes.MAX_FLATNESS
-		if (tuningFor !== Settings.get().a4) {
-			tuningFor = Settings.get().a4
-			tuning = Changes.createTuningTracker(tuningFor)
-		}
-		const { pitch } = Microphone.getStats()
-		if (pitch > 0) tuning.feed(pitch)
-		const a4 = tuning.a4()
-		const chroma = tonal ? Tab.chromaOf(power.power, power.binHz, a4) : null
+		const chroma = tonal ? Tab.chromaOf(power.power, power.binHz, Settings.get().a4) : null
 		const strum = strummed(now)
 		// The drill's own chords only: the recognizer's close relatives (Em7 for G) count as them.
-		const symbol = Changes.sequenceChord(heardChord(now, a4)?.symbol ?? null, isRunning() ? session.config().sequence : selection())
+		const symbol = Changes.sequenceChord(heardChord(now)?.symbol ?? null, isRunning() ? session.config().sequence : selection())
 		if (session.frame(now - Settings.get().micDelayMs, strum, symbol, chroma, Microphone.getStats().volume)) finish(true)
 	}
 

@@ -13,6 +13,7 @@ import { scoped } from '../../ui/dom'
 import { setListening } from '../../ui/mic-block'
 import { showCalibrationState } from '../../ui/cal-key'
 import { heardChord, resetHeard, strummed } from '../trainer/changes.recognizer'
+import type { ProbeEntry } from '../trainer/timing-probe'
 import { MAX_FLATNESS, spectralFlatness } from '../../music/changes'
 import { changesTimeline, lastSession, onSession, TIMELINE_AFTER, TIMELINE_BEFORE, type TimelineRow } from '../trainer/timing-probe'
 import { createDelayCalibration, createMicCalibration } from './delay-calibration'
@@ -60,11 +61,14 @@ function createMicCheck(card: HTMLElement) {
 	let lastStrum: number | null = null
 	let lastChord: string | null = null
 	let lampTimer = 0
+	// With Record sessions on, a run is a field report: every strum the detector fired, those counted.
+	let entries: ProbeEntry[] = []
 
 	function start() {
 		on = true
 		strums = 0
 		pending = []
+		entries = []
 		lastStrum = null
 		lastChord = null
 		strumCount.textContent = '0'
@@ -80,6 +84,9 @@ function createMicCheck(card: HTMLElement) {
 		if (!on) return
 		on = false
 		button.textContent = 'Start'
+		const fired = entries.filter((e) => e.kind === 'strum').length
+		const summary = `Mic check · ${strums} strums counted of ${fired} fired · noise floor ${Math.round(dB(Microphone.getStats().noiseFloor))} dB`
+		FieldReport.sessionEnded({ entries, summary }, 'Mic check')
 		setListening(false)
 		soundingLamp.classList.remove('is-on')
 	}
@@ -96,7 +103,12 @@ function createMicCheck(card: HTMLElement) {
 			floor.style.left = levelPercent(dB(noiseFloor))
 			levels.textContent = `${Math.round(dB(volume))} dB · ${Math.round(dB(noiseFloor))} dB`
 			soundingLamp.classList.toggle('is-on', Microphone.isSounding())
-			if (strummed(now)) pending.push(now)
+			// The mic starts after Start: recording begins with its first frame.
+			FieldReport.sessionStarted()
+			if (strummed(now)) {
+				pending.push(now)
+				entries.push({ kind: 'strum', at: now })
+			}
 			const power = Microphone.getFramePower()
 			const tonal = power !== null && spectralFlatness(power.power, power.binHz) < MAX_FLATNESS
 			const due = pending.filter((t) => now - t >= TONAL_AFTER_MS)
@@ -104,6 +116,7 @@ function createMicCheck(card: HTMLElement) {
 			if (due.length && tonal) {
 				strums++
 				lastStrum = due[0]
+				entries.push({ kind: 'counted', at: due[0] })
 				strumCount.textContent = String(strums)
 				strumLamp.classList.add('is-on')
 				clearTimeout(lampTimer)

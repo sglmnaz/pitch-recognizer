@@ -11,6 +11,8 @@ import * as Settings from '../../core/settings'
 export type ProbeEntry =
 	| { kind: 'beat'; heardAt: number; stampedAt: number | null }
 	| { kind: 'strum'; at: number }
+	/** Mic check: a strum counted (the sound after it had pitch). */
+	| { kind: 'counted'; at: number }
 	| { kind: 'named'; at: number; symbol: string; struck: number | null }
 	| { kind: 'judged'; dt: number | null; mark: string }
 	| { kind: 'pick'; at: number }
