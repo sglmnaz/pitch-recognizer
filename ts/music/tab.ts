@@ -1,6 +1,8 @@
 // Technique exercises on tab (Trainer → Tab): pure logic. The exercises are
 // generated from simple rules (fingerings, scales, sequences), not copied from
-// anyone's book; `from` names whose idea each one is. The view
+// anyone's book (Giuliani and Carcassi, public domain, are note for note);
+// `credit` names the player or book an exercise comes from, when it has one
+// (the sources are in docs/adr/0008). The view
 // (ts/features/trainer/tab.view.ts) draws them on a strip of tab paper that
 // moves by itself and feeds the mic's readings to a session
 // (ts/features/trainer/tab.session.ts); nothing here touches the DOM or the
@@ -8,7 +10,7 @@
 import { clamp } from '../core/math.ts'
 import { readJSON, writeJSON } from '../core/storage.ts'
 
-export type Goal = 'agility' | 'sync' | 'speed' | 'strings' | 'legato' | 'sweep' | 'bends'
+export type Goal = 'agility' | 'sync' | 'speed' | 'strings' | 'legato' | 'sweep' | 'bends' | 'fingerstyle'
 
 export const GOALS: { id: Goal; label: string }[] = [
 	{ id: 'agility', label: 'Agility' },
@@ -18,6 +20,15 @@ export const GOALS: { id: Goal; label: string }[] = [
 	{ id: 'legato', label: 'Legato' },
 	{ id: 'sweep', label: 'Sweep' },
 	{ id: 'bends', label: 'Bends' },
+	{ id: 'fingerstyle', label: 'Fingerstyle' },
+]
+
+export type Level = 'beginner' | 'intermediate' | 'advanced'
+
+export const LEVELS: { id: Level; label: string }[] = [
+	{ id: 'beginner', label: 'Beginner' },
+	{ id: 'intermediate', label: 'Intermediate' },
+	{ id: 'advanced', label: 'Advanced' },
 ]
 
 /** One note on the tab. String 1 = high E (as tab is written), fret 0 = open. */
@@ -26,8 +37,9 @@ export interface TabNote {
 	fret: number
 	/** Start, in steps from the top of the loop (a step = 1 / perBeat of a beat). */
 	step: number
-	/** Hammer-on or pull-off from the note before: no pick attack to hear. */
-	tech?: 'h' | 'p'
+	/** Hammer-on or pull-off from the note before (no pick attack to hear), or a
+	 * tap with the picking hand (an attack of its own, like a pick). */
+	tech?: 'h' | 'p' | 't'
 	/** Bend up this many semitones; the note to reach is fret + bend. */
 	bend?: number
 	/** Length in steps (bends only: the time there is to reach the pitch). */
@@ -38,8 +50,9 @@ export interface TabExercise {
 	id: string
 	name: string
 	goal: Goal
-	/** Whose idea it is, or what kind of drill. */
-	from: string
+	level: Level
+	/** The player or book it comes from (proper names and a short source), if any. */
+	credit?: string
 	/** What to do, one line. */
 	how: string
 	/** Notes per beat: 1 quarters, 2 eighths, 3 triplets, 4 sixteenths. */
@@ -64,7 +77,7 @@ export const subdivisionName = (perBeat: number) => ({ 1: 'quarters', 2: '8ths',
 
 /* Builders ------------------------------------------------------------------- */
 
-type Fingering = [string: number, fret: number, tech?: 'h' | 'p']
+type Fingering = [string: number, fret: number, tech?: TabNote['tech']]
 
 /** One note per step from step 0, then the loop padded to whole bars. */
 function exercise(base: Omit<TabExercise, 'notes' | 'steps'>, played: (Fingering | null)[]): TabExercise {
@@ -102,6 +115,45 @@ function scaleFrets(string: number, pcs: number[], from: number, to: number): nu
 	return out
 }
 
+/** Where `midi` lies within frets [from, to]: on the lowest string that has it there. */
+function inPosition(midi: number, from: number, to: number): Fingering {
+	for (let string = 6; string >= 1; string--) {
+		const fret = midi - OPEN_MIDI[string - 1]
+		if (fret >= from && fret <= to) return [string, fret]
+	}
+	throw new Error(`MIDI ${midi} is not within frets ${from}–${to}`)
+}
+
+/** The notes (MIDI) of pitch classes `pcs` from `low` to `high`. */
+function scaleRun(pcs: number[], low: number, high: number): number[] {
+	const out: number[] = []
+	for (let midi = low; midi <= high; midi++) if (pcs.includes(midi % 12)) out.push(midi)
+	return out
+}
+
+const G_MAJOR = [7, 9, 11, 0, 2, 4, 6]
+
+// A minor pentatonic, position 1 (fret 5), low E to high E.
+const PENTATONIC: Fingering[] = [
+	[6, 5],
+	[6, 8],
+	[5, 5],
+	[5, 7],
+	[4, 5],
+	[4, 7],
+	[3, 5],
+	[3, 7],
+	[2, 5],
+	[2, 8],
+	[1, 5],
+	[1, 8],
+]
+
+const VAI = 'Steve Vai · 10-Hour Workout (Guitar World, 1990)'
+const SATRIANI = 'Joe Satriani · Guitar One, 1999'
+const GILBERT = 'Paul Gilbert · Intense Rock (1988)'
+const SANDERCOE = 'Justin Sandercoe · JustinGuitar'
+
 // Frets 5–8 for fingers 1–4: the hand sits in the middle of the neck, where
 // the frets are neither wide nor cramped (the usual advice for these drills).
 const POSITION = 4
@@ -124,29 +176,12 @@ function spider(): TabExercise {
 			id: 'spider',
 			name: 'Spider 1-3 / 2-4',
 			goal: 'agility',
-			from: 'Classic warm-up: fingers apart from any scale shape',
-			how: 'One finger per fret, two strings at a time, frets 5–8. Alternate picking.',
+			level: 'beginner',
+			how: 'Classic warm-up: one finger per fret, two strings at a time, frets 5–8. Alternate picking.',
 			perBeat: 2,
 			startBpm: 60,
 		},
 		[...up, ...[...up].reverse()]
-	)
-}
-
-function permutations(date: Date): TabExercise {
-	const order = permutationOfDay(date)
-	const strings = [6, 5, 4, 3, 2, 1, 2, 3, 4, 5]
-	return exercise(
-		{
-			id: 'permutations',
-			name: 'Finger permutations',
-			goal: 'agility',
-			from: 'One of the 24 orders of 1-2-3-4, a new one each day',
-			how: `Today: ${order.join('-')}, frets 5–8, on every string and back.`,
-			perBeat: 4,
-			startBpm: 50,
-		},
-		strings.flatMap((s) => order.map((f): Fingering => [s, POSITION + f]))
 	)
 }
 
@@ -160,7 +195,8 @@ function chromaticShift(): TabExercise {
 			id: 'chromatic',
 			name: 'Chromatic shift',
 			goal: 'sync',
-			from: 'Hand synchronization drill (John Petrucci, Rock Discipline)',
+			level: 'beginner',
+			credit: 'Nita Strauss · Guitar World, 2018',
 			how: '1-2-3-4 up the strings, then a fret higher 4-3-2-1 back down. Alternate picking.',
 			perBeat: 4,
 			startBpm: 50,
@@ -169,86 +205,330 @@ function chromaticShift(): TabExercise {
 	)
 }
 
-function bursts(): TabExercise {
-	// Short bursts on one string with rests to reset, then the same speed with a
-	// string change (Troy Grady: speed on one string first, string changes in short chunks).
-	const b = (n: number): (Fingering | null)[] => Array.from({ length: n }, (): Fingering => [2, 7])
-	const rest = (n: number) => Array<null>(n).fill(null)
-	const change: Fingering[] = [
-		[2, 5],
-		[2, 7],
-		[1, 5],
-		[1, 7],
+function pentatonicBox(): TabExercise {
+	return exercise(
+		{
+			id: 'pentatonic-box',
+			name: 'Minor pentatonic box',
+			goal: 'agility',
+			level: 'beginner',
+			credit: SANDERCOE,
+			how: 'A minor pentatonic at fret 5, up and down, slowly. Keep every finger close to the strings.',
+			perBeat: 2,
+			startBpm: 60,
+		},
+		[...PENTATONIC, ...PENTATONIC.slice(1, -1).reverse()]
+	)
+}
+
+function fingerGym(): TabExercise {
+	// Finger number = fret number. Each pair across all six strings, from the
+	// high E down and back up with the next pair: pick one, hammer the other.
+	const pairs = [
+		[1, 2],
+		[2, 3],
+		[3, 4],
+		[1, 3],
+		[2, 4],
+		[1, 4],
+	]
+	const strings = [1, 2, 3, 4, 5, 6]
+	return exercise(
+		{
+			id: 'finger-gym',
+			name: 'Finger Gym',
+			goal: 'legato',
+			level: 'beginner',
+			credit: SANDERCOE,
+			how: 'One finger per fret from fret 1: pick the first note, hammer the second just as loud. Pairs 1-2, 2-3, 3-4, 1-3, 2-4, 1-4.',
+			perBeat: 2,
+			startBpm: 60,
+		},
+		pairs.flatMap(([a, b], k) =>
+			(k % 2 ? [...strings].reverse() : strings).flatMap((s): Fingering[] => [
+				[s, a],
+				[s, b, 'h'],
+			])
+		)
+	)
+}
+
+function bends(): TabExercise {
+	// Bend, then fret the note the bend had to reach to hear whether it got
+	// there. No vibrato: it hides the pitch. The tuner checks it to the cent.
+	const notes: TabNote[] = [
+		{ string: 2, fret: 12, step: 0, bend: 2, length: 2 },
+		{ string: 1, fret: 9, step: 2 },
+		{ string: 3, fret: 14, step: 4, bend: 2, length: 2 },
+		{ string: 2, fret: 12, step: 6 },
+	]
+	return {
+		id: 'bends',
+		name: 'Bend to pitch',
+		goal: 'bends',
+		level: 'beginner',
+		credit: 'Andy Timmons · Guitar World, 2022',
+		how: 'Whole-step bends without vibrato, each checked against the fretted note: B 12 against high E 9, G 14 against B 12.',
+		perBeat: 1,
+		startBpm: 60,
+		notes,
+		steps: 8,
+	}
+}
+
+function giuliani(): TabExercise {
+	// 120 right-hand studies, Op. 1, No. 4, note for note (public domain): C
+	// then G7, each beat rising p-i-m from its bass note.
+	const c: Fingering[] = [
+		[5, 3],
+		[4, 2],
+		[3, 0],
+		[4, 2],
+		[3, 0],
+		[2, 1],
+		[3, 0],
+		[2, 1],
+		[1, 0],
+		[5, 3],
+		[2, 1],
+		[1, 0],
+	]
+	const g7: Fingering[] = [
+		[5, 2],
+		[4, 0],
+		[3, 0],
+		[4, 0],
+		[3, 0],
+		[2, 3],
+		[3, 0],
+		[2, 3],
+		[1, 1],
+		[5, 2],
+		[2, 3],
+		[1, 1],
 	]
 	return exercise(
 		{
-			id: 'bursts',
-			name: 'Single-string bursts',
-			goal: 'speed',
-			from: 'Troy Grady (Cracking the Code): one string first, then string changes',
-			how: 'Bursts of 4, 6 and 8 on the B string, then a string change. Relax in the rests.',
-			perBeat: 4,
-			startBpm: 70,
+			id: 'giuliani',
+			name: 'Arpeggios p-i-m',
+			goal: 'fingerstyle',
+			level: 'beginner',
+			credit: 'Mauro Giuliani · Op. 1 No. 4 (1812)',
+			how: 'C, then G7: thumb on the bass, then index and middle, rising on every beat. Let the notes ring.',
+			perBeat: 3,
+			startBpm: 60,
 		},
-		[...b(4), ...rest(4), ...b(6), ...rest(2), ...b(8), ...rest(8), ...change, ...change, ...rest(8)]
+		[...c, ...g7]
+	)
+}
+
+function permutations(date: Date): TabExercise {
+	const order = permutationOfDay(date)
+	const strings = [6, 5, 4, 3, 2, 1, 2, 3, 4, 5]
+	return exercise(
+		{
+			id: 'permutations',
+			name: 'Finger permutations',
+			goal: 'agility',
+			level: 'intermediate',
+			credit: VAI,
+			how: `One of the 24 orders of 1-2-3-4, a new one each day. Today: ${order.join('-')}, frets 5–8, on every string and back.`,
+			perBeat: 4,
+			startBpm: 50,
+		},
+		strings.flatMap((s) => order.map((f): Fingering => [s, POSITION + f]))
+	)
+}
+
+function rotation(): TabExercise {
+	// Each string starts the four fingers one later (1234, 2341, 3412, 4123),
+	// up the strings and back down: no two strings in a row share an order.
+	const orders = [0, 1, 2, 3].map((k) => [0, 1, 2, 3].map((i) => ((i + k) % 4) + 1))
+	const strings = [6, 5, 4, 3, 2, 1, 1, 2, 3, 4, 5, 6]
+	return exercise(
+		{
+			id: 'rotation',
+			name: 'Rotating 1-2-3-4',
+			goal: 'sync',
+			level: 'intermediate',
+			credit: VAI,
+			how: 'One finger per fret at frets 5–8, each string starting a finger later: 1234, 2341, 3412, 4123.',
+			perBeat: 4,
+			startBpm: 50,
+		},
+		strings.flatMap((s, i) => orders[i % 4].map((f): Fingering => [s, POSITION + f]))
+	)
+}
+
+function pedal(): TabExercise {
+	// Every other note back to a held top note over a falling line: E (high E,
+	// fret 12) over D C B A, then C (B string, fret 13) over B A G F.
+	const line = (string: number, top: number, frets: number[]) =>
+		frets.flatMap((f): Fingering[] => [
+			[string, top],
+			[string, f],
+		])
+	const e = line(1, 12, [10, 8, 7, 5])
+	const b = line(2, 13, [12, 10, 8, 6])
+	return exercise(
+		{
+			id: 'pedal',
+			name: 'Pedal tone',
+			goal: 'sync',
+			level: 'intermediate',
+			how: 'Every other note goes back to the top note: fret 12 on the high E, then 13 on the B. Alternate picking.',
+			perBeat: 4,
+			startBpm: 50,
+		},
+		[...e, ...e, ...b, ...b]
+	)
+}
+
+function oneString(): TabExercise {
+	// C major up the B string from fret 1 to 13 and back: the hand shifts all the way.
+	const frets = scaleFrets(2, [0, 2, 4, 5, 7, 9, 11], 1, 13)
+	return exercise(
+		{
+			id: 'one-string',
+			name: 'Major scale on one string',
+			goal: 'agility',
+			level: 'intermediate',
+			credit: SATRIANI,
+			how: 'C major up the B string from fret 1 to 13 and back down. Shift cleanly, alternate picking.',
+			perBeat: 2,
+			startBpm: 60,
+		},
+		[...frets, ...frets.slice(1, -1).reverse()].map((f): Fingering => [2, f])
 	)
 }
 
 function pentatonicFours(): TabExercise {
 	// A minor pentatonic, position 1, in groups of four up and down.
-	const scale: Fingering[] = [
-		[6, 5],
-		[6, 8],
-		[5, 5],
-		[5, 7],
-		[4, 5],
-		[4, 7],
-		[3, 5],
-		[3, 7],
-		[2, 5],
-		[2, 8],
-		[1, 5],
-		[1, 8],
-	]
 	const fours = (line: Fingering[]) => line.slice(0, -3).flatMap((_, i) => line.slice(i, i + 4))
 	return exercise(
 		{
 			id: 'pentatonic',
 			name: 'Pentatonic in fours',
 			goal: 'speed',
-			from: 'Standard sequence for alternate picking',
+			level: 'intermediate',
 			how: 'A minor pentatonic at fret 5, four notes from each note, up and back down.',
 			perBeat: 4,
 			startBpm: 50,
 		},
-		[...fours(scale), ...fours([...scale].reverse())]
+		[...fours(PENTATONIC), ...fours([...PENTATONIC].reverse())]
 	)
 }
 
-function stringSkipping(): TabExercise {
-	// G major, three notes per string, on the G and high E strings only: each
-	// group on the G string, the next three scale notes on the high E in the
-	// same hand position, then up a scale step (Paul Gilbert).
-	const pcs = [7, 9, 11, 0, 2, 4, 6]
-	const g = scaleFrets(3, pcs, 0, 17)
-	const e = scaleFrets(1, pcs, 0, 19)
-	const up: Fingering[] = []
-	for (let k = 1; k <= 5; k++) {
-		const low = g.slice(k, k + 3)
-		const high = e.filter((f) => f >= low[0] - 1).slice(0, 3)
-		up.push(...low.map((f): Fingering => [3, f]), ...high.map((f): Fingering => [1, f]))
-	}
+function threePerString(): TabExercise {
+	// G major from the low G (fret 3), the next three scale notes on every string.
+	const up = scaleRun(G_MAJOR, 43, 72).map((midi, i): Fingering => {
+		const string = 6 - Math.floor(i / 3)
+		return [string, midi - OPEN_MIDI[string - 1]]
+	})
 	return exercise(
 		{
-			id: 'skipping',
-			name: 'G major on strings 1 and 3',
-			goal: 'strings',
-			from: 'Paul Gilbert: string skipping with alternate picking',
-			how: 'Three notes on the G string, three on the high E, skip the B string. Outside picking.',
+			id: 'three-per-string',
+			name: 'Three notes per string',
+			goal: 'speed',
+			level: 'intermediate',
+			how: 'G major from fret 3, three notes on every string, up and back. Alternate picking.',
 			perBeat: 3,
 			startBpm: 50,
 		},
-		[...up, ...[...up].reverse()]
+		[...up, ...up.slice(1, -1).reverse()]
+	)
+}
+
+function sixNote(): TabExercise {
+	// One six-note figure on the high E (A minor pentatonic), over and over:
+	// slow until it is perfect, then the metronome a little faster each day.
+	const figure = [12, 10, 8, 10, 12, 15]
+	return exercise(
+		{
+			id: 'six-note',
+			name: 'Six-note lick',
+			goal: 'speed',
+			level: 'intermediate',
+			credit: 'Paul Gilbert · Guitar One, 1999',
+			how: 'One six-note figure on the high E, alternate picking. Slow until it is perfect, then faster day by day.',
+			perBeat: 3,
+			startBpm: 60,
+		},
+		[1, 2, 3, 4].flatMap(() => figure.map((f): Fingering => [1, f]))
+	)
+}
+
+function thirds(): TabExercise {
+	// G major in 2nd position (frets 2–5), two octaves in thirds up, then back
+	// down (not to the very top or bottom, so no note repeats at a turn).
+	const run = scaleRun(G_MAJOR, 43, 67)
+	const up = run.slice(0, -2).flatMap((midi, i) => [midi, run[i + 2]])
+	const down = run
+		.slice(1, -3)
+		.flatMap((midi, i) => [run[i + 3], midi])
+		.reverse()
+	return exercise(
+		{
+			id: 'thirds',
+			name: 'Major scale in thirds',
+			goal: 'strings',
+			level: 'intermediate',
+			how: 'G major at fret 2 in thirds: G-B, A-C, B-D… up two octaves and back.',
+			perBeat: 2,
+			startBpm: 60,
+		},
+		[...up, ...down].map((midi) => inPosition(midi, 2, 5))
+	)
+}
+
+function outside(): TabExercise {
+	// The string changes on every note, a down stroke on the B and an up stroke
+	// on the high E, so the pick hops over the pair each time.
+	const cell = (b1: number, e1: number, b2: number, e2: number): Fingering[] => [
+		[2, b1],
+		[1, e1],
+		[2, b2],
+		[1, e2],
+	]
+	const low = cell(5, 5, 8, 8)
+	const mid = cell(8, 8, 10, 10)
+	const high = cell(10, 10, 13, 12)
+	return exercise(
+		{
+			id: 'outside',
+			name: 'Outside picking, B and E',
+			goal: 'strings',
+			level: 'intermediate',
+			credit: GILBERT,
+			how: 'A new string on every note: down on the B, up on the high E. A minor pentatonic, frets 5–13.',
+			perBeat: 4,
+			startBpm: 50,
+		},
+		[...low, ...low, ...mid, ...mid, ...high, ...high, ...mid, ...mid]
+	)
+}
+
+function legatoCombos(): TabExercise {
+	// Up the strings like a scale, three notes on each: pick the first, hammer
+	// the other two. Fingers 1-3-4 and 1-2-4 in four frets, then over five.
+	const combos = [
+		[0, 2, 3],
+		[0, 1, 3],
+		[0, 2, 4],
+		[0, 3, 4],
+	]
+	return exercise(
+		{
+			id: 'legato-combos',
+			name: 'Legato 1-3-4 / 1-2-4',
+			goal: 'legato',
+			level: 'intermediate',
+			credit: 'John Petrucci · Total Guitar, 2020',
+			how: 'Pick the first note on each string, hammer the other two. Frets 5–8, then stretched to 5–9.',
+			perBeat: 3,
+			startBpm: 50,
+		},
+		combos.flatMap((frets) => [6, 5, 4, 3, 2, 1].flatMap((s) => frets.map((f, i): Fingering => (i ? [s, POSITION + 1 + f, 'h'] : [s, POSITION + 1 + f]))))
 	)
 }
 
@@ -260,7 +540,8 @@ function trills(): TabExercise {
 			id: 'trills',
 			name: 'Anchored trills',
 			goal: 'legato',
-			from: 'Joe Satriani: one finger per fret, hammer-ons and pull-offs',
+			level: 'intermediate',
+			credit: SATRIANI,
 			how: 'Pick once, then only hammer-ons and pull-offs. First finger stays on fret 5.',
 			perBeat: 4,
 			startBpm: 50,
@@ -269,9 +550,150 @@ function trills(): TabExercise {
 	)
 }
 
+function tapping(): TabExercise {
+	// Tap, pull off to the first finger, hammer with the third, in triplets on
+	// the B string; the tap moves from fret 12 to 13 and back.
+	const cell = (tap: number): Fingering[] => [
+		[2, tap, 't'],
+		[2, 5, 'p'],
+		[2, 8, 'h'],
+	]
+	return exercise(
+		{
+			id: 'tapping',
+			name: 'Tapping triplets',
+			goal: 'legato',
+			level: 'intermediate',
+			credit: 'Eddie Van Halen · Eruption (1978)',
+			how: 'Tap fret 12 with the picking hand, pull off to 5, hammer 8. No picks. Then tap 13.',
+			perBeat: 3,
+			startBpm: 60,
+		},
+		[12, 12, 12, 12, 13, 13, 12, 12].flatMap(cell)
+	)
+}
+
+function carcassi(): TabExercise {
+	// 25 Études, Op. 60, No. 1, its first four bars note for note (public
+	// domain): C major runs in first position, open strings included.
+	const bars: Fingering[] = [
+		[5, 3],
+		[2, 1],
+		[2, 0],
+		[3, 2],
+		[3, 0],
+		[4, 3],
+		[4, 2],
+		[4, 0],
+		[5, 3],
+		[1, 0],
+		[2, 3],
+		[2, 1],
+		[2, 0],
+		[3, 2],
+		[3, 0],
+		[4, 3],
+		[4, 2],
+		[1, 3],
+		[1, 1],
+		[1, 0],
+		[2, 3],
+		[2, 1],
+		[2, 0],
+		[3, 2],
+		[3, 0],
+		[4, 4],
+		[4, 2],
+		[4, 0],
+		[5, 3],
+		[5, 2],
+		[5, 0],
+		[4, 0],
+	]
+	return exercise(
+		{
+			id: 'carcassi',
+			name: 'Scale study in C',
+			goal: 'fingerstyle',
+			level: 'intermediate',
+			credit: 'Matteo Carcassi · Op. 60 No. 1',
+			how: 'The first four bars: C major runs in first position, index and middle alternating.',
+			perBeat: 2,
+			startBpm: 60,
+		},
+		bars
+	)
+}
+
+function fives(): TabExercise {
+	// Down the box in fives from each note: five notes in a beat of four start
+	// every group somewhere new, so the accent moves round the beat.
+	const down = [...PENTATONIC].reverse()
+	return exercise(
+		{
+			id: 'fives',
+			name: 'Pentatonic in fives',
+			goal: 'speed',
+			level: 'advanced',
+			credit: 'Eric Johnson · MusicRadar, 2019',
+			how: 'A minor pentatonic at fret 5, five notes down from each note, in 16ths. Accent the first of each five.',
+			perBeat: 4,
+			startBpm: 50,
+		},
+		down.slice(0, -4).flatMap((_, i) => down.slice(i, i + 5))
+	)
+}
+
+function fiveFour(): TabExercise {
+	// D major in 7th position: five notes down from a scale note, four down
+	// from the note two steps under it, then again from the next note up.
+	const scale = [61, 62, 64, 66, 67, 69, 71, 73, 74]
+	const cell = (top: number) => [...scale.slice(top - 4, top + 1).reverse(), ...scale.slice(top - 5, top - 1).reverse()]
+	return exercise(
+		{
+			id: 'five-four',
+			name: 'Five and four, down',
+			goal: 'speed',
+			level: 'advanced',
+			credit: 'Al Di Meola, via Alex Skolnick · Guitar Player, 2023',
+			how: 'D major at fret 7: A-G-F♯-E-D, F♯-E-D-C♯, then the same from B, C♯ and D.',
+			perBeat: 3,
+			startBpm: 50,
+		},
+		[5, 6, 7, 8].flatMap(cell).map((midi) => inPosition(midi, 6, 10))
+	)
+}
+
+function stringSkipping(): TabExercise {
+	// G major, three notes per string, on the G and high E strings only: each
+	// group on the G string, the next three scale notes on the high E in the
+	// same hand position, then up a scale step.
+	const g = scaleFrets(3, G_MAJOR, 0, 17)
+	const e = scaleFrets(1, G_MAJOR, 0, 19)
+	const up: Fingering[] = []
+	for (let k = 1; k <= 5; k++) {
+		const low = g.slice(k, k + 3)
+		const high = e.filter((f) => f >= low[0] - 1).slice(0, 3)
+		up.push(...low.map((f): Fingering => [3, f]), ...high.map((f): Fingering => [1, f]))
+	}
+	return exercise(
+		{
+			id: 'skipping',
+			name: 'G major on strings 1 and 3',
+			goal: 'strings',
+			level: 'advanced',
+			credit: GILBERT,
+			how: 'Three notes on the G string, three on the high E, skip the B string. Outside picking.',
+			perBeat: 3,
+			startBpm: 50,
+		},
+		[...up, ...[...up].reverse()]
+	)
+}
+
 function sweeps(): TabExercise {
 	// Three-string triads Am F G E on the G, B and high E strings, swept up and
-	// back (Frank Gambale's economy picking: the pick keeps going the way it went).
+	// back (economy picking: the pick keeps going the way it went).
 	const chords = [
 		[14, 13, 12],
 		[10, 10, 8],
@@ -289,7 +711,8 @@ function sweeps(): TabExercise {
 			id: 'sweeps',
 			name: 'Three-string sweeps',
 			goal: 'sweep',
-			from: 'Frank Gambale: economy picking, the pick keeps its direction',
+			level: 'advanced',
+			credit: 'Frank Gambale · Monster Licks & Speed Picking (1988)',
 			how: 'Am F G E on the top three strings: one down stroke through G-B-E, up from E.',
 			perBeat: 4,
 			startBpm: 50,
@@ -298,31 +721,33 @@ function sweeps(): TabExercise {
 	)
 }
 
-function bends(): TabExercise {
-	// Bend, then fret the note the bend had to reach to hear whether it got there
-	// (Andy Timmons). The tuner checks it to the cent.
-	const notes: TabNote[] = [
-		{ string: 2, fret: 7, step: 0, bend: 2, length: 2 },
-		{ string: 1, fret: 4, step: 2 },
-		{ string: 3, fret: 7, step: 4, bend: 1, length: 2 },
-		{ string: 2, fret: 4, step: 6 },
-	]
-	return {
-		id: 'bends',
-		name: 'Bend to pitch',
-		goal: 'bends',
-		from: 'Andy Timmons: bend, then check against the fretted note',
-		how: 'Whole step on the B string, half step on the G, each followed by the note to reach.',
-		perBeat: 1,
-		startBpm: 60,
-		notes,
-		steps: 8,
-	}
-}
-
-/** Every exercise, in list order. `date` picks the day's permutation. */
+/** Every exercise, in list order (beginner first). `date` picks the day's permutation. */
 export function exercises(date = new Date()): TabExercise[] {
-	return [spider(), permutations(date), chromaticShift(), bursts(), pentatonicFours(), stringSkipping(), trills(), sweeps(), bends()]
+	return [
+		spider(),
+		chromaticShift(),
+		pentatonicBox(),
+		fingerGym(),
+		bends(),
+		giuliani(),
+		permutations(date),
+		rotation(),
+		pedal(),
+		oneString(),
+		pentatonicFours(),
+		threePerString(),
+		sixNote(),
+		thirds(),
+		outside(),
+		legatoCombos(),
+		trills(),
+		tapping(),
+		carcassi(),
+		fives(),
+		fiveFour(),
+		stringSkipping(),
+		sweeps(),
+	]
 }
 
 export const EXERCISE_IDS = exercises().map((e) => e.id)
@@ -533,6 +958,12 @@ export function judgeNote(at: number, midi: number, stepMs: number, events: Note
 // moment, but with other strings still ringing the detector reads it only in
 // some frames: one is enough. 120 ms = a 16th at 125 BPM.
 export const PICK_LISTEN_MS = 120
+// ...but not the first frames: the window then holds the note before and the
+// new one, and two notes a whole step apart read as the one in between (C#
+// then D# reads D), so a line played a fret off scored a third of its notes
+// on time on one string. From 40 ms on the new note fills the window enough;
+// 40 and 50 scored the same on every exercise (scripts/tab-check.ts).
+const READ_AFTER_PICK_MS = 40
 
 // Pitch-class profile of a frame's power spectrum: each note E2–E6 scores the
 // power at its first four harmonics (weighted 1/h, best of three bins), folded
@@ -632,7 +1063,7 @@ export function judgeHeard(at: number, midi: number, stepMs: number, heard: Hear
 	for (const pick of near) {
 		const next = heard.picks.find((p) => p > pick) ?? Number.POSITIVE_INFINITY
 		const until = Math.min(pick + ATTACK_LATENCY_MS + PICK_LISTEN_MS, next + ATTACK_LATENCY_MS)
-		const read = heard.frames.some((f) => f.at >= pick && f.at <= until && f.midi !== null && samePitchClass(f.midi, midi))
+		const read = heard.frames.some((f) => f.at >= pick + READ_AFTER_PICK_MS && f.at <= until && f.midi !== null && samePitchClass(f.midi, midi))
 		// A note already ringing before the pick (the one played before) is no
 		// evidence of this one, unless the tab repeats that note here.
 		const fresh = repeat || !rangBefore(heard.frames, pick, midi)

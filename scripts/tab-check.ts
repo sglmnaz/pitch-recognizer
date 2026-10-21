@@ -16,7 +16,21 @@ const hz = (midi: number) => 440 * 2 ** ((midi - 69) / 12)
 
 /* Exercises -------------------------------------------------------------------- */
 const all = Tab.exercises(new Date(2026, 9, 21))
-check('nine exercises, unique ids', all.length === 9 && new Set(all.map((e) => e.id)).size === 9)
+check('23 exercises, unique ids', all.length === 23 && new Set(all.map((e) => e.id)).size === 23)
+check(
+	'every exercise has a goal and a level, a short name and, if credited, a short credit',
+	all.every(
+		(e) =>
+			Tab.GOALS.some((g) => g.id === e.goal) &&
+			Tab.LEVELS.some((l) => l.id === e.level) &&
+			e.name.length <= 28 &&
+			(e.credit === undefined || (e.credit.length > 0 && e.credit.length <= 60))
+	)
+)
+check(
+	'every goal and every level has an exercise',
+	Tab.GOALS.every((g) => all.some((e) => e.goal === g.id)) && Tab.LEVELS.every((l) => all.some((e) => e.level === l.id))
+)
 for (const e of all) {
 	const bar = e.perBeat * Tab.BEATS_PER_BAR
 	const ordered = e.notes.every((n, i) => i === 0 || n.step > e.notes[i - 1].step)
@@ -42,7 +56,43 @@ check(
 		groups.every((g, i) => g.every((m, j) => j === 0 || m > g[j - 1]) && (i === 0 || g[0] > groups[i - 1][0]))
 )
 check('trills: one pick per finger, the rest hammer-ons and pull-offs', byId('trills').notes.filter((n) => !n.tech).length === 3)
-check('bend: B string fret 7 up a whole step reaches G#4 (fret 4 on high E)', Tab.targetMidi(byId('bends').notes[0]) === Tab.midiOf(byId('bends').notes[1]))
+check(
+	'bends: B 12 up a whole step reaches high E 9, G 14 reaches B 12',
+	Tab.targetMidi(byId('bends').notes[0]) === Tab.midiOf(byId('bends').notes[1]) && Tab.targetMidi(byId('bends').notes[2]) === Tab.midiOf(byId('bends').notes[3])
+)
+{
+	const r = byId('rotation').notes
+	const orders = Array.from({ length: r.length / 4 }, (_, g) =>
+		r
+			.slice(g * 4, g * 4 + 4)
+			.map((n) => n.fret - 4)
+			.join('')
+	)
+	check(
+		'rotation: 1234 2341 3412 4123 over and over, one string each',
+		orders.join(' ') === '1234 2341 3412 4123 '.repeat(3).trim() && r.every((n, i) => n.string === r[i - (i % 4)].string)
+	)
+}
+{
+	const gym = byId('finger-gym').notes
+	check(
+		'finger gym: six pairs on all six strings, the second note of each hammered',
+		gym.length === 72 && gym.every((n, i) => (i % 2 ? n.tech === 'h' && n.string === gym[i - 1].string && n.fret > gym[i - 1].fret : !n.tech))
+	)
+}
+check('giuliani: C then G7, two bars of p-i-m triplets', byId('giuliani').notes.length === 24 && byId('giuliani').steps === 24)
+check('carcassi: the first four bars, eighths', byId('carcassi').notes.length === 32 && byId('carcassi').steps === 32)
+check(
+	'tapping: a tap, a pull-off and a hammer-on on every beat',
+	byId('tapping').notes.every((n, i) => n.tech === ['t', 'p', 'h'][i % 3])
+)
+{
+	const th = byId('thirds').notes.map(Tab.midiOf)
+	check(
+		'thirds: G major, each pair a third apart, in 2nd position',
+		th.every((m) => [7, 9, 11, 0, 2, 4, 6].includes(m % 12)) && byId('thirds').notes.every((n) => n.fret >= 2 && n.fret <= 5)
+	)
+}
 
 /* Note follower ------------------------------------------------------------------- */
 {
@@ -178,7 +228,16 @@ function tempoSession(exercise: Tab.TabExercise, beats: number, player: (note: T
 	for (let t = 0; t < 500 + beats * 1100 && !ended; t += FRAME) {
 		if (t >= nextBeat && beat < beats) {
 			beatBpm = m.bpm
-			const event: BeatEvent = { time: 0, bar: Math.floor(beat / 4), beat: beat % 4, sub: 0, accent: beat % 4 ? 1 : 2, bpm: beatBpm, heardAt: nextBeat, stampedAt: null }
+			const event: BeatEvent = {
+				time: 0,
+				bar: Math.floor(beat / 4),
+				beat: beat % 4,
+				sub: 0,
+				accent: beat % 4 ? 1 : 2,
+				bpm: beatBpm,
+				heardAt: nextBeat,
+				stampedAt: null,
+			}
 			session.beat(event, nextBeat)
 			const inLoop = (beat - 4) % (exercise.steps / exercise.perBeat)
 			if (beat >= 4) {
@@ -204,7 +263,7 @@ const spiderEx = byId('spider')
 const clean = (note: Tab.TabNote, at: number): Sound => ({
 	start: at,
 	midi: Tab.midiOf(note),
-	legato: note.tech !== undefined,
+	legato: note.tech === 'h' || note.tech === 'p',
 	bendTo: note.bend ? Tab.targetMidi(note) : undefined,
 })
 {
@@ -243,10 +302,13 @@ const clean = (note: Tab.TabNote, at: number): Sound => ({
 		run.u.marks.slice(0, 24).every((m) => m === 'hit'),
 		run.u.marks.slice(0, 24).join(' ')
 	)
-	const bursts = tempoSession(byId('bursts'), 4 + 12 + 2, clean)
+	// Bursts of one fret picked again and again, rests between.
+	const same = (from: number, n: number) => Array.from({ length: n }, (_, i): Tab.TabNote => ({ string: 2, fret: 7, step: from + i }))
+	const repeated: Tab.TabExercise = { ...byId('six-note'), id: 'repeated', perBeat: 4, notes: [...same(0, 4), ...same(8, 6), ...same(16, 8)], steps: 32 }
+	const bursts = tempoSession(repeated, 4 + 8 + 2, clean)
 	check(
 		'tempo: repeated notes on one fret count one by one',
-		bursts.u.marks.slice(0, byId('bursts').notes.length).every((m) => m === 'hit'),
+		bursts.u.marks.slice(0, repeated.notes.length).every((m) => m === 'hit'),
 		`${Tab.accuracy(bursts.u.marks)}% · ${bursts.u.marks
 			.map((m, i) => (m === 'hit' ? '' : `${i}:${m}`))
 			.filter(Boolean)
@@ -354,7 +416,13 @@ function realSession(id: string, bpm: number, late = 0, off = 0): Tab.Mark[] {
 	const loops = 2
 	const played: Played[] = []
 	for (let l = 0; l < loops; l++)
-		for (const n of ex.notes) played.push({ t: (top + (l * ex.steps + n.step) * stepMs + late) / 1000, midi: Tab.midiOf(n) + off, string: n.string, legato: !!n.tech })
+		for (const n of ex.notes)
+			played.push({
+				t: (top + (l * ex.steps + n.step) * stepMs + late) / 1000,
+				midi: Tab.midiOf(n) + off,
+				string: n.string,
+				legato: n.tech === 'h' || n.tech === 'p',
+			})
 	const signal = strings(played, (top + loops * ex.steps * stepMs + 1500) / 1000)
 	stopMic()
 	const u = ui()
@@ -375,23 +443,37 @@ function realSession(id: string, bpm: number, late = 0, off = 0): Tab.Mark[] {
 		processFrame(window, SR, now)
 		const { pitch, clarity } = getStats()
 		const power = getFramePower()
-		session.frame(now, pitch && clarity >= Tab.MIN_CLARITY ? pitch : null, onsets.feed(now, Tab.newestEnergy(window)), power ? Tab.chromaOf(power.power, power.binHz) : null)
+		session.frame(
+			now,
+			pitch && clarity >= Tab.MIN_CLARITY ? pitch : null,
+			onsets.feed(now, Tab.newestEnergy(window)),
+			power ? Tab.chromaOf(power.power, power.binHz) : null
+		)
 	}
 	return u.marks
 }
 
 const share = (marks: Tab.Mark[], mark: Tab.Mark) => Math.round((100 * marks.filter((m) => m === mark).length) / Math.max(1, marks.length))
-for (const [id, bpm] of [['spider', 60], ['chromatic', 50], ['pentatonic', 50], ['skipping', 50], ['sweeps', 50], ['trills', 50], ['bursts', 70]] as [string, number][]) {
+// Every exercise but the bends (the synthetic strings cannot bend) at its own starting tempo.
+for (const { id, startBpm: bpm } of all.filter((e) => e.id !== 'bends')) {
 	const right = realSession(id, bpm)
 	const wrong = realSession(id, bpm, 0, 1)
-	check(`real pipeline, ${id} at ${bpm}: played right, on time`, right.length === 2 * byId(id).notes.length && share(right, 'hit') >= 90, `${share(right, 'hit')}% on time`)
+	check(
+		`real pipeline, ${id} at ${bpm}: played right, on time`,
+		right.length === 2 * byId(id).notes.length && share(right, 'hit') >= 90,
+		`${share(right, 'hit')}% on time`
+	)
 	check(`real pipeline, ${id} at ${bpm}: a fret off, not on time`, share(wrong, 'hit') <= 20, `${share(wrong, 'hit')}% on time`)
 }
 {
 	const late = realSession('spider', 60, 160)
 	const early = realSession('spider', 60, -160)
 	const close = realSession('spider', 60, 60)
-	check('real pipeline: 160 ms behind is late, 160 ahead early, 60 behind on time', share(late, 'late') >= 90 && share(early, 'early') >= 90 && share(close, 'hit') >= 90, `${share(late, 'late')}% late · ${share(early, 'early')}% early · ${share(close, 'hit')}% on time`)
+	check(
+		'real pipeline: 160 ms behind is late, 160 ahead early, 60 behind on time',
+		share(late, 'late') >= 90 && share(early, 'early') >= 90 && share(close, 'hit') >= 90,
+		`${share(late, 'late')}% late · ${share(early, 'early')}% early · ${share(close, 'hit')}% on time`
+	)
 }
 
 /* Records ------------------------------------------------------------------------- */

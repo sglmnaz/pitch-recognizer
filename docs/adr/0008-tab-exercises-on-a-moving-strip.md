@@ -95,3 +95,53 @@ So the session no longer reads the tuner's reading:
 a fret off, 0–13% (a trill a fret off lands on its own other note); 160 ms
 behind or ahead, late or early. Real guitars, rooms and phone mics still need
 the `?debug` recordings; the constants are commented where they were tuned.
+
+## Addendum (2026-10-22): 23 exercises, levels, credits
+
+The nine exercises were too few, and some weak. Single-string bursts (one
+fret picked over and over) is gone; Spider and Pentatonic in fours stay
+without a credit: an exercise many teachers recommend does not need an
+author. The list is now 23, generated from rules as before. Giuliani and
+Carcassi, public domain, are note for note.
+
+- **Levels**: every exercise is beginner, intermediate or advanced
+  (`Tab.LEVELS`); the list filters by goal and by level (`tabGoal`,
+  `tabLevel`). A new goal, Fingerstyle, holds Giuliani and Carcassi.
+- **Credits**: `credit` (proper names and a short source, no link) shows
+  under the exercise's instructions only, not in the list: with one or two
+  exercises per player, a list by name would mean little. The sources checked
+  for each (2026-10-22):
+  - Steve Vai, 10-Hour Workout (Guitar World, January 1990; Hal Leonard
+    reprint): permutations, rotating 1234 / 2341 / 3412 / 4123.
+    https://www.groove3.com/viewbook/Steve-Vais-Guitar-Workout
+  - Nita Strauss, Guitar World 2018: chromatic shift (it was credited to
+    John Petrucci, which no source confirmed).
+    https://www.guitarworld.com/lessons/getting-your-chops-in-tip-top-shape
+  - Joe Satriani, Guitar One 1999 (Dale Turner): trills, a scale on one
+    string. https://intimateaudio.com/psycho_licks.satriani.html
+  - Paul Gilbert, Guitar One 1999 and Intense Rock (REH, 1988): six-note
+    lick, outside picking, string skipping.
+    https://intimateaudio.com/psycho_licks.gilbert.html,
+    https://www.guitarworld.com/lessons/intense-rock-picking-a-brief-look-at-paul-gilberts-alternate-picking-technique
+  - John Petrucci, Total Guitar 2020: legato 1-3-4 / 1-2-4.
+    https://www.musicradar.com/totalguitar/john-petruccis-ultimate-warm-up-guest-lesson-533027
+  - Justin Sandercoe, JustinGuitar: Finger Gym, Minimum Movement (pentatonic
+    box). https://www.justinguitar.com/guitar-lessons/play-better-guitar-the-finger-gym-exercise-bg-1503
+  - Andy Timmons, Guitar World 2022: bend, then the fretted note it must
+    reach (B 12 / E 9, G 14 / B 12), no vibrato.
+    https://www.guitarworld.com/lessons/andy-timmons-string-bending
+  - Eric Johnson's fives (Phil Hilborne, MusicRadar 2019).
+    https://www.musicradar.com/how-to/5-guitar-tricks-you-can-learn-from-eric-johnson-today
+  - Al Di Meola's five-and-four run, taught by Alex Skolnick (Guitar Player
+    2023). https://www.guitarplayer.com/lessons/vai-tremonti-bonamassa-stern-malmsteen-gilbert-skolnick-satriani-johnson
+  - Frank Gambale's economy picking. https://troygrady.com/interviews/frank-gambale/
+  - Eddie Van Halen's tapping (Eruption, 1978): tap, pull-off, hammer-on.
+  - Mauro Giuliani, Op. 1 No. 4 (1812): https://imslp.org/wiki/Studio_per_la_chitarra,_Op.1_(Giuliani,_Mauro)
+  - Matteo Carcassi, Op. 60 No. 1, bars 1–4: https://imslp.org/wiki/Etudes,_Op.60_(Carcassi,_Matteo)
+- **Taps** are `tech: 't'`: struck, so judged like a pick, drawn T over the note.
+- **Judging**: a pick's frames count for its note only from 40 ms on
+  (`READ_AFTER_PICK_MS`). Right after a pick the window mixes two notes, and
+  two a whole step apart read as the one between: on one string, a line
+  played a fret off scored a third of its notes on time. `check:tab` now
+  plays every exercise but the bends through the real pipeline: played
+  right, 100% on time; a fret off, 0–4%.

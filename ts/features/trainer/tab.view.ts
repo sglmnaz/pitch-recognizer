@@ -51,6 +51,7 @@ export function createTabView(root: HTMLElement): View {
 	const goalText = $<HTMLElement>('.tab-goal')
 	const title = $<HTMLElement>('.tab-title')
 	const how = $<HTMLElement>('.tab-how')
+	const credit = $<HTMLElement>('.tab-by')
 	const paper = $<HTMLElement>('.tab-paper')
 	const strip = $<HTMLElement>('.tab-strip')
 	const statusMain = $<HTMLElement>('.tab-status__main')
@@ -64,6 +65,7 @@ export function createTabView(root: HTMLElement): View {
 	const tempoValue = $<HTMLElement>('.tab-tempo')
 	const speedUp = $<HTMLInputElement>('.tab-speedup .switch__input')
 	const goalsBox = $<HTMLElement>('.tab-goals')
+	const levelsBox = $<HTMLElement>('.tab-levels')
 	const list = $<HTMLElement>('.tab-list')
 
 	// Readings arrive every frame while the mic runs and reset() runs when it stops.
@@ -108,7 +110,9 @@ export function createTabView(root: HTMLElement): View {
 				ex.notes.map((note) => {
 					const x = x0 + note.step * sp
 					const y = STRING_TOP + (note.string - 1) * STRING_GAP
-					if (note.tech) el('tab-tech', x - sp / 2, note.tech, y - 15)
+					// h / p sit between the two notes they join; a tap's T over its own note.
+					if (note.tech === 't') el('tab-tech', x, 'T', y - 15)
+					else if (note.tech) el('tab-tech', x - sp / 2, note.tech, y - 15)
 					return el('tab-n', x, note.bend ? `${note.fret}b${note.fret + note.bend}` : String(note.fret), y)
 				})
 			)
@@ -163,21 +167,27 @@ export function createTabView(root: HTMLElement): View {
 	let shownLoop = 0
 
 	/* Setup ---------------------------------------------------------------- */
-	goalsBox.replaceChildren(
-		...[{ id: 'all', label: 'All' }, ...Tab.GOALS].map((goal) => {
-			const chip = document.createElement('button')
-			chip.type = 'button'
-			chip.className = 'chip'
-			chip.dataset.goal = goal.id
-			chip.textContent = goal.label
-			chip.addEventListener('click', () => Settings.update({ tabGoal: goal.id as Settings.Settings['tabGoal'] }))
-			return chip
-		})
-	)
+	// Two filters over one list: a goal and a level, each with All first.
+	function filterChips(box: HTMLElement, options: { id: string; label: string }[], pick: (id: string) => void) {
+		box.replaceChildren(
+			...[{ id: 'all', label: 'All' }, ...options].map((option) => {
+				const chip = document.createElement('button')
+				chip.type = 'button'
+				chip.className = 'chip'
+				chip.dataset.filter = option.id
+				chip.textContent = option.label
+				chip.addEventListener('click', () => pick(option.id))
+				return chip
+			})
+		)
+	}
+	filterChips(goalsBox, Tab.GOALS, (id) => Settings.update({ tabGoal: id as Settings.Settings['tabGoal'] }))
+	filterChips(levelsBox, Tab.LEVELS, (id) => Settings.update({ tabLevel: id as Settings.Settings['tabLevel'] }))
+	const levelOf = (ex: Tab.TabExercise) => Tab.LEVELS.find((l) => l.id === ex.level)!.label
 
 	function renderList() {
 		const s = Settings.get()
-		const rows = Tab.exercises().filter((ex) => s.tabGoal === 'all' || ex.goal === s.tabGoal)
+		const rows = Tab.exercises().filter((ex) => (s.tabGoal === 'all' || ex.goal === s.tabGoal) && (s.tabLevel === 'all' || ex.level === s.tabLevel))
 		list.replaceChildren(
 			...rows.map((ex) => {
 				const li = document.createElement('li')
@@ -192,10 +202,10 @@ export function createTabView(root: HTMLElement): View {
 					'<span class="tab-ex__best"><span class="silk"></span><span class="window"><span class="lcd"></span></span></span>'
 				button.querySelector('.lamp')!.classList.toggle('is-on', ex.id === s.tabExercise)
 				button.querySelector('.tab-ex__name')!.textContent = ex.name
-				button.querySelector('.tab-ex__from')!.textContent = ex.from
+				button.querySelector('.tab-ex__from')!.textContent = `${levelOf(ex)} · ${Tab.subdivisionName(ex.perBeat)}`
 				button.querySelector('.tab-ex__best .silk')!.textContent = goal
 				button.querySelector('.tab-ex__best .lcd')!.textContent = best ? `${best} BPM` : '—'
-				button.setAttribute('aria-label', `${ex.name}, ${goal}${best ? `, best ${best} BPM` : ''}`)
+				button.setAttribute('aria-label', `${ex.name}, ${goal}, ${levelOf(ex)}${best ? `, best ${best} BPM` : ''}`)
 				button.addEventListener('click', () => Settings.update({ tabExercise: ex.id }))
 				li.append(button)
 				return li
@@ -225,7 +235,10 @@ export function createTabView(root: HTMLElement): View {
 		speedUp.checked = s.tabSpeedUp
 		speedUp.disabled = s.tabFollow === 'wait'
 		tempoValue.textContent = `${Tab.loadRecord(exercise()).bpm} BPM`
-		for (const chip of goalsBox.querySelectorAll<HTMLButtonElement>('[data-goal]')) chip.setAttribute('aria-pressed', String(chip.dataset.goal === s.tabGoal))
+		for (const chip of goalsBox.querySelectorAll<HTMLButtonElement>('[data-filter]'))
+			chip.setAttribute('aria-pressed', String(chip.dataset.filter === s.tabGoal))
+		for (const chip of levelsBox.querySelectorAll<HTMLButtonElement>('[data-filter]'))
+			chip.setAttribute('aria-pressed', String(chip.dataset.filter === s.tabLevel))
 		renderList()
 	}
 
@@ -261,9 +274,11 @@ export function createTabView(root: HTMLElement): View {
 		const ex = exercise()
 		const s = Settings.get()
 		const goal = Tab.GOALS.find((g) => g.id === ex.goal)!.label
-		goalText.textContent = goal
+		goalText.textContent = `${goal} · ${levelOf(ex)}`
 		title.textContent = ex.name
-		how.textContent = `${ex.how} ${ex.from}.`
+		how.textContent = ex.how
+		credit.textContent = ex.credit ?? ''
+		credit.hidden = !ex.credit
 		paper.setAttribute('aria-label', `Tab: ${ex.name}. ${ex.how}`)
 		drawStrip(ex, s.tabLoop ? 2 : 1)
 		clearMarks()

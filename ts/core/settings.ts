@@ -144,6 +144,8 @@ export interface Settings {
 	tabSpeedUp: boolean
 	/** The exercise list shows this goal only ('all' = every exercise). */
 	tabGoal: 'all' | Tab.Goal
+	/** And this level only ('all' = every level). */
+	tabLevel: 'all' | Tab.Level
 }
 
 const STORAGE_KEY = 'pitch-recognizer:settings'
@@ -219,6 +221,7 @@ const defaults: Settings = {
 	tabLoop: true,
 	tabSpeedUp: false,
 	tabGoal: 'all',
+	tabLevel: 'all',
 }
 
 const listeners = new Set<() => void>()
@@ -332,6 +335,7 @@ export function load(): Settings {
 		tabLoop: bool(s.tabLoop, d.tabLoop),
 		tabSpeedUp: bool(s.tabSpeedUp, d.tabSpeedUp),
 		tabGoal: oneOf(s.tabGoal, ['all', ...Tab.GOALS.map((g) => g.id)]),
+		tabLevel: oneOf(s.tabLevel, ['all', ...Tab.LEVELS.map((l) => l.id)]),
 	}
 }
 

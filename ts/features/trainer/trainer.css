@@ -1004,6 +1004,12 @@
 	color: var(--fg-muted);
 }
 
+/* Whose exercise it is, printed on the panel like a label. */
+.tab-by {
+	margin: 2px 0 0;
+	line-height: 1.35;
+}
+
 .tab-paper {
 	position: relative;
 	height: 132px;
@@ -1279,14 +1285,20 @@
 	gap: var(--space-8);
 }
 
-.tab-goals {
-	grid-template-columns: repeat(4, minmax(0, 1fr));
+/* Nine goals in three rows of three; the four levels in one row under them. */
+.tab-goals,
+.tab-levels {
+	grid-template-columns: repeat(3, minmax(0, 1fr));
 
 	@media (max-width: 600px) {
 		& > .chip {
 			min-height: var(--tap);
 		}
 	}
+}
+
+.tab-levels {
+	grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
 .tab-list {
@@ -1346,10 +1358,11 @@
 	color: var(--fg-muted);
 }
 
+/* A grid, not a flex column: the LCD window (stretched by panel.css) stays
+   as wide as its value, not as the goal printed over it (Fingerstyle). */
 .tab-ex__best {
-	display: flex;
-	flex-direction: column;
-	align-items: flex-end;
+	display: grid;
+	justify-items: end;
 	gap: 2px;
 
 	& .silk {
