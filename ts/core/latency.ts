@@ -15,6 +15,15 @@ export const MAX_SPREAD_MS = 50
 export const MIN_DELAY_MS = -200
 export const MAX_DELAY_MS = 400
 
+// Mic delay (the mic hearing the clicks): a phone's round trip, speaker to
+// mic to the app, can pass half a second. At 75 BPM a click heard 640 ms late
+// paired with the next one and read -160 ms, so these clicks are slower and a
+// heard click may come up to MIC_AHEAD_MS early or a beat less that late.
+export const MIC_CALIBRATION_BPM = 40
+export const MIC_CALIBRATION_CLICKS = 12
+export const MIC_AHEAD_MS = 300
+export const MAX_MIC_DELAY_MS = 1000
+
 export interface DelayEstimate {
 	/** Median lag of the taps behind the clicks, ms (negative: taps ahead). */
 	lag: number
@@ -31,17 +40,17 @@ const median = (values: number[]) => {
 }
 
 /**
- * Pairs each tap with the click it answers: the one it follows by less than
- * three quarters of a beat or precedes by less than a quarter (a delay up to
- * 600 ms at 75 BPM, a tap a little ahead of the beat). One tap per click, the
- * first; taps on the listening clicks are dropped. Median, not mean: one
- * missed or doubled tap must not move the answer. Null below MIN_TAPS.
+ * Pairs each tap with the click it answers: the one it precedes by up to
+ * `ahead` ms or follows by less than a beat minus that (by default a quarter
+ * beat: a delay up to 600 ms at 75 BPM, a tap a little ahead of the beat). One
+ * tap per click, the first; taps on the listening clicks are dropped. Median,
+ * not mean: one missed or doubled tap must not move the answer. Null below MIN_TAPS.
  */
-export function estimateDelay(clicks: number[], taps: number[], beatMs: number): DelayEstimate | null {
+export function estimateDelay(clicks: number[], taps: number[], beatMs: number, ahead = beatMs / 4): DelayEstimate | null {
 	const lags: number[] = []
 	const used = new Set<number>()
 	for (const tap of taps) {
-		const index = clicks.findIndex((click) => tap - click >= -beatMs / 4 && tap - click < (beatMs * 3) / 4)
+		const index = clicks.findIndex((click) => tap - click >= -ahead && tap - click < beatMs - ahead)
 		if (index < LISTEN_CLICKS || used.has(index)) continue
 		used.add(index)
 		lags.push(tap - clicks[index])
@@ -58,6 +67,6 @@ export function estimateDelay(clicks: number[], taps: number[], beatMs: number):
  * touchscreen's own delay (some tens of ms on a phone), so it can come out a
  * little high; nudge it down by hand if needed.
  */
-export function delaySetting(lag: number): number {
-	return Math.min(MAX_DELAY_MS, Math.max(MIN_DELAY_MS, Math.round(lag / 5) * 5))
+export function delaySetting(lag: number, max = MAX_DELAY_MS): number {
+	return Math.min(max, Math.max(MIN_DELAY_MS, Math.round(lag / 5) * 5))
 }

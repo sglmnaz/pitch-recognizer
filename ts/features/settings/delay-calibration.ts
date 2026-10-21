@@ -99,7 +99,7 @@ export function createDelayCalibration(root: HTMLElement): { cancel(): void } {
 
 /**
  * Settings → Metronome → Mic delay → Calibrate: the metronome clicks out loud
- * at 75 BPM, Audio delay included, and the mic listens for them. How far each
+ * at 40 BPM (Latency.MIC_CALIBRATION_BPM), Audio delay included, and the mic listens for them. How far each
  * click is heard behind its BeatEvent.heardAt, picked and dated like Trainer →
  * Tab's notes, becomes the setting: Changes and Tab then judge what they hear
  * that much earlier, the whole round trip (speaker, room, input path) whatever
@@ -108,7 +108,7 @@ export function createDelayCalibration(root: HTMLElement): { cancel(): void } {
 export function createMicCalibration(root: HTMLElement): { frame(): void; cancel(): void } {
 	const button = root.querySelector<HTMLButtonElement>('[data-action="calibrate-mic"]')!
 	const status = root.querySelector<HTMLElement>('[data-mic-calibrate-status]')!
-	const beatMs = 60000 / Latency.CALIBRATION_BPM
+	const beatMs = 60000 / Latency.MIC_CALIBRATION_BPM
 	const onsets = Tab.createOnsetDetector()
 
 	let clicks: number[] = []
@@ -129,7 +129,7 @@ export function createMicCalibration(root: HTMLElement): { frame(): void; cancel
 		frames = 0
 		onsets.reset()
 		button.textContent = 'Cancel'
-		say(`Volume up, no headphones, quiet please: listening for ${Latency.CALIBRATION_CLICKS} clicks…`)
+		say(`Volume up, no headphones, quiet please: listening for ${Latency.MIC_CALIBRATION_CLICKS} clicks…`)
 		const s = Settings.get()
 		Metronome.configure({
 			beats: 4,
@@ -141,11 +141,11 @@ export function createMicCalibration(root: HTMLElement): { frame(): void; cancel
 			trainer: { enabled: false, step: 5, bars: 4, target: 160 },
 			outputDelayMs: s.audioDelayMs,
 		})
-		Metronome.setTempo(Latency.CALIBRATION_BPM)
+		Metronome.setTempo(Latency.MIC_CALIBRATION_BPM)
 		off = Metronome.onBeat((event) => {
 			clicks.push(event.heardAt)
 			// The last click still has to reach the mic: stop a beat later.
-			if (clicks.length === Latency.CALIBRATION_CLICKS) finishTimer = window.setTimeout(finish, beatMs)
+			if (clicks.length === Latency.MIC_CALIBRATION_CLICKS) finishTimer = window.setTimeout(finish, beatMs)
 		})
 		setListening(true)
 		Metronome.start()
@@ -164,10 +164,10 @@ export function createMicCalibration(root: HTMLElement): { frame(): void; cancel
 	function finish() {
 		stopRun()
 		if (!frames) return say('The microphone is off or blocked: allow it, then try again.')
-		const read = Latency.estimateDelay(clicks, picks, beatMs)
+		const read = Latency.estimateDelay(clicks, picks, beatMs, Latency.MIC_AHEAD_MS)
 		if (!read) return say('Not enough clicks heard. Turn the volume up, take off headphones and try again.')
 		if (read.spread > Latency.MAX_SPREAD_MS) return say(`Clicks heard too unevenly (±${Math.round(read.spread)} ms). Try again somewhere quieter.`)
-		const ms = Latency.delaySetting(read.lag)
+		const ms = Latency.delaySetting(read.lag, Latency.MAX_MIC_DELAY_MS)
 		Settings.update({ micDelayMs: ms })
 		say(`The mic heard ${read.taps} clicks ${Math.round(read.lag)} ms late: set to ${ms} ms.`)
 	}

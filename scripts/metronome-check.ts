@@ -246,6 +246,25 @@ check(
 	) === -30
 )
 check('the setting stays within −200…400 ms', Latency.delaySetting(-260) === -200 && Latency.delaySetting(520) === 400)
+{
+	// Mic delay: a phone that hears its own clicks 640 ms late. At 75 BPM that
+	// paired with the next click (-160 ms); the slow mic run keeps it whole.
+	const micBeat = 60000 / Latency.MIC_CALIBRATION_BPM
+	const micClicks = Array.from({ length: Latency.MIC_CALIBRATION_CLICKS }, (_, i) => 1000 + i * micBeat)
+	const heard = micClicks.map((c, i) => c + 640 + jitter[i % jitter.length])
+	const mic = Latency.estimateDelay(micClicks, heard, micBeat, Latency.MIC_AHEAD_MS)
+	check(
+		'mic delay: clicks heard 640 ms late read 640, not the next click',
+		mic !== null && Math.abs(mic.lag - 640) <= 5 && Latency.delaySetting(mic.lag, Latency.MAX_MIC_DELAY_MS) === 640,
+		JSON.stringify(mic)
+	)
+	const fast = Latency.estimateDelay(
+		clickTimes,
+		clickTimes.map((c) => c + 640),
+		beatMs
+	)
+	check('…which the tap run at 75 BPM would alias to -160', fast !== null && Math.round(fast.lag) === -160, JSON.stringify(fast))
+}
 check('too few taps: no answer', Latency.estimateDelay(clickTimes, steady.slice(0, 5), beatMs) === null)
 const uneven = Latency.estimateDelay(
 	clickTimes,
