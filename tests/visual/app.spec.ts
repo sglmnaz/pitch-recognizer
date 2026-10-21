@@ -303,7 +303,7 @@ test.describe('behaviour', () => {
 		const keyBefore = await page.evaluate(() => getComputedStyle(document.querySelector('.btn')!, '::before').backgroundColor)
 		// Through the dropdown itself: open it, pick Amber.
 		await page.getByRole('combobox', { name: 'Display' }).click()
-		await page.getByRole('option', { name: 'Amber' }).click()
+		await page.getByRole('option', { name: 'Amber', exact: true }).click()
 		await expect(page.getByRole('combobox', { name: 'Display' })).toHaveText('Amber')
 		expect(await color('.dropdown')).toBe('rgb(20, 16, 11)')
 		expect(await page.evaluate(() => getComputedStyle(document.querySelector('.btn')!, '::before').backgroundColor)).toBe(keyBefore)
@@ -342,7 +342,7 @@ test.describe('themes', () => {
 		})
 	}
 
-	for (const id of ['casio', 'red', 'phosphor', 'vfd', 'oled', 'ice', 'violet', 'eink']) {
+	for (const id of ['casio', 'red', 'phosphor', 'vfd', 'oled', 'ice', 'violet', 'eink', 'backlit']) {
 		test(`lcd ${id}`, async ({ page, open }) => {
 			await open('#metronome')
 			await remember(page, 'pitch-recognizer:display', id)

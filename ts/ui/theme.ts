@@ -63,6 +63,7 @@ export const DISPLAYS = [
 	{ id: 'ice', label: 'Ice' },
 	{ id: 'violet', label: 'Violet' },
 	{ id: 'eink', label: 'E-ink' },
+	{ id: 'backlit', label: 'Amber backlight' },
 ] as const
 export type Display = (typeof DISPLAYS)[number]['id']
 

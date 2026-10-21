@@ -1277,6 +1277,16 @@
 	--lcd-shadow: inset 0 3px 5px -3px rgba(0, 0, 0, 0.3);
 }
 
+/* Amber backlight: dark segments on a lit amber glass, as on the app icon (9b).
+   A flat colour, not the icon's gradient: --lcd-bg also goes into color-mix(). */
+:root[data-display='backlit'] {
+	--lcd-bg: #f5a742;
+	--lcd-ink: #3a1e08;
+	--lcd-dim: rgba(58, 30, 8, 0.14);
+	--lcd-glow: none;
+	--lcd-shadow: inset 0 6px 8px -4px rgba(0, 0, 0, 0.6);
+}
+
 /* Roles every component reads, derived from the materials above. Declared
    wherever a mode is, so a subtree with its own data-mode resolves them
    against its own materials. */
