@@ -55,14 +55,20 @@
 	font-display: swap;
 }
 
-/* VT323 (OFL): a terminal face, the Broadcast theme's display digits. Drawn
-   small for its size: scaled so its capitals match Chakra Petch's. */
+/* Barlow Condensed (OFL), thin weights: the Broadcast theme's display
+   digits, drawn like the fine vector strokes of an oscilloscope. */
 @font-face {
-	font-family: 'VT323';
-	src: url('./fonts/VT323-Regular.woff2') format('woff2');
-	font-weight: 400 700;
+	font-family: 'Barlow Condensed';
+	src: url('./fonts/BarlowCondensed-200.woff2') format('woff2');
+	font-weight: 200;
 	font-display: swap;
-	size-adjust: 125%;
+}
+
+@font-face {
+	font-family: 'Barlow Condensed';
+	src: url('./fonts/BarlowCondensed-300.woff2') format('woff2');
+	font-weight: 300;
+	font-display: swap;
 }
 
 @font-face {
@@ -1029,21 +1035,28 @@
 }
 
 /* Broadcast: a control-room desk. Grey-green (light) or console blue-grey
-   (dark) panel, an oscilloscope for every display (green phosphor, VT323),
-   red tally lamps and an ON AIR Start, console knobs with colour-coded caps.
-   Light and dark of one palette. The rest of the look (scan lines, fader caps,
-   bat-handle toggle, the red Sound cap) is in ts/styles/themes/regia.css. */
+   (dark) panel, a vector oscilloscope for every display (green phosphor,
+   thin Barlow Condensed digits), red tally lamps and a backlit ON AIR Start,
+   keys and screens mounted in the same bezel, console knobs with colour-coded
+   caps. Light and dark of one palette. The rest of the look (graticule, fader
+   caps, bat-handle toggle, desk legends) is in ts/styles/themes/regia.css. */
 [data-theme='regia'][data-mode],
 [data-theme='regia'] [data-mode] {
-	--font-display: 'VT323', var(--font-ui);
+	--font-display: 'Barlow Condensed', var(--font-ui);
 	--radius-lg: 12px;
-	--key-radius: 2px;
+	/* Low caps with a flat face: the bezel does the framing. */
+	--key-chamfer: 1px;
+	--key-cheek: 1px;
+	--key-edge: 3px;
+	--key-sink: 2px;
+	--key-radius: 3px;
 	--window: #141716;
 	--lcd-bg: #031208;
 	--lcd-ink: #9dffbc;
 	--lcd-dim: rgba(141, 255, 176, 0.11);
-	--lcd-glow: 0 0 3px #4dff88, 0 0 10px rgba(43, 224, 106, 0.47);
+	--lcd-glow: 0 0 2px #7dffa8, 0 0 8px rgba(43, 224, 106, 0.4);
 	--lcd-shadow: inset 0 0 18px 4px #000;
+	--scope: radial-gradient(110% 130% at 50% 45%, #0a2e1d, #04170d 62%, #010804);
 	--lamp-off: #4a1410;
 	--lamp-on: #ff3b2f;
 	--lamp-glow: rgba(255, 59, 47, 0.67);
@@ -1052,11 +1065,17 @@
 	--key3-side: #a82020;
 	--key3-front: #6a1210;
 	--key3-ink: #fff0ee;
-	--knob-rim: repeating-conic-gradient(var(--knob-body) 0 6deg, var(--knob-body-2) 6deg 12deg);
-	--knob-cap: radial-gradient(circle at 40% 30%, rgba(255, 255, 255, 0.4), transparent 55%), #2f6fb0;
-	--knob-cap-inset: 12px;
-	--knob-cap-ring: 0 0 0 1px rgba(0, 0, 0, 0.6), 0 2px 3px rgba(0, 0, 0, 0.4);
-	--knob-pointer: linear-gradient(#fff, #fff) 50% 13px / 3px 22% no-repeat;
+	/* Console knob: ridged black skirt, smooth collar, a colour cap (blue for
+	   time; Sound's is red; the cap's gradient is in regia.css). Light and
+	   shadow stay put; only the white line turns, across skirt and cap. */
+	--cap: #2f6cb3;
+	--cap-dk: #1d4577;
+	--knob-rim:
+		radial-gradient(circle closest-side, #202326 0 72%, #050606 73% 75%, transparent 76%),
+		radial-gradient(circle at 42% 28%, rgba(255, 255, 255, 0.16), transparent 62%), repeating-conic-gradient(#43484c 0 2.5deg, #15181a 2.5deg 5deg);
+	--knob-cap-inset: 13px;
+	--knob-cap-ring: 0 0 0 1.5px #08090a, 0 0 0 3.5px #2e3236, 0 3px 4px 2px rgba(0, 0, 0, 0.5);
+	--knob-pointer: linear-gradient(#fff, #fff) 50% 4px / 2.5px 36% no-repeat;
 }
 
 [data-theme='regia'][data-mode='light'],
@@ -1100,9 +1119,9 @@
 	--key4-front: #0a0b0a;
 	--key4-ink: #eef1ec;
 	--accent: #c62828;
-	--knob-body: #8c9298;
-	--knob-body-2: #6a7076;
+	/* One bezel for screens and keys: a black line, a 4 px grey-green frame, a lower shine. */
 	--scope-bezel: #3a3f3c;
+	--bezel: 0 0 0 1px #0a0c0b, 0 0 0 4px var(--scope-bezel), 0 1px 0 5px var(--plate-shine);
 }
 
 [data-theme='regia'][data-mode='dark'],
@@ -1126,7 +1145,8 @@
 	--plate-ink: #dde3e7;
 	--plate-ink-2: #9aa6af;
 	--plate-shine: rgba(255, 255, 255, 0.06);
-	--window-shadow: 0 0 0 1px #000, 0 0 0 4px #3b4651, inset 0 2px 4px #000;
+	/* A near-black frame, darker than the panel, instead of a muddy mid-grey. */
+	--window-shadow: 0 0 0 1px #000, 0 0 0 4px #10151a, 0 3px 5px 4px rgba(0, 0, 0, 0.35), inset 0 2px 4px #000;
 	--key-face: #4a5864;
 	--key-hi: #687884;
 	--key-side: #3e4a55;
@@ -1146,9 +1166,8 @@
 	--key4-front: #030405;
 	--key4-ink: #e8edf0;
 	--accent: #e04a3a;
-	--knob-body: #56636e;
-	--knob-body-2: #3a444d;
-	--scope-bezel: #3b4651;
+	--scope-bezel: #10151a;
+	--bezel: 0 0 0 1px #000, 0 0 0 4px var(--scope-bezel), 0 3px 5px 4px rgba(0, 0, 0, 0.3);
 }
 
 /* Tier 3: display ------------------------------------------------------------ */

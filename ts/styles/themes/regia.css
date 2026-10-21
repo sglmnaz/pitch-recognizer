@@ -1,43 +1,231 @@
 /*
  * Broadcast theme (data-theme="regia"): what tokens alone cannot draw. Its
- * colours, knob caps and display font are in tokens.css. Imported last in the
- * components layer, so it wins over the components it restyles; every rule is
- * scoped to the theme. Approved mockup: Claude Design, "Temi nuovi" 5a / 5b.
+ * colours, bezel, key shape, knob and display font are in tokens.css.
+ * Imported last in the components layer, so it wins over the components it
+ * restyles; every rule is scoped to the theme. Approved mockup: Claude
+ * Design, "Temi nuovi" 5a / 5b (temi-nuovi.css, the Regia section).
  */
 
-/* Every display is an oscilloscope screen: scan lines over the phosphor, a
-   darker rim like curved glass. Behind the text, so it stays crisp. */
+/* Screens --------------------------------------------------------------------- */
+/* Every display is a vector oscilloscope: dark green phosphor glass, no
+   raster lines. The big screens add a glass reflection and a dark rim. */
 [data-theme='regia'] :is(.lcd, .readout:not(.readout--split), .metro-beat__display) {
-	background-image:
-		repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.32) 0 1px, transparent 1px 3px),
-		radial-gradient(100% 120% at 50% 50%, rgba(13, 64, 38, 0.55), transparent 70%);
+	background-image: var(--scope);
 }
 
-/* The tempo screen of the Metronome: the graticule as well. */
+[data-theme='regia'] .lcd {
+	font-weight: 500;
+	letter-spacing: 0.16em;
+
+	& .lcd__dim {
+		color: rgba(141, 255, 176, 0.4);
+	}
+}
+
+[data-theme='regia'] :is(.metro-lcd, .metro-count .lcd, .readout:not(.readout--split)) {
+	position: relative;
+	overflow: hidden;
+
+	&::after {
+		content: '';
+		position: absolute;
+		inset: 0;
+		pointer-events: none;
+		border-radius: inherit;
+		background: radial-gradient(120% 70% at 30% -10%, rgba(255, 255, 255, 0.1), transparent 55%);
+		box-shadow: inset 0 0 14px 3px rgba(0, 0, 0, 0.85);
+	}
+}
+
+/* The Metronome's tempo screen: a fine graticule and the centre axes. */
 [data-theme='regia'] .metro-lcd {
-	border-radius: 10px / 14px;
+	border-radius: 8px / 11px;
 	background-image:
-		repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.32) 0 1px, transparent 1px 3px), linear-gradient(90deg, rgba(141, 255, 176, 0.08) 1px, transparent 1px),
-		linear-gradient(0deg, rgba(141, 255, 176, 0.08) 1px, transparent 1px), radial-gradient(100% 120% at 50% 50%, rgba(13, 64, 38, 0.55), transparent 70%);
+		linear-gradient(90deg, transparent calc(50% - 0.5px), rgba(141, 255, 176, 0.15) calc(50% - 0.5px) calc(50% + 0.5px), transparent calc(50% + 0.5px)),
+		linear-gradient(0deg, transparent calc(50% - 0.5px), rgba(141, 255, 176, 0.15) calc(50% - 0.5px) calc(50% + 0.5px), transparent calc(50% + 0.5px)),
+		linear-gradient(90deg, rgba(141, 255, 176, 0.07) 1px, transparent 1px), linear-gradient(0deg, rgba(141, 255, 176, 0.07) 1px, transparent 1px), var(--scope);
 	background-size:
 		auto,
+		auto,
 		10% 100%,
-		100% 20%,
+		100% 25%,
 		auto;
+}
+
+[data-theme='regia'] .metro-lcd__line {
+	font-size: 13px;
+	line-height: 1;
+}
+
+/* Display digits: the thinnest stroke for the big values. */
+[data-theme='regia'] :is(input.metro-bpm__value, .readout__note) {
+	font-weight: 200;
+	letter-spacing: 0.02em;
+}
+
+[data-theme='regia'] input.metro-bpm__value {
+	font-size: 1.04em;
+	line-height: 1;
+}
+
+[data-theme='regia'] .metro-bpm__unit {
+	font-size: 13px;
+	font-weight: 500;
+	letter-spacing: 0.16em;
+}
+
+/* Beats per bar: a small monitor in the key bezel, the numeral on the axis. */
+[data-theme='regia'] .metro-count {
+	padding: 0;
+	border-radius: 4px;
+	background: none;
+	box-shadow: var(--bezel);
+
+	& .lcd {
+		min-width: 44px;
+		padding: 0;
+		text-align: center;
+		border-radius: 3px / 5px;
+		background-image:
+			linear-gradient(0deg, transparent calc(50% - 0.5px), rgba(141, 255, 176, 0.1) calc(50% - 0.5px) calc(50% + 0.5px), transparent calc(50% + 0.5px)),
+			var(--scope);
+		font-family: var(--font-display);
+		font-size: 27px;
+		font-weight: 300;
+		letter-spacing: 0;
+
+		&::after {
+			box-shadow: inset 0 0 8px 2px rgba(0, 0, 0, 0.85);
+		}
+	}
 }
 
 /* Beat lights: small scope screens, the two elements drawn as traces. */
 [data-theme='regia'] .metro-beat__display {
-	gap: 7px;
-	border-radius: 6px / 9px;
+	gap: 8px;
+	border-radius: 5px / 7px;
+	background-image: linear-gradient(90deg, rgba(141, 255, 176, 0.06) 1px, transparent 1px), var(--scope);
+	background-size:
+		25% 100%,
+		auto;
 	box-shadow:
 		0 0 0 1px #000,
 		0 0 0 3px var(--scope-bezel),
-		inset 0 0 8px #000;
+		0 1px 0 3px var(--plate-shine),
+		inset 0 0 8px rgba(0, 0, 0, 0.9);
 
 	& i {
-		height: 2px;
-		width: 78%;
+		height: 1.5px;
+		width: 74%;
+		border-radius: 1px;
+		background: rgba(141, 255, 176, 0.13);
+	}
+}
+
+[data-theme='regia'][data-mode='dark'] .metro-beat__display {
+	box-shadow:
+		0 0 0 1px #000,
+		0 0 0 3px var(--scope-bezel),
+		inset 0 0 8px rgba(0, 0, 0, 0.9);
+}
+
+/* Lit: one crisp phosphor line, a tight bloom. */
+[data-theme='regia'] :is(.metro-beat[data-accent='2'] .metro-beat__display i, .metro-beat[data-accent='1'] .metro-beat__display i:last-child) {
+	height: 2px;
+	background: #b6ffcf;
+	box-shadow:
+		0 0 2px #4dff88,
+		0 0 6px rgba(43, 224, 106, 0.53);
+}
+
+/* Keys --------------------------------------------------------------------------- */
+/* Keys sit in the screens' bezel, so keys and screens read as one family of
+   mounted parts: a low cap, its flat face lit from above. */
+[data-theme='regia'] :where(.key, .btn, .link-btn) {
+	&::before,
+	&:is([aria-pressed='true'], [aria-selected='true'], .is-down, :active)::before {
+		box-shadow:
+			var(--bezel),
+			0 3px 4px 4px rgba(0, 0, 0, 0.16);
+	}
+
+	&::before {
+		background: linear-gradient(180deg, color-mix(in srgb, var(--k-hi) 70%, var(--k-face)), var(--k-face) 45%);
+	}
+}
+
+/* Room for the bezels between neighbouring keys (Metronome). */
+[data-theme='regia'] .metro-tempo,
+[data-theme='regia'] .metro-stepper {
+	gap: 12px;
+}
+
+[data-theme='regia'] .metro-actions {
+	gap: 14px;
+}
+
+/* Start: a backlit ON AIR cap, translucent red with a lit centre, brighter while it runs. */
+[data-theme='regia'] .key--hot {
+	letter-spacing: 0.22em;
+	text-shadow: 0 0 6px rgba(255, 255, 255, 0.35);
+
+	&::before {
+		background: radial-gradient(90% 120% at 50% 40%, #f0504a, #c62828 55%, #9e1c1c);
+	}
+}
+
+[data-theme='regia'] .metro-start[aria-pressed='true']::before {
+	background: radial-gradient(90% 120% at 50% 40%, #ff8a7a, #f0403a 50%, #c62828);
+	box-shadow:
+		var(--bezel),
+		0 0 18px 6px rgba(255, 59, 47, 0.4);
+}
+
+/* Segmented: one bezelled housing; the caps inside get only a black line and,
+   where the row has no lamps above it, a tally lamp on the cap that is down. */
+[data-theme='regia'] .segmented {
+	padding: 3px;
+	gap: 3px;
+	border-radius: 4px;
+	background: #0a0c0b;
+	box-shadow:
+		0 0 0 4px var(--scope-bezel),
+		0 1px 0 5px var(--plate-shine);
+
+	& > button::before,
+	& > button:is([aria-pressed='true'], [aria-selected='true'], :active)::before {
+		box-shadow: none;
+	}
+}
+
+[data-theme='regia'][data-mode='dark'] .segmented {
+	background: #000;
+	box-shadow:
+		0 0 0 4px var(--scope-bezel),
+		0 3px 5px 4px rgba(0, 0, 0, 0.3);
+}
+
+[data-theme='regia'] .segmented:not(.has-lamps) > button {
+	padding-top: calc(var(--k-top) + 9px);
+
+	&::after {
+		content: '';
+		position: absolute;
+		top: calc(var(--k-top) + 4px);
+		left: 50%;
+		width: 14px;
+		height: 3px;
+		margin-left: -7px;
+		border-radius: 1px;
+		background: var(--lamp-off);
+		box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.35);
+	}
+
+	&:is([aria-pressed='true'], [aria-selected='true'])::after {
+		background: var(--lamp-on);
+		box-shadow:
+			0 0 0 1px rgba(0, 0, 0, 0.35),
+			0 0 6px var(--lamp-glow);
 	}
 }
 
@@ -58,8 +246,8 @@
 	}
 
 	&::-webkit-slider-thumb {
-		height: 30px;
-		margin-top: -13px;
+		height: 32px;
+		margin-top: -14px;
 		border-radius: 2px;
 		background:
 			linear-gradient(90deg, transparent 6px, #f4f4f4 6px 8px, transparent 8px), linear-gradient(90deg, #3a3f3c, #1a1d1b 30%, #2a2e2b 50%, #1a1d1b 70%, #3a3f3c);
@@ -69,7 +257,7 @@
 	}
 
 	&::-moz-range-thumb {
-		height: 30px;
+		height: 32px;
 		border-radius: 2px;
 		background:
 			linear-gradient(90deg, transparent 6px, #f4f4f4 6px 8px, transparent 8px), linear-gradient(90deg, #3a3f3c, #1a1d1b 30%, #2a2e2b 50%, #1a1d1b 70%, #3a3f3c);
@@ -77,37 +265,112 @@
 	}
 }
 
-/* Console knobs are colour-coded: blue for time (tokens.css), red for sound. */
-[data-theme='regia'] .metro-knob:last-child .rotary {
-	--knob-cap: radial-gradient(circle at 40% 30%, rgba(255, 255, 255, 0.4), transparent 55%), #c0392b;
+/* Console knobs are colour-coded: blue for time (tokens.css), red for sound.
+   The cap is set on the knob itself, so it picks up the knob's own --cap. */
+[data-theme='regia'] .rotary {
+	--knob-cap:
+		radial-gradient(ellipse 60% 40% at 46% 26%, rgba(255, 255, 255, 0.26), rgba(255, 255, 255, 0) 70%),
+		radial-gradient(circle closest-side, var(--cap) 0 70%, var(--cap-dk) 94%, #0a0b0c 100%);
 }
 
-/* The slide switch (speed trainer) becomes the desk's bat-handle toggle: a
-   chrome lever on a nut, tilted to OFF or ON. Same box as the slide. */
+[data-theme='regia'] .metro-knob:last-child .rotary {
+	--cap: #c8372d;
+	--cap-dk: #7e1d17;
+}
+
+/* The slide switch becomes a bat-handle toggle seen from above: a chrome
+   bushing on a black plate, the lever pointing to the side that is on, thin
+   at the pivot and swelling to a rounded tip, with its shadow. */
 [data-theme='regia'] .switch--slide .switch__track {
-	width: 44px;
-	height: 28px;
+	width: 58px;
+	height: 30px;
 	margin-block: 0;
-	border-radius: 3px;
-	background: radial-gradient(circle at 50% 50%, #e6e8e6 0 3px, #8a8f8c 3.5px 6px, #3b3f3d 6.5px 7.5px, transparent 8px), #16191a;
+	border-radius: 4px;
+	background:
+		radial-gradient(circle at 50% 50%, #1c1f1e 0 2.5px, #f3f5f3 3px 4px, #a9aeac 4.5px 6px, #5a5f5d 6.5px 7px, #1a1d1c 7.5px 8.5px, transparent 9px),
+		linear-gradient(180deg, #1e2221, #121514);
 	box-shadow:
 		inset 0 1px 2px #000,
-		0 1px 0 var(--plate-shine);
+		0 0 0 1px #000,
+		0 1px 0 1px var(--plate-shine);
+
+	&::before,
+	&::after {
+		content: '';
+		position: absolute;
+		top: 50%;
+		left: 2px;
+		width: 27px;
+		height: 14px;
+		margin-top: -7px;
+		padding: 0;
+		border: 0;
+		border-radius: 7px 0 0 7px;
+		clip-path: polygon(0 0, 38% 0, 100% 32%, 100% 68%, 38% 100%, 0 100%);
+		transform-origin: 27px 50%;
+		transition: transform 0.12s;
+	}
+
+	&::before {
+		background: rgba(0, 0, 0, 0.6);
+		filter: blur(1.5px);
+		translate: 2px 3px;
+	}
 
 	&::after {
-		top: 10px;
-		left: 3px;
-		width: 23px;
-		height: 8px;
-		border: 0;
-		border-radius: 4px;
-		background: radial-gradient(circle at 4px 50%, #fff, #c9cdcb 3px, transparent 4.5px), linear-gradient(180deg, #fff, #b9bdbb 45%, #6e7371 60%, #c9cdcb);
-		box-shadow: 0 2px 2px rgba(0, 0, 0, 0.5);
+		background:
+			radial-gradient(ellipse 30% 40% at 22% 35%, rgba(255, 255, 255, 0.95), transparent 70%),
+			linear-gradient(180deg, #fff, #d3d7d5 30%, #7c817f 58%, #aeb3b1 80%, #e4e7e5);
+		box-shadow: none;
 	}
 }
 
-[data-theme='regia'] .switch--slide:has(.switch__input:checked) .switch__track::after {
-	left: 18px;
-	background:
-		radial-gradient(circle at calc(100% - 4px) 50%, #fff, #c9cdcb 3px, transparent 4.5px), linear-gradient(180deg, #fff, #b9bdbb 45%, #6e7371 60%, #c9cdcb);
+[data-theme='regia'] .switch--slide:has(.switch__input:checked) .switch__track {
+	&::before,
+	&::after {
+		left: 2px;
+		transform: scaleX(-1);
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	[data-theme='regia'] .switch--slide .switch__track::after {
+		transition: none;
+	}
+}
+
+/* Section titles in a view: reverse-printed desk legends, the name white on a
+   black block, the rule running on over the panel. Settings' folding bands
+   keep their own toggle. */
+[data-theme='regia'] .settings-group__title:not(:has(> .settings-group__toggle)) {
+	gap: 0;
+	padding: 4px 0 4px 8px;
+	line-height: 1;
+	color: var(--panel);
+	background: var(--ink);
+	border-radius: 1px;
+
+	&::after {
+		align-self: stretch;
+		height: auto;
+		/* A pixel past the block on every side: no edge of it shows round the rule. */
+		margin: -5px -1px -5px 8px;
+		background:
+			linear-gradient(var(--rule-strong), var(--rule-strong)) 0 50% / 100% 1.5px no-repeat,
+			var(--panel-grain) var(--panel);
+	}
+}
+
+/* Tab bar: condensed silk so every label fits on a phone. */
+@media (max-width: 600px) {
+	[data-theme='regia'] .tab__label {
+		font-size: 10px;
+		font-weight: 600;
+		letter-spacing: 0.04em;
+	}
+
+	[data-theme='regia'] .tab[aria-selected='true'] .tab__label {
+		font-weight: 500;
+		color: var(--ink);
+	}
 }

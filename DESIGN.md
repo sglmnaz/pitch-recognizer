@@ -32,7 +32,7 @@ System follows the device between Light and Dark.
 | Copper top (`copper`, dark) | copper, diamond weave | brown `#1f1b18` | dark brown, 4 px corners | amber; ivory chicken-head knobs |
 | Citrus (`citrus`, light) | beige, grille weave | orange `#e2671f` | white; black Start | black, white figures; glossy black knobs |
 | Black star (`blackstar`, dark) | graphite, perforated mesh | black `#151517` | graphite, 1 px corners; silver Start | ice white; knurled knobs, red pointer |
-| Broadcast light / dark (`regia`, both modes) | grey-green / blue-grey | grey-green `#b8bdb4` / blue-grey `#27313a` | light grey / blue-grey, 2 px corners; red ON AIR Start | oscilloscope: green phosphor, VT323 digits, scan lines; console knobs with blue / red caps, fader caps, bat-handle toggle |
+| Broadcast light / dark (`regia`, both modes) | grey-green / blue-grey | grey-green `#b8bdb4` / blue-grey `#27313a` | low flat caps in the screens' bezel (grey-green / near-black frame); backlit ON AIR Start | vector oscilloscope: green phosphor, thin Barlow Condensed digits, graticule, glass reflection; console knobs with blue / red caps, fader caps, bat-handle toggle, reverse-printed section legends |
 
 The amp themes also set the knob through `--knob-rim`, `--knob-cap`,
 `--knob-cap-inset`, `--knob-cap-ring`, `--knob-pointer` and, for a pointer
@@ -55,7 +55,7 @@ LCD windows, whatever the theme. Any subtree can force a mode with its own
    maps of the inline script in `index.html`.
 3. A button in Settings > Appearance (`data-theme-choice`).
 4. Only if tokens cannot draw it (a different fader cap, a toggle instead of
-   the slide, scan lines on the displays): `ts/styles/themes/<id>.css`, every
+   the slide, a graticule on the displays): `ts/styles/themes/<id>.css`, every
    rule scoped to `[data-theme='<id>']`, imported last in the components layer
    of `main.css` (Broadcast, `themes/regia.css`). A palette with both modes
    keys its blocks `[data-theme='<id>'][data-mode='light'], [data-theme='<id>'] [data-mode='light']`
