@@ -2,7 +2,7 @@
 // your ears (Audio delay, tapping) and the microphone (Mic delay, the phone
 // hearing its own clicks), then Diagnostics: the field report, a live mic
 // check, the last session's timeline and log, fine-tuning by hand. Opened from
-// the Settings section and the Timing calibration link of Changes and Tab;
+// the Settings section and the Calibration key of Changes and Tab;
 // Back returns where you came from.
 import * as Metronome from '../../core/metronome'
 import * as Microphone from '../../core/microphone'

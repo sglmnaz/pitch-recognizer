@@ -335,10 +335,10 @@
 					<ul class="tab-list" aria-label="Exercises"></ul>
 				</div>
 			</div>
-			<!-- The end of the tab: the guide, and the way to the calibration page from the exercises that judge timing. -->
+			<!-- The end of the tab: the way to the calibration page from the exercises that judge timing, then the guide. -->
 			<div class="view-foot">
+				<button class="foot-key" type="button" data-action="open-calibration" data-only="changes tab">Calibration</button>
 				<button class="foot-key" type="button" data-help="trainer" aria-haspopup="dialog" aria-label="How to use the trainer">Guide</button>
-				<button class="cal-link" type="button" data-action="open-calibration" data-only="changes tab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 4v4M6 12v8M4 8h4M12 4v10M12 18v2M10 14h4M18 4v1M18 9v11M16 5h4"/></svg>Timing calibration</button>
 			</div>
 		</section>
 
@@ -1289,7 +1289,7 @@
 
 		<!-- Calibration (ts/features/calibration/calibration.view.ts): two guided steps that set
 		     Audio delay and Mic delay, and the diagnostics. No tab of its own: opened from the
-		     Settings section and the Timing calibration link of Changes and Tab, back to where you came from. -->
+		     Settings section and the Calibration key of Changes and Tab, back to where you came from. -->
 		<section class="view view--calibration" id="view-calibration" role="tabpanel" aria-labelledby="tab-settings" hidden>
 			<div class="plate">
 				<div class="plate__brand"><b>PLUCK</b><span>CALIBRATION · CB-2</span></div>
@@ -1482,7 +1482,7 @@
 		<ul>
 			<li>Pick a pair of chords (or up to four) and press Start with the mic on.</li>
 			<li><b>One minute</b>: switch back and forth as fast as you can; every clean change counts. Beat your best.</li>
-			<li><b>In time</b>: change on the metronome's beat. The display shows what the mic hears, the chord to play and the next one, and lights the beat of the chord you are on. The needle under it shows how far your last change was from the beat: left of the green zone is early, right is late; the dots are the changes before. A missed change lights the Miss lamp. Headphones work best. Calibrate the mic first (Timing calibration, at the bottom of the exercise; once per phone): without it every change reads late or early.</li>
+			<li><b>In time</b>: change on the metronome's beat. The display shows what the mic hears, the chord to play and the next one, and lights the beat of the chord you are on. The needle under it shows how far your last change was from the beat: left of the green zone is early, right is late; the dots are the changes before. A missed change lights the Miss lamp. Headphones work best. Calibrate the mic first (Calibration, at the bottom of the exercise; once per phone): without it every change reads late or early.</li>
 		</ul>
 		<h3>Tab</h3>
 		<ul>

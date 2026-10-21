@@ -1,6 +1,6 @@
 /* The end of each tab: small keys side by side at the bottom left, the
-   Guide last (and Reset before it on the Metronome; the Timing calibration
-   link after it on Trainer → Changes and Tab). Guide opens the dialog
+   Guide last (Reset before it on the Metronome, Calibration before it on
+   Trainer → Changes and Tab). Guide opens the dialog
    (ts/ui/help.ts), as the Guide row in Settings → Help does. */
 .view-foot {
 	/* Last even where a view reorders its blocks (Trainer → Changes uses order). */

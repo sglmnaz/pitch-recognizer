@@ -1,7 +1,7 @@
 /*
  * Calibration (ts/features/calibration/): the page's two guided steps, its
  * Diagnostics (field report, mic check, the last session's timeline, fine-tune),
- * the Calibration section on top of Settings and the Timing calibration link of
+ * the Calibration section on top of Settings and the Calibration key of
  * Changes and Tab.
  * Approved mockup: Claude Design, "Calibrazione". Colours are tokens only; what
  * sits on an LCD uses the LCD's own (--lcd-*), so every theme and display works.
@@ -597,31 +597,6 @@
 	/* As the A4 row's Change key. */
 	.key {
 		height: 40px;
-	}
-}
-
-/* Trainer → Changes and Tab: Timing calibration, muted like the guide's ? beside it. */
-.cal-link {
-	display: inline-flex;
-	align-items: center;
-	gap: var(--space-6);
-	min-height: var(--tap);
-	padding: 0;
-	border: none;
-	background: none;
-	color: var(--fg-muted);
-	font: 600 var(--text-xs) / 1 var(--font-ui);
-	letter-spacing: 0.08em;
-	text-transform: uppercase;
-	cursor: pointer;
-
-	&:hover {
-		color: var(--fg-secondary);
-	}
-
-	& svg {
-		width: 16px;
-		height: 16px;
 	}
 }
 

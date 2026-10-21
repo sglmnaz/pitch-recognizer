@@ -35,7 +35,7 @@ const tabs = {
 	settings: { view: createSettingsView(byId('view-settings'), () => lastTab), section: byId('view-settings') },
 } satisfies Record<string, { view: View; section: HTMLElement }>
 // Pages without a tab of their own: Calibration (from the Settings section and the
-// Timing calibration link of Changes and Tab; Settings stays lit, Back returns where you came from).
+// Calibration key of Changes and Tab; Settings stays lit, Back returns where you came from).
 let calibrationFrom: string | null = null
 // The app opened straight on a page: Back goes to Settings, not to the default tab.
 let booted = false

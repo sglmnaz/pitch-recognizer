@@ -1,5 +1,5 @@
 // The ways to the calibration page (the Settings section's Calibrate key, the
-// "Timing calibration" link of Changes and Tab) and the state of its two steps
+// "Calibration" foot key of Changes and Tab) and the state of its two steps
 // as the Settings section and the page show it: the value, when it was done,
 // a lamp green once done, amber until then.
 import * as Settings from '../../core/settings'
