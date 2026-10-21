@@ -22,6 +22,13 @@ const NAMING_MIN_MS = 150
 const STRUM_SEARCH_MS = 1500
 const CHROMA_FROM_MS = 40
 const CHROMA_TO_MS = 200
+// Lifting the fingers off the old chord sounds the open strings a moment
+// before the strum (a field log: changes read 90–270 ms early), and their
+// profile 40–200 ms on already holds the strum. Of the strums that sound like
+// the new chord within STRUM_PICK_MS of the first one, the loudest over its
+// first PEAK_MS is the strum; re-strums come a beat later.
+const STRUM_PICK_MS = 300
+const PEAK_MS = 80
 // Profiles older than this are no use to any strum still to be matched.
 const CHROMA_KEEP_MS = STRUM_SEARCH_MS + CHROMA_TO_MS
 // The level detector fires a frame or so after the strum reaches the mic.
@@ -129,6 +136,7 @@ export function createChangesSession(ui: SessionUi, metronome: MetronomeControl)
 	// change was dated (the next one's strum comes after it).
 	let strums: number[] = []
 	let chromas: { at: number; chroma: Float32Array }[] = []
+	let levels: { at: number; volume: number }[] = []
 	let namingDelays: number[] = []
 	let lastDated = -Infinity
 	let clean = 0
@@ -149,6 +157,7 @@ export function createChangesSession(ui: SessionUi, metronome: MetronomeControl)
 		onsets = []
 		strums = []
 		chromas = []
+		levels = []
 		namingDelays = []
 		lastDated = -Infinity
 		clean = 0
@@ -273,20 +282,25 @@ export function createChangesSession(ui: SessionUi, metronome: MetronomeControl)
 		const seq = config.sequence
 		const before = seq[(seq.indexOf(symbol) - 1 + seq.length) % seq.length]
 		const candidates = strums.filter((t) => t > lastDated && t >= named - STRUM_SEARCH_MS && t <= named - NAMING_MIN_MS)
-		for (const t of candidates) {
+		const sounding = candidates.filter((t) => {
 			const profile = profileAfter(t)
-			if (profile && Changes.chordShare(profile, symbol) > Changes.chordShare(profile, before)) return { at: t, matched: true }
+			return profile !== null && Changes.chordShare(profile, symbol) > Changes.chordShare(profile, before)
+		})
+		if (sounding.length) {
+			const peak = (t: number) => Math.max(0, ...levels.filter((l) => l.at >= t && l.at <= t + PEAK_MS).map((l) => l.volume))
+			const near = sounding.filter((t) => t - sounding[0] <= STRUM_PICK_MS)
+			return { at: near.reduce((loudest, t) => (peak(t) > peak(loudest) ? t : loudest)), matched: true }
 		}
 		const recent = candidates.filter((t) => t >= named - Changes.ATTACK_LEAD_MS).pop()
 		return recent === undefined ? null : { at: recent, matched: false }
 	}
 
 	/**
-	 * One mic frame: whether it was strummed, the chord heard (null = none) and
-	 * the frame's pitch-class profile (null = too quiet or not given).
+	 * One mic frame: whether it was strummed, the chord heard (null = none),
+	 * the frame's pitch-class profile (null = too quiet or not given) and level (RMS).
 	 * True when a One-minute session's time just ran out (the view ends it).
 	 */
-	function frame(now: number, strum: boolean, symbol: string | null, chroma: Float32Array | null = null): boolean {
+	function frame(now: number, strum: boolean, symbol: string | null, chroma: Float32Array | null = null, volume = 0): boolean {
 		const attack = strum && !(clicking && Math.abs(now - lastClickAt) <= CLICK_MASK_MS)
 		const onset = stabilizer.feed(symbol, now, attack)
 		ui.heard(stabilizer.current())
@@ -308,8 +322,10 @@ export function createChangesSession(ui: SessionUi, metronome: MetronomeControl)
 				ui.probe?.({ kind: 'strum', at: now })
 			}
 			if (chroma) chromas.push({ at: now, chroma })
+			levels.push({ at: now, volume })
 			strums = strums.filter((t) => now - t < CONFIRM_MS + STRUM_SEARCH_MS)
 			chromas = chromas.filter((c) => now - c.at < CHROMA_KEEP_MS)
+			levels = levels.filter((l) => now - l.at < CHROMA_KEEP_MS)
 			if (onset) {
 				// Unmasked strums: one right on the click is masked above as the click, yet it is when the change was played.
 				const struck = strumOf(onset.symbol, onset.at)
