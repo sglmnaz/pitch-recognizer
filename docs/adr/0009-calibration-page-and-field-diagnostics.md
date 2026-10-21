@@ -48,8 +48,13 @@ in 567d68b). The phone's own audio and timing were the missing evidence.
 
 - One place explains and holds the calibration; the exercises point there.
 - A field report is the first step of any timing bug on a device: no more
-  constants tuned from summaries. A replay script that feeds a report through
-  `processFrame` and the sessions is the next piece, written when the first
-  report arrives.
+  constants tuned from summaries. `npm run replay` lines a report's audio up
+  with its log by the recorded clicks and tries the detectors and dating rules
+  on the real sound. The first report (a Xiaomi) showed the recognizer names a
+  chord 160–450 ms after the strum (not the ~1 s guessed from summaries), the
+  old strum rule firing on the clicks and missing strums after the fingers'
+  noise, and the player strumming ~110 ms ahead of the click; the strum
+  detector and the choice of strum were retuned on it (35 of 36 changes within
+  60 ms of the real strum, against 30).
 - Reports are lost when the app closes (no IndexedDB for now); sharing them is
   the way to keep one.

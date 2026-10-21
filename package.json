@@ -23,6 +23,7 @@
 		"check:changes": "node scripts/changes-check.ts",
 		"check:tab": "node scripts/tab-check.ts",
 		"check:settings": "node scripts/settings-check.ts",
+		"replay": "node scripts/replay.ts",
 		"bench": "node scripts/bench.ts",
 		"test:visual": "playwright test",
 		"test:visual:update": "playwright test --update-snapshots"

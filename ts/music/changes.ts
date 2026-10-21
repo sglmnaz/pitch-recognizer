@@ -143,6 +143,51 @@ export function chordShare(chroma: ArrayLike<number>, symbol: string): number {
 	return share
 }
 
+/* Strums --------------------------------------------------------------------- */
+
+// A strum is a jump in the energy of the newest samples (ts/music/tab.ts
+// newestEnergy, 23 ms) to STRUM_RISE times the quietest of the last
+// STRUM_LOOK_MS and STRUM_STEP times the frame before; then nothing for
+// STRUM_REFRACTORY_MS. Tuned on a field report replayed through
+// scripts/replay.ts (45 strums, the clicks through the phone's speaker): 40
+// fired once and 5 twice, 2 fires away from any strum, where the old rule
+// (the mic's attack state or a 1.5x level rise, held while the rise lasted)
+// fired 103 times away from strums, mostly on the clicks, and missed a strum
+// right after its fingers' noise. Lower rises fire on clicks and string noise,
+// higher ones begin to miss strums on a still ringing chord.
+const STRUM_LOOK_MS = 60
+const STRUM_RISE = 6
+const STRUM_STEP = 1.3
+const STRUM_REFRACTORY_MS = 120
+// Mean square of ~-64 dBFS: under it nothing is a strum (as Tab's picks).
+const STRUM_FLOOR = 4e-7
+
+export interface StrumDetector {
+	/** One frame's newest energy: true when a strum starts. */
+	feed(now: number, energy: number): boolean
+	reset(): void
+}
+
+export function createStrumDetector(): StrumDetector {
+	let history: { at: number; energy: number }[] = []
+	let last = Number.NEGATIVE_INFINITY
+	return {
+		feed(now, energy) {
+			const quietest = Math.min(...history.filter((h) => now - h.at <= STRUM_LOOK_MS).map((h) => h.energy))
+			const before = history[history.length - 1]?.energy ?? Number.POSITIVE_INFINITY
+			history.push({ at: now, energy })
+			history = history.filter((h) => now - h.at <= STRUM_LOOK_MS)
+			const strum = energy > STRUM_FLOOR && energy > STRUM_RISE * quietest && energy > STRUM_STEP * before && now - last >= STRUM_REFRACTORY_MS
+			if (strum) last = now
+			return strum
+		},
+		reset() {
+			history = []
+			last = Number.NEGATIVE_INFINITY
+		},
+	}
+}
+
 /* One-minute changes --------------------------------------------------------- */
 
 // After a counted change nothing counts for this long: a recognizer flipping

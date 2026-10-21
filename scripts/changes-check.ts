@@ -7,6 +7,7 @@ import {
 	CLEAN_PASSES,
 	createChangeCounter,
 	createStabilizer,
+	createStrumDetector,
 	DEFAULT_SEQUENCE,
 	HISTORY,
 	hitWindow,
@@ -266,6 +267,35 @@ const strums = (symbols: string[], ms: number): Segments => symbols.map((s) => [
 	check('corrupt storage reads as no record', loadRecord(['A', 'D'], 60).best === 0)
 }
 
+/* Strum detector (Changes.createStrumDetector) ------------------------------- */
+{
+	// Frames every 16.7 ms: room noise wobbling up to 2x, a click (x4 for a frame), a strum
+	// (x60, ringing down), its second peak 80 ms on (inside the refractory), a strum 500 ms later.
+	const fired: number[] = []
+	const detector = createStrumDetector()
+	let seed = 3
+	const noise = () => {
+		seed = (seed * 16807) % 2147483647
+		return 1e-6 * (1 + seed / 2147483647)
+	}
+	const events: [number, number][] = [
+		[300, 4e-6],
+		[600, 6e-5],
+		[680, 8e-5],
+		[1100, 6e-5],
+	]
+	for (let t = 0; t < 1500; t += FRAME) {
+		const hit = events.filter(([at]) => t >= at && t - at < FRAME).map(([, e]) => e)[0]
+		const ringing = Math.max(0, ...events.filter(([at, e]) => t > at && e > 1e-5).map(([at, e]) => e * Math.exp(-(t - at) / 120)))
+		if (detector.feed(t, (hit ?? 0) + ringing + noise())) fired.push(Math.round(t))
+	}
+	check(
+		'strums: fired once per strum, not on noise, a click or a second peak',
+		fired.length === 2 && Math.abs(fired[0] - 600) < 20 && Math.abs(fired[1] - 1100) < 20,
+		fired.join(' ')
+	)
+}
+
 /* Session state machine (ts/features/trainer/changes.session.ts) ------------- */
 {
 	// Pitch-class profiles of the two chords as the strings sound them.
@@ -349,7 +379,12 @@ const strums = (symbols: string[], ms: number): Segments => symbols.map((s) => [
 	 * recognizer names the chord `namingMs` after the downbeat, straight from
 	 * the last one (no gap), so only the strum makes it a change.
 	 */
-	function inTime(strumOffset: number, ms = 12_000, namingMs = RECOGNITION_LATENCY_MS, { everyBeat = false, profiles = false } = {}) {
+	function inTime(
+		strumOffset: number,
+		ms = 12_000,
+		namingMs = RECOGNITION_LATENCY_MS,
+		{ everyBeat = false, profiles = false, liftMs = 0, secondPeakMs = 0 } = {}
+	) {
 		const h = harness()
 		h.session.start({ mode: 'time', sequence: ['G', 'C'], seconds: 60, beats: 2, bpm: 120, speedUp: true, countIn: true, volume: 1 }, 0)
 		const downbeats: number[] = []
@@ -365,12 +400,21 @@ const strums = (symbols: string[], ms: number): Segments => symbols.map((s) => [
 				if (index >= 4 && index % 2 === 0) downbeats.push(nextClick)
 				if (index >= 4) beats.push(nextClick)
 			}
+			// The downbeat to come too (not clicked yet): the lifted fingers sound before it.
+			const coming = [...downbeats, (downbeats.at(-1) ?? 2000) + (2 * 60_000) / h.metro.bpm]
 			const named = downbeats.filter((d) => d + namingMs <= t).length
-			const strum = (everyBeat ? beats : downbeats).some((d) => d + strumOffset > t - FRAME && d + strumOffset <= t)
+			const struck = (everyBeat ? beats : downbeats).map((d) => d + strumOffset)
+			// Field cases (scripts/replay.ts): the open strings of the lifted fingers, quiet, liftMs
+			// before each change, and the strum's own second peak, louder, secondPeakMs after it.
+			const lifts = liftMs ? coming.map((d) => d + strumOffset - liftMs) : []
+			const seconds = secondPeakMs ? downbeats.map((d) => d + strumOffset + secondPeakMs) : []
+			const strum = [...struck, ...lifts, ...seconds].some((at) => at > t - FRAME && at <= t)
 			// What the strings sound like: the chord changes at the strum on its downbeat.
 			const played = downbeats.filter((d) => d + strumOffset <= t).length
 			const profile = profiles ? CHROMA[played ? ['G', 'C'][(played - 1) % 2] : 'G'] : null
-			h.session.frame(t, strum, named ? ['G', 'C'][(named - 1) % 2] : 'G', profile)
+			const ring = (events: number[], level: number) => Math.max(0, ...events.filter((at) => at <= t).map((at) => level * Math.exp(-(t - at) / 150)))
+			const volume = Math.max(ring(struck, 1), ring(lifts, 0.08), ring(seconds, 1.4))
+			h.session.frame(t, strum, named ? ['G', 'C'][(named - 1) % 2] : 'G', profile, volume)
 		}
 		return h
 	}
@@ -408,6 +452,20 @@ const strums = (symbols: string[], ms: number): Segments => symbols.map((s) => [
 			'in time: named a second late, strummed on every beat: dated by the strum that sounds like the new chord',
 			marks.length >= 5 && marks.every((m) => m === 'hit') && offsets.every((dt) => dt !== null && Math.abs(dt - 100) <= 35),
 			`${marks.join(' ')} | ${offsets.map((dt) => (dt === null ? '-' : dt.toFixed(0))).join(' ')}`
+		)
+	}
+	{
+		// A field report (scripts/replay.ts) had all three: quiet open strings as the fingers
+		// left the old chord (here 180 ms before the strum, sounding like the new chord by
+		// then), the strum's own second peak 130 ms on and louder, and a chord named right
+		// with its strum (named early while the old one rang). The first strum at least half
+		// as loud as the loudest dates it.
+		const h = inTime(100, 12_000, 103, { everyBeat: true, profiles: true, liftMs: 180, secondPeakMs: 130 })
+		const offsets = h.of('offset') as (number | null)[]
+		check(
+			'in time: not the lifted fingers, not the second peak, not missed when named with the strum: the strum',
+			offsets.length >= 5 && offsets.every((dt) => dt !== null && Math.abs(dt - 85) <= 20),
+			offsets.map((dt) => (dt === null ? '-' : dt.toFixed(0))).join(' ')
 		)
 	}
 	{

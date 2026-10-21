@@ -4,6 +4,8 @@
 import * as Microphone from '../../core/microphone'
 import * as Settings from '../../core/settings'
 import { createChordTracker, PITCH_CLASSES, withSilenceReset } from '../../music/chords'
+import { createStrumDetector } from '../../music/changes'
+import { newestEnergy } from '../../music/tab'
 
 /**
  * What the recognizer hears right now. Contract: `symbol` spelt like
@@ -49,41 +51,23 @@ export function heardChord(now: number): HeardChord | null {
 /** Forgets what the recognizer was following, so a new session (or a mic restart) starts clean. */
 export function resetHeard() {
 	tracker.reset()
-	levels = []
-	lastStrum = Number.NEGATIVE_INFINITY
+	strums.reset()
 }
 
-// The pitch pipeline's onset rule wants the level to double over its running
-// envelope: right for single notes, but a chord strummed while the previous
-// one still rings often rises less, so changes went uncounted. A rise of
-// STRUM_RISE over the quietest level of the last STRUM_WINDOW_MS counts too.
-// A held chord only decays, so it never trips this; a recognizer flip on it
-// stays a flip.
-const STRUM_RISE = 1.5
-const STRUM_WINDOW_MS = 250
-// One strum fires once. The mic's 'attack' state lasts several frames after
-// an onset, and a strum's level keeps rising for a few: counted every frame,
-// a phone logged ~16 strums a beat and any of them could date a change.
-const STRUM_REFRACTORY_MS = 120
-let levels: { at: number; volume: number }[] = []
-let lastStrum = Number.NEGATIVE_INFINITY
+// Strums from the energy of the newest samples (Changes.createStrumDetector,
+// tuned on a field report), not the mic's attack state or a level rise: those
+// fired on the metronome's clicks and on the fingers leaving the strings.
+const strums = createStrumDetector()
 
-/** A strum's attack this frame: what tells a played chord from a recognizer flip. */
+/** A strum's attack this frame: what tells a played chord from a recognizer flip, and what dates a change. */
 export function strummed(now: number): boolean {
 	if (fake !== undefined) {
 		const strum = fakeStrum
 		fakeStrum = false
 		return strum
 	}
-	const { reason, volume } = Microphone.getStats()
-	levels.push({ at: now, volume })
-	levels = levels.filter((level) => level.at >= now - STRUM_WINDOW_MS)
-	const quietest = Math.min(...levels.map((level) => level.volume))
-	if (!(reason === 'attack' || (Microphone.isSounding() && volume > STRUM_RISE * quietest))) return false
-	// Only the first frame of a run of attack frames, after STRUM_REFRACTORY_MS without one.
-	const fresh = now - lastStrum >= STRUM_REFRACTORY_MS
-	lastStrum = now
-	return fresh
+	const wave = Microphone.getWaveform()
+	return wave !== null && strums.feed(now, newestEnergy(wave))
 }
 
 /** ?debug chords are being fed: a session may start without the mic. */

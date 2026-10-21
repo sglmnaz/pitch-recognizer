@@ -490,7 +490,8 @@ export function createChangesView(root: HTMLElement): View {
 		// The session gets the time it was played: the mic hears it Mic delay later (Settings).
 		const power = Microphone.getFramePower()
 		const chroma = power ? Tab.chromaOf(power.power, power.binHz, Settings.get().a4) : null
-		if (session.frame(now - Settings.get().micDelayMs, strummed(now), heardChord(now)?.symbol ?? null, chroma)) finish(true)
+		const strum = strummed(now)
+		if (session.frame(now - Settings.get().micDelayMs, strum, heardChord(now)?.symbol ?? null, chroma, Microphone.getStats().volume)) finish(true)
 	}
 
 	// ?debug: fake chords drive frames while the mic is off.
