@@ -14,7 +14,7 @@ export const probing = () => DEBUG || Settings.get().timingLog
 export type ProbeEntry =
 	| { kind: 'beat'; heardAt: number; stampedAt: number | null }
 	| { kind: 'strum'; at: number }
-	| { kind: 'named'; at: number; symbol: string; struck: number | null; how: string }
+	| { kind: 'named'; at: number; symbol: string; struck: number | null }
 	| { kind: 'judged'; dt: number | null; mark: string }
 	| { kind: 'pick'; at: number }
 	| { kind: 'due'; at: number }
@@ -50,10 +50,7 @@ export function createProbe() {
 		const named = of('named')
 		if (named.length) {
 			const dated = named.filter((n) => n.struck !== null)
-			const how = (h: string) => named.filter((n) => n.how === h).length
-			lines.push(
-				`strums heard ${strums.length} · changes dated ${named.length}: by a strum that sounds like it ${how('sound')} · by the last strum ${how('recent')} · by naming ${how('none')}`
-			)
+			lines.push(`strums heard ${strums.length} · chords named ${named.length} · dated by a strum ${dated.length}`)
 			lines.push(`named − dating strum (25/50/75%) ${quartiles(dated.map((n) => n.at - n.struck!))}`)
 			lines.push('each named chord: ms back to the last 3 strums before it')
 			for (const n of named.slice(0, 16)) {
@@ -62,7 +59,7 @@ export function createProbe() {
 					.slice(-3)
 					.reverse()
 					.map((t) => ms(n.at - t))
-				lines.push(`  ${n.symbol.padEnd(4)} ${n.how.padEnd(6)} ${n.struck === null ? '' : `strum ${ms(n.at - n.struck)} before naming · `}${back.join(' / ')}`)
+				lines.push(`  ${n.symbol.padEnd(3)} ${n.struck === null ? 'fallback' : 'strum   '} ${back.join(' / ')}`)
 			}
 		}
 		const judged = of('judged')
@@ -72,7 +69,6 @@ export function createProbe() {
 			lines.push(
 				`judged ${judged.length}: hit ${count('hit')} · early ${count('early')} · late ${count('late')} · miss ${count('miss')} · dt (25/50/75%) ${quartiles(dts)}`
 			)
-			if (dts.length) lines.push(`dt in order: ${judged.map((j) => (j.dt === null ? 'miss' : ms(j.dt))).join(' ')}`)
 		}
 		const picks = of('pick').map((e) => e.at)
 		const due = of('due').map((e) => e.at)

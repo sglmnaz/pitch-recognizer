@@ -272,10 +272,7 @@ const strums = (symbols: string[], ms: number): Segments => symbols.map((s) => [
 	const CHROMA: Record<string, Float32Array> = {
 		G: Float32Array.from({ length: 12 }, (_, pc) => ([7, 11, 2].includes(pc) ? 1 / 3 : 0)),
 		C: Float32Array.from({ length: 12 }, (_, pc) => ([0, 4, 7].includes(pc) ? 1 / 3 : 0)),
-		// The six open strings: E A D G B (E twice).
-		open: Float32Array.from({ length: 12 }, (_, pc) => ([4, 9, 2, 7, 11].includes(pc) ? 1 / 5 : 0)),
 	}
-	const LIFT_MS = 280
 
 	/** A session with a recording UI and a fake metronome (tempo, running). */
 	function harness() {
@@ -352,7 +349,7 @@ const strums = (symbols: string[], ms: number): Segments => symbols.map((s) => [
 	 * recognizer names the chord `namingMs` after the downbeat, straight from
 	 * the last one (no gap), so only the strum makes it a change.
 	 */
-	function inTime(strumOffset: number, ms = 12_000, namingMs = RECOGNITION_LATENCY_MS, { everyBeat = false, profiles = false, liftOff = false } = {}) {
+	function inTime(strumOffset: number, ms = 12_000, namingMs = RECOGNITION_LATENCY_MS, { everyBeat = false, profiles = false } = {}) {
 		const h = harness()
 		h.session.start({ mode: 'time', sequence: ['G', 'C'], seconds: 60, beats: 2, bpm: 120, speedUp: true, countIn: true, volume: 1 }, 0)
 		const downbeats: number[] = []
@@ -368,22 +365,12 @@ const strums = (symbols: string[], ms: number): Segments => symbols.map((s) => [
 				if (index >= 4 && index % 2 === 0) downbeats.push(nextClick)
 				if (index >= 4) beats.push(nextClick)
 			}
-			// The next downbeat too, not clicked yet: a recognizer may name its chord early.
-			const slot = (2 * 60_000) / h.metro.bpm
-			const coming = [...downbeats, (downbeats.at(-1) ?? 2000) + slot]
-			const named = coming.filter((d) => d + namingMs <= t).length
-			const struck = (everyBeat ? beats : downbeats).map((d) => d + strumOffset)
-			// Lifting the fingers LIFT_MS before each change sounds the open strings, quietly.
-			const lifts = liftOff ? coming.map((d) => d + strumOffset - LIFT_MS) : []
-			const strum = [...struck, ...lifts].some((at) => at > t - FRAME && at <= t)
+			const named = downbeats.filter((d) => d + namingMs <= t).length
+			const strum = (everyBeat ? beats : downbeats).some((d) => d + strumOffset > t - FRAME && d + strumOffset <= t)
 			// What the strings sound like: the chord changes at the strum on its downbeat.
 			const played = downbeats.filter((d) => d + strumOffset <= t).length
-			const lifting = lifts.some((l) => t >= l && t < l + LIFT_MS)
-			const profile = profiles ? (lifting ? CHROMA.open : CHROMA[played ? ['G', 'C'][(played - 1) % 2] : 'G']) : null
-			const ring = (events: number[], level: number, decay: number) =>
-				Math.max(0, ...events.filter((at) => at <= t).map((at) => level * Math.exp(-(t - at) / decay)))
-			const volume = Math.max(ring(struck, 1, 200), ring(lifts, 0.08, 100))
-			h.session.frame(t, strum, named ? ['G', 'C'][(named - 1) % 2] : 'G', profile, volume)
+			const profile = profiles ? CHROMA[played ? ['G', 'C'][(played - 1) % 2] : 'G'] : null
+			h.session.frame(t, strum, named ? ['G', 'C'][(named - 1) % 2] : 'G', profile)
 		}
 		return h
 	}
@@ -421,30 +408,6 @@ const strums = (symbols: string[], ms: number): Segments => symbols.map((s) => [
 			'in time: named a second late, strummed on every beat: dated by the strum that sounds like the new chord',
 			marks.length >= 5 && marks.every((m) => m === 'hit') && offsets.every((dt) => dt !== null && Math.abs(dt - 100) <= 35),
 			`${marks.join(' ')} | ${offsets.map((dt) => (dt === null ? '-' : dt.toFixed(0))).join(' ')}`
-		)
-	}
-	{
-		// Chords that share notes: the recognizer names the new one 250 ms before
-		// the change, while the old one still rings. Dated by the last strum (the
-		// old chord's, a beat before) it read ~-500 ms; held until a strum sounds like it.
-		const h = inTime(100, 12_000, -250, { everyBeat: true, profiles: true })
-		const offsets = h.of('offset') as (number | null)[]
-		check(
-			'in time: a chord named before it is played waits for the strum that sounds like it',
-			offsets.length >= 5 && offsets.every((dt) => dt !== null && Math.abs(dt - 100) <= 35),
-			offsets.map((dt) => (dt === null ? '-' : dt.toFixed(0))).join(' ')
-		)
-	}
-	{
-		// The open strings ring 280 ms before each strum as the fingers leave the
-		// old chord: quiet, and to G they sound like G. The loud strum dates it
-		// (dated by the first strum that sounds like the chord, G changes read ~-200 ms).
-		const h = inTime(100, 12_000, 1100, { everyBeat: true, profiles: true, liftOff: true })
-		const offsets = h.of('offset') as (number | null)[]
-		check(
-			'in time: the open strings of lifted fingers do not date the change, the strum does',
-			offsets.length >= 5 && offsets.every((dt) => dt !== null && Math.abs(dt - 100) <= 35),
-			offsets.map((dt) => (dt === null ? '-' : dt.toFixed(0))).join(' ')
 		)
 	}
 	{
