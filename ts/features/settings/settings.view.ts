@@ -271,7 +271,19 @@ export function createSettingsView(root: HTMLElement, from: () => string | null)
 		}
 	}
 
+	// A4 is locked behind its Change key: a brush while scrolling once moved it to 451 Hz unseen.
+	const lockValue = root.querySelector<HTMLElement>('[data-lock-value]')!
+	const lockPanel = root.querySelector<HTMLElement>('[data-lock-panel]')!
+	const unlock = root.querySelector<HTMLButtonElement>('[data-unlock]')!
+	function setLocked(locked: boolean) {
+		lockPanel.hidden = locked
+		unlock.textContent = locked ? 'Change' : 'Done'
+		unlock.setAttribute('aria-expanded', String(!locked))
+	}
+	unlock.addEventListener('click', () => setLocked(!lockPanel.hidden))
+
 	function sync() {
+		lockValue.textContent = `${Settings.get().a4} Hz`
 		syncSwitches()
 		renderChips()
 		syncEarChips()
@@ -286,6 +298,7 @@ export function createSettingsView(root: HTMLElement, from: () => string | null)
 
 	return {
 		onActivate() {
+			setLocked(true)
 			sync()
 			// The section of the tab you came from opens (Appearance when the app
 			// started here) and comes to the top.

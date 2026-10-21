@@ -21,7 +21,7 @@ import { focusMicButton } from '../../ui/mic-block'
 import { faking, heardChord, installDebugHook, resetHeard, strummed } from './changes.recognizer'
 import { showLed } from './led'
 import { clockText, createChangesSession, verdict } from './changes.session'
-import { createProbe, probing, showProbe } from './timing-probe'
+import { createProbe } from './timing-probe'
 import * as FieldReport from '../calibration/field-report'
 
 // Screen readers hear the count at most this often (a change can come every 250 ms).
@@ -426,7 +426,6 @@ export function createChangesView(root: HTMLElement): View {
 		const wasTime = session.config().mode === 'time'
 		const ended = session.end(finished)
 		if (wasTime) FieldReport.sessionEnded(probe.finish('changes'), `Changes · In time · ${session.config().sequence.join(' ')}`)
-		if (wasTime && probing()) showProbe(status, probe.summary())
 		wakeLock.release()
 		if (ended?.mode === 'minute') {
 			const { count, before } = ended
@@ -491,7 +490,9 @@ export function createChangesView(root: HTMLElement): View {
 		const power = Microphone.getFramePower()
 		const chroma = power ? Tab.chromaOf(power.power, power.binHz, Settings.get().a4) : null
 		const strum = strummed(now)
-		if (session.frame(now - Settings.get().micDelayMs, strum, heardChord(now)?.symbol ?? null, chroma, Microphone.getStats().volume)) finish(true)
+		// The drill's own chords only: the recognizer's close relatives (Em7 for G) count as them.
+		const symbol = Changes.sequenceChord(heardChord(now)?.symbol ?? null, isRunning() ? session.config().sequence : selection())
+		if (session.frame(now - Settings.get().micDelayMs, strum, symbol, chroma, Microphone.getStats().volume)) finish(true)
 	}
 
 	// ?debug: fake chords drive frames while the mic is off.

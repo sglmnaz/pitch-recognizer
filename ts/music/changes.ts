@@ -143,6 +143,27 @@ export function chordShare(chroma: ArrayLike<number>, symbol: string): number {
 	return share
 }
 
+/**
+ * The chord of `sequence` a recognized `symbol` stands for: the one sharing
+ * the most notes with it (at least two), or null when two tie or it is no
+ * chord. The drill only has to tell its own chords apart, and the recognizer
+ * names close relatives: on a field report an open G read Em7 (E G B D holds
+ * all of G B D) and C read A7, so only 13 of 28 changes found their chord by
+ * name, 26 this way.
+ */
+export function sequenceChord(symbol: string | null, sequence: readonly string[]): string | null {
+	if (symbol === null) return null
+	if (sequence.includes(symbol)) return symbol
+	const notes = (s: string) => {
+		const chord = parseChordSymbol(s)
+		return chord ? new Set(semitonesOf(chord.type).map((n) => (chord.rootPc + n) % 12)) : new Set<number>()
+	}
+	const heard = notes(symbol)
+	const shared = sequence.map((s) => [...notes(s)].filter((pc) => heard.has(pc)).length)
+	const best = Math.max(...shared)
+	return best >= 2 && shared.filter((n) => n === best).length === 1 ? sequence[shared.indexOf(best)] : null
+}
+
 /* Strums --------------------------------------------------------------------- */
 
 // A strum is a jump in the energy of the newest samples (ts/music/tab.ts
@@ -161,6 +182,9 @@ const STRUM_STEP = 1.3
 const STRUM_REFRACTORY_MS = 120
 // Mean square of ~-64 dBFS: under it nothing is a strum (as Tab's picks).
 const STRUM_FLOOR = 4e-7
+// Nothing for this long after the first frame: the mic going from digital
+// silence to the room fired strums in total silence (the Mic check, a phone).
+const STRUM_WARMUP_MS = 500
 
 export interface StrumDetector {
 	/** One frame's newest energy: true when a strum starts. */
@@ -171,19 +195,27 @@ export interface StrumDetector {
 export function createStrumDetector(): StrumDetector {
 	let history: { at: number; energy: number }[] = []
 	let last = Number.NEGATIVE_INFINITY
+	let startedAt: number | null = null
 	return {
 		feed(now, energy) {
+			startedAt ??= now
 			const quietest = Math.min(...history.filter((h) => now - h.at <= STRUM_LOOK_MS).map((h) => h.energy))
 			const before = history[history.length - 1]?.energy ?? Number.POSITIVE_INFINITY
 			history.push({ at: now, energy })
 			history = history.filter((h) => now - h.at <= STRUM_LOOK_MS)
-			const strum = energy > STRUM_FLOOR && energy > STRUM_RISE * quietest && energy > STRUM_STEP * before && now - last >= STRUM_REFRACTORY_MS
+			const strum =
+				now - startedAt >= STRUM_WARMUP_MS &&
+				energy > STRUM_FLOOR &&
+				energy > STRUM_RISE * quietest &&
+				energy > STRUM_STEP * before &&
+				now - last >= STRUM_REFRACTORY_MS
 			if (strum) last = now
 			return strum
 		},
 		reset() {
 			history = []
 			last = Number.NEGATIVE_INFINITY
+			startedAt = null
 		},
 	}
 }

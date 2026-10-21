@@ -75,8 +75,8 @@ export interface Settings {
 	 * Metronome → Mic delay, measured by the mic hearing the clicks): Changes
 	 * and Tab date what the mic hears that much earlier. */
 	micDelayMs: number
-	/** Calibration → Diagnostics → Timing log: Changes In time and Tab show their timing log (timing-probe.ts). */
-	timingLog: boolean
+	/** Calibration → Diagnostics → Field report: record every Changes In time and Tab session (the last 3 kept). */
+	fieldReport: boolean
 	/** When Calibration's two steps were last done (Date.now(); 0 = never): the page's status and the CAL keys. */
 	audioCalibratedAt: number
 	micCalibratedAt: number
@@ -174,7 +174,7 @@ const defaults: Settings = {
 	metroFlash: false,
 	audioDelayMs: 0,
 	micDelayMs: 0,
-	timingLog: false,
+	fieldReport: false,
 	audioCalibratedAt: 0,
 	micCalibratedAt: 0,
 	metroTrainerOn: false,
@@ -287,7 +287,7 @@ export function load(): Settings {
 		metroFlash: bool(s.metroFlash, d.metroFlash),
 		audioDelayMs: clamp(s.audioDelayMs, -200, 400, d.audioDelayMs, true),
 		micDelayMs: clamp(s.micDelayMs, -500, 1000, d.micDelayMs, true),
-		timingLog: bool(s.timingLog, d.timingLog),
+		fieldReport: bool(s.fieldReport, d.fieldReport),
 		audioCalibratedAt: clamp(s.audioCalibratedAt, 0, Number.MAX_SAFE_INTEGER, d.audioCalibratedAt, true),
 		micCalibratedAt: clamp(s.micCalibratedAt, 0, Number.MAX_SAFE_INTEGER, d.micCalibratedAt, true),
 		metroTrainerOn: bool(s.metroTrainerOn, d.metroTrainerOn),

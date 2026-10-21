@@ -29,7 +29,9 @@
 		height: 16px;
 		margin-left: var(--space-8);
 		background: var(--lcd-ink);
-		mask: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><path d='M3 3l10 10M13 3L3 13' stroke='black' stroke-width='2.4'/></svg>") center / contain no-repeat;
+		mask:
+			url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><path d='M3 3l10 10M13 3L3 13' stroke='black' stroke-width='2.4'/></svg>")
+			center / contain no-repeat;
 		cursor: pointer;
 	}
 }
@@ -181,7 +183,6 @@
 .settings__section + .settings__section {
 	border-top: 1.5px solid var(--rule);
 }
-
 
 .settings__heading {
 	display: flex;
@@ -355,5 +356,31 @@
 
 	.view--settings .chip {
 		height: var(--tap);
+	}
+}
+
+/* A setting behind a Change key (A4): its value in an LCD, the controls only once opened. */
+.settings-lock {
+	display: flex;
+	align-items: center;
+	gap: var(--space-8);
+
+	.lcd {
+		min-width: 76px;
+		text-align: center;
+	}
+
+	.key {
+		height: 40px;
+	}
+}
+
+.settings-lock__panel {
+	display: flex;
+	flex-direction: column;
+	gap: var(--space-8);
+
+	.range {
+		width: 100%;
 	}
 }

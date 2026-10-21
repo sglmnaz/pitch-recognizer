@@ -67,6 +67,7 @@ export function strummed(now: number): boolean {
 		return strum
 	}
 	const wave = Microphone.getWaveform()
+	// No noise gate on top: on two field reports the mic's gate (or 10 dB over its noise floor) lost 4–11 strums of ~40.
 	return wave !== null && strums.feed(now, newestEnergy(wave))
 }
 

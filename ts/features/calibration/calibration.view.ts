@@ -164,7 +164,7 @@ export function createCalibrationView(root: HTMLElement, from: () => string | nu
 
 	function renderReports() {
 		arm.checked = FieldReport.isArmed()
-		armed.textContent = FieldReport.isArmed() ? 'Armed: starts with your next session, up to 3 minutes' : 'Off'
+		armed.textContent = FieldReport.isArmed() ? 'On: every session is recorded, up to 3 minutes each; the last 3 are kept' : 'Off'
 		files.replaceChildren(
 			...FieldReport.getReports().map((report) => {
 				const row = document.createElement('div')
@@ -232,7 +232,7 @@ export function createCalibrationView(root: HTMLElement, from: () => string | nu
 		)
 	})
 
-	/* Fine-tune by hand, timing log, device -------------------------------------- */
+	/* Fine-tune by hand, device -------------------------------------------------- */
 	for (const button of $$<HTMLElement>('[data-nudge]')) {
 		button.addEventListener('click', () => {
 			const [key, step] = button.dataset.nudge!.split(':') as [keyof typeof RANGES, string]
@@ -240,8 +240,6 @@ export function createCalibrationView(root: HTMLElement, from: () => string | nu
 			Settings.update({ [key]: clamp(Settings.get()[key] + Number(step), min, max) })
 		})
 	}
-	const timingLog = $<HTMLInputElement>('[data-timing-log]')
-	timingLog.addEventListener('change', () => Settings.update({ timingLog: timingLog.checked }))
 	const device = $<HTMLElement>('[data-device]')
 
 	function render() {
@@ -258,7 +256,6 @@ export function createCalibrationView(root: HTMLElement, from: () => string | nu
 			const ms = s[el.dataset.fine as keyof typeof RANGES]
 			el.textContent = `${ms < 0 ? '−' : ms > 0 ? '+' : ''}${Math.abs(ms)} MS`
 		}
-		timingLog.checked = s.timingLog
 		const latency = Metronome.latencies()
 		const track = Microphone.getStream()?.getAudioTracks()[0]?.getSettings() as { latency?: number; sampleRate?: number } | undefined
 		device.textContent = `Browser: output ${latency.outputMs === null ? '– (play a click first)' : `${Math.round(latency.outputMs)} ms`} · mic ${track?.latency === undefined ? '–' : `${Math.round(track.latency * 1000)} ms`}${track?.sampleRate ? ` · ${track.sampleRate / 1000} kHz` : ''}`

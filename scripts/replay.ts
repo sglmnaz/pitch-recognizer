@@ -62,7 +62,8 @@ function onsets(signal: Float32Array, minStrength: number) {
 const beats = report.entries.filter((e) => e.kind === 'beat').map((e) => (e.heardAt as number) - report.recordStartedAt)
 const quiet = onsets(audio, 4)
 let offset = { x: 0, matched: 0 }
-for (let x = -1500; x <= 1500; x += 2) {
+// Within what the recorder's start can plausibly be off by: a wider search locks onto the clicks a beat or two away.
+for (let x = -300; x <= 500; x += 2) {
 	let matched = 0
 	for (const b of beats) if (quiet.some((o) => Math.abs(o.at - (b + x)) < 12)) matched++
 	if (matched > offset.matched) offset = { x, matched }

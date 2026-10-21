@@ -870,20 +870,27 @@
 						<div class="switch switch--wrap">
 							<span class="switch__text">
 								<span class="switch__title">A4 reference</span>
-								<span class="switch__desc">Concert pitch for Tuner, Trainer, Scales and Chords</span>
+								<span class="switch__desc">Concert pitch for Tuner, Trainer, Scales and Chords. Leave it at 440 unless you tune to another pitch</span>
 							</span>
-							<span class="number">
-								<input type="number" class="input" min="415" max="466" step="0.1" inputmode="decimal" data-setting="a4" aria-label="A4 frequency in Hz, number field" />
-								<span class="number__unit">Hz</span>
+							<!-- Locked: a brush while scrolling must not retune every tab (settings.view.ts). -->
+							<span class="settings-lock">
+								<span class="window"><span class="lcd" data-lock-value></span></span>
+								<button class="key" type="button" data-unlock aria-expanded="false" aria-controls="a4Controls">Change</button>
 							</span>
-							<input type="range" class="range switch__wide" min="415" max="466" step="1" data-setting="a4" aria-label="A4 frequency, slider" />
-							<span class="switch__wide settings__presets">
-								<button class="link-btn" type="button" data-set="a4:415">415</button>
-								<button class="link-btn" type="button" data-set="a4:432">432</button>
-								<button class="link-btn" type="button" data-set="a4:440">440</button>
-								<button class="link-btn" type="button" data-set="a4:442">442</button>
-								<button class="link-btn" type="button" data-set="a4:466">466</button>
-							</span>
+							<div class="switch__wide settings-lock__panel" id="a4Controls" data-lock-panel hidden>
+								<span class="number">
+									<input type="number" class="input" min="415" max="466" step="0.1" inputmode="decimal" data-setting="a4" aria-label="A4 frequency in Hz, number field" />
+									<span class="number__unit">Hz</span>
+								</span>
+								<input type="range" class="range" min="415" max="466" step="1" data-setting="a4" aria-label="A4 frequency, slider" />
+								<span class="settings__presets">
+									<button class="link-btn" type="button" data-set="a4:415">415</button>
+									<button class="link-btn" type="button" data-set="a4:432">432</button>
+									<button class="link-btn" type="button" data-set="a4:440">440</button>
+									<button class="link-btn" type="button" data-set="a4:442">442</button>
+									<button class="link-btn" type="button" data-set="a4:466">466</button>
+								</span>
+							</div>
 						</div>
 						<label class="switch">
 							<span class="switch__text">
@@ -1298,8 +1305,8 @@
 				<h2 class="settings-group__title" id="calDiagnostics">Diagnostics</h2>
 
 				<div class="dg-card">
-					<span><span class="cb-title">Field report</span><span class="cb-sub">Records the mic and every timing event of your next Changes In time or Tab session, to replay it exactly as this phone heard it. Kept until the app closes.</span></span>
-					<label class="switch"><span class="switch__text"><span class="switch__title">Record the next session</span><span class="switch__desc" data-report-armed>Off</span></span><input type="checkbox" class="switch__input" data-report-arm /><span class="switch__track"></span></label>
+					<span><span class="cb-title">Field report</span><span class="cb-sub">Records the mic and every timing event of each Changes In time or Tab session while on, to replay it exactly as this phone heard it. The last 3 are kept until the app closes.</span></span>
+					<label class="switch"><span class="switch__text"><span class="switch__title">Record sessions</span><span class="switch__desc" data-report-armed>Off</span></span><input type="checkbox" class="switch__input" data-report-arm /><span class="switch__track"></span></label>
 					<div class="dg-files" data-reports></div>
 				</div>
 
@@ -1328,7 +1335,6 @@
 					<span class="cb-title">Fine-tune by hand</span>
 					<div class="dg-fine"><span class="switch__title">Audio delay</span><button class="key key--step" type="button" data-nudge="audioDelayMs:-5" aria-label="Audio delay 5 ms less">−</button><span class="window"><span class="lcd" data-fine="audioDelayMs"></span></span><button class="key key--step" type="button" data-nudge="audioDelayMs:5" aria-label="Audio delay 5 ms more">+</button></div>
 					<div class="dg-fine"><span class="switch__title">Mic delay</span><button class="key key--step" type="button" data-nudge="micDelayMs:-5" aria-label="Mic delay 5 ms less">−</button><span class="window"><span class="lcd" data-fine="micDelayMs"></span></span><button class="key key--step" type="button" data-nudge="micDelayMs:5" aria-label="Mic delay 5 ms more">+</button></div>
-					<label class="switch"><span class="switch__text"><span class="switch__title">Timing log</span><span class="switch__desc">After a Changes In time or Tab session, its log under the exercise, to copy</span></span><input type="checkbox" class="switch__input" data-timing-log /><span class="switch__track"></span></label>
 					<p class="switch__desc" data-device></p>
 				</div>
 			</section>

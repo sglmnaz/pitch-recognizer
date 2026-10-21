@@ -1,16 +1,11 @@
 // The timing log of a Changes In time or Tab session: field data instead of
 // guesses. When the clicks are heard, when the mic hears strums and picks, how
 // long the recognizer takes to name a chord, what each judged change or note
-// was off by. Summed up in a few lines to paste into a report (shown after a
-// session with Calibration → Diagnostics → Timing log, or ?debug), drawn as a
-// timeline on the calibration page, and saved whole in a field report.
+// was off by. Summed up in a few lines and drawn as a timeline on the
+// calibration page (Diagnostics → Last session), saved whole in a field report.
 import * as Metronome from '../../core/metronome'
 import * as Microphone from '../../core/microphone'
 import * as Settings from '../../core/settings'
-
-const DEBUG = new URLSearchParams(location.search).has('debug')
-/** Whether a session ends with its timing log shown (the log itself is always kept: a few entries a beat). */
-export const probing = () => DEBUG || Settings.get().timingLog
 
 /** Session times are the mic's (Mic delay already taken off); beats are BeatEvent.heardAt. */
 export type ProbeEntry =
@@ -160,28 +155,4 @@ export function changesTimeline(entries: ProbeEntry[]): TimelineRow[] {
 			mark: j.mark,
 		}
 	})
-}
-
-/** Shows `text` after `anchor` in a <pre> with a Copy button (one per anchor). */
-export function showProbe(anchor: HTMLElement, text: string) {
-	let box = anchor.nextElementSibling as HTMLElement | null
-	if (!box?.classList.contains('probe')) {
-		box = document.createElement('div')
-		box.className = 'probe debug'
-		const pre = document.createElement('pre')
-		const copy = document.createElement('button')
-		copy.type = 'button'
-		copy.className = 'btn'
-		copy.textContent = 'Copy timing log'
-		copy.addEventListener('click', () => {
-			navigator.clipboard?.writeText(pre.textContent ?? '').then(
-				() => (copy.textContent = 'Copied'),
-				() => (copy.textContent = 'Copy failed: select the text')
-			)
-		})
-		box.append(pre, copy)
-		anchor.after(box)
-	}
-	box.querySelector('pre')!.textContent = text
-	box.querySelector('button')!.textContent = 'Copy timing log'
 }

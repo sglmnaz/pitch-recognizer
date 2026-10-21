@@ -1,9 +1,9 @@
-// Calibration → Diagnostics → Field report: the mic of the next Changes In time
-// or Tab session, recorded exactly as the app hears it (voice processing off),
-// with the session's whole timing log, the settings and the device. Shared as
-// two files, it can be replayed offline through the same code to see what went
-// wrong on someone's phone instead of guessing from summaries. The reports live
-// until the app closes.
+// Calibration → Diagnostics → Field report: while on (fieldReport), the mic of
+// every Changes In time or Tab session, recorded exactly as the app hears it
+// (voice processing off), with the session's whole timing log, the settings
+// and the device. Shared as two files, it is replayed offline through the same
+// code (npm run replay) to see what went wrong on someone's phone instead of
+// guessing from summaries. The last KEEP live until the app closes.
 import * as Metronome from '../../core/metronome'
 import * as Microphone from '../../core/microphone'
 import * as Settings from '../../core/settings'
@@ -11,6 +11,8 @@ import type { ProbeSession } from '../trainer/timing-probe'
 
 // A longer session keeps its log; the recording stops here (a few MB).
 const MAX_RECORD_MS = 180_000
+// Reports kept (older ones dropped): a few MB each, in memory.
+const KEEP = 3
 
 export interface FieldReport {
 	title: string
@@ -21,7 +23,6 @@ export interface FieldReport {
 	events: number
 }
 
-let armed = false
 let recording: { recorder: MediaRecorder; chunks: Blob[]; startedAt: number; stopTimer: number } | null = null
 const reports: FieldReport[] = []
 const listeners: (() => void)[] = []
@@ -29,7 +30,7 @@ const changed = () => {
 	for (const listener of listeners) listener()
 }
 
-export const isArmed = () => armed
+export const isArmed = () => Settings.get().fieldReport
 export const getReports = (): readonly FieldReport[] => reports
 /** `listener` runs when arming changes or a report is ready. */
 export function onReports(listener: () => void) {
@@ -37,14 +38,14 @@ export function onReports(listener: () => void) {
 }
 
 export function arm(on: boolean) {
-	armed = on
+	Settings.update({ fieldReport: on })
 	changed()
 }
 
 /** A Changes In time or Tab session started: record it if armed (the mic is on by then). */
 export function sessionStarted() {
 	const stream = Microphone.getStream()
-	if (!armed || recording || !stream || typeof MediaRecorder === 'undefined') return
+	if (!isArmed() || recording || !stream || typeof MediaRecorder === 'undefined') return
 	const recorder = new MediaRecorder(stream)
 	const chunks: Blob[] = []
 	recorder.ondataavailable = (event) => chunks.push(event.data)
@@ -57,7 +58,6 @@ export function sessionEnded(session: ProbeSession, title: string) {
 	const run = recording
 	if (!run) return
 	recording = null
-	armed = false
 	clearTimeout(run.stopTimer)
 	const finished = () => {
 		const audio = new Blob(run.chunks, { type: run.recorder.mimeType })
@@ -90,6 +90,7 @@ export function sessionEnded(session: ProbeSession, title: string) {
 			log: new Blob([JSON.stringify(log)], { type: 'application/json' }),
 			events: session.entries.length,
 		})
+		reports.length = Math.min(reports.length, KEEP)
 		changed()
 	}
 	if (run.recorder.state === 'inactive') finished()

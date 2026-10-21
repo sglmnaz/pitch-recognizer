@@ -14,7 +14,7 @@ import { reducedMotion } from '../../ui/media'
 import { screenLock } from '../../ui/screen-lock'
 import { focusMicButton } from '../../ui/mic-block'
 import { createTabSession, type TabResult } from './tab.session'
-import { createProbe, probing, showProbe } from './timing-probe'
+import { createProbe } from './timing-probe'
 import * as FieldReport from '../calibration/field-report'
 
 // One beat takes this much paper whatever the subdivision, so 16ths sit
@@ -375,7 +375,6 @@ export function createTabView(root: HTMLElement): View {
 		const ex = session.config()?.exercise ?? exercise()
 		const ended = session.end()
 		FieldReport.sessionEnded(probe.finish('tab'), `Tab · ${ex.name}`)
-		if (probing()) showProbe(message, probe.summary())
 		wakeLock.release()
 		if (frameId) cancelAnimationFrame(frameId)
 		frameId = 0

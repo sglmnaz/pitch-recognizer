@@ -16,6 +16,7 @@ import {
 	offset,
 	recordKey,
 	REFRACTORY_MS,
+	sequenceChord,
 	saveSession,
 	STABLE_MS,
 	validSequence,
@@ -267,6 +268,16 @@ const strums = (symbols: string[], ms: number): Segments => symbols.map((s) => [
 	check('corrupt storage reads as no record', loadRecord(['A', 'D'], 60).best === 0)
 }
 
+/* The drill's own chords (Changes.sequenceChord) ------------------------------ */
+check(
+	"recognized relatives count as the drill's chord (field report: G read Em7, C read A7)",
+	sequenceChord('Em7', ['G', 'C']) === 'G' && sequenceChord('A7', ['G', 'C']) === 'C' && sequenceChord('C', ['G', 'C']) === 'C'
+)
+check(
+	'a chord sharing too little, or as much with two of them, is none of them',
+	sequenceChord('D', ['G', 'C']) === null && sequenceChord('Am', ['C', 'F']) === null && sequenceChord(null, ['G', 'C']) === null
+)
+
 /* Strum detector (Changes.createStrumDetector) ------------------------------- */
 {
 	// Frames every 16.7 ms: room noise wobbling up to 2x, a click (x4 for a frame), a strum
@@ -294,6 +305,13 @@ const strums = (symbols: string[], ms: number): Segments => symbols.map((s) => [
 		fired.length === 2 && Math.abs(fired[0] - 600) < 20 && Math.abs(fired[1] - 1100) < 20,
 		fired.join(' ')
 	)
+}
+{
+	// The mic starting: digital silence, then the room's noise 100 ms on. Nothing is a strum.
+	const detector = createStrumDetector()
+	let fired = 0
+	for (let t = 0; t < 1000; t += FRAME) if (detector.feed(t, t < 100 ? 0 : 1e-6)) fired++
+	check('strums: none from the mic starting up', fired === 0, String(fired))
 }
 
 /* Session state machine (ts/features/trainer/changes.session.ts) ------------- */
