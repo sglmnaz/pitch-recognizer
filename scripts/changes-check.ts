@@ -342,7 +342,7 @@ const strums = (symbols: string[], ms: number): Segments => symbols.map((s) => [
 		let index = 0
 		for (let t = 0; t < ms; t += FRAME) {
 			for (; nextClick <= t; index++, nextClick += 60_000 / h.metro.bpm) {
-				h.session.beat({ time: 0, bar: Math.floor(index / 2), beat: index % 2, sub: 0, accent: 1, bpm: h.metro.bpm }, nextClick)
+				h.session.beat({ time: 0, bar: Math.floor(index / 2), beat: index % 2, sub: 0, accent: 1, bpm: h.metro.bpm, heardAt: nextClick }, nextClick)
 				if (index >= 4 && index % 2 === 0) downbeats.push(nextClick)
 			}
 			const named = downbeats.filter((d) => d + RECOGNITION_LATENCY_MS <= t).length

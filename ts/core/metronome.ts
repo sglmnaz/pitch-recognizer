@@ -39,6 +39,8 @@ export interface BeatEvent {
 	accent: Accent
 	/** Tempo this click was scheduled at (moves while the speed trainer runs). */
 	bpm: number
+	/** performance.now() time the click is heard at: the callback itself can run up to a frame later. */
+	heardAt: number
 }
 
 export interface State {
@@ -206,7 +208,7 @@ const stepTime = () => beatTime + (sub * beatDur) / config.subdivision
 
 function playStep(time: number) {
 	const accent = config.accents[beat] ?? 1
-	pending.push({ time, bar, beat, sub, accent, bpm: liveBpm })
+	pending.push({ time, bar, beat, sub, accent, bpm: liveBpm, heardAt: 0 })
 	if (accent === 0) return
 	click(time, accent === 2 && sub === 0, sub > 0 ? LEVEL.sub : accent === 2 ? LEVEL.accent : LEVEL.normal)
 }
@@ -256,6 +258,7 @@ function flush() {
 	const now = ctx.currentTime - (ctx.outputLatency || 0) - config.outputDelayMs / 1000
 	while (pending.length && pending[0].time <= now) {
 		const event = pending.shift()!
+		event.heardAt = performance.now() - (now - event.time) * 1000
 		heard = { bar: event.bar, beat: event.beat }
 		for (const listener of listeners) {
 			try {

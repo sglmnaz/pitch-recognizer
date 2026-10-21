@@ -1105,6 +1105,15 @@
 								<span class="number__unit">ms</span>
 							</span>
 							<input type="range" class="range switch__wide" min="0" max="400" step="5" data-setting="audioDelayMs" aria-label="Audio delay, slider" />
+							<span class="switch__wide settings__presets">
+								<span class="switch__desc">Or let the app measure it: tap along with the clicks</span>
+								<button class="link-btn" type="button" data-action="calibrate-delay">Calibrate</button>
+							</span>
+							<!-- Tap-along calibration (ts/features/settings/delay-calibration.ts). -->
+							<div class="switch__wide calibrate" data-calibrate hidden>
+								<button class="key calibrate__pad" type="button" data-calibrate-pad data-feedback="none" disabled>Tap</button>
+								<p class="switch__desc" data-calibrate-status aria-live="polite"></p>
+							</div>
 						</div>
 					</div>
 				</div>

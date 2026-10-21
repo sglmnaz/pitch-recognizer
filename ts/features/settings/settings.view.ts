@@ -6,6 +6,7 @@ import { subscribeVisible } from '../../ui/dom'
 import * as Theme from '../../ui/theme'
 import { resetKey } from '../../ui/reset-key'
 import { guardTouches } from '../../ui/touch-guard'
+import { createDelayCalibration } from './delay-calibration'
 
 /**
  * The Settings tab: the switches and selects of every tab, the per-note target
@@ -279,6 +280,8 @@ export function createSettingsView(root: HTMLElement, from: () => string | null)
 	subscribeVisible(root, sync)
 	sync()
 
+	const calibration = createDelayCalibration(root)
+
 	return {
 		onActivate() {
 			sync()
@@ -291,7 +294,8 @@ export function createSettingsView(root: HTMLElement, from: () => string | null)
 			}
 		},
 		onReading() {},
-		reset() {},
+		// Leaving the tab stops a calibration run (its clicks would follow you).
+		reset: () => calibration.cancel(),
 		// Nothing here listens; an open mic would only cost battery.
 		wantsMic: () => false,
 	}

@@ -2,6 +2,7 @@
 // and a jittery timer, and checks click times, accents, subdivisions, mute and
 // the speed trainer. Run with `npm run check:metronome`.
 import * as Metronome from '../ts/core/metronome.ts'
+import * as Latency from '../ts/core/latency.ts'
 import { check, finish } from './check.ts'
 
 /* Fake Web Audio + browser bits ------------------------------------------- */
@@ -194,7 +195,52 @@ check(
 	heard.length >= 3 && late.every((l) => l >= 0.15 && l < 0.15 + 0.075),
 	`late ${late.map((l) => l.toFixed(3)).join(' ')}`
 )
-check('the delay moves the events, not the clicks', clicks.every((c, i) => i === 0 || near(c.at - clicks[i - 1].at, 0.5)))
+check(
+	'the delay moves the events, not the clicks',
+	clicks.every((c, i) => i === 0 || near(c.at - clicks[i - 1].at, 0.5))
+)
 Metronome.configure({ outputDelayMs: 0 })
+
+/* Calibration: the delay read from taps along with the clicks ------------- */
+const beatMs = 60000 / Latency.CALIBRATION_BPM
+const clickTimes = Array.from({ length: Latency.CALIBRATION_CLICKS }, (_, i) => 1000 + i * beatMs)
+// Taps 180 ms behind each click, ±12 ms of human jitter, none on the listening clicks.
+const jitter = [5, -12, 8, 0, -6, 11, -3, 7, -9, 2, 12, -10, 4, -1]
+const steady = clickTimes.slice(Latency.LISTEN_CLICKS).map((c, i) => c + 180 + jitter[i])
+const read = Latency.estimateDelay(clickTimes, steady, beatMs)
+check(
+	'steady taps 180 ms behind: lag read as 180 ±5 ms',
+	read !== null && Math.abs(read.lag - 180) <= 5 && read.spread < Latency.MAX_SPREAD_MS,
+	JSON.stringify(read)
+)
+check('…and set as 180 ms', read !== null && Latency.delaySetting(read.lag) === 180)
+const messy = [...steady.slice(0, 6), steady[6] + 250, steady[7], steady[7] + 60, ...steady.slice(8), clickTimes[0] + 30, clickTimes[1] + 40]
+const robust = Latency.estimateDelay(clickTimes, messy, beatMs)
+check('a stray tap, a double tap and taps on the listening clicks do not move it', robust !== null && Math.abs(robust.lag - 180) <= 6, JSON.stringify(robust))
+check(
+	'a 450 ms delay still pairs each tap with its own click',
+	Latency.estimateDelay(
+		clickTimes,
+		clickTimes.slice(2).map((c) => c + 450),
+		beatMs
+	)?.lag === 450
+)
+check(
+	'taps a little ahead of the click read as 0 ms',
+	Latency.delaySetting(
+		Latency.estimateDelay(
+			clickTimes,
+			clickTimes.slice(2).map((c) => c - 30),
+			beatMs
+		)!.lag
+	) === 0
+)
+check('too few taps: no answer', Latency.estimateDelay(clickTimes, steady.slice(0, 5), beatMs) === null)
+const uneven = Latency.estimateDelay(
+	clickTimes,
+	clickTimes.slice(2).map((c, i) => c + (i % 2 ? 40 : 260)),
+	beatMs
+)
+check('uneven taps report a spread above the limit', uneven !== null && uneven.spread > Latency.MAX_SPREAD_MS, JSON.stringify(uneven))
 
 finish('All metronome checks passed')
