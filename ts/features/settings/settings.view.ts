@@ -2,7 +2,7 @@ import * as Settings from '../../core/settings'
 import { clamp } from '../../core/math'
 import { INTERVALS, QUALITIES } from '../../music/ear'
 import type { View } from '../../ui/view'
-import { subscribeVisible } from '../../ui/dom'
+import { subscribeVisible, svgEl } from '../../ui/dom'
 import * as Theme from '../../ui/theme'
 import { resetKey } from '../../ui/reset-key'
 import { guardTouches } from '../../ui/touch-guard'
@@ -83,8 +83,9 @@ export function createSettingsView(root: HTMLElement, from: () => string | null)
 	}
 
 	/* Sections fold (accordion) ------------------------------------------- */
-	// Each band becomes a toggle; everything under it goes into a body that
-	// folds. All start folded but the one of the tab you came from (onActivate).
+	// Each band becomes a toggle (a bare chevron, then the name); everything
+	// under it goes into a body that folds. All start folded but the one of
+	// the tab you came from (onActivate).
 	const groups = Array.from(root.querySelectorAll<HTMLElement>('.settings-group[data-group]')).map((group) => {
 		const title = group.querySelector<HTMLElement>('.settings-group__title')!
 		const name = group.dataset.group!
@@ -92,10 +93,14 @@ export function createSettingsView(root: HTMLElement, from: () => string | null)
 		toggle.type = 'button'
 		toggle.className = 'settings-group__toggle'
 		toggle.setAttribute('aria-controls', `settings-${name}`)
-		const chevron = document.createElement('span')
-		chevron.className = 'settings-group__chev'
-		chevron.setAttribute('aria-hidden', 'true')
-		toggle.append(chevron, ...title.childNodes)
+		const chevron = svgEl('svg', { class: 'settings-group__chev', viewBox: '0 0 24 24', 'aria-hidden': 'true' })
+		chevron.append(
+			svgEl('path', { d: 'M9 5l7 7-7 7', fill: 'none', stroke: 'currentColor', 'stroke-width': '2.5', 'stroke-linecap': 'round', 'stroke-linejoin': 'round' })
+		)
+		const label = document.createElement('span')
+		label.className = 'settings-group__name'
+		label.append(...title.childNodes)
+		toggle.append(chevron, label)
 		title.append(toggle)
 		const body = document.createElement('div')
 		body.className = 'settings-group__body'
@@ -111,7 +116,6 @@ export function createSettingsView(root: HTMLElement, from: () => string | null)
 	function setOpen(entry: Group, open: boolean) {
 		entry.open = open
 		entry.toggle.setAttribute('aria-expanded', String(open))
-		entry.chevron.textContent = open ? '▾' : '▸'
 		entry.body.hidden = !open
 		entry.group.classList.toggle('is-open', open)
 	}

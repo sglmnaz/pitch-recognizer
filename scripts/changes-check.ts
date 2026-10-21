@@ -401,11 +401,12 @@ check(
 	 * every beat, the clicks heard as strums, the open strings of the lifted
 	 * fingers liftMs before each change (quiet), the strum's own second peak
 	 * secondPeakMs after it (louder), the clicks heard 22 ms on and 3× as loud
-	 * as the strums (an unplugged electric).
+	 * as the strums (an unplugged electric); liftLevel: how loud the open
+	 * strings are (1: strummed on the beat before the change).
 	 */
 	function inTime(
 		strumOffset: number,
-		{ ms = 12_000, profiles = true, everyBeat = false, clicks = false, liftMs = 0, secondPeakMs = 0, loudClicks = false } = {}
+		{ ms = 12_000, profiles = true, everyBeat = false, clicks = false, liftMs = 0, liftLevel = 0.08, secondPeakMs = 0, loudClicks = false } = {}
 	) {
 		const h = harness()
 		h.session.start({ mode: 'time', sequence: ['G', 'C'], seconds: 60, beats: 2, bpm: 120, speedUp: true, countIn: true, volume: 1 }, 0)
@@ -435,7 +436,7 @@ check(
 			const lifting = lifts.some((l) => t >= l && t < l + liftMs)
 			const sounding = lifting ? 'open' : played ? ['G', 'C'][(played - 1) % 2] : 'G'
 			const ring = (events: number[], level: number) => Math.max(0, ...events.filter((at) => at <= t).map((at) => level * Math.exp(-(t - at) / 150)))
-			const volume = Math.max(ring(struck, 1), ring(lifts, 0.08), ring(seconds, 1.4), ring(heardClicks, loudClicks ? 3 : 0.05))
+			const volume = Math.max(ring(struck, 1), ring(lifts, liftLevel), ring(seconds, 1.4), ring(heardClicks, loudClicks ? 3 : 0.05))
 			// The recognizer's name only shows as Hearing now; it names the chord 283 ms on.
 			const named = downbeats.filter((d) => d + 283 <= t).length
 			h.session.frame(t, strum, named ? ['G', 'C'][(named - 1) % 2] : 'G', profiles ? CHROMA[sounding] : null, volume)
@@ -490,8 +491,16 @@ check(
 		check('in time: a strum just ahead of the click counts (the change is in its sound, not in a name)', near(offsets, -45), show(offsets))
 	}
 	{
+		const offsets = offsetsOf(inTime(100, { liftMs: 500, liftLevel: 1 }))
+		check('in time: open strings strummed on the beat before the change (they read as G, a little) yield to the change strum', near(offsets, 85), show(offsets))
+	}
+	{
 		const offsets = offsetsOf(inTime(-100, { loudClicks: true }))
-		check('in time: clicks heard louder than the strums are not strums (they took the change, late)', near(offsets, -115), show(offsets))
+		check('in time: clicks heard louder than the strums never take a change from them (late)', near(offsets, -115), show(offsets))
+	}
+	{
+		const offsets = offsetsOf(inTime(15))
+		check('in time: a change strummed right on the click counts', near(offsets, 0), show(offsets))
 	}
 	{
 		const h = inTime(100, { profiles: false })

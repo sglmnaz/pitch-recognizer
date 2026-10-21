@@ -15,22 +15,26 @@ import type { ProbeEntry } from './timing-probe.ts'
 // pitch-class profile from CHROMA_FROM_MS to CHROMA_TO_MS on (Changes.drillChord;
 // noise as flat as a breath brings no profile, see the view) and is a change
 // when that chord is not the one ringing. Re-strums and clicks sound like the
-// chord ringing, so they are not. Unless a strum LOUDER times as loud follows
-// within LOUDER_MS: the fingers leaving the old chord sound the open strings
-// first. On three field reports (scripts/replay.ts): 103 of 105 changes within
-// 60 ms of the strum in the sound, against ~80 by the recognizer. The clicks
-// the mic hears are left out (CLICK_HEARD_MS): on an unplugged electric they
-// were louder than the strums, took the change from them (late) and, with the
-// next chord already fretted, made it a beat early; 2 of 30 off without them,
-// 18 with them (and the acoustic reports unchanged).
+// chord ringing, so they are not. The fingers leaving the old chord sound the
+// open strings first, which can read as another chord: such a strum yields to
+// one LOUDER times as loud within LOUDER_MS (not a click: on an unplugged
+// electric the clicks were louder than the strums and took their changes), or
+// to one within BETTER_MS sounding clearly more like that chord (the open
+// strings on beat 4 read as G, a little; the G strum after them, a lot). On
+// five field reports (scripts/replay.ts): 149 of 157 changes within ±200 ms
+// of the click; the clicks left out instead lost every change strummed right
+// on the click.
 const CHROMA_FROM_MS = 40
 const CHROMA_TO_MS = 200
 const LOUDER_MS = 300
 const LOUDER = 3
 // How loud a strum is: the peak level (RMS) over its first LOUD_MS.
 const LOUD_MS = 80
+const BETTER_MS = 700
+// Share of the profile (Changes.chordShare) a later strum must add.
+const BETTER = 0.1
 // A strum is placed this long after it, once its profile and what follows are in.
-const DECIDE_MS = Math.max(CHROMA_TO_MS, LOUDER_MS + LOUD_MS)
+const DECIDE_MS = Math.max(LOUDER_MS + LOUD_MS, BETTER_MS + CHROMA_TO_MS)
 // The detector fires a frame or so after the strum reaches the mic.
 // Calibration knob, like Trainer → Tab's ATTACK_LATENCY_MS.
 const STRUM_LATENCY_MS = 15
@@ -48,7 +52,8 @@ const ONSET_KEEP_MS = 10_000
 const CLICK_MASK_MS = 40
 // In time: where a click lands among the strums (frame times are less the Mic
 // delay): this long after its heardAt, give or take CLICK_HEARD_WITHIN_MS (on
-// a field report every click sat 19–24 ms on). A strum there is the click.
+// a field report every click sat 19–24 ms on). A strum there may be the click:
+// it never takes a change from another strum as the louder one.
 const CLICK_HEARD_MS = 22
 const CLICK_HEARD_WITHIN_MS = 15
 
@@ -130,7 +135,7 @@ export function createChangesSession(ui: SessionUi, metronome: MetronomeControl)
 	let onsets: Changes.Onset[] = []
 	// In time: the strums waiting DECIDE_MS to be placed, the frames' pitch-class
 	// profiles and levels, and the chord ringing (the last change's).
-	let strums: number[] = []
+	let strums: { at: number; click: boolean }[] = []
 	let chromas: { at: number; chroma: Float32Array }[] = []
 	let levels: { at: number; volume: number }[] = []
 	let playing: string | null = null
@@ -284,8 +289,15 @@ export function createChangesSession(ui: SessionUi, metronome: MetronomeControl)
 		const chord = Changes.drillChord(profileAfter(at), config.sequence)
 		if (!chord || chord === playing) return
 		const loud = (t: number) => Math.max(0, ...levels.filter((l) => l.at >= t && l.at <= t + LOUD_MS).map((l) => l.volume))
-		// A strum this much louder soon after is the change; this one, the fingers leaving the old chord.
-		if (strums.some((t) => t > at && t <= at + LOUDER_MS && loud(t) >= LOUDER * loud(at))) return
+		const share = (t: number) => {
+			const profile = profileAfter(t)
+			return profile ? Changes.chordShare(profile, chord) : 0
+		}
+		// A strum much louder soon after (not a click), or one sounding clearly more like the chord, is the change; this one, the fingers leaving the old chord.
+		if (strums.some((s) => !s.click && s.at > at && s.at <= at + LOUDER_MS && loud(s.at) >= LOUDER * loud(at))) return
+		const mine = share(at)
+		const later = strums.filter((s) => s.at > at && s.at <= at + BETTER_MS)
+		if (later.some((s) => Changes.drillChord(profileAfter(s.at), config.sequence) === chord && share(s.at) >= mine + BETTER)) return
 		playing = chord
 		onsets.push({ symbol: chord, at: at - STRUM_LATENCY_MS, fresh: true })
 		ui.probe?.({ kind: 'named', at, symbol: chord, struck: at })
@@ -314,15 +326,15 @@ export function createChangesSession(ui: SessionUi, metronome: MetronomeControl)
 			return left <= 0
 		} else if (config.mode === 'time' && running()) {
 			const click = [lastClickAt, lastClickAt + clickGap].some((at) => Math.abs(now - at - CLICK_HEARD_MS) <= CLICK_HEARD_WITHIN_MS)
-			if (strum && !click) {
-				strums.push(now)
+			if (strum) {
+				strums.push({ at: now, click })
 				ui.probe?.({ kind: 'strum', at: now })
 			}
 			if (chroma) chromas.push({ at: now, chroma })
 			levels.push({ at: now, volume })
 			chromas = chromas.filter((c) => now - c.at < 2 * DECIDE_MS)
 			levels = levels.filter((l) => now - l.at < 2 * DECIDE_MS)
-			while (strums.length && now - strums[0] >= DECIDE_MS) place(strums.shift()!)
+			while (strums.length && now - strums[0].at >= DECIDE_MS) place(strums.shift()!.at)
 			onsets = onsets.filter((o) => now - o.at < ONSET_KEEP_MS)
 			judgeDue(now)
 		}

@@ -194,8 +194,6 @@
 						<span class="silk changes-count__label">Changes</span>
 						<span class="window"><span class="led led--big changes-count__value"></span></span>
 					</div>
-					<!-- ts/ui/cal-key.ts: the lamp says whether the mic is calibrated. In time only. -->
-					<button class="key cal-key" type="button" data-action="open-calibration"><span class="lamp" aria-hidden="true"></span>Calibrate</button>
 					<span class="window"><span class="lcd changes-clock">1:00</span></span>
 				</div>
 				<!-- In time lays the LCD out as a grid (trainer.css): what the mic hears on top,
@@ -279,8 +277,6 @@
 				<div class="tab-head">
 					<span class="silk tab-goal"></span>
 					<h2 class="tab-title"></h2>
-					<!-- ts/ui/cal-key.ts: the lamp says whether the mic is calibrated. -->
-					<button class="key cal-key" type="button" data-action="open-calibration"><span class="lamp" aria-hidden="true"></span>Calibrate</button>
 					<p class="tab-how"></p>
 				</div>
 				<div class="window">
@@ -339,7 +335,11 @@
 					<ul class="tab-list" aria-label="Exercises"></ul>
 				</div>
 			</div>
-			<button class="help-link" type="button" data-help="trainer" aria-haspopup="dialog" aria-label="How to use the trainer"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.6 9.4a2.5 2.5 0 0 1 4.8.9c0 1.7-2.4 2.2-2.4 3.7"/><path d="M12 17.2h.01"/></svg></button>
+			<!-- The way to the calibration page from the exercises that judge timing, quiet like the guide beside it. -->
+			<div class="view-foot">
+				<button class="cal-link" type="button" data-action="open-calibration" data-only="changes tab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 4v4M6 12v8M4 8h4M12 4v10M12 18v2M10 14h4M18 4v1M18 9v11M16 5h4"/></svg>Timing calibration</button>
+				<button class="help-link" type="button" data-help="trainer" aria-haspopup="dialog" aria-label="How to use the trainer"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.6 9.4a2.5 2.5 0 0 1 4.8.9c0 1.7-2.4 2.2-2.4 3.7"/><path d="M12 17.2h.01"/></svg></button>
+			</div>
 		</section>
 
 		<!-- Tuner --------------------------------------------------------- -->
@@ -771,13 +771,33 @@
 				<input class="input settings-search" type="search" placeholder="Search settings" aria-label="Search settings" autocomplete="off" />
 			</div>
 			<p class="hint settings-search__empty" hidden>No setting matches.</p>
-			<!-- The calibration's state; the page itself is #view-calibration. -->
-			<div class="cb-card">
+			<!-- The calibration's state, a section like the others; the page itself is #view-calibration. -->
+			<section class="settings-group" data-group="calibration">
 				<h2 class="settings-group__title">Calibration</h2>
-				<div class="cb-card__row"><span class="lamp lamp--ok" data-cal-lamp="audio"></span><span><span class="switch__title">Your ears</span><span class="switch__desc" data-cal-desc="audio"></span></span><span class="window"><span class="lcd" data-cal-value="audio"></span></span></div>
-				<div class="cb-card__row"><span class="lamp lamp--ok" data-cal-lamp="mic"></span><span><span class="switch__title">The microphone</span><span class="switch__desc" data-cal-desc="mic"></span></span><span class="window"><span class="lcd" data-cal-value="mic"></span></span></div>
-				<button class="key key--hot cb-card__open" type="button" data-action="open-calibration">Calibrate</button>
-			</div>
+				<div class="panel settings-card">
+					<div class="settings__section">
+						<div class="switch">
+							<span class="switch__text">
+								<span class="switch__title">Audio delay</span>
+								<span class="switch__desc">Your ears: the beat lights on the clicks</span>
+							</span>
+							<span class="window"><span class="lcd settings-cal__value" data-cal-value="audio" data-cal-empty="Not set"></span></span>
+						</div>
+					</div>
+					<div class="settings__section">
+						<div class="switch">
+							<span class="switch__text">
+								<span class="switch__title">Mic delay</span>
+								<span class="switch__desc">The microphone: Changes and Tab timing</span>
+							</span>
+							<span class="window"><span class="lcd settings-cal__value" data-cal-value="mic" data-cal-empty="Not set"></span></span>
+						</div>
+					</div>
+					<div class="settings__section settings-cal__open">
+						<button class="key" type="button" data-action="open-calibration">Calibrate</button>
+					</div>
+				</div>
+			</section>
 			<section class="settings-group" data-group="appearance">
 				<h2 class="settings-group__title">Appearance</h2>
 				<div class="panel settings-card">

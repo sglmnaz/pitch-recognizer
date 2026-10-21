@@ -84,9 +84,10 @@
 	}
 }
 
-/* The band folds its section: the whole band is the toggle, a small ▸ / ▾
-   key at its left, the rule after the name. Reset sits at the right end and
-   the rule stops short of it. */
+/* The band folds its section: the whole band is the toggle, a bare chevron
+   at its left, then the name as every section title prints it (a block of
+   its own in Broadcast) and the rule. Reset shows on an open band, at the
+   right end, and the rule stops short of it. */
 .settings-group {
 	position: relative;
 }
@@ -118,26 +119,31 @@
 		background: var(--rule-strong);
 	}
 
-	.settings-group:has(> .settings-group__reset) & {
+	.settings-group.is-open:has(> .settings-group__reset) & {
 		padding-right: 76px;
 	}
 }
 
+.settings-group:not(.is-open) > .settings-group__reset {
+	display: none;
+}
+
 .settings-group__chev {
-	display: grid;
-	place-items: center;
 	flex: none;
-	width: 24px;
-	height: 24px;
-	border-radius: var(--key-radius);
-	background: var(--key-face);
-	color: var(--key-ink);
-	font-size: 10px;
-	letter-spacing: 0;
-	box-shadow:
-		inset 0 0 0 var(--outline-width) var(--outline),
-		inset 0 -3px 0 0 var(--key-front),
-		inset 0 2px 0 0 var(--key-hi);
+	width: 20px;
+	height: 20px;
+	color: var(--fg);
+	transition: transform var(--dur) var(--ease);
+
+	[aria-expanded='true'] > & {
+		transform: rotate(90deg);
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.settings-group__chev {
+		transition: none;
+	}
 }
 
 .settings-group__body {

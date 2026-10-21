@@ -410,11 +410,6 @@
 	gap: var(--space-12);
 }
 
-/* The Calibrate key only In time: One-minute does not judge timing. */
-.changes-stage:not([data-drill='time']) .cal-key {
-	display: none;
-}
-
 .changes-count {
 	display: flex;
 	flex-direction: column;
@@ -985,23 +980,10 @@
 	gap: var(--space-12);
 }
 
-/* Goal and title on the left, the Calibrate key beside them, how to play under both. */
 .tab-head {
-	display: grid;
-	grid-template-columns: minmax(0, 1fr) auto;
-	column-gap: var(--space-12);
-	row-gap: 2px;
-	align-items: center;
-
-	.cal-key {
-		grid-column: 2;
-		grid-row: 1 / span 2;
-		height: 44px;
-	}
-}
-
-.tab-how {
-	grid-column: 1 / -1;
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
 }
 
 .tab-title {

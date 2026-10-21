@@ -254,12 +254,14 @@ test.describe('behaviour', () => {
 		expect(await read()).toEqual({ token: 'rgb(255, 0, 0)', button: 'rgb(255, 0, 0)', board: 'rgb(0, 0, 255)', boardBg: 'rgb(0, 0, 255)' })
 	})
 
-	// Each section's Reset (two taps) puts what it shows back to the defaults.
+	// Each section's Reset (two taps, shown on an open band) puts what it shows back to the defaults.
 	test('a section resets to its defaults', async ({ page, open }) => {
 		await open('#settings', { leftHanded: true })
 		const group = page.locator('[data-group="fretboard"]')
-		await expect(group.locator('[data-setting="leftHanded"]')).toBeChecked()
 		const reset = group.locator('.settings-group__reset')
+		await expect(reset).toBeHidden()
+		await group.locator('.settings-group__toggle').click()
+		await expect(group.locator('[data-setting="leftHanded"]')).toBeChecked()
 		await reset.click()
 		await expect(reset).toHaveText('Sure?')
 		await reset.click()

@@ -28,7 +28,6 @@
 /* A step: number, title, status (lamp + LCD), what it does, its key; while it
    runs, the panel under it. */
 .cb-step,
-.cb-card,
 .dg-card {
 	padding: var(--space-12);
 	border-radius: var(--radius-lg);
@@ -595,74 +594,48 @@
 	}
 }
 
-/* Settings: the Calibration card on top ------------------------------------------------ */
-.cb-card {
+/* Settings: the Calibration section's values and its key on the right. */
+.settings-cal__value {
+	min-width: 86px;
+	text-align: center;
+}
+
+.settings-cal__open {
 	display: flex;
-	flex-direction: column;
-	gap: var(--space-12);
-}
+	justify-content: flex-end;
 
-.cb-card__row {
-	display: grid;
-	grid-template-columns: auto minmax(0, 1fr) auto;
-	align-items: center;
-	gap: var(--space-12);
-
-	.lamp {
-		--lamp-w: 20px;
-		--lamp-h: 6px;
-	}
-
-	.lcd {
-		min-width: 70px;
-		text-align: center;
+	/* As the A4 row's Change key. */
+	.key {
+		height: 40px;
 	}
 }
 
-.cb-card__open {
-	height: 46px;
-}
-
-/* The Calibrate key of Changes In time and Tab: a plain key, its lamp the state
-   (blinking amber until the mic is calibrated, green after). */
-.cal-key {
+/* Trainer → Changes and Tab: Timing calibration, muted like the guide's ? beside it. */
+.cal-link {
 	display: inline-flex;
 	align-items: center;
-	gap: var(--space-8);
-	/* As tall as the LED and the clock windows beside it in Changes. */
-	height: 48px;
-	padding-inline: var(--space-12);
+	gap: var(--space-6);
+	min-height: var(--tap);
+	padding: 0;
+	border: none;
+	background: none;
+	color: var(--fg-muted);
+	font: 600 var(--text-xs) / 1 var(--font-ui);
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+	cursor: pointer;
 
-	.lamp {
-		--lamp-w: 8px;
-		--lamp-h: 8px;
-	}
-}
-
-.cal-key--due .lamp {
-	animation: cal-due 1.2s step-end infinite;
-}
-
-@keyframes cal-due {
-	0% {
-		background: var(--lamp-warn-on);
-		box-shadow:
-			var(--lamp-ring),
-			0 0 8px var(--lamp-warn-glow);
+	&:hover {
+		color: var(--fg-secondary);
 	}
 
-	50% {
-		background: var(--lamp-warn-off);
-		box-shadow: var(--lamp-ring);
+	& svg {
+		width: 16px;
+		height: 16px;
 	}
 }
 
 @media (prefers-reduced-motion: reduce) {
-	.cal-key--due .lamp {
-		animation: none;
-		background: var(--lamp-warn-on);
-	}
-
 	.cb-dots i.now {
 		animation: none;
 	}

@@ -10,18 +10,6 @@ export function bindCalKeys(root: ParentNode) {
 			location.hash = '#calibration'
 		})
 	}
-	const keys = Array.from(root.querySelectorAll<HTMLElement>('.cal-key'))
-	const sync = () => {
-		const { micCalibratedAt, micDelayMs } = Settings.get()
-		const due = !micCalibratedAt
-		for (const key of keys) {
-			key.classList.toggle('cal-key--due', due)
-			key.querySelector('.lamp')!.className = `lamp ${due ? 'lamp--warn' : 'lamp--ok is-on'}`
-			key.setAttribute('aria-label', due ? 'Calibrate timing: not done yet' : `Calibrate timing: done, mic delay ${signed(micDelayMs)}`)
-		}
-	}
-	Settings.subscribe(sync)
-	sync()
 }
 
 const signed = (ms: number) => `${ms < 0 ? '−' : ms > 0 ? '+' : ''}${Math.abs(ms)} ms`
@@ -46,7 +34,7 @@ export function showCalibrationState(root: ParentNode) {
 			lamp.classList.toggle('lamp--warn', !done)
 			lamp.classList.add('is-on')
 		}
-		for (const el of root.querySelectorAll<HTMLElement>(`[data-cal-value="${key}"]`)) el.textContent = done ? signed(ms) : '— —'
+		for (const el of root.querySelectorAll<HTMLElement>(`[data-cal-value="${key}"]`)) el.textContent = done ? signed(ms) : (el.dataset.calEmpty ?? '— —')
 		for (const el of root.querySelectorAll<HTMLElement>(`[data-cal-when="${key}"]`)) el.textContent = done ? `Done ${day(at)}` : 'Not done'
 		for (const el of root.querySelectorAll<HTMLElement>(`[data-cal-desc="${key}"]`)) el.textContent = done ? `Done ${day(at)}` : NOT_DONE[key]
 	}

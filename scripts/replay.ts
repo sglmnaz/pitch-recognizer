@@ -336,42 +336,61 @@ real strums (${real.length}): drill chord share ${q(real.map((d) => d.best))} | 
 if (slots.length) {
 	const sequence = report.settings.changesChords as string[]
 	const tonal = frames.filter((f) => f.chroma && f.flatness !== null && f.flatness < 0.25)
-	const chordAt = (t: number) => {
+	const profileAt = (t: number) => {
 		const near = tonal.filter((f) => f.at >= t + 40 && f.at <= t + 200)
 		if (!near.length) return null
 		const mean = new Float32Array(12)
 		for (const f of near) for (let i = 0; i < 12; i++) mean[i] += f.chroma![i] / near.length
-		const shares = sequence.map((c) => chordShare(mean, c))
+		return mean
+	}
+	const shareAt = (t: number, chord: string) => {
+		const p = profileAt(t)
+		return p ? chordShare(p, chord) : 0
+	}
+	const chordAt = (t: number) => {
+		const p = profileAt(t)
+		if (!p) return null
+		const shares = sequence.map((c) => chordShare(p, c))
 		const best = Math.max(...shares)
 		return shares.filter((x) => x === best).length === 1 ? sequence[shares.indexOf(best)] : null
 	}
 	const loud = (t: number) => Math.max(0, ...frames.filter((f) => f.at >= t && f.at <= t + 80).map((f) => f.volume))
-	// The clicks the mic hears are not strums (the session's CLICK_HEARD_MS ± CLICK_HEARD_WITHIN_MS; CLICK=off keeps them).
+	// CLICK=mask: strums where the mic hears a click are left out; louder: they never take a change as the louder one; off (default): as any strum.
+	const clickMode = process.env.CLICK ?? 'off'
 	const clickAt = beats.map((b) => b + offset.x + 22)
-	const isClick = (t: number) => process.env.CLICK !== 'off' && clickAt.some((c) => Math.abs(t - c) <= 15)
-	// CLICK=louder: a click may still be a change, it just never takes one from a strum as the louder one.
-	const heard = process.env.CLICK === 'louder' ? appStrums : appStrums.filter((t) => !isClick(t))
+	const isClick = (t: number) => clickMode !== 'off' && clickAt.some((c) => Math.abs(t - c) <= 15)
+	const heard = clickMode === 'mask' ? appStrums.filter((t) => !isClick(t)) : appStrums
+	// NEXT=1: a change only to the chord after the one ringing. BETTER=m: a strum within BETTER_MS sounding m more like the chord takes it.
+	const better = process.env.BETTER ? Number(process.env.BETTER) : null
+	const betterMs = Number(process.env.BETTER_MS ?? 700)
 	let playing: string | null = null
 	const changes: { at: number; chord: string }[] = []
 	for (const t of heard) {
 		const chord = chordAt(t)
 		if (!chord || chord === playing) continue
+		if (process.env.NEXT && playing !== null && chord !== sequence[(sequence.indexOf(playing) + 1) % sequence.length]) continue
 		if (
 			process.env.LOUDER !== 'off' &&
 			heard.some((u) => u > t && u <= t + Number(process.env.LOUDER_MS ?? 300) && !isClick(u) && loud(u) >= Number(process.env.LOUDER ?? 3) * loud(t))
 		)
 			continue
+		if (better !== null && heard.some((u) => u > t && u <= t + betterMs && chordAt(u) === chord && shareAt(u, chord) >= shareAt(t, chord) + better)) continue
 		changes.push({ at: t, chord })
 		playing = chord
 	}
 	const errors: (number | null)[] = []
+	// As the player sees it: the change for each downbeat, ms off its click (hit within ±200 at these tempos).
+	const fromClick: (number | null)[] = []
 	for (const slot of slots) {
 		const click = (slot.downbeat as number) - report.recordStartedAt + offset.x
 		const truth = strums.filter((s) => Math.abs(s - click) < 400).sort((a, b) => Math.abs(a - click) - Math.abs(b - click))[0]
 		const change = changes.find((c) => c.chord === slot.target && Math.abs(c.at - click) < 1200)
+		fromClick.push(change ? Math.round(change.at - click) : null)
 		if (truth === undefined) continue
 		errors.push(change ? Math.round(change.at - truth) : null)
 	}
+	const hits = fromClick.filter((d) => d !== null && Math.abs(d) <= 200).length
+	console.log(`by sound, from the click: ${hits} of ${fromClick.length} within ±200 ms · ${fromClick.map((d) => (d === null ? '–' : d)).join(' ')}`)
 	const off = errors.filter((e) => e === null || Math.abs(e) > 60).length
 	console.log(`
 by sound alone: ${off} of ${errors.length} changes more than 60 ms off or not found: ${errors.map((e) => (e === null ? '–' : e)).join(' ')}`)

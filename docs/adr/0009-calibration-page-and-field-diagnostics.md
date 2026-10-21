@@ -26,12 +26,11 @@ in 567d68b). The phone's own audio and timing were the missing evidence.
   redoable:
   1. *Your ears*: tap along with the clicks (Audio delay, beat lights).
   2. *The microphone*: the phone hears its own clicks (Mic delay, Changes and Tab).
-- **Ways in**: a Calibration card on top of Settings, and a plain Calibrate
-  key in Changes In time (top row, between the counter and the clock) and Tab
-  (beside the exercise title), its lamp blinking amber until the mic is
-  calibrated, then green (`ts/ui/cal-key.ts`). A "CAL" key with a lamp above
-  it broke its row and said nothing; a full-width row took the middle of the
-  page for a one-off task. The delays' rows left Settings → Metronome for the
+- **Ways in**: a Calibration section on top of Settings, like the others
+  (the two delays, "Not set" until done, a Calibrate key), and a muted
+  "Timing calibration" link beside the guide's ? at the bottom of Changes
+  and Tab. Keys on the exercise itself (a "CAL" key, a full-width row, a
+  Calibrate key in the top row) broke its design for a one-off task. The delays' rows left Settings → Metronome for the
   page's Fine-tune by hand.
 - **Diagnostics on the same page**:
   - *Field report*: while on, records the mic of every Changes In time or Tab
@@ -75,9 +74,12 @@ in 567d68b). The phone's own audio and timing were the missing evidence.
 - An unplugged electric then read 17 of 30 changes. Its report showed two
   causes: the guitar was tuned a quarter tone off A4 = 440 (tuned with the
   accidental A4 = 451), splitting every note over two pitch classes, and the
-  clicks the mic heard were louder than its strums. The clicks heard are no
-  strums now: 28 of 30 replayed on the guitar's A4, the acoustic reports
-  unchanged. The guitar must be tuned on the Tuner's A4 (estimating its
+  clicks the mic heard were louder than its strums. A click no longer takes
+  a change as the louder strum, and open strings on the beat before a change
+  yield to the change strum when it sounds clearly more like the chord.
+  Leaving the clicks out altogether lost every change strummed right on the
+  click (the next report). On five reports: 149 of 157 changes within ±200
+  ms of the click. The guitar must be tuned on the Tuner's A4 (estimating its
   tuning from what it plays was tried and left out).
 - Reports are lost when the app closes (no IndexedDB for now); sharing them is
   the way to keep one.

@@ -29,6 +29,21 @@
 	}
 }
 
+/* The guide's ? with another quiet way out beside it (Trainer: Timing calibration). */
+.view-foot {
+	order: 99;
+	grid-column: 1 / -1;
+	justify-self: end;
+	align-self: flex-end;
+	display: flex;
+	align-items: center;
+	gap: var(--space-16);
+
+	.help-link {
+		align-self: center;
+	}
+}
+
 .help-row {
 	width: 100%;
 	border: none;

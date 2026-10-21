@@ -410,6 +410,15 @@
 	}
 }
 
+/* Settings' folding bands: the name as the same reverse-printed block. */
+[data-theme='regia'] .settings-group__name {
+	padding: 4px 8px;
+	line-height: 1;
+	color: var(--panel);
+	background: var(--ink);
+	border-radius: 1px;
+}
+
 /* Tab bar: condensed silk so every label fits on a phone. */
 @media (max-width: 600px) {
 	[data-theme='regia'] .tab__label {
