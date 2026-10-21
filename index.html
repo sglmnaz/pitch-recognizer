@@ -1395,6 +1395,13 @@
 		</div>
 	</main>
 
+	<!-- A new version is ready (ts/ui/update-prompt.ts): Update reloads into it. -->
+	<div class="update-bar" role="status" aria-live="polite" hidden>
+		<span class="window"><span class="lcd update-bar__text">New version ready</span></span>
+		<button class="key key--hot update-bar__go" type="button" data-action="update-now">Update</button>
+		<button class="foot-key" type="button" data-action="update-later">Later</button>
+	</div>
+
 	<!-- Guide: one dialog, filled from the template of the tab whose ? was tapped (ts/ui/help.ts). -->
 	<dialog class="help" id="help" aria-labelledby="helpTitle">
 		<div class="help__head">

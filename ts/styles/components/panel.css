@@ -102,6 +102,34 @@
 	font-variant-numeric: tabular-nums;
 }
 
+/* Small displays, a value set inline beside keys or a label (a span.window
+   round one .lcd): the dropdown's look (select.css), a 4 px black frame round
+   the glass with the same radius and no bezel ring, as tall as the keys beside
+   them (stretched to the row, plus --key-ring on each side where keys wear a
+   bezel round their box) and never under the dropdown's height. The Changes
+   clock stands with the LED counter instead. */
+span.window:has(> .lcd):not(:has(> .changes-clock)) {
+	display: flex;
+	align-self: stretch;
+	min-height: calc(40px + 2 * var(--key-ring, 0px));
+	margin-block: calc(-1 * var(--key-ring, 0px));
+	padding: 0;
+	border: 4px solid var(--window);
+	box-shadow: 0 1px 0 var(--plate-shine);
+
+	@media (max-width: 600px) {
+		min-height: calc(var(--tap) + 2 * var(--key-ring, 0px));
+	}
+
+	& > .lcd {
+		flex: 1;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		border-radius: max(0px, calc(var(--radius-lg) - 4px));
+	}
+}
+
 /* Unlit segments / dim LCD text. */
 .lcd__dim {
 	color: var(--lcd-dim);
@@ -127,9 +155,7 @@
 /* A loose card of paper lying on the panel: outlined, with the keys' drop shadow
    (chord diagrams, the trainer staff). */
 .paper--card {
-	box-shadow:
-		var(--shadow-border),
-		var(--key-drop);
+	box-shadow: var(--shadow-border), var(--key-drop);
 }
 
 /* The heavier printed rule between blocks of a view. */

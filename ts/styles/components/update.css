@@ -1,0 +1,32 @@
+/* The new-version bar (ts/ui/update-prompt.ts): a small panel floating over
+   the page, above the docked tab bar on phones, bottom centre elsewhere. */
+.update-bar {
+	position: fixed;
+	z-index: 30;
+	left: 50%;
+	bottom: calc(24px + env(safe-area-inset-bottom));
+	translate: -50% 0;
+	display: flex;
+	align-items: center;
+	gap: var(--space-12);
+	width: max-content;
+	max-width: calc(100% - 2 * var(--space-16));
+	padding: var(--space-12);
+	border-radius: var(--radius-lg);
+	background: var(--panel-grain) var(--panel);
+	box-shadow:
+		0 0 0 var(--outline-width) var(--outline),
+		0 8px 24px rgba(0, 0, 0, 0.35);
+
+	@media (max-width: 600px) {
+		bottom: calc(88px + env(safe-area-inset-bottom));
+	}
+
+	.lcd {
+		white-space: nowrap;
+	}
+
+	.update-bar__go {
+		height: 40px;
+	}
+}

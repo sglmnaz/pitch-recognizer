@@ -1063,6 +1063,9 @@
 [data-theme='regia'] [data-mode] {
 	--font-display: 'Barlow Condensed', var(--font-ui);
 	--radius-lg: 12px;
+	/* How far the keys' bezel stands out of their box: the small displays and
+	   the dropdowns grow by it so they stand as tall as the keys (panel.css). */
+	--key-ring: 3px;
 	/* Low caps with a flat face: the bezel does the framing. */
 	--key-chamfer: 1px;
 	--key-cheek: 1px;

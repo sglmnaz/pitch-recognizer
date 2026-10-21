@@ -41,6 +41,7 @@
 @import './components/rotary.css' layer(components);
 @import './components/led.css' layer(components);
 @import './components/help.css' layer(components);
+@import './components/update.css' layer(components);
 @import '../ui/fretboard.css' layer(components);
 @import '../features/tuner/tuner.css' layer(components);
 @import '../features/scales/scales.css' layer(components);

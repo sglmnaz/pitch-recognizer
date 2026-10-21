@@ -6,8 +6,9 @@
  */
 .select {
 	appearance: none;
-	/* The height of the keys beside it; thumb-sized on phones (below). */
-	height: 36px;
+	/* The height of the keys beside it, and of the small displays
+	   (panel.css); thumb-sized on phones (below). */
+	height: calc(40px + 2 * var(--key-ring, 0px));
 	min-width: 0;
 	padding: 0 26px 0 var(--space-10);
 	border: 4px solid var(--window);
@@ -45,7 +46,7 @@
 }
 
 .select--small {
-	height: 32px;
+	height: calc(40px + 2 * var(--key-ring, 0px));
 }
 
 /* Phones: every select is thumb-sized, so one beside a stepper or a key never
@@ -53,7 +54,7 @@
 @media (max-width: 600px) {
 	.select,
 	.select--small {
-		height: var(--tap);
+		height: calc(var(--tap) + 2 * var(--key-ring, 0px));
 	}
 }
 
@@ -70,8 +71,8 @@
 
 	& > .key {
 		flex: none;
-		width: 36px;
-		height: 36px;
+		width: 40px;
+		height: 40px;
 		padding-inline: 0;
 		font-size: var(--text-xs);
 	}

@@ -15,6 +15,7 @@ import { applyTheme } from './ui/theme'
 import { enhanceSelects } from './ui/dropdown'
 import { initFeedback } from './ui/feedback'
 import { bindCalibrationLinks } from './features/calibration/calibration-state'
+import { watchForUpdates } from './ui/update-prompt'
 
 const tabButtons = Array.from(document.querySelectorAll<HTMLButtonElement>('[data-tab]'))
 
@@ -106,3 +107,4 @@ applyTheme()
 initHelp()
 activate(location.hash.replace('#', ''))
 bootMic()
+watchForUpdates(document.querySelector<HTMLElement>('.update-bar')!)
