@@ -1229,6 +1229,23 @@
 								<p class="switch__desc" data-calibrate-status aria-live="polite"></p>
 							</div>
 						</div>
+						<div class="switch switch--wrap">
+							<span class="switch__text">
+								<span class="switch__title">Mic delay</span>
+								<span class="switch__desc">How late the mic hears what you play. Changes and Tab take it off, so their timing does not depend on the phone</span>
+							</span>
+							<span class="number">
+								<input type="number" class="input" min="-200" max="400" step="5" inputmode="numeric" data-setting="micDelayMs" aria-label="Mic delay in milliseconds, number field" />
+								<span class="number__unit">ms</span>
+							</span>
+							<input type="range" class="range switch__wide" min="-200" max="400" step="5" data-setting="micDelayMs" aria-label="Mic delay, slider" />
+							<span class="switch__wide settings__presets">
+								<span class="switch__desc">Or let the mic measure it: clicks out loud, no headphones</span>
+								<button class="link-btn" type="button" data-action="calibrate-mic">Calibrate</button>
+							</span>
+							<!-- The mic hears the clicks (ts/features/settings/delay-calibration.ts). -->
+							<p class="switch__wide switch__desc" data-mic-calibrate-status aria-live="polite" hidden></p>
+						</div>
 					</div>
 				</div>
 			</section>

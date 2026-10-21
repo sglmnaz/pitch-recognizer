@@ -476,7 +476,8 @@ export function createChangesView(root: HTMLElement): View {
 	/* Per frame ----------------------------------------------------------------- */
 	function frame() {
 		const now = performance.now()
-		if (session.frame(now, strummed(now), heardChord(now)?.symbol ?? null)) finish(true)
+		// The session gets the time it was played: the mic hears it Mic delay later (Settings).
+		if (session.frame(now - Settings.get().micDelayMs, strummed(now), heardChord(now)?.symbol ?? null)) finish(true)
 	}
 
 	// ?debug: fake chords drive frames while the mic is off.

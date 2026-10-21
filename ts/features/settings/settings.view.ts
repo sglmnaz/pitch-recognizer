@@ -6,7 +6,7 @@ import { subscribeVisible } from '../../ui/dom'
 import * as Theme from '../../ui/theme'
 import { resetKey } from '../../ui/reset-key'
 import { guardTouches } from '../../ui/touch-guard'
-import { createDelayCalibration } from './delay-calibration'
+import { createDelayCalibration, createMicCalibration } from './delay-calibration'
 
 /**
  * The Settings tab: the switches and selects of every tab, the per-note target
@@ -61,7 +61,8 @@ export function createSettingsView(root: HTMLElement, from: () => string | null)
 	// itself). Two taps (ts/ui/reset-key.ts).
 	for (const group of root.querySelectorAll<HTMLElement>('.settings-group[data-group]')) {
 		const keys = new Set<keyof Settings.Settings>()
-		for (const el of group.querySelectorAll<HTMLElement>('[data-setting], [data-chips]')) keys.add((el.dataset.setting ?? el.dataset.chips) as keyof Settings.Settings)
+		for (const el of group.querySelectorAll<HTMLElement>('[data-setting], [data-chips]'))
+			keys.add((el.dataset.setting ?? el.dataset.chips) as keyof Settings.Settings)
 		for (const el of group.querySelectorAll<HTMLElement>('[data-set]')) keys.add(el.dataset.set!.split(':')[0] as keyof Settings.Settings)
 		if (group.querySelector('#noteChips')) keys.add('disabledNotes')
 		const appearance = group.dataset.group === 'appearance'
@@ -142,7 +143,8 @@ export function createSettingsView(root: HTMLElement, from: () => string | null)
 				any ||= !unit.hidden
 			}
 			// A section whose rows all went is a hole with a rule: hide it too.
-			for (const section of group.querySelectorAll<HTMLElement>('.settings__section:has(.switch)')) section.hidden = !Array.from(section.querySelectorAll<HTMLElement>('.switch')).some((row) => !row.hidden)
+			for (const section of group.querySelectorAll<HTMLElement>('.settings__section:has(.switch)'))
+				section.hidden = !Array.from(section.querySelectorAll<HTMLElement>('.switch')).some((row) => !row.hidden)
 			for (const el of extras) el.hidden = !named
 			group.hidden = !any
 			body.hidden = !any
@@ -281,6 +283,7 @@ export function createSettingsView(root: HTMLElement, from: () => string | null)
 	sync()
 
 	const calibration = createDelayCalibration(root)
+	const micCalibration = createMicCalibration(root)
 
 	return {
 		onActivate() {
@@ -293,10 +296,13 @@ export function createSettingsView(root: HTMLElement, from: () => string | null)
 				target.group.scrollIntoView({ block: 'start' })
 			}
 		},
-		onReading() {},
+		onReading: () => micCalibration.frame(),
 		// Leaving the tab stops a calibration run (its clicks would follow you).
-		reset: () => calibration.cancel(),
-		// Nothing here listens; an open mic would only cost battery.
+		reset() {
+			calibration.cancel()
+			micCalibration.cancel()
+		},
+		// Only the Mic delay calibration listens, and it turns the mic on itself; an open mic would only cost battery.
 		wantsMic: () => false,
 	}
 }

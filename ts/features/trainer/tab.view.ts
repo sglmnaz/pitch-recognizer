@@ -450,7 +450,8 @@ export function createTabView(root: HTMLElement): View {
 			const frequency = pitch && clarity >= Tab.MIN_CLARITY ? pitch : null
 			const power = Microphone.getFramePower()
 			const chroma = power ? Tab.chromaOf(power.power, power.binHz, Settings.get().a4) : null
-			if (session.frame(now, frequency, attack, chroma)) finish()
+			// The session gets the time it was played: the mic hears it Mic delay later (Settings).
+			if (session.frame(now - Settings.get().micDelayMs, frequency, attack, chroma)) finish()
 		},
 	}
 }

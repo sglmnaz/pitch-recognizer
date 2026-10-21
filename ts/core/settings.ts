@@ -71,6 +71,10 @@ export interface Settings {
 	 * (Bluetooth, some phones; negative where the browser over-reports its own
 	 * latency): the metronome's beats (lights, Changes judging) move by it. */
 	audioDelayMs: number
+	/** −200…400 ms the mic hears a sound after its click is heard (Settings →
+	 * Metronome → Mic delay, measured by the mic hearing the clicks): Changes
+	 * and Tab date what the mic hears that much earlier. */
+	micDelayMs: number
 	/** Speed trainer: +step BPM every `bars` bars until `target`. */
 	metroTrainerOn: boolean
 	metroTrainerStep: number
@@ -164,6 +168,7 @@ const defaults: Settings = {
 	metroVolume: 0.8,
 	metroFlash: false,
 	audioDelayMs: 0,
+	micDelayMs: 0,
 	metroTrainerOn: false,
 	metroTrainerStep: 5,
 	metroTrainerBars: 4,
@@ -273,6 +278,7 @@ export function load(): Settings {
 		metroVolume: clamp(s.metroVolume, 0, 1, d.metroVolume),
 		metroFlash: bool(s.metroFlash, d.metroFlash),
 		audioDelayMs: clamp(s.audioDelayMs, -200, 400, d.audioDelayMs, true),
+		micDelayMs: clamp(s.micDelayMs, -200, 400, d.micDelayMs, true),
 		metroTrainerOn: bool(s.metroTrainerOn, d.metroTrainerOn),
 		// The ranges of the steppers in ts/features/metronome/metronome.view.ts.
 		metroTrainerStep: clamp(s.metroTrainerStep, 1, 20, d.metroTrainerStep, true),

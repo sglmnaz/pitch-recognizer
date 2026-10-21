@@ -57,7 +57,7 @@ export function micNeedChanged() {
 }
 
 /**
- * Scales' own toggle. It only stops listening: a progression or Play scale
+ * Scales' own toggle, and the Mic delay calibration (Settings). It only stops listening: a progression or Play scale
  * keeps playing (the view clears what it heard itself).
  */
 export function setListening(on: boolean) {
