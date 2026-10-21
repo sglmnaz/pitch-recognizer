@@ -268,7 +268,7 @@
 					<span class="silk" id="changesTempoLabel">Tempo</span>
 					<div class="changes-stepper" role="group" aria-labelledby="changesTempoLabel">
 						<button class="key key--step" type="button" data-changes-bpm="-5" aria-label="5 BPM slower">▼</button>
-						<span class="window"><span class="lcd changes-tempo__value">60 BPM</span></span>
+						<span class="window"><span class="lcd changes-tempo__value"><input class="lcd-number" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="3" aria-label="Tempo in BPM, tap to type" /><span class="lcd__unit">BPM</span></span></span>
 						<button class="key key--step" type="button" data-changes-bpm="5" aria-label="5 BPM faster">▲</button>
 					</div>
 				</div>
@@ -322,13 +322,21 @@
 			</div>
 
 			<div class="tab-setup" data-only="tab" hidden>
+				<!-- The tempo, set as on the Metronome (the same keys and fader), on a small display. -->
 				<div class="tab-row">
 					<span class="silk" id="tabTempoLabel">Tempo</span>
-					<div class="changes-stepper" role="group" aria-labelledby="tabTempoLabel">
-						<button class="key key--step" type="button" data-tab-bpm="-5" aria-label="5 BPM slower">▼</button>
-						<span class="window"><span class="lcd tab-tempo">60 BPM</span></span>
-						<button class="key key--step" type="button" data-tab-bpm="5" aria-label="5 BPM faster">▲</button>
+					<span class="window"><span class="lcd tab-tempo"><input class="lcd-number" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="3" aria-label="Tempo in BPM, tap to type" /><span class="lcd__unit">BPM</span></span></span>
+				</div>
+				<div class="metro-tempo" role="group" aria-labelledby="tabTempoLabel">
+					<button class="key key--step metro-step metro-step--ten" type="button" data-tempo="-10" aria-label="10 BPM slower">&minus;10</button>
+					<button class="key key--dark metro-step" type="button" data-tempo="-1" aria-label="1 BPM slower">&minus;</button>
+					<div class="metro-fader tab-fader">
+						<!-- A tick every 30 BPM, numbers every 60 (10 … 250 is 8 steps). -->
+						<span class="metro-fader__scale" aria-hidden="true"><span>10</span><span>70</span><span>130</span><span>190</span><span>250</span></span>
+						<input class="range metro-slider tab-slider" type="range" min="10" max="250" step="1" aria-label="Tempo in beats per minute" />
 					</div>
+					<button class="key key--dark metro-step" type="button" data-tempo="1" aria-label="1 BPM faster">+</button>
+					<button class="key key--step metro-step metro-step--ten" type="button" data-tempo="10" aria-label="10 BPM faster">+10</button>
 				</div>
 				<div class="tab-row">
 					<span class="silk" id="tabFollowLabel">Follow</span>
@@ -628,7 +636,7 @@
 						<span class="silk" id="progTempoLabel">Tempo</span>
 						<div class="changes-stepper" role="group" aria-labelledby="progTempoLabel">
 							<button class="key key--step" type="button" data-bpm="-5" aria-label="5 BPM slower">▼</button>
-							<span class="window"><span class="lcd harmony__bpm"></span></span>
+							<span class="window"><span class="lcd harmony__bpm"><input class="lcd-number" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="3" aria-label="Tempo in BPM, tap to type" /><span class="lcd__unit">BPM</span></span></span>
 							<button class="key key--step" type="button" data-bpm="5" aria-label="5 BPM faster">▲</button>
 						</div>
 					</div>
@@ -786,7 +794,7 @@
 						<span class="switch__title">Up to</span>
 						<div class="metro-stepper">
 							<button class="key key--step metro-step metro-step--small" type="button" data-trainer="target" data-by="-1" aria-label="Lower target">&minus;</button>
-							<span class="window metro-count metro-count--wide"><span class="lcd" data-value="target"></span></span>
+							<span class="window metro-count metro-count--wide"><span class="lcd"><input class="lcd-number" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="3" data-value="target" aria-label="Target tempo in BPM, tap to type" /></span></span>
 							<button class="key key--step metro-step metro-step--small" type="button" data-trainer="target" data-by="1" aria-label="Higher target">+</button>
 						</div>
 					</div>

@@ -8,17 +8,15 @@ import { bindRotary } from '../../ui/rotary'
 import { screenLock } from '../../ui/screen-lock'
 import { resetKey } from '../../ui/reset-key'
 import { plural, t } from '../../core/i18n'
+import { bindTempoKeys, numberField, onPress } from '../../ui/tempo'
 
 const MAX_BEATS = 12
 // Taps further apart than this start a new measurement; the average covers the
 // last TAP_COUNT taps so one sloppy tap fades out instead of ruining the tempo.
 const TAP_RESET_MS = 2000
 const TAP_COUNT = 6
-// Holding − / + repeats after HOLD_DELAY_MS, every REPEAT_MS; after SPEED_UP
-// repeats it jumps 5 at a time, so 30 → 300 does not take half a minute.
-const HOLD_DELAY_MS = 400
-const REPEAT_MS = 70
-const SPEED_UP = 20
+// The fader's range (index.html). The engine goes down to 10 for Trainer → Tab.
+const MIN_TEMPO = 30
 
 // Beat pad tap targets: never smaller than MIN_BEAT px, BEAT_GAP apart (match .metro-beats in metronome.css).
 const MIN_BEAT = 44
@@ -78,7 +76,7 @@ export function createMetronomeView(root: HTMLElement): View & { stop(): void } 
 	/** The one way the user changes tempo: engine first, then the stored setting. */
 	function setBpm(bpm: number) {
 		userTempoAt = performance.now()
-		bpm = clamp(Math.round(bpm), Metronome.MIN_BPM, Metronome.MAX_BPM)
+		bpm = clamp(Math.round(bpm), MIN_TEMPO, Metronome.MAX_BPM)
 		Metronome.setTempo(bpm)
 		Settings.update({ metroBpm: bpm })
 	}
@@ -88,60 +86,10 @@ export function createMetronomeView(root: HTMLElement): View & { stop(): void } 
 	slider.addEventListener('pointerdown', () => (dragging = true))
 	for (const type of ['pointerup', 'pointercancel']) slider.addEventListener(type, () => (dragging = false))
 
-	/** Pointer-down acts at once (no 300 ms touch delay, and timing taps matter);
-	 * `click` with detail 0 is the keyboard. Holding repeats. */
-	function onPress(button: HTMLElement, action: (repeats: number) => void, repeat = false) {
-		let delay = 0
-		let ticker = 0
-		const release = () => {
-			clearTimeout(delay)
-			clearInterval(ticker)
-		}
-		button.addEventListener('pointerdown', (event) => {
-			if (event.button !== 0) return
-			release()
-			action(0)
-			if (!repeat) return
-			delay = setTimeout(() => {
-				let repeats = 0
-				ticker = setInterval(() => action(++repeats), REPEAT_MS) as unknown as number
-			}, HOLD_DELAY_MS) as unknown as number
-		})
-		for (const type of ['pointerup', 'pointerleave', 'pointercancel']) button.addEventListener(type, release)
-		button.addEventListener('click', (event) => {
-			if (event.detail === 0) action(0)
-		})
-		// A long press must not open the context menu on touch screens.
-		button.addEventListener('contextmenu', (event) => event.preventDefault())
-	}
+	bindTempoKeys($$('[data-tempo]'), nudge)
 
-	for (const button of $$('[data-tempo]')) {
-		const by = Number(button.dataset.tempo)
-		// ±1 speeds up when held; ±10 is already the big step.
-		onPress(button, (repeats) => nudge(Math.abs(by) === 1 && repeats > SPEED_UP ? by * 5 : by), true)
-	}
-
-	// Tap the number to type a tempo: committed on Enter or when focus leaves,
-	// Escape puts the current tempo back.
-	bpmValue.addEventListener('focus', () => bpmValue.select())
-	// The field is as wide as its digits, so the BPM unit hangs right off the number.
-	const fitBpm = () => (bpmValue.style.width = `${Math.max(2, bpmValue.value.length)}ch`)
-	bpmValue.addEventListener('input', () => {
-		bpmValue.value = bpmValue.value.replace(/\D/g, '')
-		fitBpm()
-	})
-	bpmValue.addEventListener('change', () => {
-		const typed = Number(bpmValue.value)
-		if (bpmValue.value !== '' && typed > 0) setBpm(typed)
-		showBpm(Metronome.getState().bpm, true)
-	})
-	bpmValue.addEventListener('keydown', (event) => {
-		if (event.key === 'Enter') bpmValue.blur()
-		if (event.key === 'Escape') {
-			showBpm(Metronome.getState().bpm, true)
-			bpmValue.blur()
-		}
-	})
+	// Tap the number to type a tempo.
+	const bpmField = numberField(bpmValue, () => Metronome.getState().bpm, setBpm)
 
 	onPress(tapButton, () => {
 		const now = performance.now()
@@ -242,11 +190,7 @@ export function createMetronomeView(root: HTMLElement): View & { stop(): void } 
 
 	/* Beats ----------------------------------------------------------------- */
 	function showBpm(bpm: number, force = false) {
-		// Never overwrite what the user is typing.
-		if (force || document.activeElement !== bpmValue) {
-			bpmValue.value = String(bpm)
-			fitBpm()
-		}
+		bpmField.show(bpm, force)
 		slider.value = String(bpm)
 		name.textContent = t(tempoName(bpm))
 	}
@@ -273,7 +217,7 @@ export function createMetronomeView(root: HTMLElement): View & { stop(): void } 
 	const TRAINER_LIMITS = {
 		step: { key: 'metroTrainerStep', min: 1, max: 20, by: 1 },
 		bars: { key: 'metroTrainerBars', min: 1, max: 16, by: 1 },
-		target: { key: 'metroTrainerTarget', min: Metronome.MIN_BPM, max: Metronome.MAX_BPM, by: 5 },
+		target: { key: 'metroTrainerTarget', min: MIN_TEMPO, max: Metronome.MAX_BPM, by: 5 },
 	} as const
 	const trainerValues = Object.fromEntries(Object.keys(TRAINER_LIMITS).map((name) => [name, $<HTMLElement>(`[data-value="${name}"]`)])) as Record<
 		keyof typeof TRAINER_LIMITS,
@@ -303,13 +247,20 @@ export function createMetronomeView(root: HTMLElement): View & { stop(): void } 
 		)
 	}
 
+	// The target can be typed too.
+	const targetField = numberField(
+		trainerValues.target as HTMLInputElement,
+		() => Settings.get().metroTrainerTarget,
+		(bpm) => Settings.update({ metroTrainerTarget: clamp(Math.round(bpm), MIN_TEMPO, Metronome.MAX_BPM) })
+	)
+
 	function renderTrainer() {
 		const { metroTrainerOn: on, metroTrainerStep: step, metroTrainerBars: bars, metroTrainerTarget: target, metroBpm: start } = Settings.get()
 		const barsText = plural(bars, '{n} bar', '{n} bars')
 		trainerDesc.textContent = on ? t('From {start} BPM, +{step} every {bars}', { start, step, bars: barsText }) : t('Speeds up while you play')
 		trainerValues.step.textContent = `+${step}`
 		trainerValues.bars.textContent = barsText
-		trainerValues.target.textContent = `${target}`
+		targetField.show(target)
 		trainerConfig.hidden = !on
 		progress.hidden = !on
 		// The TRN legend on the tempo LCD lights while the trainer is on.

@@ -67,8 +67,9 @@ export interface TabExercise {
 // Standard tuning, string 1 (high E) first.
 const OPEN_MIDI = [64, 59, 55, 50, 45, 40]
 export const BEATS_PER_BAR = 4
-export const MIN_BPM = 30
-export const MAX_BPM = 240
+// The fader's range (index.html): slow enough to learn a pattern note by note.
+export const MIN_BPM = 10
+export const MAX_BPM = 250
 
 export const midiOf = (note: TabNote) => OPEN_MIDI[note.string - 1] + note.fret
 /** The pitch the note has to sound at: a bend's target, otherwise the fretted note. */

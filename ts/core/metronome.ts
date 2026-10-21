@@ -56,7 +56,8 @@ export interface State {
 	beat: number
 }
 
-export const MIN_BPM = 30
+// Trainer → Tab goes this slow; the Metronome tab's own fader starts at 30.
+export const MIN_BPM = 10
 export const MAX_BPM = 300
 
 const TICK_MS = 25

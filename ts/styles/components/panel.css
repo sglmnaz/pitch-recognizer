@@ -143,6 +143,50 @@ span.window:has(> .lcd):not(:has(> .changes-clock)) {
 	}
 }
 
+/* A value on a small LCD that can be typed (ts/ui/tempo.ts numberField): the
+   text field wears the glass's own face and glow, as wide as its digits (their
+   letter spacing included), and a unit after it in .lcd__unit. Focused, an
+   underline in the display's ink; its text is selected so typing replaces it,
+   without a highlight. */
+input.lcd-number {
+	--field-spacing: 0.12em;
+	width: 3ch;
+	padding: 0;
+	border: none;
+	border-radius: 0;
+	/* The underline is a background, so the field is exactly as tall as the
+	   text it replaced and the LCD keeps its size. */
+	background: linear-gradient(currentColor, currentColor) center bottom / 100% 0 no-repeat;
+	color: inherit;
+	font: inherit;
+	font-variant-numeric: inherit;
+	line-height: inherit;
+	letter-spacing: var(--field-spacing);
+	text-align: center;
+	text-shadow: inherit;
+	cursor: text;
+	caret-color: currentColor;
+
+	&:hover {
+		background-image: linear-gradient(var(--lcd-dim), var(--lcd-dim));
+		background-size: 100% 2px;
+	}
+
+	&:focus {
+		outline: none;
+		background-image: linear-gradient(currentColor, currentColor);
+		background-size: 100% 2px;
+	}
+
+	&::selection {
+		background: transparent;
+	}
+}
+
+.lcd__unit {
+	margin-left: 0.4em;
+}
+
 /* Unlit segments / dim LCD text. */
 .lcd__dim {
 	color: var(--lcd-dim);

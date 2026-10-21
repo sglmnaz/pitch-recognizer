@@ -177,6 +177,7 @@ export const it: Dictionary = {
 	'More bars': 'Più misure',
 	'Up to': 'Fino a',
 	'Lower target': 'Obiettivo più basso',
+	'Target tempo in BPM, tap to type': 'Tempo obiettivo in BPM, tocca per scriverlo',
 	'Higher target': 'Obiettivo più alto',
 	'How to use the metronome': 'Come usare il metronomo',
 

@@ -19,6 +19,7 @@ import { createProbe } from './timing-probe'
 import { noteName } from '../../music/note-names'
 import * as FieldReport from '../calibration/field-report'
 import { plural, t } from '../../core/i18n'
+import { bindTempoKeys, numberField } from '../../ui/tempo'
 
 // One beat takes this much paper whatever the subdivision, so 16ths sit
 // closer than 8ths and a bar always reads as a bar.
@@ -66,7 +67,8 @@ export function createTabView(root: HTMLElement): View {
 	const loopKey = $<HTMLButtonElement>('.tab-loop')
 	const message = $<HTMLElement>('.tab-message')
 	const announce = liveRegion($('.tab-live'), { throttleMs: 4000 })
-	const tempoValue = $<HTMLElement>('.tab-tempo')
+	const tempoInput = $<HTMLInputElement>('.tab-tempo .lcd-number')
+	const slider = $<HTMLInputElement>('.tab-slider')
 	const speedUp = $<HTMLInputElement>('.tab-speedup .switch__input')
 	const goalsBox = $<HTMLElement>('.tab-goals')
 	const levelsBox = $<HTMLElement>('.tab-levels')
@@ -229,9 +231,11 @@ export function createTabView(root: HTMLElement): View {
 	loopKey.addEventListener('click', () => Settings.update({ tabLoop: !Settings.get().tabLoop }))
 	speedUp.addEventListener('change', () => Settings.update({ tabSpeedUp: speedUp.checked }))
 
-	for (const button of setup.querySelectorAll<HTMLButtonElement>('[data-tab-bpm]')) {
-		button.addEventListener('click', () => Settings.update({ tabBpm: clamp(Settings.get().tabBpm + Number(button.dataset.tabBpm), Tab.MIN_BPM, Tab.MAX_BPM) }))
-	}
+	// The tempo, set as on the Metronome: −10 − + +10 (held, they repeat), the fader, or typed.
+	const setBpm = (bpm: number) => Settings.update({ tabBpm: clamp(Math.round(bpm), Tab.MIN_BPM, Tab.MAX_BPM) })
+	bindTempoKeys(setup.querySelectorAll<HTMLElement>('[data-tempo]'), (by) => setBpm(Settings.get().tabBpm + by))
+	slider.addEventListener('input', () => setBpm(Number(slider.value)))
+	const tempoField = numberField(tempoInput, () => Settings.get().tabBpm, setBpm)
 
 	function renderSetup() {
 		const s = Settings.get()
@@ -239,7 +243,8 @@ export function createTabView(root: HTMLElement): View {
 		setPressed([loopKey], () => s.tabLoop)
 		speedUp.checked = s.tabSpeedUp
 		speedUp.disabled = s.tabFollow === 'wait'
-		tempoValue.textContent = `${s.tabBpm} BPM`
+		tempoField.show(s.tabBpm)
+		slider.value = String(s.tabBpm)
 		for (const chip of goalsBox.querySelectorAll<HTMLButtonElement>('[data-filter]'))
 			chip.setAttribute('aria-pressed', String(chip.dataset.filter === s.tabGoal))
 		for (const chip of levelsBox.querySelectorAll<HTMLButtonElement>('[data-filter]'))

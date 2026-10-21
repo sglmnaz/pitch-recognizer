@@ -240,8 +240,8 @@ input.metro-bpm__value {
 	font-weight: 600;
 	line-height: 1;
 	pointer-events: none;
-	/* A tick every 30 BPM: 9 steps from 30 to 300. */
-	background: repeating-linear-gradient(90deg, currentColor 0 1px, transparent 1px calc((100% - 1px) / 9)) 0 6px / 100% 6px no-repeat;
+	/* A tick every 30 BPM: 9 steps from 30 to 300 (--ticks: Trainer → Tab's fader has 8). */
+	background: repeating-linear-gradient(90deg, currentColor 0 1px, transparent 1px calc((100% - 1px) / var(--ticks, 9))) 0 6px / 100% 6px no-repeat;
 
 	/* Each number is centred on its tick. */
 	& span {

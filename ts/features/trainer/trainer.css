@@ -1279,6 +1279,11 @@
 	text-align: center;
 }
 
+/* The Metronome's tempo row (metronome.css), on a fader from 10 to 250. */
+.tab-fader {
+	--ticks: 8;
+}
+
 .tab-group {
 	display: flex;
 	flex-direction: column;

@@ -14,6 +14,7 @@ import { shapeNotes } from '../../music/chord-library'
 import { OPEN_CHORD_EVENT } from '../../ui/events'
 import { liveRegion, scoped, setPressed } from '../../ui/dom'
 import { clamp } from '../../core/math'
+import { numberField } from '../../ui/tempo'
 import { createCircle } from './circle'
 import { createProgressionPlayer } from './progression-player'
 import { noteName } from '../../music/note-names'
@@ -69,7 +70,12 @@ export function createHarmony(root: HTMLElement, host: HarmonyHost) {
 	const openLink = $<HTMLAnchorElement>('[data-action="open-chord"]')
 	const progNote = $<HTMLElement>('.harmony__note--progressions')
 	const keyNote = $<HTMLElement>('.harmony__note--key')
-	const bpm = $<HTMLElement>('.harmony__bpm')
+	// Tap the number to type a tempo.
+	const bpm = numberField(
+		$<HTMLInputElement>('.harmony__bpm .lcd-number'),
+		() => Settings.get().progressionBpm,
+		(value) => Settings.update({ progressionBpm: clamp(Math.round(value), 60, 140) })
+	)
 	const loopSwitch = $<HTMLInputElement>('[data-action="loop"]')
 	const progList = $<HTMLElement>('.progressions')
 	const announce = liveRegion($('.harmony__live'))
@@ -304,7 +310,7 @@ export function createHarmony(root: HTMLElement, host: HarmonyHost) {
 		const { progressionBpm, progressionLoop } = Settings.get()
 		const playing = player.playing()
 		progNote.textContent = progKeyName && t('In {key}', { key: progKeyName })
-		bpm.textContent = `${progressionBpm} BPM`
+		bpm.show(progressionBpm)
 		loopSwitch.checked = progressionLoop
 		Array.from(progList.children).forEach((item, index) => {
 			const on = playing?.index === index

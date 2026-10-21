@@ -153,3 +153,7 @@ Carcassi, public domain, are note for note.
 - **One tempo** (`tabBpm`) for every exercise: changing exercise no longer
   changes the tempo; a Tempo session ends saving the tempo it reached there.
   Records keep only the best clean BPM.
+- **Tempo from 10 to 250 BPM**, set as on the Metronome: the same −10 − + +10
+  keys (held, they repeat) and fader (`ts/ui/tempo.ts`, shared with the
+  Metronome), on a small LCD that can be typed. The metronome engine's floor
+  is 10 for it; the Metronome tab's own fader still starts at 30.

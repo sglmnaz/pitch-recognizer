@@ -9,6 +9,7 @@ import * as Tab from '../../music/tab'
 import * as Metronome from '../../core/metronome'
 import * as Settings from '../../core/settings'
 import { clamp } from '../../core/math'
+import { numberField } from '../../ui/tempo'
 import { loadChordModel } from '../../music/chords'
 import { parseChordSymbol } from '../../music/chord-library'
 import { chordShapes } from '../../music/chord-shapes'
@@ -70,7 +71,12 @@ export function createChangesView(root: HTMLElement): View {
 	const order = $<HTMLElement>('.changes-order')
 	const summary = $<HTMLElement>('.changes-summary')
 	const tempo = $<HTMLElement>('.changes-tempo')
-	const tempoValue = $<HTMLElement>('.changes-tempo__value')
+	// Tap the number to type a tempo.
+	const tempoValue = numberField(
+		$<HTMLInputElement>('.changes-tempo__value .lcd-number'),
+		() => Settings.get().changesBpm,
+		(bpm) => Settings.update({ changesBpm: clamp(Math.round(bpm), Changes.MIN_BPM, Changes.MAX_BPM) })
+	)
 
 	// Readings arrive every frame while the mic runs and reset() runs when it stops.
 	let micLive = false
@@ -204,7 +210,7 @@ export function createChangesView(root: HTMLElement): View {
 		const chords = selection()
 		showMode(s.changesMode)
 		tempo.hidden = s.changesMode !== 'time'
-		tempoValue.textContent = `${s.changesBpm} BPM`
+		tempoValue.show(s.changesBpm)
 		for (const button of presetsBox.querySelectorAll<HTMLButtonElement>('[data-preset]')) {
 			button.setAttribute('aria-pressed', String(button.dataset.preset === chords.join()))
 		}
