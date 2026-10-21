@@ -100,8 +100,8 @@ export function createDelayCalibration(root: HTMLElement): { cancel(): void } {
 /**
  * Settings → Metronome → Mic delay → Calibrate: the metronome clicks out loud
  * at 40 BPM (Latency.MIC_CALIBRATION_BPM), Audio delay included, and the mic listens for them. How far each
- * click is heard behind its BeatEvent.heardAt, picked and dated like Trainer →
- * Tab's notes, becomes the setting: Changes and Tab then judge what they hear
+ * click is heard behind its BeatEvent.heardAt (its strongest energy jump, Latency.estimateOnsetDelay; dated
+ * like Trainer → Tab's picks) becomes the setting: Changes and Tab then judge what they hear
  * that much earlier, the whole round trip (speaker, room, input path) whatever
  * Audio delay says. Turns the mic on for the run and off after.
  */
@@ -109,11 +109,10 @@ export function createMicCalibration(root: HTMLElement): { frame(): void; cancel
 	const button = root.querySelector<HTMLButtonElement>('[data-action="calibrate-mic"]')!
 	const status = root.querySelector<HTMLElement>('[data-mic-calibrate-status]')!
 	const beatMs = 60000 / Latency.MIC_CALIBRATION_BPM
-	const onsets = Tab.createOnsetDetector()
 
 	let clicks: number[] = []
-	let picks: number[] = []
-	let frames = 0
+	// Every mic frame's time (dated like Tab's picks) and the energy of its newest samples.
+	let frames: { at: number; energy: number }[] = []
 	let off: (() => void) | null = null
 	let finishTimer = 0
 
@@ -125,9 +124,7 @@ export function createMicCalibration(root: HTMLElement): { frame(): void; cancel
 	function start() {
 		if (Metronome.getState().running) return say('Stop the metronome first, then calibrate.')
 		clicks = []
-		picks = []
-		frames = 0
-		onsets.reset()
+		frames = []
 		button.textContent = 'Cancel'
 		say(`Volume up, no headphones, quiet please: listening for ${Latency.MIC_CALIBRATION_CLICKS} clicks…`)
 		const s = Settings.get()
@@ -163,8 +160,8 @@ export function createMicCalibration(root: HTMLElement): { frame(): void; cancel
 
 	function finish() {
 		stopRun()
-		if (!frames) return say('The microphone is off or blocked: allow it, then try again.')
-		const read = Latency.estimateDelay(clicks, picks, beatMs, Latency.MIC_AHEAD_MS)
+		if (!frames.length) return say('The microphone is off or blocked: allow it, then try again.')
+		const read = Latency.estimateOnsetDelay(clicks, frames, beatMs, Latency.MIC_AHEAD_MS)
 		if (!read) return say('Not enough clicks heard. Turn the volume up, take off headphones and try again.')
 		if (read.spread > Latency.MAX_SPREAD_MS) return say(`Clicks heard too unevenly (±${Math.round(read.spread)} ms). Try again somewhere quieter.`)
 		const ms = Latency.delaySetting(read.lag, Latency.MAX_MIC_DELAY_MS, Latency.MIN_MIC_DELAY_MS)
@@ -185,10 +182,8 @@ export function createMicCalibration(root: HTMLElement): { frame(): void; cancel
 		/** One mic frame while the Settings tab is open. */
 		frame() {
 			if (!off) return
-			frames++
-			const now = performance.now()
 			const wave = Microphone.getWaveform()
-			if (wave && onsets.feed(now, Tab.newestEnergy(wave))) picks.push(now - Tab.ATTACK_LATENCY_MS)
+			if (wave) frames.push({ at: performance.now() - Tab.ATTACK_LATENCY_MS, energy: Tab.newestEnergy(wave) })
 		},
 		cancel,
 	}

@@ -61,6 +61,44 @@ export function estimateDelay(clicks: number[], taps: number[], beatMs: number, 
 	return { lag, spread: median(lags.map((l) => Math.abs(l - lag))), taps: lags.length }
 }
 
+// Mic delay: each click is the strongest jump in energy near it (the energy of
+// a frame over the quietest of the ONSET_LOOK_MS before it), not the first
+// pick: on a phone the room and the click's own tail fired picks all through
+// the window, and the first one always sat at the window's start (-160, -245,
+// -445 ms for windows from -200, -300, -500). A click at full volume is the
+// loudest thing in the room; a jump under MIN_STRENGTH is not one.
+const ONSET_LOOK_MS = 100
+export const MIN_STRENGTH = 3
+
+/**
+ * The mic's lag behind each click (after the listening ones): the frame with
+ * the strongest energy jump from `ahead` ms before the click to a beat minus
+ * that after it. `frames` = each mic frame's time and energy (oldest first).
+ * Median and spread as estimateDelay; null below MIN_TAPS clicks heard.
+ */
+export function estimateOnsetDelay(clicks: number[], frames: { at: number; energy: number }[], beatMs: number, ahead: number): DelayEstimate | null {
+	const lags: number[] = []
+	for (const click of clicks.slice(LISTEN_CLICKS)) {
+		let best = 0
+		let bestAt = 0
+		for (let i = 0; i < frames.length; i++) {
+			const { at, energy } = frames[i]
+			if (at < click - ahead || at >= click + beatMs - ahead) continue
+			let quietest = Infinity
+			for (let j = i - 1; j >= 0 && frames[j].at >= at - ONSET_LOOK_MS; j--) quietest = Math.min(quietest, frames[j].energy)
+			const strength = quietest > 0 && quietest < Infinity ? energy / quietest : 0
+			if (strength > best) {
+				best = strength
+				bestAt = at
+			}
+		}
+		if (best >= MIN_STRENGTH) lags.push(bestAt - click)
+	}
+	if (lags.length < MIN_TAPS) return null
+	const lag = median(lags)
+	return { lag, spread: median(lags.map((l) => Math.abs(l - lag))), taps: lags.length }
+}
+
 /**
  * The setting for a lag: rounded to the slider's 5 ms steps, within the
  * setting's range. Negative when taps land ahead of where the browser places

@@ -50,6 +50,7 @@ export function heardChord(now: number): HeardChord | null {
 export function resetHeard() {
 	tracker.reset()
 	levels = []
+	lastStrum = Number.NEGATIVE_INFINITY
 }
 
 // The pitch pipeline's onset rule wants the level to double over its running
@@ -60,7 +61,12 @@ export function resetHeard() {
 // stays a flip.
 const STRUM_RISE = 1.5
 const STRUM_WINDOW_MS = 250
+// One strum fires once. The mic's 'attack' state lasts several frames after
+// an onset, and a strum's level keeps rising for a few: counted every frame,
+// a phone logged ~16 strums a beat and any of them could date a change.
+const STRUM_REFRACTORY_MS = 120
 let levels: { at: number; volume: number }[] = []
+let lastStrum = Number.NEGATIVE_INFINITY
 
 /** A strum's attack this frame: what tells a played chord from a recognizer flip. */
 export function strummed(now: number): boolean {
@@ -73,7 +79,11 @@ export function strummed(now: number): boolean {
 	levels.push({ at: now, volume })
 	levels = levels.filter((level) => level.at >= now - STRUM_WINDOW_MS)
 	const quietest = Math.min(...levels.map((level) => level.volume))
-	return reason === 'attack' || (Microphone.isSounding() && volume > STRUM_RISE * quietest)
+	if (!(reason === 'attack' || (Microphone.isSounding() && volume > STRUM_RISE * quietest))) return false
+	// Only the first frame of a run of attack frames, after STRUM_REFRACTORY_MS without one.
+	const fresh = now - lastStrum >= STRUM_REFRACTORY_MS
+	lastStrum = now
+	return fresh
 }
 
 /** ?debug chords are being fed: a session may start without the mic. */

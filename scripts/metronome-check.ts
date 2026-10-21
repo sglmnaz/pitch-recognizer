@@ -265,6 +265,37 @@ check('the setting stays within −200…400 ms', Latency.delaySetting(-260) ===
 	)
 	check('…which the tap run at 75 BPM would alias to -160', fast !== null && Math.round(fast.lag) === -160, JSON.stringify(fast))
 }
+{
+	// Mic delay from the mic's frames: 120 fps, room noise wobbling up to 2x all
+	// the time, the click a 20x jump 300 ms after heardAt with a decaying tail.
+	// The first pick in the window used to win (the window's start); the strongest jump must.
+	const micBeat = 60000 / Latency.MIC_CALIBRATION_BPM
+	const micClicks = Array.from({ length: Latency.MIC_CALIBRATION_CLICKS }, (_, i) => 1000 + i * micBeat)
+	let seed = 7
+	const random = () => {
+		seed = (seed * 16807) % 2147483647
+		return seed / 2147483647
+	}
+	const frames: { at: number; energy: number }[] = []
+	for (let at = 0; at < 1000 + micBeat * (micClicks.length + 1); at += 1000 / 120) {
+		const since = Math.min(...micClicks.map((c) => (at >= c + 300 ? at - c - 300 : Infinity)))
+		const click = since < 400 ? 20 * Math.exp(-since / 80) : 0
+		frames.push({ at, energy: 1e-6 * (1 + random()) + 1e-6 * click })
+	}
+	const onset = Latency.estimateOnsetDelay(micClicks, frames, micBeat, Latency.MIC_AHEAD_MS)
+	check(
+		'mic delay: the click is the strongest jump, not the first noise in the window',
+		onset !== null && Math.abs(onset.lag - 300) <= 10,
+		JSON.stringify(onset)
+	)
+	const quiet = Latency.estimateOnsetDelay(
+		micClicks,
+		frames.map((f) => ({ at: f.at, energy: 1e-6 * (1 + random()) })),
+		micBeat,
+		Latency.MIC_AHEAD_MS
+	)
+	check('mic delay: noise alone is no answer', quiet === null, JSON.stringify(quiet))
+}
 check('too few taps: no answer', Latency.estimateDelay(clickTimes, steady.slice(0, 5), beatMs) === null)
 const uneven = Latency.estimateDelay(
 	clickTimes,
