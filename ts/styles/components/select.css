@@ -28,11 +28,22 @@
 	box-shadow:
 		var(--lcd-shadow),
 		0 1px 0 var(--plate-shine);
-	/* Small ▾ in the display's ink, so it follows the LCD colour. */
-	background:
-		linear-gradient(45deg, transparent 50%, var(--lcd-ink) 50%) right 12px center / 5px 5px no-repeat,
-		linear-gradient(135deg, var(--lcd-ink) 50%, transparent 50%) right 7px center / 5px 5px no-repeat,
-		var(--lcd-bg);
+	position: relative;
+	background: var(--lcd-bg);
+
+	/* Small ▾ in the display's ink, so it follows the LCD colour: one shape
+	   (two half-triangles side by side left a seam on phone screens). */
+	&::after {
+		content: '';
+		position: absolute;
+		top: 50%;
+		right: 8px;
+		width: 10px;
+		height: 5px;
+		margin-top: -2px;
+		background: var(--lcd-ink);
+		clip-path: polygon(0 0, 100% 0, 50% 100%);
+	}
 
 	& option,
 	& optgroup {
