@@ -494,7 +494,7 @@ export function createChangesView(root: HTMLElement): View {
 		const chroma = tonal ? Tab.chromaOf(power.power, power.binHz, Settings.get().a4) : null
 		const strum = strummed(now)
 		// The drill's own chords only: the recognizer's close relatives (Em7 for G) count as them.
-		const symbol = Changes.sequenceChord(heardChord(now)?.symbol ?? null, isRunning() ? session.config().sequence : selection())
+		const symbol = Changes.sequenceChord(heardChord(now), isRunning() ? session.config().sequence : selection())
 		const { volume, noiseFloor } = Microphone.getStats()
 		if (session.frame(now - Settings.get().micDelayMs, strum, symbol, chroma, volume, noiseFloor)) finish(true)
 	}

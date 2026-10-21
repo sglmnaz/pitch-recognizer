@@ -123,7 +123,7 @@ function createMicCheck(card: HTMLElement) {
 				clearTimeout(lampTimer)
 				lampTimer = window.setTimeout(() => strumLamp.classList.remove('is-on'), 150)
 			}
-			const chord = heardChord(now)?.symbol ?? null
+			const chord = heardChord(now)
 			if (chord && chord !== lastChord && lastStrum !== null) namingText.textContent = String(Math.round(now - lastStrum))
 			if (chord !== lastChord) chordText.textContent = chord ?? '–'
 			lastChord = chord
