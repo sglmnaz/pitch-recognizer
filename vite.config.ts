@@ -50,8 +50,9 @@ export default defineConfig({
 				short_name: 'Pluck',
 				description: 'Guitar tuner, chord recognition and ear training from your microphone.',
 				lang: 'en',
-				theme_color: '#0a0a0b',
-				background_color: '#0a0a0b',
+				// The cream of the app icon (and of the classic light panel): the splash screen matches the icon.
+				theme_color: '#e7e1d3',
+				background_color: '#e7e1d3',
 				display: 'standalone',
 				orientation: 'portrait',
 				start_url: '/',

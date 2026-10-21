@@ -173,7 +173,7 @@
 	&:is([aria-pressed='true'], [aria-selected='true'], .is-down, :active)::before {
 		box-shadow:
 			var(--bezel),
-			0 3px 4px 4px rgba(0, 0, 0, 0.16);
+			0 2px 3px 3px rgba(0, 0, 0, 0.14);
 	}
 
 	&::before {
@@ -220,16 +220,24 @@
 		0 0 18px 6px rgba(255, 59, 47, 0.4);
 }
 
-/* Segmented: one bezelled housing; the caps inside get only a black line and,
-   where the row has no lamps above it, a tally lamp on the cap that is down. */
+/* Segmented: each cap a key of its own in the same bezel as every other key
+   (a shared dark housing read as a second outline). The bezel sits on the
+   button box, black inside, so a cap that is down sinks and shows the black
+   gap above it. Where the row has no lamps above it, a tally lamp on the cap
+   that is down. */
 [data-theme='regia'] .segmented {
-	padding: 3px;
-	gap: 3px;
-	border-radius: 4px;
-	background: #0a0c0b;
-	box-shadow:
-		0 0 0 4px var(--scope-bezel),
-		0 1px 0 5px var(--plate-shine);
+	padding: 0;
+	gap: 8px;
+	background: none;
+	box-shadow: none;
+
+	& > button {
+		border-radius: var(--key-radius);
+		background: #0a0c0b;
+		box-shadow:
+			var(--bezel),
+			0 2px 3px 3px rgba(0, 0, 0, 0.14);
+	}
 
 	& > button::before,
 	& > button:is([aria-pressed='true'], [aria-selected='true'], :active)::before {
@@ -237,11 +245,8 @@
 	}
 }
 
-[data-theme='regia'][data-mode='dark'] .segmented {
+[data-theme='regia'][data-mode='dark'] .segmented > button {
 	background: #000;
-	box-shadow:
-		0 0 0 4px var(--scope-bezel),
-		0 3px 5px 4px rgba(0, 0, 0, 0.3);
 }
 
 [data-theme='regia'] .segmented:not(.has-lamps) > button {
@@ -431,4 +436,21 @@
 		font-weight: 500;
 		color: var(--ink);
 	}
+}
+
+/* The tab lamps get the bezel's light lower edge too. */
+[data-theme='regia'] .tab::before {
+	box-shadow:
+		0 0 0 1.5px var(--outline),
+		0 1px 0 1.5px var(--plate-shine);
+}
+
+/* Metronome rows: the group titles are reverse-printed blocks (line-height 1),
+   so the first row comes up and the next title down by fixed amounts. */
+[data-theme='regia'] .metro-options > .settings-group__title + .metro-row {
+	margin-top: -14px;
+}
+
+[data-theme='regia'] .metro-options > .metro-row + .settings-group__title {
+	margin-top: -10px;
 }

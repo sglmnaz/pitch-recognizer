@@ -379,8 +379,9 @@ export function createMetronomeView(root: HTMLElement): View & { stop(): void } 
 		Settings.reset(metroKeys)
 		Metronome.setTempo(Settings.get().metroBpm)
 	})
-	reset.classList.add('metro-reset')
-	$<HTMLElement>('.help-link').before(reset)
+	// A small key in the tab's foot, before the Guide.
+	reset.className = 'foot-key reset-key'
+	$<HTMLElement>('.view-foot [data-help]').before(reset)
 
 	return {
 		onActivate() {

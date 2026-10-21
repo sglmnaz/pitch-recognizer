@@ -145,6 +145,15 @@
 	--lamp-w: 13px;
 	--lamp-h: 5px;
 	--lamp-radius: 1px;
+
+	/* Foot keys (Guide, Reset; components/help.css): one dark cap on every
+	   light and dark theme, a light top edge, a 2 px lower lip, a short drop. */
+	--foot-face: #1f1d1b;
+	--foot-hover: #262421;
+	--foot-down: #1a1817;
+	--foot-ink: #cfc9bc;
+	--foot-edge: inset 0 1px 0 rgba(255, 255, 255, 0.12), inset 0 -2px 0 #0e0d0c, 0 0 0 1px #0e0d0c, 0 2px 2px rgba(0, 0, 0, 0.3);
+	--foot-edge-down: inset 0 1px 2px rgba(0, 0, 0, 0.5), 0 0 0 1px #0e0d0c;
 }
 
 @media (max-width: 600px) {
@@ -1137,9 +1146,16 @@
 	--key4-front: #0a0b0a;
 	--key4-ink: #eef1ec;
 	--accent: #c62828;
-	/* One bezel for screens and keys: a black line, a 4 px grey-green frame, a lower shine. */
+	/* One bezel for screens and keys: a black line, a 3 px grey-green frame,
+	   a light lower edge 1 px under it (4 px read as a thick double outline). */
 	--scope-bezel: #3a3f3c;
-	--bezel: 0 0 0 1px #0a0c0b, 0 0 0 4px var(--scope-bezel), 0 1px 0 5px var(--plate-shine);
+	--bezel: 0 0 0 1px #0a0c0b, 0 0 0 3px var(--scope-bezel), 0 1px 0 3px var(--plate-shine);
+	--foot-face: linear-gradient(180deg, #2a2e2b, #1a1d1b);
+	--foot-hover: linear-gradient(180deg, #313532, #1f2220);
+	--foot-down: #1a1d1b;
+	--foot-ink: #d6dad4;
+	--foot-edge: inset 0 1px 0 rgba(255, 255, 255, 0.14), inset 0 -2px 0 #0a0c0b, var(--bezel);
+	--foot-edge-down: inset 0 1px 2px rgba(0, 0, 0, 0.6), var(--bezel);
 }
 
 [data-theme='regia'][data-mode='dark'],
@@ -1185,7 +1201,13 @@
 	--key4-ink: #e8edf0;
 	--accent: #e04a3a;
 	--scope-bezel: #10151a;
-	--bezel: 0 0 0 1px #000, 0 0 0 4px var(--scope-bezel), 0 3px 5px 4px rgba(0, 0, 0, 0.3);
+	--bezel: 0 0 0 1px #000, 0 0 0 3px var(--scope-bezel), 0 3px 5px 3px rgba(0, 0, 0, 0.3);
+	--foot-face: linear-gradient(180deg, #2a3138, #161b20);
+	--foot-hover: linear-gradient(180deg, #313942, #1c2228);
+	--foot-down: #161b20;
+	--foot-ink: #d6dde4;
+	--foot-edge: inset 0 1px 0 rgba(255, 255, 255, 0.12), inset 0 -2px 0 #000, var(--bezel);
+	--foot-edge-down: inset 0 1px 2px rgba(0, 0, 0, 0.6), var(--bezel);
 }
 
 /* Tier 3: display ------------------------------------------------------------ */

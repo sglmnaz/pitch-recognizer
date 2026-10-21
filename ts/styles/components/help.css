@@ -1,46 +1,46 @@
-/* Guide: a quiet ? icon at the end of each tab (bottom right), no button
-   chrome, and a row in Settings → Help; both open the dialog (ts/ui/help.ts). */
-.help-link {
+/* The end of each tab: small keys side by side at the bottom left, the
+   Guide last (and Reset before it on the Metronome; the Timing calibration
+   link after it on Trainer → Changes and Tab). Guide opens the dialog
+   (ts/ui/help.ts), as the Guide row in Settings → Help does. */
+.view-foot {
 	/* Last even where a view reorders its blocks (Trainer → Changes uses order). */
 	order: 99;
-	align-self: flex-end;
 	grid-column: 1 / -1;
-	justify-self: end;
-	display: grid;
-	place-items: center;
-	/* Thumb-sized hit area around a small icon. */
-	width: var(--tap);
-	height: var(--tap);
-	margin: calc(var(--space-8) * -1) calc(var(--space-12) * -1) 0 0;
-	padding: 0;
-	border: none;
-	border-radius: 50%;
-	background: none;
-	color: var(--fg-muted);
-	cursor: pointer;
-
-	&:hover {
-		color: var(--fg-secondary);
-	}
-
-	& svg {
-		width: 18px;
-		height: 18px;
-	}
-}
-
-/* The guide's ? with another quiet way out beside it (Trainer: Timing calibration). */
-.view-foot {
-	order: 99;
-	grid-column: 1 / -1;
-	justify-self: end;
-	align-self: flex-end;
+	justify-self: start;
 	display: flex;
 	align-items: center;
-	gap: var(--space-16);
+	gap: var(--foot-gap, var(--space-8));
+	margin-top: var(--space-16);
+}
 
-	.help-link {
-		align-self: center;
+/* A small key for what a tab rarely needs (Guide, Reset): a dark cap with
+   square corners, slightly raised by a light top edge and a lower lip, the
+   same on every light or dark theme (Broadcast sets it in its key frame). */
+.foot-key {
+	display: grid;
+	place-items: center;
+	min-width: 56px;
+	height: 24px;
+	padding: 0 10px;
+	border: 0;
+	border-radius: 1px;
+	background: var(--foot-face);
+	color: var(--foot-ink);
+	font: 700 10px / 1 var(--font-ui);
+	letter-spacing: 0.14em;
+	text-transform: uppercase;
+	cursor: pointer;
+	box-shadow: var(--foot-edge);
+	-webkit-tap-highlight-color: transparent;
+
+	&:hover {
+		background: var(--foot-hover);
+	}
+
+	&:active {
+		transform: translateY(1px);
+		background: var(--foot-down);
+		box-shadow: var(--foot-edge-down);
 	}
 }
 

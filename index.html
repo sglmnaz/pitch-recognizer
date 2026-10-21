@@ -335,10 +335,10 @@
 					<ul class="tab-list" aria-label="Exercises"></ul>
 				</div>
 			</div>
-			<!-- The way to the calibration page from the exercises that judge timing, quiet like the guide beside it. -->
+			<!-- The end of the tab: the guide, and the way to the calibration page from the exercises that judge timing. -->
 			<div class="view-foot">
+				<button class="foot-key" type="button" data-help="trainer" aria-haspopup="dialog" aria-label="How to use the trainer">Guide</button>
 				<button class="cal-link" type="button" data-action="open-calibration" data-only="changes tab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 4v4M6 12v8M4 8h4M12 4v10M12 18v2M10 14h4M18 4v1M18 9v11M16 5h4"/></svg>Timing calibration</button>
-				<button class="help-link" type="button" data-help="trainer" aria-haspopup="dialog" aria-label="How to use the trainer"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.6 9.4a2.5 2.5 0 0 1 4.8.9c0 1.7-2.4 2.2-2.4 3.7"/><path d="M12 17.2h.01"/></svg></button>
 			</div>
 		</section>
 
@@ -382,7 +382,10 @@
 				<hr class="rule tuner-rule" />
 			</div>
 			<p class="hint">Play one string at a time and mute the others. Unplugged electric? Hold the phone close to the strings. A check mark lights beside the note within <span class="tuner-tolerance">5</span> cents.</p>
-			<button class="help-link" type="button" data-help="tuner" aria-haspopup="dialog" aria-label="How to use the tuner"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.6 9.4a2.5 2.5 0 0 1 4.8.9c0 1.7-2.4 2.2-2.4 3.7"/><path d="M12 17.2h.01"/></svg></button>
+			<!-- The end of the tab: small keys, the guide last (ts/ui/help.ts). -->
+			<div class="view-foot">
+				<button class="foot-key" type="button" data-help="tuner" aria-haspopup="dialog" aria-label="How to use the tuner">Guide</button>
+			</div>
 		</section>
 
 		<!-- Chords ------------------------------------------------------- -->
@@ -471,7 +474,10 @@
 				<p class="sr-only chord-identify__status" aria-live="polite"></p>
 				<ol class="chord-results" aria-label="Matching chords"></ol>
 			</div>
-			<button class="help-link" type="button" data-help="chords" aria-haspopup="dialog" aria-label="How to use the chords tab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.6 9.4a2.5 2.5 0 0 1 4.8.9c0 1.7-2.4 2.2-2.4 3.7"/><path d="M12 17.2h.01"/></svg></button>
+			<!-- The end of the tab: small keys, the guide last (ts/ui/help.ts). -->
+			<div class="view-foot">
+				<button class="foot-key" type="button" data-help="chords" aria-haspopup="dialog" aria-label="How to use the chords tab">Guide</button>
+			</div>
 		</section>
 
 		<!-- Scales: explorer + identifier on one fretboard (ts/features/scales/scales.view.ts). -->
@@ -617,7 +623,10 @@
 			</div>
 
 			<ol class="scale-results"></ol>
-			<button class="help-link" type="button" data-help="scales" aria-haspopup="dialog" aria-label="How to use the scales tab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.6 9.4a2.5 2.5 0 0 1 4.8.9c0 1.7-2.4 2.2-2.4 3.7"/><path d="M12 17.2h.01"/></svg></button>
+			<!-- The end of the tab: small keys, the guide last (ts/ui/help.ts). -->
+			<div class="view-foot">
+				<button class="foot-key" type="button" data-help="scales" aria-haspopup="dialog" aria-label="How to use the scales tab">Guide</button>
+			</div>
 		</section>
 
 		<!-- Metronome: engine in ts/core/metronome.ts, view in ts/features/metronome/metronome.view.ts. -->
@@ -759,7 +768,10 @@
 					</div>
 				</div>
 			</div>
-			<button class="help-link" type="button" data-help="metronome" aria-haspopup="dialog" aria-label="How to use the metronome"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.6 9.4a2.5 2.5 0 0 1 4.8.9c0 1.7-2.4 2.2-2.4 3.7"/><path d="M12 17.2h.01"/></svg></button>
+			<!-- The end of the tab: small keys, the guide last (ts/ui/help.ts). -->
+			<div class="view-foot">
+				<button class="foot-key" type="button" data-help="metronome" aria-haspopup="dialog" aria-label="How to use the metronome">Guide</button>
+			</div>
 		</section>
 
 		<!-- Settings: its own tab (ts/features/settings/settings.view.ts). One group per tab, in tab
