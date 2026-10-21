@@ -1,0 +1,113 @@
+/*
+ * Broadcast theme (data-theme="regia"): what tokens alone cannot draw. Its
+ * colours, knob caps and display font are in tokens.css. Imported last in the
+ * components layer, so it wins over the components it restyles; every rule is
+ * scoped to the theme. Approved mockup: Claude Design, "Temi nuovi" 5a / 5b.
+ */
+
+/* Every display is an oscilloscope screen: scan lines over the phosphor, a
+   darker rim like curved glass. Behind the text, so it stays crisp. */
+[data-theme='regia'] :is(.lcd, .readout:not(.readout--split), .metro-beat__display) {
+	background-image:
+		repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.32) 0 1px, transparent 1px 3px),
+		radial-gradient(100% 120% at 50% 50%, rgba(13, 64, 38, 0.55), transparent 70%);
+}
+
+/* The tempo screen of the Metronome: the graticule as well. */
+[data-theme='regia'] .metro-lcd {
+	border-radius: 10px / 14px;
+	background-image:
+		repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.32) 0 1px, transparent 1px 3px), linear-gradient(90deg, rgba(141, 255, 176, 0.08) 1px, transparent 1px),
+		linear-gradient(0deg, rgba(141, 255, 176, 0.08) 1px, transparent 1px), radial-gradient(100% 120% at 50% 50%, rgba(13, 64, 38, 0.55), transparent 70%);
+	background-size:
+		auto,
+		10% 100%,
+		100% 20%,
+		auto;
+}
+
+/* Beat lights: small scope screens, the two elements drawn as traces. */
+[data-theme='regia'] .metro-beat__display {
+	gap: 7px;
+	border-radius: 6px / 9px;
+	box-shadow:
+		0 0 0 1px #000,
+		0 0 0 3px var(--scope-bezel),
+		inset 0 0 8px #000;
+
+	& i {
+		height: 2px;
+		width: 78%;
+	}
+}
+
+/* Faders: the console cap, black with a white line across, on a narrow slot.
+   Same 14 px width as the default cap (ts/ui/touch-guard.ts counts on it). */
+[data-theme='regia'] .range {
+	&::-webkit-slider-runnable-track {
+		height: 4px;
+		border-radius: 2px;
+		box-shadow:
+			inset 0 1px 2px #000,
+			0 1px 0 var(--plate-shine);
+	}
+
+	&::-moz-range-track {
+		height: 4px;
+		border-radius: 2px;
+	}
+
+	&::-webkit-slider-thumb {
+		height: 30px;
+		margin-top: -13px;
+		border-radius: 2px;
+		background:
+			linear-gradient(90deg, transparent 6px, #f4f4f4 6px 8px, transparent 8px), linear-gradient(90deg, #3a3f3c, #1a1d1b 30%, #2a2e2b 50%, #1a1d1b 70%, #3a3f3c);
+		box-shadow:
+			0 0 0 1px #000,
+			0 3px 4px rgba(0, 0, 0, 0.45);
+	}
+
+	&::-moz-range-thumb {
+		height: 30px;
+		border-radius: 2px;
+		background:
+			linear-gradient(90deg, transparent 6px, #f4f4f4 6px 8px, transparent 8px), linear-gradient(90deg, #3a3f3c, #1a1d1b 30%, #2a2e2b 50%, #1a1d1b 70%, #3a3f3c);
+		box-shadow: 0 0 0 1px #000;
+	}
+}
+
+/* Console knobs are colour-coded: blue for time (tokens.css), red for sound. */
+[data-theme='regia'] .metro-knob:last-child .rotary {
+	--knob-cap: radial-gradient(circle at 40% 30%, rgba(255, 255, 255, 0.4), transparent 55%), #c0392b;
+}
+
+/* The slide switch (speed trainer) becomes the desk's bat-handle toggle: a
+   chrome lever on a nut, tilted to OFF or ON. Same box as the slide. */
+[data-theme='regia'] .switch--slide .switch__track {
+	width: 44px;
+	height: 28px;
+	margin-block: 0;
+	border-radius: 3px;
+	background: radial-gradient(circle at 50% 50%, #e6e8e6 0 3px, #8a8f8c 3.5px 6px, #3b3f3d 6.5px 7.5px, transparent 8px), #16191a;
+	box-shadow:
+		inset 0 1px 2px #000,
+		0 1px 0 var(--plate-shine);
+
+	&::after {
+		top: 10px;
+		left: 3px;
+		width: 23px;
+		height: 8px;
+		border: 0;
+		border-radius: 4px;
+		background: radial-gradient(circle at 4px 50%, #fff, #c9cdcb 3px, transparent 4.5px), linear-gradient(180deg, #fff, #b9bdbb 45%, #6e7371 60%, #c9cdcb);
+		box-shadow: 0 2px 2px rgba(0, 0, 0, 0.5);
+	}
+}
+
+[data-theme='regia'] .switch--slide:has(.switch__input:checked) .switch__track::after {
+	left: 18px;
+	background:
+		radial-gradient(circle at calc(100% - 4px) 50%, #fff, #c9cdcb 3px, transparent 4.5px), linear-gradient(180deg, #fff, #b9bdbb 45%, #6e7371 60%, #c9cdcb);
+}

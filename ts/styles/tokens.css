@@ -55,6 +55,16 @@
 	font-display: swap;
 }
 
+/* VT323 (OFL): a terminal face, the Broadcast theme's display digits. Drawn
+   small for its size: scaled so its capitals match Chakra Petch's. */
+@font-face {
+	font-family: 'VT323';
+	src: url('./fonts/VT323-Regular.woff2') format('woff2');
+	font-weight: 400 700;
+	font-display: swap;
+	size-adjust: 125%;
+}
+
 @font-face {
 	font-family: 'Geist';
 	src: url('./fonts/Geist-Variable.woff2') format('woff2');
@@ -1016,6 +1026,129 @@
 
 [data-theme='blackstar'] {
 	--key-radius: 1px;
+}
+
+/* Broadcast: a control-room desk. Grey-green (light) or console blue-grey
+   (dark) panel, an oscilloscope for every display (green phosphor, VT323),
+   red tally lamps and an ON AIR Start, console knobs with colour-coded caps.
+   Light and dark of one palette. The rest of the look (scan lines, fader caps,
+   bat-handle toggle, the red Sound cap) is in ts/styles/themes/regia.css. */
+[data-theme='regia'][data-mode],
+[data-theme='regia'] [data-mode] {
+	--font-display: 'VT323', var(--font-ui);
+	--radius-lg: 12px;
+	--key-radius: 2px;
+	--window: #141716;
+	--lcd-bg: #031208;
+	--lcd-ink: #9dffbc;
+	--lcd-dim: rgba(141, 255, 176, 0.11);
+	--lcd-glow: 0 0 3px #4dff88, 0 0 10px rgba(43, 224, 106, 0.47);
+	--lcd-shadow: inset 0 0 18px 4px #000;
+	--lamp-off: #4a1410;
+	--lamp-on: #ff3b2f;
+	--lamp-glow: rgba(255, 59, 47, 0.67);
+	--key3-face: #c62828;
+	--key3-hi: #e35a52;
+	--key3-side: #a82020;
+	--key3-front: #6a1210;
+	--key3-ink: #fff0ee;
+	--knob-rim: repeating-conic-gradient(var(--knob-body) 0 6deg, var(--knob-body-2) 6deg 12deg);
+	--knob-cap: radial-gradient(circle at 40% 30%, rgba(255, 255, 255, 0.4), transparent 55%), #2f6fb0;
+	--knob-cap-inset: 12px;
+	--knob-cap-ring: 0 0 0 1px rgba(0, 0, 0, 0.6), 0 2px 3px rgba(0, 0, 0, 0.4);
+	--knob-pointer: linear-gradient(#fff, #fff) 50% 13px / 3px 22% no-repeat;
+}
+
+[data-theme='regia'][data-mode='light'],
+[data-theme='regia'] [data-mode='light'] {
+	color-scheme: light;
+	--panel: #b8bdb4;
+	--panel-sunk: #aab0a6;
+	--panel-raised: #c2c7be;
+	--ink: #1c211d;
+	--ink-2: #363c37;
+	--ink-3: #565d57;
+	--ink-4: #6a716a;
+	--rule: rgba(28, 33, 29, 0.17);
+	--rule-strong: #1c211d;
+	--outline: #151816;
+	--hole: #151816;
+	--track: #0b0d0c;
+	--rocker-plate: #151816;
+	--plate: linear-gradient(180deg, #9aa299, #8e968d);
+	--plate-edge: #151816;
+	--plate-ink: #151816;
+	--plate-ink-2: #2f3530;
+	--plate-shine: rgba(255, 255, 255, 0.35);
+	--window-shadow: 0 0 0 1px #000, 0 0 0 4px #3a3f3c, 0 1px 0 5px rgba(255, 255, 255, 0.18), inset 0 2px 4px #000;
+	--key-face: #d9dcd5;
+	--key-hi: #eff1ec;
+	--key-side: #c0c4bc;
+	--key-front: #959a91;
+	--key-ink: #1c211d;
+	--key-drop: 0 2px 3px rgba(0, 0, 0, 0.28);
+	--key-lip: rgba(0, 0, 0, 0.16);
+	--key-down: 92%;
+	--key2-face: #5e665f;
+	--key2-hi: #7c847d;
+	--key2-side: #515852;
+	--key2-front: #2c312d;
+	--key2-ink: #f1f3ef;
+	--key4-face: #262b28;
+	--key4-hi: #454c47;
+	--key4-side: #1e2220;
+	--key4-front: #0a0b0a;
+	--key4-ink: #eef1ec;
+	--accent: #c62828;
+	--knob-body: #8c9298;
+	--knob-body-2: #6a7076;
+	--scope-bezel: #3a3f3c;
+}
+
+[data-theme='regia'][data-mode='dark'],
+[data-theme='regia'] [data-mode='dark'] {
+	color-scheme: dark;
+	--panel: #27313a;
+	--panel-sunk: #212a32;
+	--panel-raised: #2e3943;
+	--ink: #dde3e7;
+	--ink-2: #bcc5cc;
+	--ink-3: #8e9aa3;
+	--ink-4: #76828b;
+	--rule: rgba(221, 227, 231, 0.12);
+	--rule-strong: #dde3e7;
+	--outline: #06090b;
+	--hole: #06090b;
+	--track: #030405;
+	--rocker-plate: #06090b;
+	--plate: linear-gradient(180deg, #1f2830, #1a2229);
+	--plate-edge: #06090b;
+	--plate-ink: #dde3e7;
+	--plate-ink-2: #9aa6af;
+	--plate-shine: rgba(255, 255, 255, 0.06);
+	--window-shadow: 0 0 0 1px #000, 0 0 0 4px #3b4651, inset 0 2px 4px #000;
+	--key-face: #4a5864;
+	--key-hi: #687884;
+	--key-side: #3e4a55;
+	--key-front: #1a2128;
+	--key-ink: #e8edf0;
+	--key-drop: 0 2px 3px rgba(0, 0, 0, 0.6);
+	--key-lip: rgba(0, 0, 0, 0.4);
+	--key-down: 84%;
+	--key2-face: #36424c;
+	--key2-hi: #52606b;
+	--key2-side: #2d3740;
+	--key2-front: #11161a;
+	--key2-ink: #e8edf0;
+	--key4-face: #1a2127;
+	--key4-hi: #36414a;
+	--key4-side: #151b20;
+	--key4-front: #030405;
+	--key4-ink: #e8edf0;
+	--accent: #e04a3a;
+	--knob-body: #56636e;
+	--knob-body-2: #3a444d;
+	--scope-bezel: #3b4651;
 }
 
 /* Tier 3: display ------------------------------------------------------------ */

@@ -45,6 +45,8 @@ export const THEMES: readonly Theme[] = [
 	{ id: 'copper', label: 'Copper top', palette: 'copper', mode: 'dark', themeColor: { dark: '#1f1b18' } },
 	{ id: 'citrus', label: 'Citrus', palette: 'citrus', mode: 'light', themeColor: { light: '#e2671f' } },
 	{ id: 'blackstar', label: 'Black star', palette: 'blackstar', mode: 'dark', themeColor: { dark: '#151517' } },
+	{ id: 'regia-light', label: 'Broadcast light', palette: 'regia', mode: 'light', themeColor: { light: '#b8bdb4' } },
+	{ id: 'regia-dark', label: 'Broadcast dark', palette: 'regia', mode: 'dark', themeColor: { dark: '#27313a' } },
 ]
 
 /** LCD colours; 'auto' = the theme's own. */
