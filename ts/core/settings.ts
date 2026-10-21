@@ -77,9 +77,9 @@ export interface Settings {
 	 * Metronome → Mic delay, measured by the mic hearing the clicks): Changes
 	 * and Tab date what the mic hears that much earlier. */
 	micDelayMs: number
-	/** Calibration → Diagnostics → Field report: record every Changes In time and Tab session (the last 3 kept). */
+	/** Calibration → Diagnostics → Field report: record every Changes In time, Tab and Mic check session (the last 3 kept). */
 	fieldReport: boolean
-	/** When Calibration's two steps were last done (Date.now(); 0 = never): the page's status and the CAL keys. */
+	/** When Calibration's two steps were last done (Date.now(); 0 = never): the page's steps and the Settings section. */
 	audioCalibratedAt: number
 	micCalibratedAt: number
 	/** Speed trainer: +step BPM every `bars` bars until `target`. */
