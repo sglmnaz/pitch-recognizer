@@ -33,7 +33,8 @@ const tracker = withSilenceReset(createChordTracker(), SILENCE_RESET_MS)
 let fake: string | null | undefined
 let fakeStrum = false
 
-export function heardChord(now: number): HeardChord | null {
+/** The chord heard, on `a4` (the guitar's own, Changes.createTuningTracker). */
+export function heardChord(now: number, a4 = Settings.get().a4): HeardChord | null {
 	if (fake !== undefined) {
 		const root = fake?.match(/^[A-G][#b]?/)?.[0]
 		return fake && root ? { symbol: fake, rootPc: PITCH_CLASSES.indexOf(root), type: fake.slice(root.length) } : null
@@ -41,7 +42,7 @@ export function heardChord(now: number): HeardChord | null {
 	// Same silence gate as the Chords view. Until the model has loaded the
 	// tracker answers "no chord" (and starts the load itself).
 	const spectrum = Microphone.getSpectrum()
-	const analysis = tracker.track(Microphone.isSounding() ? spectrum : null, now, Settings.get().a4)
+	const analysis = tracker.track(Microphone.isSounding() ? spectrum : null, now, a4)
 	const chord = analysis?.chord
 	if (!chord) return null
 	const root = chord.notes[0]

@@ -110,8 +110,11 @@ const extension = (type: string) => (type.includes('mp4') ? 'm4a' : type.include
  */
 function filesOf(report: FieldReport) {
 	const stamp = report.when.toISOString().replace(/[:.]/g, '-')
+	// Without the codecs parameter: Chrome checks the bare type against its share list,
+	// and 'audio/webm;codecs=opus' failed there (Share did nothing on a Xiaomi).
+	const type = report.audio.type.split(';')[0]
 	return [
-		new File([report.audio], `pluck-report-${stamp}.${extension(report.audio.type)}`, { type: report.audio.type }),
+		new File([report.audio], `pluck-report-${stamp}.${extension(type)}`, { type }),
 		new File([report.log], `pluck-report-${stamp}.txt`, { type: 'text/plain' }),
 	]
 }
@@ -124,15 +127,16 @@ function download(file: File) {
 	setTimeout(() => URL.revokeObjectURL(link.href), 10_000)
 }
 
-/** Sends `files` to an app (the system share sheet); downloads them where sharing files is not supported. */
+/** Sends `files` to an app (the system share sheet); downloads them where sharing them fails. */
 async function share(files: File[], title: string) {
 	if (navigator.canShare?.({ files })) {
 		try {
 			await navigator.share({ files, title })
-		} catch {
-			// Dismissed: nothing to do.
+			return
+		} catch (error) {
+			// Dismissed: nothing to do. Refused (canShare does not check what the browser then rejects): download.
+			if (error instanceof DOMException && error.name === 'AbortError') return
 		}
-		return
 	}
 	for (const file of files) download(file)
 }

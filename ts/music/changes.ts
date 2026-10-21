@@ -177,6 +177,40 @@ export function drillChord(profile: ArrayLike<number> | null, sequence: readonly
 	return shares.filter((share) => share === best).length === 1 ? sequence[shares.indexOf(best)] : null
 }
 
+// How fast the tuning estimate follows: a pitched frame weighs this much (~1 s of frames).
+const TUNING_RATE = 0.02
+// Under this agreement between frames (length of the mean phase vector) the estimate stays put.
+const TUNING_AGREEMENT = 0.3
+
+/**
+ * The A4 the guitar is actually tuned to, from the pitches heard. A guitar a
+ * quarter tone off (a field report: an electric tuned with A4 = 451 Hz, +44
+ * cents) splits every note between two pitch classes of the profile, and the
+ * drill chords could not be told apart (17 of 30 changes; 29 with this). Each
+ * pitch's cents off the nearest semitone of `a4` is a phase on a circle (100
+ * cents round), averaged: the mean's angle is the offset, wherever the notes
+ * are. Past ±50 cents it reads as the other side: a guitar that far off reads
+ * a semitone away, which no reference fixes.
+ */
+export function createTuningTracker(a4: number) {
+	let x = 0
+	let y = 0
+	return {
+		feed(hz: number) {
+			const phase = (2 * Math.PI * 1200 * Math.log2(hz / a4)) / 100
+			x += TUNING_RATE * (Math.cos(phase) - x)
+			y += TUNING_RATE * (Math.sin(phase) - y)
+		},
+		/** Cents the guitar sits off `a4`'s semitones (0 until frames agree). */
+		cents() {
+			return Math.hypot(x, y) < TUNING_AGREEMENT ? 0 : (Math.atan2(y, x) * 100) / (2 * Math.PI)
+		},
+		a4() {
+			return a4 * 2 ** (this.cents() / 1200)
+		},
+	}
+}
+
 /**
  * Spectral flatness of a power spectrum over the guitar's band (80–1400 Hz):
  * the geometric over the arithmetic mean, near 0 for harmonic peaks (a chord),

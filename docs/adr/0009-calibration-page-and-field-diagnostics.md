@@ -26,11 +26,12 @@ in 567d68b). The phone's own audio and timing were the missing evidence.
   redoable:
   1. *Your ears*: tap along with the clicks (Audio delay, beat lights).
   2. *The microphone*: the phone hears its own clicks (Mic delay, Changes and Tab).
-- **Ways in**: a Calibration card on top of Settings, and a calibration row in
-  Changes In time and Tab (`ts/ui/cal-key.ts`): until the mic is calibrated a
-  blinking amber lamp, "Mic not calibrated" and Calibrate; then the Mic delay
-  and Redo. (A "CAL" key with a lamp above it broke the rows it sat in and
-  said nothing to the player.) The delays' rows left Settings → Metronome for the
+- **Ways in**: a Calibration card on top of Settings, and a plain Calibrate
+  key in Changes In time (top row, between the counter and the clock) and Tab
+  (beside the exercise title), its lamp blinking amber until the mic is
+  calibrated, then green (`ts/ui/cal-key.ts`). A "CAL" key with a lamp above
+  it broke its row and said nothing; a full-width row took the middle of the
+  page for a one-off task. The delays' rows left Settings → Metronome for the
   page's Fine-tune by hand.
 - **Diagnostics on the same page**:
   - *Field report*: while on, records the mic of every Changes In time or Tab
@@ -71,5 +72,12 @@ in 567d68b). The phone's own audio and timing were the missing evidence.
   sounding unlike the chord ringing, unless one 3× louder follows within
   300 ms (the lifted fingers' open strings). 103 of 105 changes within 60 ms
   of the strum. The recognizer only shows what it hears, and runs One-minute.
+- An unplugged electric then read 17 of 30 changes. Its report showed two
+  causes: the guitar was tuned a quarter tone off A4 = 440 (tuned with the
+  accidental A4 = 451), splitting every note over two pitch classes, and the
+  clicks the mic heard were louder than its strums. The profile now uses the
+  guitar's own A4 (`Changes.createTuningTracker`) and the clicks heard are no
+  strums: 28 of 30 with the guitar's A4, the acoustic reports unchanged. A
+  guitar exactly half a semitone off stays ambiguous: retune it.
 - Reports are lost when the app closes (no IndexedDB for now); sharing them is
   the way to keep one.

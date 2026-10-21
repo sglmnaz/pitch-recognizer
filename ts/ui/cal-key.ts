@@ -1,32 +1,23 @@
-// The way to the calibration page: the calibration rows of Changes In time
-// and Tab and the Settings card's Calibrate key, and the state they show. A
-// row blinks amber with a Calibrate key until the mic is calibrated on this
-// phone, then shows the Mic delay quietly with Redo.
+// The way to the calibration page: the Calibrate keys of Changes In time and
+// Tab and the Settings card's Calibrate key, and the state they show. A key's
+// lamp blinks amber until the mic is calibrated on this phone, then is green.
 import * as Settings from '../core/settings'
 
-/** Wires every [data-action="open-calibration"] under `root`, and keeps the calibration rows in step. */
+/** Wires every [data-action="open-calibration"] under `root`, and keeps the Calibrate keys' lamps in step. */
 export function bindCalKeys(root: ParentNode) {
 	for (const button of root.querySelectorAll<HTMLElement>('[data-action="open-calibration"]')) {
 		button.addEventListener('click', () => {
 			location.hash = '#calibration'
 		})
 	}
-	const rows = Array.from(root.querySelectorAll<HTMLElement>('.cal-row'))
+	const keys = Array.from(root.querySelectorAll<HTMLElement>('.cal-key'))
 	const sync = () => {
 		const { micCalibratedAt, micDelayMs } = Settings.get()
 		const due = !micCalibratedAt
-		for (const row of rows) {
-			row.classList.toggle('cal-row--due', due)
-			row.classList.toggle('cal-row--done', !due)
-			const lamp = row.querySelector<HTMLElement>('.lamp')!
-			lamp.className = `lamp ${due ? 'lamp--warn' : 'lamp--ok is-on'}`
-			row.querySelector('.cal-row__title')!.textContent = due ? 'Mic not calibrated' : 'Timing calibrated'
-			row.querySelector('.cal-row__desc')!.textContent = due
-				? 'Your timing will read late or early. 20 s, once per phone.'
-				: `Mic delay ${signed(micDelayMs)} · ${day(micCalibratedAt)}`
-			const key = row.querySelector<HTMLElement>('.key')!
-			key.textContent = due ? 'Calibrate' : 'Redo'
-			key.classList.toggle('key--hot', due)
+		for (const key of keys) {
+			key.classList.toggle('cal-key--due', due)
+			key.querySelector('.lamp')!.className = `lamp ${due ? 'lamp--warn' : 'lamp--ok is-on'}`
+			key.setAttribute('aria-label', due ? 'Calibrate timing: not done yet' : `Calibrate timing: done, mic delay ${signed(micDelayMs)}`)
 		}
 	}
 	Settings.subscribe(sync)

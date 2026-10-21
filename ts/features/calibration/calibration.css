@@ -623,53 +623,23 @@
 	height: 46px;
 }
 
-/* The calibration row of Changes In time and Tab (ts/ui/cal-key.ts): a lamp
-   beside the line (never above a key: that broke the rows it sat in), what
-   it means, a key. Not calibrated: the lamp blinks amber and the key is the
-   hot Calibrate; done: a quiet line with Redo. */
-.cal-row {
-	display: grid;
-	grid-template-columns: auto minmax(0, 1fr) auto;
+/* The Calibrate key of Changes In time and Tab: a plain key, its lamp the state
+   (blinking amber until the mic is calibrated, green after). */
+.cal-key {
+	display: inline-flex;
 	align-items: center;
-	gap: var(--space-12);
-	padding: var(--space-10) var(--space-12);
-	border-radius: var(--radius);
-	background: var(--panel-sunk);
-	box-shadow:
-		inset 0 1px 2px rgba(0, 0, 0, 0.2),
-		0 0 0 var(--outline-width) var(--rule);
+	gap: var(--space-8);
+	/* As tall as the LED and the clock windows beside it in Changes. */
+	height: 48px;
+	padding-inline: var(--space-12);
 
 	.lamp {
-		--lamp-w: 12px;
-		--lamp-h: 12px;
-	}
-
-	.key {
-		height: 40px;
-		padding-inline: var(--space-12);
+		--lamp-w: 8px;
+		--lamp-h: 8px;
 	}
 }
 
-.cal-row__title {
-	display: block;
-	font: 700 var(--text-sm) / 1.2 var(--font-ui);
-	letter-spacing: 0.08em;
-	text-transform: uppercase;
-}
-
-.cal-row__desc {
-	display: block;
-	font: var(--text-xs) / 1.35 var(--font-text);
-	color: var(--fg-muted);
-}
-
-.cal-row--done {
-	background: transparent;
-	box-shadow: none;
-	padding-block: var(--space-4);
-}
-
-.cal-row--due .lamp {
+.cal-key--due .lamp {
 	animation: cal-due 1.2s step-end infinite;
 }
 
@@ -688,7 +658,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-	.cal-row--due .lamp {
+	.cal-key--due .lamp {
 		animation: none;
 		background: var(--lamp-warn-on);
 	}

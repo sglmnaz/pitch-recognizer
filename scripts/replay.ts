@@ -10,7 +10,7 @@ import { readFileSync } from 'node:fs'
 import { appBand, decode } from './audio.ts'
 import { FFT_SIZE, getStats, isSounding, processFrame } from '../ts/core/microphone.ts'
 import { chromaOf, createOnsetDetector, newestEnergy } from '../ts/music/tab.ts'
-import { chordShare, createStrumDetector, spectralFlatness } from '../ts/music/changes.ts'
+import { chordShare, createStrumDetector, createTuningTracker, spectralFlatness } from '../ts/music/changes.ts'
 import { getFramePower } from '../ts/core/microphone.ts'
 
 const args = process.argv.slice(2)
@@ -88,15 +88,21 @@ const levelStrums: number[] = []
 const attackStrums: number[] = []
 const picks: number[] = []
 // Per frame: its level and pitch-class profile (as the Changes view feeds the session).
+// The guitar's own A4 from the frames' pitches as they come, as the app does (Changes.createTuningTracker); A4=… fixes it instead.
+const tuning = createTuningTracker(Number(report.settings.a4) || 440)
+// Every pitched frame's cents off the nearest semitone on the session's A4: how the guitar is tuned.
+const cents: number[] = []
 const frames: { at: number; volume: number; chroma: Float32Array | null; flatness: number | null }[] = []
-const a4 = Number(report.settings.a4) || 440
+const a4 = Number(process.env.A4) || Number(report.settings.a4) || 440
 const newest: { at: number; energy: number }[] = []
 const step = SR / fps
 for (let end = FFT_SIZE; end <= band.length; end += step) {
 	const at = ms(end)
 	const frame = band.subarray(Math.round(end) - FFT_SIZE, Math.round(end))
 	processFrame(frame, SR, at)
-	const { reason, volume } = getStats()
+	const { reason, volume, pitch } = getStats()
+	if (pitch > 0) tuning.feed(pitch)
+	if (pitch > 0) cents.push(((((1200 * Math.log2(pitch / (Number(report.settings.a4) || 440)) + 50) % 100) + 100) % 100) - 50)
 	levels.push({ at, volume })
 	levels = levels.filter((l) => l.at >= at - STRUM_WINDOW_MS)
 	const quietest = Math.min(...levels.map((l) => l.volume))
@@ -113,7 +119,7 @@ for (let end = FFT_SIZE; end <= band.length; end += step) {
 	frames.push({
 		at,
 		volume,
-		chroma: power ? chromaOf(power.power, power.binHz, a4) : null,
+		chroma: power ? chromaOf(power.power, power.binHz, process.env.A4 ? a4 : tuning.a4()) : null,
 		flatness: power ? spectralFlatness(power.power, power.binHz) : null,
 	})
 }
@@ -328,7 +334,8 @@ real strums (${real.length}): drill chord share ${q(real.map((d) => d.best))} | 
 
 /* In time by sound alone (no recognizer): each strum's profile 40–200 ms on (frames flatter than
    FLAT left out) picks the drill's chord; a change is a strum of a chord other than the one ringing,
-   unless a strum twice as loud follows within 300 ms (then that one). Judged against the real strums. */
+   unless a strum 3× as loud follows within 300 ms (then that one); the clicks heard are no strums.
+   As changes.session.ts does; judged against the real strums. */
 if (slots.length) {
 	const sequence = report.settings.changesChords as string[]
 	const tonal = frames.filter((f) => f.chroma && f.flatness !== null && f.flatness < 0.25)
@@ -342,14 +349,19 @@ if (slots.length) {
 		return shares.filter((x) => x === best).length === 1 ? sequence[shares.indexOf(best)] : null
 	}
 	const loud = (t: number) => Math.max(0, ...frames.filter((f) => f.at >= t && f.at <= t + 80).map((f) => f.volume))
+	// The clicks the mic hears are not strums (the session's CLICK_HEARD_MS ± CLICK_HEARD_WITHIN_MS; CLICK=off keeps them).
+	const clickAt = beats.map((b) => b + offset.x + 22)
+	const isClick = (t: number) => process.env.CLICK !== 'off' && clickAt.some((c) => Math.abs(t - c) <= 15)
+	// CLICK=louder: a click may still be a change, it just never takes one from a strum as the louder one.
+	const heard = process.env.CLICK === 'louder' ? appStrums : appStrums.filter((t) => !isClick(t))
 	let playing: string | null = null
 	const changes: { at: number; chord: string }[] = []
-	for (const t of appStrums) {
+	for (const t of heard) {
 		const chord = chordAt(t)
 		if (!chord || chord === playing) continue
 		if (
 			process.env.LOUDER !== 'off' &&
-			appStrums.some((u) => u > t && u <= t + Number(process.env.LOUDER_MS ?? 300) && loud(u) >= Number(process.env.LOUDER ?? 2) * loud(t))
+			heard.some((u) => u > t && u <= t + Number(process.env.LOUDER_MS ?? 300) && !isClick(u) && loud(u) >= Number(process.env.LOUDER ?? 3) * loud(t))
 		)
 			continue
 		changes.push({ at: t, chord })
@@ -366,4 +378,58 @@ if (slots.length) {
 	const off = errors.filter((e) => e === null || Math.abs(e) > 60).length
 	console.log(`
 by sound alone: ${off} of ${errors.length} changes more than 60 ms off or not found: ${errors.map((e) => (e === null ? '–' : e)).join(' ')}`)
+}
+
+/* The mean profile of each chord as played (strums from its downbeat to the next one), to see whether they differ at all. */
+if (slots.length && process.env.PROFILES) {
+	const names = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']
+	const byChord = new Map<string, Float32Array[]>()
+	slots.forEach((slot, i) => {
+		const from = (slot.downbeat as number) - report.recordStartedAt + offset.x - 200
+		const to = slots[i + 1] ? (slots[i + 1].downbeat as number) - report.recordStartedAt + offset.x - 200 : from + 2000
+		for (const t of strums.filter((s) => s >= from && s < to)) {
+			const near = frames.filter((f) => f.chroma && f.at >= t + 40 && f.at <= t + 200)
+			if (!near.length) continue
+			const m = new Float32Array(12)
+			for (const f of near) for (let k = 0; k < 12; k++) m[k] += f.chroma![k]
+			const sum = m.reduce((a, b) => a + b, 0)
+			for (let k = 0; k < 12; k++) m[k] /= sum
+			const list = byChord.get(slot.target as string) ?? []
+			list.push(m)
+			byChord.set(slot.target as string, list)
+		}
+	})
+	console.log(`\nmean profile per chord (%):   ${names.map((n) => n.padStart(3)).join(' ')}`)
+	for (const [chord, list] of byChord) {
+		const m = names.map((_, k) => list.reduce((a, p) => a + p[k], 0) / list.length)
+		console.log(`${chord.padEnd(4)} (${String(list.length).padStart(3)} strums)          ${m.map((v) => String(Math.round(v * 100)).padStart(3)).join(' ')}`)
+	}
+}
+
+{
+	const sorted = [...cents].sort((a, b) => a - b)
+	const at = (p: number) => sorted[Math.floor(p * (sorted.length - 1))]?.toFixed(0)
+	const bins = new Array(10).fill(0)
+	for (const c of cents) bins[Math.min(9, Math.floor((c + 50) / 10))]++
+	if (process.env.HIST) console.log(`cents −50…+50 by 10: ${bins.join(' ')} · online estimate at the end ${tuning.cents().toFixed(0)}`)
+	console.log(`
+tuning: ${cents.length} pitched frames, cents off the nearest semitone (A4 ${report.settings.a4}) 25/50/75%: ${at(0.25)} / ${at(0.5)} / ${at(0.75)}`)
+}
+
+/* DUMP: every app strum with its offset from the nearest click, level and drill-chord shares. */
+if (slots.length && process.env.DUMP) {
+	const sequence = report.settings.changesChords as string[]
+	const clicks = beats.map((b) => b + offset.x)
+	const downs = new Map(slots.map((s) => [Math.round((s.downbeat as number) - report.recordStartedAt + offset.x), s.target as string]))
+	for (const t of appStrums.slice(0, Number(process.env.DUMP))) {
+		const near = frames.filter((f) => f.chroma && f.flatness !== null && f.flatness < 0.25 && f.at >= t + 40 && f.at <= t + 200)
+		const m = new Float32Array(12)
+		for (const f of near) for (let i = 0; i < 12; i++) m[i] += f.chroma![i] / near.length
+		const click = clicks.reduce((a, b) => (Math.abs(b - t) < Math.abs(a - t) ? b : a))
+		const due = downs.get(Math.round(click))
+		const level = Math.max(0, ...frames.filter((f) => f.at >= t && f.at <= t + 80).map((f) => f.volume))
+		console.log(
+			`${(t / 1000).toFixed(2).padStart(6)}s ${String(Math.round(t - click)).padStart(5)} ms ${due ? `▼${due.padEnd(3)}` : '    '} lvl ${level.toFixed(4)} flat ${near.length ? '' : 'none'} ${sequence.map((c) => `${c} ${near.length ? chordShare(m, c).toFixed(2) : '-'}`).join(' ')}`
+		)
+	}
 }

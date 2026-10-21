@@ -8,6 +8,7 @@ import {
 	createChangeCounter,
 	createStabilizer,
 	createStrumDetector,
+	createTuningTracker,
 	DEFAULT_SEQUENCE,
 	HISTORY,
 	hitWindow,
@@ -268,6 +269,23 @@ const strums = (symbols: string[], ms: number): Segments => symbols.map((s) => [
 	check('corrupt storage reads as no record', loadRecord(['A', 'D'], 60).best === 0)
 }
 
+/* The guitar's own A4 (Changes.createTuningTracker) ---------------------------- */
+{
+	const notes = [40, 45, 50, 55, 59, 64, 47, 52, 57, 60]
+	const play = (cents: number, frames = 300) => {
+		const tracker = createTuningTracker(440)
+		for (let i = 0; i < frames; i++) tracker.feed(440 * 2 ** ((notes[i % notes.length] - 69 + cents / 100 + Math.sin(i) * 0.08) / 12))
+		return tracker
+	}
+	check('tuning: a guitar in tune reads A4 = 440', Math.abs(play(0).a4() - 440) < 1, play(0).a4().toFixed(1))
+	check('tuning: tuned with A4 = 451 (+43 cents) reads ~451', Math.abs(play(43).a4() - 451) < 1.5, play(43).a4().toFixed(1))
+	check('tuning: 20 cents flat reads ~435', Math.abs(play(-20).a4() - 434.9) < 1.5, play(-20).a4().toFixed(1))
+	const scattered = createTuningTracker(440)
+	for (let i = 0; i < 300; i++) scattered.feed(440 * 2 ** (((i * 37) % 100) / 1200))
+	check('tuning: pitches that do not agree leave A4 alone', scattered.a4() === 440, scattered.a4().toFixed(1))
+	check('tuning: nothing heard leaves A4 alone', createTuningTracker(440).a4() === 440)
+}
+
 /* The drill's own chords (Changes.sequenceChord) ------------------------------ */
 check(
 	"recognized relatives count as the drill's chord (field report: G read Em7, C read A7)",
@@ -400,9 +418,13 @@ check(
 	 * strum) and a level. Field cases (scripts/replay.ts) on request: a strum on
 	 * every beat, the clicks heard as strums, the open strings of the lifted
 	 * fingers liftMs before each change (quiet), the strum's own second peak
-	 * secondPeakMs after it (louder).
+	 * secondPeakMs after it (louder), the clicks heard 22 ms on and 3× as loud
+	 * as the strums (an unplugged electric).
 	 */
-	function inTime(strumOffset: number, { ms = 12_000, profiles = true, everyBeat = false, clicks = false, liftMs = 0, secondPeakMs = 0 } = {}) {
+	function inTime(
+		strumOffset: number,
+		{ ms = 12_000, profiles = true, everyBeat = false, clicks = false, liftMs = 0, secondPeakMs = 0, loudClicks = false } = {}
+	) {
 		const h = harness()
 		h.session.start({ mode: 'time', sequence: ['G', 'C'], seconds: 60, beats: 2, bpm: 120, speedUp: true, countIn: true, volume: 1 }, 0)
 		const downbeats: number[] = []
@@ -420,18 +442,18 @@ check(
 				if (index >= 4 && index % 2 === 0) downbeats.push(nextClick)
 				if (index >= 4) beats.push(nextClick)
 			}
-			// The downbeat to come too (not clicked yet): the lifted fingers sound before it.
-			const coming = [...downbeats, (downbeats.at(-1) ?? 2000) + (2 * 60_000) / h.metro.bpm]
-			const struck = (everyBeat ? beats : downbeats).map((d) => d + strumOffset)
+			// The downbeat to come too (not clicked yet): the lifted fingers, and a strum ahead of it, sound before it.
+			const coming = downbeats.length ? [...downbeats, downbeats.at(-1)! + (2 * 60_000) / h.metro.bpm] : [2000]
+			const struck = (everyBeat ? beats : strumOffset < 0 ? coming : downbeats).map((d) => d + strumOffset)
 			const lifts = liftMs ? coming.map((d) => d + strumOffset - liftMs) : []
 			const seconds = secondPeakMs ? downbeats.map((d) => d + strumOffset + secondPeakMs) : []
-			const heardClicks = clicks ? clicked : []
+			const heardClicks = clicks ? clicked : loudClicks ? clicked.map((c) => c + 22) : []
 			const strum = [...struck, ...lifts, ...seconds, ...heardClicks].some((at) => at > t - FRAME && at <= t)
-			const played = downbeats.filter((d) => d + strumOffset <= t).length
+			const played = (strumOffset < 0 ? coming : downbeats).filter((d) => d + strumOffset <= t).length
 			const lifting = lifts.some((l) => t >= l && t < l + liftMs)
 			const sounding = lifting ? 'open' : played ? ['G', 'C'][(played - 1) % 2] : 'G'
 			const ring = (events: number[], level: number) => Math.max(0, ...events.filter((at) => at <= t).map((at) => level * Math.exp(-(t - at) / 150)))
-			const volume = Math.max(ring(struck, 1), ring(lifts, 0.08), ring(seconds, 1.4), ring(heardClicks, 0.05))
+			const volume = Math.max(ring(struck, 1), ring(lifts, 0.08), ring(seconds, 1.4), ring(heardClicks, loudClicks ? 3 : 0.05))
 			// The recognizer's name only shows as Hearing now; it names the chord 283 ms on.
 			const named = downbeats.filter((d) => d + 283 <= t).length
 			h.session.frame(t, strum, named ? ['G', 'C'][(named - 1) % 2] : 'G', profiles ? CHROMA[sounding] : null, volume)
@@ -481,8 +503,13 @@ check(
 		check('in time: not the lifted fingers (a louder strum follows), not the second peak (the same chord): the strum', near(offsets, 85), show(offsets))
 	}
 	{
-		const offsets = offsetsOf(inTime(0))
-		check('in time: a strum right on the click counts (the change is in its sound, not in a name)', near(offsets, -15), show(offsets))
+		// Right on the click it would read as the click (CLICK_HEARD_MS): a strum a little ahead, as players do (−50 … −190 ms on the reports).
+		const offsets = offsetsOf(inTime(-30))
+		check('in time: a strum just ahead of the click counts (the change is in its sound, not in a name)', near(offsets, -45), show(offsets))
+	}
+	{
+		const offsets = offsetsOf(inTime(-100, { loudClicks: true }))
+		check('in time: clicks heard louder than the strums are not strums (they took the change, late)', near(offsets, -115), show(offsets))
 	}
 	{
 		const h = inTime(100, { profiles: false })

@@ -18,7 +18,11 @@ import type { ProbeEntry } from './timing-probe.ts'
 // chord ringing, so they are not. Unless a strum LOUDER times as loud follows
 // within LOUDER_MS: the fingers leaving the old chord sound the open strings
 // first. On three field reports (scripts/replay.ts): 103 of 105 changes within
-// 60 ms of the strum in the sound, against ~80 by the recognizer.
+// 60 ms of the strum in the sound, against ~80 by the recognizer. The clicks
+// the mic hears are left out (CLICK_HEARD_MS): on an unplugged electric they
+// were louder than the strums, took the change from them (late) and, with the
+// next chord already fretted, made it a beat early; 2 of 30 off without them,
+// 18 with them (and the acoustic reports unchanged).
 const CHROMA_FROM_MS = 40
 const CHROMA_TO_MS = 200
 const LOUDER_MS = 300
@@ -42,6 +46,11 @@ const ONSET_KEEP_MS = 10_000
 // beat still counts: another name came between). Calibration knob: widen it if
 // clicks still read as strums on a phone with a slow input path.
 const CLICK_MASK_MS = 40
+// In time: where a click lands among the strums (frame times are less the Mic
+// delay): this long after its heardAt, give or take CLICK_HEARD_WITHIN_MS (on
+// a field report every click sat 19–24 ms on). A strum there is the click.
+const CLICK_HEARD_MS = 22
+const CLICK_HEARD_WITHIN_MS = 15
 
 type Phase = 'idle' | 'countin' | 'running' | 'done'
 
@@ -131,6 +140,8 @@ export function createChangesSession(ui: SessionUi, metronome: MetronomeControl)
 	let clicking = false
 	// performance.now() of the last click heard (Metronome.onBeat fires then).
 	let lastClickAt = -Infinity
+	// Between the last two clicks: with a negative Mic delay a frame can carry the next click before its beat event.
+	let clickGap = Infinity
 
 	const running = () => phase === 'countin' || phase === 'running'
 
@@ -167,6 +178,8 @@ export function createChangesSession(ui: SessionUi, metronome: MetronomeControl)
 		metronome.setTempo(config.bpm)
 		metronome.start()
 		clicking = true
+		lastClickAt = -Infinity
+		clickGap = Infinity
 		phase = config.countIn ? 'countin' : 'running'
 		ui.target(config.sequence[0], `then ${config.sequence[1]}`)
 		ui.announce(`Play ${config.sequence[0]} on the first beat`, true)
@@ -209,6 +222,7 @@ export function createChangesSession(ui: SessionUi, metronome: MetronomeControl)
 	/** In time: a click heard (Metronome.onBeat); downbeats open the slots to judge. */
 	function beat(event: Metronome.BeatEvent, now: number) {
 		if (!clicking) return
+		if (now > lastClickAt) clickGap = now - lastClickAt
 		lastClickAt = now
 		if (event.sub !== 0) return
 		const lead = config.countIn ? COUNT_IN_BEATS : 0
@@ -299,7 +313,8 @@ export function createChangesSession(ui: SessionUi, metronome: MetronomeControl)
 			ui.clock(clockText(left))
 			return left <= 0
 		} else if (config.mode === 'time' && running()) {
-			if (strum) {
+			const click = [lastClickAt, lastClickAt + clickGap].some((at) => Math.abs(now - at - CLICK_HEARD_MS) <= CLICK_HEARD_WITHIN_MS)
+			if (strum && !click) {
 				strums.push(now)
 				ui.probe?.({ kind: 'strum', at: now })
 			}

@@ -194,6 +194,8 @@
 						<span class="silk changes-count__label">Changes</span>
 						<span class="window"><span class="led led--big changes-count__value"></span></span>
 					</div>
+					<!-- ts/ui/cal-key.ts: the lamp says whether the mic is calibrated. In time only. -->
+					<button class="key cal-key" type="button" data-action="open-calibration"><span class="lamp" aria-hidden="true"></span>Calibrate</button>
 					<span class="window"><span class="lcd changes-clock">1:00</span></span>
 				</div>
 				<!-- In time lays the LCD out as a grid (trainer.css): what the mic hears on top,
@@ -237,12 +239,6 @@
 						<span class="silk changes-tally"></span>
 					</div>
 				</div>
-				<!-- ts/ui/cal-key.ts: the way to the calibration page, and whether it is done. -->
-				<div class="cal-row">
-					<span class="lamp" aria-hidden="true"></span>
-					<span class="cal-row__text"><b class="cal-row__title"></b><span class="cal-row__desc"></span></span>
-					<button class="key" type="button" data-action="open-calibration"></button>
-				</div>
 				<div class="changes-shapes"></div>
 				<button class="btn btn--large key--hot" type="button" data-action="changes-start" aria-keyshortcuts="Space">Start</button>
 				<p class="changes-status" aria-live="polite"></p>
@@ -283,6 +279,8 @@
 				<div class="tab-head">
 					<span class="silk tab-goal"></span>
 					<h2 class="tab-title"></h2>
+					<!-- ts/ui/cal-key.ts: the lamp says whether the mic is calibrated. -->
+					<button class="key cal-key" type="button" data-action="open-calibration"><span class="lamp" aria-hidden="true"></span>Calibrate</button>
 					<p class="tab-how"></p>
 				</div>
 				<div class="window">
@@ -306,12 +304,6 @@
 				<div class="tab-transport">
 					<button class="btn btn--large key--hot" type="button" data-action="tab-start" aria-keyshortcuts="Space">Start</button>
 					<button class="key key--lit tab-loop" type="button" aria-pressed="true">Loop</button>
-				</div>
-				<!-- ts/ui/cal-key.ts: the way to the calibration page, and whether it is done. -->
-				<div class="cal-row">
-					<span class="lamp" aria-hidden="true"></span>
-					<span class="cal-row__text"><b class="cal-row__title"></b><span class="cal-row__desc"></span></span>
-					<button class="key" type="button" data-action="open-calibration"></button>
 				</div>
 				<p class="changes-status tab-message" aria-live="polite"></p>
 				<span class="sr-only tab-live" aria-live="polite"></span>
