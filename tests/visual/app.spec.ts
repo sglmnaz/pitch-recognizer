@@ -147,6 +147,14 @@ test.describe('metronome', () => {
 	})
 })
 
+test.describe('calibration', () => {
+	test('page', async ({ page, open }) => {
+		// The dates in the steps' status would change every day: one step done on a fixed day.
+		await open('#calibration', { audioDelayMs: -135, audioCalibratedAt: Date.UTC(2026, 9, 21, 12) })
+		await shot(page, 'calibration', { fullPage: true })
+	})
+})
+
 test.describe('settings', () => {
 	test('top', async ({ page, open }) => {
 		await open('#settings')
@@ -297,7 +305,22 @@ test.describe('themes', () => {
 	const remember = (page: Page, key: string, value: string) =>
 		page.evaluate(([k, v]) => localStorage.setItem(k, v), [key, value] as const).then(() => page.reload())
 
-	for (const id of ['sand', 'studio', 'mint', 'graphite', 'petrol', 'walnut', 'olive', 'stage', 'brit', 'copper', 'citrus', 'blackstar', 'regia-light', 'regia-dark']) {
+	for (const id of [
+		'sand',
+		'studio',
+		'mint',
+		'graphite',
+		'petrol',
+		'walnut',
+		'olive',
+		'stage',
+		'brit',
+		'copper',
+		'citrus',
+		'blackstar',
+		'regia-light',
+		'regia-dark',
+	]) {
 		test(id, async ({ page, open }) => {
 			await open('#chords')
 			await remember(page, 'pitch-recognizer:mode', id)

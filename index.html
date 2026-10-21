@@ -194,7 +194,11 @@
 						<span class="silk changes-count__label">Changes</span>
 						<span class="window"><span class="led led--big changes-count__value"></span></span>
 					</div>
-					<span class="window"><span class="lcd changes-clock">1:00</span></span>
+					<span class="changes-meta__right">
+						<!-- ts/ui/cal-key.ts: blinks until the mic is calibrated. -->
+						<span class="cal-key"><span class="lamp lamp--warn" aria-hidden="true"></span><button class="key" type="button" data-action="open-calibration" aria-label="Calibration">Cal</button></span>
+						<span class="window"><span class="lcd changes-clock">1:00</span></span>
+					</span>
 				</div>
 				<!-- In time lays the LCD out as a grid (trainer.css): what the mic hears on top,
 				     Now ▶ Next, then a segment per beat of the chord. -->
@@ -299,6 +303,7 @@
 				</div>
 				<div class="tab-transport">
 					<button class="btn btn--large key--hot" type="button" data-action="tab-start" aria-keyshortcuts="Space">Start</button>
+					<span class="cal-key"><span class="lamp lamp--warn" aria-hidden="true"></span><button class="key" type="button" data-action="open-calibration" aria-label="Calibration">Cal</button></span>
 					<button class="key key--lit tab-loop" type="button" aria-pressed="true">Loop</button>
 				</div>
 				<p class="changes-status tab-message" aria-live="polite"></p>
@@ -767,6 +772,13 @@
 				<input class="input settings-search" type="search" placeholder="Search settings" aria-label="Search settings" autocomplete="off" />
 			</div>
 			<p class="hint settings-search__empty" hidden>No setting matches.</p>
+			<!-- The calibration's state; the page itself is #view-calibration. -->
+			<div class="cb-card">
+				<h2 class="settings-group__title">Calibration</h2>
+				<div class="cb-card__row"><span class="lamp lamp--ok" data-cal-lamp="audio"></span><span><span class="switch__title">Your ears</span><span class="switch__desc" data-cal-desc="audio"></span></span><span class="window"><span class="lcd" data-cal-value="audio"></span></span></div>
+				<div class="cb-card__row"><span class="lamp lamp--ok" data-cal-lamp="mic"></span><span><span class="switch__title">The microphone</span><span class="switch__desc" data-cal-desc="mic"></span></span><span class="window"><span class="lcd" data-cal-value="mic"></span></span></div>
+				<button class="key key--hot cb-card__open" type="button" data-action="open-calibration">Calibrate</button>
+			</div>
 			<section class="settings-group" data-group="appearance">
 				<h2 class="settings-group__title">Appearance</h2>
 				<div class="panel settings-card">
@@ -1209,52 +1221,6 @@
 							<input type="checkbox" class="switch__input" data-setting="metroFlash" />
 							<span class="switch__track"></span>
 						</label>
-						<div class="switch switch--wrap">
-							<span class="switch__text">
-								<span class="switch__title">Audio delay</span>
-								<span class="switch__desc">Beat lights out of step with the clicks (Bluetooth, some phones)? Shifts them and the Changes timing; negative moves them earlier</span>
-							</span>
-							<span class="number">
-								<input type="number" class="input" min="-200" max="400" step="5" inputmode="numeric" data-setting="audioDelayMs" aria-label="Audio delay in milliseconds, number field" />
-								<span class="number__unit">ms</span>
-							</span>
-							<input type="range" class="range switch__wide" min="-200" max="400" step="5" data-setting="audioDelayMs" aria-label="Audio delay, slider" />
-							<span class="switch__wide settings__presets">
-								<span class="switch__desc">Or let the app measure it: tap along with the clicks</span>
-								<button class="link-btn" type="button" data-action="calibrate-delay">Calibrate</button>
-							</span>
-							<!-- Tap-along calibration (ts/features/settings/delay-calibration.ts). -->
-							<div class="switch__wide calibrate" data-calibrate hidden>
-								<button class="key calibrate__pad" type="button" data-calibrate-pad data-feedback="none" disabled>Tap</button>
-								<p class="switch__desc" data-calibrate-status aria-live="polite"></p>
-							</div>
-						</div>
-						<div class="switch switch--wrap">
-							<span class="switch__text">
-								<span class="switch__title">Mic delay</span>
-								<span class="switch__desc">How late the mic hears what you play. Changes and Tab take it off, so their timing does not depend on the phone</span>
-							</span>
-							<span class="number">
-								<input type="number" class="input" min="-500" max="1000" step="5" inputmode="numeric" data-setting="micDelayMs" aria-label="Mic delay in milliseconds, number field" />
-								<span class="number__unit">ms</span>
-							</span>
-							<input type="range" class="range switch__wide" min="-500" max="1000" step="5" data-setting="micDelayMs" aria-label="Mic delay, slider" />
-							<span class="switch__wide settings__presets">
-								<span class="switch__desc">Or let the mic measure it: clicks out loud, no headphones</span>
-								<button class="link-btn" type="button" data-action="calibrate-mic">Calibrate</button>
-							</span>
-							<!-- The mic hears the clicks (ts/features/settings/delay-calibration.ts). -->
-							<p class="switch__wide switch__desc" data-mic-calibrate-status aria-live="polite" hidden></p>
-						</div>
-						<!-- ts/features/trainer/timing-probe.ts, also on with ?debug. -->
-						<label class="switch">
-							<span class="switch__text">
-								<span class="switch__title">Timing log</span>
-								<span class="switch__desc">After a Changes In time or Tab session, what the mic heard and when, with a button to copy it for a bug report</span>
-							</span>
-							<input type="checkbox" class="switch__input" data-setting="timingLog" />
-							<span class="switch__track"></span>
-						</label>
 					</div>
 				</div>
 			</section>
@@ -1279,6 +1245,91 @@
 							<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.6 9.4a2.5 2.5 0 0 1 4.8.9c0 1.7-2.4 2.2-2.4 3.7"/><path d="M12 17.2h.01"/></svg>
 						</button>
 					</div>
+				</div>
+			</section>
+		</section>
+
+		<!-- Calibration (ts/features/calibration/calibration.view.ts): two guided steps that set
+		     Audio delay and Mic delay, and the diagnostics. No tab of its own: opened from the
+		     Settings card and the CAL keys of Changes In time and Tab, back to where you came from. -->
+		<section class="view view--calibration" id="view-calibration" role="tabpanel" aria-labelledby="tab-settings" hidden>
+			<div class="plate">
+				<div class="plate__brand"><b>PLUCK</b><span>CALIBRATION · CB-2</span></div>
+				<button class="link-btn cb-back" type="button" data-action="calibration-back">◀ Back</button>
+			</div>
+			<p class="cb-intro">Two short tests so the exercises hear you in time. Do them once on this phone, and again if you change speaker or headphones.</p>
+
+			<div class="cb-step" data-step="audio">
+				<span class="cb-num"><span class="window"><span class="lcd">1</span></span></span>
+				<span><span class="cb-title">Your ears</span><span class="cb-sub">Tap along with the clicks · 20 s</span></span>
+				<span class="cb-status"><span class="lamp lamp--ok" data-cal-lamp="audio"></span><span class="window"><span class="lcd" data-cal-value="audio"></span></span></span>
+				<p class="cb-desc">Lines the beat lights up with the sound you hear. Use the speaker or the headphones you play with.</p>
+				<div class="cb-foot"><span class="silk" data-cal-when="audio"></span><button class="key" type="button" data-start>Start</button></div>
+				<div class="cb-run" data-run hidden>
+					<div class="window"><div class="lcd cb-screen"><span class="cb-count"><span data-count>0</span><small> taps</small></span><div class="cb-dots" data-dots></div></div></div>
+					<button class="key cb-pad" type="button" data-pad data-feedback="none" disabled>Tap</button>
+				</div>
+				<p class="cb-say" data-status aria-live="polite"></p>
+			</div>
+
+			<div class="cb-step" data-step="mic">
+				<span class="cb-num"><span class="window"><span class="lcd">2</span></span></span>
+				<span><span class="cb-title">The microphone</span><span class="cb-sub">Clicks out loud, no headphones · 20 s</span></span>
+				<span class="cb-status"><span class="lamp lamp--ok" data-cal-lamp="mic"></span><span class="window"><span class="lcd" data-cal-value="mic"></span></span></span>
+				<p class="cb-desc">Measures how late this phone's mic hears what you play, so Changes and Tab judge your timing right.</p>
+				<div class="cb-checks" aria-label="Before you start">
+					<span class="cb-check"><span class="lamp lamp--ok is-on" aria-hidden="true"></span><span class="silk">Volume up</span></span>
+					<span class="cb-check"><span class="lamp lamp--ok is-on" aria-hidden="true"></span><span class="silk">No headphones</span></span>
+					<span class="cb-check"><span class="lamp lamp--ok is-on" aria-hidden="true"></span><span class="silk">Quiet room</span></span>
+				</div>
+				<div class="cb-foot"><span class="cb-uses"><span class="cb-tag">Changes · In time</span><span class="cb-tag">Tab</span></span><span class="silk" data-cal-when="mic"></span><button class="key" type="button" data-start>Start</button></div>
+				<div class="cb-run" data-run hidden>
+					<div class="window"><div class="lcd cb-screen"><span class="cb-count"><span data-count>0</span><small> clicks</small></span><div class="cb-dots" data-dots></div><div class="cb-level" data-level role="img" aria-label="Microphone level"></div></div></div>
+				</div>
+				<p class="cb-say" data-status aria-live="polite"></p>
+			</div>
+
+			<div class="cb-ready" data-cal-ready hidden>
+				<span class="cb-ready__line"><span class="lamp lamp--ok is-on" aria-hidden="true"></span><span class="switch__title">Ready: the exercises hear you in time</span></span>
+				<button class="key key--hot" type="button" data-action="calibration-back" data-back-label>Back</button>
+			</div>
+
+			<section class="cb-diag" aria-labelledby="calDiagnostics">
+				<h2 class="settings-group__title" id="calDiagnostics">Diagnostics</h2>
+
+				<div class="dg-card">
+					<span><span class="cb-title">Field report</span><span class="cb-sub">Records the mic and every timing event of your next Changes In time or Tab session, to replay it exactly as this phone heard it. Kept until the app closes.</span></span>
+					<label class="switch"><span class="switch__text"><span class="switch__title">Record the next session</span><span class="switch__desc" data-report-armed>Off</span></span><input type="checkbox" class="switch__input" data-report-arm /><span class="switch__track"></span></label>
+					<div class="dg-files" data-reports></div>
+				</div>
+
+				<div class="dg-card" data-mic-check>
+					<div class="dg-card__head"><span><span class="cb-title">Mic check</span><span class="cb-sub">Strum 8 times, slowly: Strums should read 8. More means false strums, fewer means missed ones.</span></span><button class="key" type="button" data-start>Start</button></div>
+					<div class="window"><div class="lcd dg-live">
+						<div class="dg-level" data-level role="img" aria-label="Microphone level"><span class="dg-floor" data-floor></span></div>
+						<div class="dg-row2"><span>Level · room noise</span><span data-levels>–</span></div>
+						<div class="dg-nums"><span><b data-strums>0</b>Strums</span><span><b data-chord>–</b>Chord heard</span><span><b data-naming>–</b>ms to name it</span></div>
+					</div></div>
+					<div class="dg-lamps" aria-hidden="true"><span class="dg-lamp"><span class="lamp lamp--ok" data-strum-lamp></span><span class="silk">Strum</span></span><span class="dg-lamp"><span class="lamp lamp--ok" data-sounding-lamp></span><span class="silk">Sounding</span></span></div>
+				</div>
+
+				<div class="dg-card">
+					<span><span class="cb-title">Last session</span><span class="cb-sub" data-session-sub>No Changes In time or Tab session yet.</span></span>
+					<div class="dg-timeline" data-timeline hidden>
+						<div class="dg-legend"><span><i class="dg-key-strum"></i>strum heard</span><span><i class="dg-key-chosen"></i>dated the change</span><span><i class="dg-key-named">N</i>chord named</span><span>| downbeat</span></div>
+						<div class="dg-axis" aria-hidden="true"><span></span><span><span>−1 s</span><span>0</span><span>+1.5 s</span></span><span></span></div>
+						<div class="dg-list" data-timeline-rows></div>
+					</div>
+					<pre class="dg-log" data-session-log hidden></pre>
+					<div class="dg-actions"><button class="key" type="button" data-action="session-log">Show log</button><button class="key" type="button" data-action="copy-log">Copy log</button></div>
+				</div>
+
+				<div class="dg-card">
+					<span class="cb-title">Fine-tune by hand</span>
+					<div class="dg-fine"><span class="switch__title">Audio delay</span><button class="key key--step" type="button" data-nudge="audioDelayMs:-5" aria-label="Audio delay 5 ms less">−</button><span class="window"><span class="lcd" data-fine="audioDelayMs"></span></span><button class="key key--step" type="button" data-nudge="audioDelayMs:5" aria-label="Audio delay 5 ms more">+</button></div>
+					<div class="dg-fine"><span class="switch__title">Mic delay</span><button class="key key--step" type="button" data-nudge="micDelayMs:-5" aria-label="Mic delay 5 ms less">−</button><span class="window"><span class="lcd" data-fine="micDelayMs"></span></span><button class="key key--step" type="button" data-nudge="micDelayMs:5" aria-label="Mic delay 5 ms more">+</button></div>
+					<label class="switch"><span class="switch__text"><span class="switch__title">Timing log</span><span class="switch__desc">After a Changes In time or Tab session, its log under the exercise, to copy</span></span><input type="checkbox" class="switch__input" data-timing-log /><span class="switch__track"></span></label>
+					<p class="switch__desc" data-device></p>
 				</div>
 			</section>
 		</section>
@@ -1387,7 +1438,7 @@
 		<ul>
 			<li>Pick a pair of chords (or up to four) and press Start with the mic on.</li>
 			<li><b>One minute</b>: switch back and forth as fast as you can; every clean change counts. Beat your best.</li>
-			<li><b>In time</b>: change on the metronome's beat. The display shows what the mic hears, the chord to play and the next one, and lights the beat of the chord you are on. The needle under it shows how far your last change was from the beat: left of the green zone is early, right is late; the dots are the changes before. A missed change lights the Miss lamp. Headphones work best.</li>
+			<li><b>In time</b>: change on the metronome's beat. The display shows what the mic hears, the chord to play and the next one, and lights the beat of the chord you are on. The needle under it shows how far your last change was from the beat: left of the green zone is early, right is late; the dots are the changes before. A missed change lights the Miss lamp. Headphones work best. Calibrate the mic first (the CAL key, once per phone): without it every change reads late or early.</li>
 		</ul>
 		<h3>Tab</h3>
 		<ul>

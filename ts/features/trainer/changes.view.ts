@@ -22,6 +22,7 @@ import { faking, heardChord, installDebugHook, resetHeard, strummed } from './ch
 import { showLed } from './led'
 import { clockText, createChangesSession, verdict } from './changes.session'
 import { createProbe, probing, showProbe } from './timing-probe'
+import * as FieldReport from '../calibration/field-report'
 
 // Screen readers hear the count at most this often (a change can come every 250 ms).
 const ANNOUNCE_MS = 4000
@@ -417,12 +418,14 @@ export function createChangesView(root: HTMLElement): View {
 		)
 		setRunningUi(true)
 		wakeLock.hold()
+		if (mode === 'time') FieldReport.sessionStarted()
 	}
 
 	/** Ends the session; `finished` = ran its course (stored), otherwise stopped. */
 	function finish(finished: boolean, reason = '') {
 		const wasTime = session.config().mode === 'time'
 		const ended = session.end(finished)
+		if (wasTime) FieldReport.sessionEnded(probe.finish('changes'), `Changes · In time · ${session.config().sequence.join(' ')}`)
 		if (wasTime && probing()) showProbe(status, probe.summary())
 		wakeLock.release()
 		if (ended?.mode === 'minute') {

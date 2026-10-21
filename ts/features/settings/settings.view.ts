@@ -6,7 +6,7 @@ import { subscribeVisible } from '../../ui/dom'
 import * as Theme from '../../ui/theme'
 import { resetKey } from '../../ui/reset-key'
 import { guardTouches } from '../../ui/touch-guard'
-import { createDelayCalibration, createMicCalibration } from './delay-calibration'
+import { showCalibrationState } from '../../ui/cal-key'
 
 /**
  * The Settings tab: the switches and selects of every tab, the per-note target
@@ -276,14 +276,13 @@ export function createSettingsView(root: HTMLElement, from: () => string | null)
 		renderChips()
 		syncEarChips()
 		syncA4Notes()
+		// The Calibration card on top (the page itself is #calibration).
+		showCalibrationState(root)
 	}
 
 	// Hidden, onActivate syncs on the way back.
 	subscribeVisible(root, sync)
 	sync()
-
-	const calibration = createDelayCalibration(root)
-	const micCalibration = createMicCalibration(root)
 
 	return {
 		onActivate() {
@@ -296,13 +295,9 @@ export function createSettingsView(root: HTMLElement, from: () => string | null)
 				target.group.scrollIntoView({ block: 'start' })
 			}
 		},
-		onReading: () => micCalibration.frame(),
-		// Leaving the tab stops a calibration run (its clicks would follow you).
-		reset() {
-			calibration.cancel()
-			micCalibration.cancel()
-		},
-		// Only the Mic delay calibration listens, and it turns the mic on itself; an open mic would only cost battery.
+		onReading() {},
+		reset() {},
+		// Nothing here listens; an open mic would only cost battery.
 		wantsMic: () => false,
 	}
 }

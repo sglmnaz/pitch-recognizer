@@ -75,8 +75,11 @@ export interface Settings {
 	 * Metronome → Mic delay, measured by the mic hearing the clicks): Changes
 	 * and Tab date what the mic hears that much earlier. */
 	micDelayMs: number
-	/** Settings → Metronome → Timing log: Changes In time and Tab show their timing log (timing-probe.ts). */
+	/** Calibration → Diagnostics → Timing log: Changes In time and Tab show their timing log (timing-probe.ts). */
 	timingLog: boolean
+	/** When Calibration's two steps were last done (Date.now(); 0 = never): the page's status and the CAL keys. */
+	audioCalibratedAt: number
+	micCalibratedAt: number
 	/** Speed trainer: +step BPM every `bars` bars until `target`. */
 	metroTrainerOn: boolean
 	metroTrainerStep: number
@@ -172,6 +175,8 @@ const defaults: Settings = {
 	audioDelayMs: 0,
 	micDelayMs: 0,
 	timingLog: false,
+	audioCalibratedAt: 0,
+	micCalibratedAt: 0,
 	metroTrainerOn: false,
 	metroTrainerStep: 5,
 	metroTrainerBars: 4,
@@ -283,6 +288,8 @@ export function load(): Settings {
 		audioDelayMs: clamp(s.audioDelayMs, -200, 400, d.audioDelayMs, true),
 		micDelayMs: clamp(s.micDelayMs, -500, 1000, d.micDelayMs, true),
 		timingLog: bool(s.timingLog, d.timingLog),
+		audioCalibratedAt: clamp(s.audioCalibratedAt, 0, Number.MAX_SAFE_INTEGER, d.audioCalibratedAt, true),
+		micCalibratedAt: clamp(s.micCalibratedAt, 0, Number.MAX_SAFE_INTEGER, d.micCalibratedAt, true),
 		metroTrainerOn: bool(s.metroTrainerOn, d.metroTrainerOn),
 		// The ranges of the steppers in ts/features/metronome/metronome.view.ts.
 		metroTrainerStep: clamp(s.metroTrainerStep, 1, 20, d.metroTrainerStep, true),

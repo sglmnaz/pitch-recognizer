@@ -236,7 +236,10 @@ export function createChangesSession(ui: SessionUi, metronome: MetronomeControl)
 		ui.target(current, `then ${seq[(slot + 1) % seq.length]}`)
 		ui.clock(`${event.bpm} BPM`)
 		// The first chord is where the player starts, not a change.
-		if (slot > 0) pending.push({ downbeat: now, slotMs: (config.beats * 60000) / event.bpm, target: current })
+		if (slot > 0) {
+			pending.push({ downbeat: now, slotMs: (config.beats * 60000) / event.bpm, target: current })
+			ui.probe?.({ kind: 'slot', downbeat: now, target: current })
+		}
 	}
 
 	function judgeDue(now: number) {

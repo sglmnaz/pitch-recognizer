@@ -47,5 +47,6 @@
 @import '../features/chords/chords.css' layer(components);
 @import '../features/trainer/trainer.css' layer(components);
 @import '../features/metronome/metronome.css' layer(components);
+@import '../features/calibration/calibration.css' layer(components);
 /* Theme-specific components last: they restyle the ones above. */
 @import './themes/regia.css' layer(components);

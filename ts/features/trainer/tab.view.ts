@@ -15,6 +15,7 @@ import { screenLock } from '../../ui/screen-lock'
 import { focusMicButton } from '../../ui/mic-block'
 import { createTabSession, type TabResult } from './tab.session'
 import { createProbe, probing, showProbe } from './timing-probe'
+import * as FieldReport from '../calibration/field-report'
 
 // One beat takes this much paper whatever the subdivision, so 16ths sit
 // closer than 8ths and a bar always reads as a bar.
@@ -367,11 +368,13 @@ export function createTabView(root: HTMLElement): View {
 		setRunningUi(true)
 		wakeLock.hold()
 		if (s.tabFollow === 'tempo' && !frameId) frameId = requestAnimationFrame(animate)
+		FieldReport.sessionStarted()
 	}
 
 	function finish(reason = '') {
 		const ex = session.config()?.exercise ?? exercise()
 		const ended = session.end()
+		FieldReport.sessionEnded(probe.finish('tab'), `Tab · ${ex.name}`)
 		if (probing()) showProbe(message, probe.summary())
 		wakeLock.release()
 		if (frameId) cancelAnimationFrame(frameId)

@@ -6,6 +6,7 @@ import { createChordsView } from './features/chords/chords.view'
 import { createScalesView } from './features/scales/scales.view'
 import { createMetronomeView } from './features/metronome/metronome.view'
 import { createSettingsView } from './features/settings/settings.view'
+import { createCalibrationView } from './features/calibration/calibration.view'
 import { initHelp } from './ui/help'
 import type { View } from './ui/view'
 import { byId } from './ui/dom'
@@ -13,6 +14,7 @@ import { bootMic, initMic, micNeedChanged } from './ui/mic-block'
 import { applyTheme } from './ui/theme'
 import { enhanceSelects } from './ui/dropdown'
 import { initFeedback } from './ui/feedback'
+import { bindCalKeys } from './ui/cal-key'
 
 const tabButtons = Array.from(document.querySelectorAll<HTMLButtonElement>('[data-tab]'))
 
@@ -32,7 +34,15 @@ const tabs = {
 	// Opens at the group of the tab the user came from. No mic (wantsMic false).
 	settings: { view: createSettingsView(byId('view-settings'), () => lastTab), section: byId('view-settings') },
 } satisfies Record<string, { view: View; section: HTMLElement }>
-const views: Record<string, { view: View; section: HTMLElement }> = tabs
+// Pages without a tab of their own: Calibration (from the Settings card and the
+// CAL keys of Changes and Tab; Settings stays lit, Back returns where you came from).
+let calibrationFrom: string | null = null
+// The app opened straight on a page: Back goes to Settings, not to the default tab.
+let booted = false
+const views: Record<string, { view: View; section: HTMLElement }> = {
+	...tabs,
+	calibration: { view: createCalibrationView(byId('view-calibration'), () => calibrationFrom), section: byId('view-calibration') },
+}
 
 let currentName = 'tuner'
 // The last tab shown other than Settings: the group Settings scrolls to on
@@ -50,14 +60,15 @@ function activate(name: string) {
 	// Nothing the last tab played keeps sounding into the next (or into its mic).
 	Sound.stopAll()
 	Sound.stopTone()
+	if (name === 'calibration' && currentName !== 'calibration') calibrationFrom = booted ? currentName : 'settings'
 	currentName = name
-	if (name !== 'settings') lastTab = name
+	if (name !== 'settings' && name !== 'calibration') lastTab = name
 
 	for (const [key, { section }] of Object.entries(views)) {
 		section.hidden = key !== name
 	}
 	for (const button of tabButtons) {
-		button.setAttribute('aria-selected', String(button.dataset.tab === name))
+		button.setAttribute('aria-selected', String(button.dataset.tab === (name === 'calibration' ? 'settings' : name)))
 	}
 
 	micNeedChanged()
@@ -65,6 +76,7 @@ function activate(name: string) {
 	// long page left scrolled would otherwise carry its offset over.
 	window.scrollTo(0, 0)
 	views[name].view.onActivate()
+	booted = true
 }
 
 for (const button of tabButtons) {
@@ -83,6 +95,7 @@ history.scrollRestoration = 'manual'
 // Every select becomes the old-school dropdown, once the views have built theirs.
 enhanceSelects()
 initFeedback()
+bindCalKeys(document)
 
 initMic(() => views[currentName])
 

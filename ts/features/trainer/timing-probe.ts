@@ -1,7 +1,9 @@
-// Settings → Metronome → Timing log (or ?debug): a timing log of a Changes In time or Tab session, summed up in a few
-// lines to paste into a report. Field data instead of guesses: when the clicks
-// are heard, when the mic hears strums and picks, how long the recognizer takes
-// to name a chord, and what each judged change or note was off by.
+// The timing log of a Changes In time or Tab session: field data instead of
+// guesses. When the clicks are heard, when the mic hears strums and picks, how
+// long the recognizer takes to name a chord, what each judged change or note
+// was off by. Summed up in a few lines to paste into a report (shown after a
+// session with Calibration → Diagnostics → Timing log, or ?debug), drawn as a
+// timeline on the calibration page, and saved whole in a field report.
 import * as Metronome from '../../core/metronome'
 import * as Microphone from '../../core/microphone'
 import * as Settings from '../../core/settings'
@@ -18,6 +20,24 @@ export type ProbeEntry =
 	| { kind: 'judged'; dt: number | null; mark: string }
 	| { kind: 'pick'; at: number }
 	| { kind: 'due'; at: number }
+	/** Changes: a chord's first beat, whose change is judged (`target` the chord due). */
+	| { kind: 'slot'; downbeat: number; target: string }
+
+/** The last session that ended, kept for the calibration page. */
+export interface ProbeSession {
+	exercise: 'changes' | 'tab'
+	endedAt: number
+	entries: ProbeEntry[]
+	summary: string
+}
+
+let last: ProbeSession | null = null
+const sessionListeners: (() => void)[] = []
+export const lastSession = () => last
+/** `listener` runs when a session ends (its log becomes lastSession()). */
+export function onSession(listener: () => void) {
+	sessionListeners.push(listener)
+}
 
 const median = (values: number[]) => {
 	if (!values.length) return null
@@ -91,7 +111,55 @@ export function createProbe() {
 			entries = []
 		},
 		summary,
+		/** The session ended: its log becomes lastSession(). */
+		finish(exercise: ProbeSession['exercise']): ProbeSession {
+			last = { exercise, endedAt: Date.now(), entries: [...entries], summary: summary() }
+			for (const listener of sessionListeners) listener()
+			return last
+		},
 	}
+}
+
+/** One judged change on the timeline, times in ms from its downbeat. */
+export interface TimelineRow {
+	index: number
+	target: string
+	strums: number[]
+	/** The strum that dated it (null: dated by its naming, or missed). */
+	chosen: number | null
+	/** When the chord was first named (null: not named near it). */
+	named: number | null
+	dt: number | null
+	mark: string
+}
+
+// A change's strip: from TIMELINE_BEFORE before its downbeat to TIMELINE_AFTER after.
+export const TIMELINE_BEFORE = 1000
+export const TIMELINE_AFTER = 1500
+
+/** Changes: each judged change with what was heard around its downbeat. */
+export function changesTimeline(entries: ProbeEntry[]): TimelineRow[] {
+	const slots = entries.filter((e): e is Extract<ProbeEntry, { kind: 'slot' }> => e.kind === 'slot')
+	const judged = entries.filter((e): e is Extract<ProbeEntry, { kind: 'judged' }> => e.kind === 'judged')
+	const strums = entries.filter((e): e is Extract<ProbeEntry, { kind: 'strum' }> => e.kind === 'strum').map((e) => e.at)
+	const named = entries.filter((e): e is Extract<ProbeEntry, { kind: 'named' }> => e.kind === 'named')
+	const near = (t: number, d: number) => t >= d - TIMELINE_BEFORE && t <= d + TIMELINE_AFTER
+	// Slots are judged in order, one mark each.
+	return judged.map((j, i) => {
+		const slot = slots[i]
+		if (!slot) return { index: i + 1, target: '?', strums: [], chosen: null, named: null, dt: j.dt, mark: j.mark }
+		const d = slot.downbeat
+		const naming = named.find((n) => n.symbol === slot.target && near(n.at, d))
+		return {
+			index: i + 1,
+			target: slot.target,
+			strums: strums.filter((t) => near(t, d)).map((t) => t - d),
+			chosen: naming?.struck != null ? naming.struck - d : null,
+			named: naming ? naming.at - d : null,
+			dt: j.dt,
+			mark: j.mark,
+		}
+	})
 }
 
 /** Shows `text` after `anchor` in a <pre> with a Copy button (one per anchor). */
