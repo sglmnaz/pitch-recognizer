@@ -12,11 +12,20 @@
 		max-width: 520px;
 	}
 
-	/* Four exercises in a 288 px track at 320 px: trim the side padding. */
+	/* Five exercises in a 288 px track at 320 px: trim the side padding and the tracking. */
 	@media (max-width: 600px) {
 		& > button {
 			min-height: var(--tap);
 			padding-inline: var(--space-4);
+			font-size: var(--text-xs);
+			letter-spacing: 0.06em;
+		}
+	}
+
+	@media (max-width: 359px) {
+		& > button {
+			font-size: var(--text-2xs);
+			letter-spacing: 0;
 		}
 	}
 }
@@ -739,6 +748,406 @@
 	fill: var(--accent);
 }
 
+/* Tab ------------------------------------------------------------------------------- */
+/* Technique exercises on a strip of tab paper (ts/features/trainer/tab.view.ts). The
+   strings, the clef and the red playhead stand still; the strip of notes slides under
+   them. Geometry shared with the view: strings from y 24, 16 px apart, playhead at x 96,
+   the track from x 40. Phones: stage, mic, setup, like Changes. */
+.trainer--tab > .mic {
+	order: 1;
+
+	@media (min-width: 960px) {
+		align-self: start;
+	}
+}
+
+.trainer--tab > .tab-setup {
+	order: 2;
+}
+
+.tab-stage {
+	display: flex;
+	flex-direction: column;
+	gap: var(--space-12);
+}
+
+.tab-head {
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+}
+
+.tab-title {
+	margin: 0;
+	font-family: var(--font-ui);
+	font-size: var(--text-3xl);
+	font-weight: 700;
+	line-height: 1.15;
+	letter-spacing: 0.06em;
+	text-transform: uppercase;
+}
+
+.tab-how {
+	margin: 0;
+	font-family: var(--font-text);
+	font-size: var(--text-xs);
+	line-height: 1.35;
+	color: var(--fg-muted);
+}
+
+.tab-paper {
+	position: relative;
+	height: 132px;
+	overflow: hidden;
+	border-radius: var(--radius-sm);
+	background: var(--paper);
+	color: var(--paper-ink);
+}
+
+.tab-strings {
+	position: absolute;
+	inset: 24px 0 auto;
+	height: 81px;
+	background: repeating-linear-gradient(180deg, color-mix(in srgb, var(--paper-ink) 70%, transparent) 0 1px, transparent 1px 16px);
+}
+
+/* The clef: the strings start at its double bar, T A B on paper patches. */
+.tab-clef {
+	position: absolute;
+	inset: 0 auto 0 0;
+	z-index: 3;
+	width: 40px;
+	background:
+		repeating-linear-gradient(180deg, color-mix(in srgb, var(--paper-ink) 70%, transparent) 0 1px, transparent 1px 16px) 10px 24px / calc(100% - 10px) 81px
+		no-repeat,
+		var(--paper);
+
+	&::before,
+	&::after {
+		content: '';
+		position: absolute;
+		top: 24px;
+		height: 81px;
+		background: var(--paper-ink);
+	}
+
+	&::before {
+		left: 10px;
+		width: 3px;
+	}
+
+	&::after {
+		left: 16px;
+		width: 1px;
+	}
+
+	& b {
+		position: absolute;
+		left: 22px;
+		width: 14px;
+		font-family: var(--font-ui);
+		font-size: var(--text-md);
+		font-weight: 700;
+		line-height: 1;
+		text-align: center;
+		background: var(--paper);
+	}
+
+	& b:nth-child(1) {
+		top: 34px;
+	}
+
+	& b:nth-child(2) {
+		top: 52px;
+	}
+
+	& b:nth-child(3) {
+		top: 70px;
+	}
+}
+
+/* Notes fade in at the right edge and out under the clef. */
+.tab-track {
+	position: absolute;
+	inset: 0 0 0 40px;
+	overflow: hidden;
+	mask: linear-gradient(90deg, transparent, #000 14px, #000 calc(100% - 18px), transparent);
+}
+
+.tab-strip {
+	position: absolute;
+	inset: 0 auto 0 0;
+	will-change: transform;
+}
+
+/* Wait: a step to the next note, not a jump. */
+.tab-strip--step {
+	transition: transform 0.18s var(--ease);
+}
+
+/* Centred on its step; a bend (7b9) is wider than a fret number. */
+.tab-n {
+	position: absolute;
+	min-width: 22px;
+	height: 15px;
+	margin-top: -7.5px;
+	padding-inline: 2px;
+	font-family: var(--font-ui);
+	font-size: var(--text-md);
+	font-weight: 700;
+	line-height: 15px;
+	text-align: center;
+	white-space: nowrap;
+	background: var(--paper);
+	transform: translateX(-50%);
+
+	&[data-mark='hit'] {
+		color: var(--success);
+	}
+
+	&:is([data-mark='early'], [data-mark='late']) {
+		color: var(--warning);
+	}
+
+	&[data-mark='miss'] {
+		color: var(--paper-red);
+	}
+}
+
+.tab-bar {
+	position: absolute;
+	top: 24px;
+	width: 1px;
+	height: 81px;
+	background: var(--paper-ink);
+}
+
+.tab-beat,
+.tab-tech {
+	position: absolute;
+	width: 20px;
+	margin-left: -10px;
+	font-family: var(--font-ui);
+	font-size: var(--text-2xs);
+	font-weight: 700;
+	line-height: 1;
+	text-align: center;
+}
+
+.tab-beat {
+	top: 112px;
+	color: color-mix(in srgb, var(--paper-ink) 60%, transparent);
+}
+
+.tab-tech {
+	color: color-mix(in srgb, var(--paper-ink) 75%, transparent);
+}
+
+/* The playhead: what sits in the red band is to be played now. */
+.tab-now {
+	position: absolute;
+	inset: 14px auto 14px 82px;
+	z-index: 2;
+	width: 28px;
+	border-radius: var(--radius);
+	background: color-mix(in srgb, var(--paper-red) 13%, transparent);
+	pointer-events: none;
+
+	&::after {
+		content: '';
+		position: absolute;
+		inset: -6px auto -6px 13px;
+		width: 2px;
+		background: var(--paper-red);
+	}
+
+	&::before {
+		content: '';
+		position: absolute;
+		top: -9px;
+		left: 8px;
+		border: 6px solid transparent;
+		border-top: 7px solid var(--paper-red);
+	}
+}
+
+.tab-status {
+	display: flex;
+	justify-content: space-between;
+	align-items: baseline;
+	gap: var(--space-8);
+
+	& > span:last-child {
+		flex: none;
+		text-align: right;
+	}
+}
+
+.tab-tape {
+	display: flex;
+	align-items: center;
+	gap: var(--space-8);
+}
+
+.tab-tape__label,
+.tab-tally {
+	flex: none;
+	font-size: var(--text-2xs);
+}
+
+.tab-tally {
+	margin-left: auto;
+}
+
+.tab-marks {
+	display: flex;
+	gap: var(--space-4);
+	min-width: 0;
+	min-height: 1.2em;
+	margin: 0;
+	padding: 0;
+	overflow: hidden;
+	list-style: none;
+	font-size: var(--text-md);
+	letter-spacing: 0;
+}
+
+.tab-transport {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) 100px;
+	gap: var(--space-12);
+	align-items: end;
+}
+
+.tab-loop {
+	height: 54px;
+	font-size: var(--text-xl);
+
+	@media (max-width: 600px) {
+		height: 48px;
+	}
+}
+
+.tab-setup {
+	display: flex;
+	flex-direction: column;
+	gap: 14px;
+	padding-top: var(--space-12);
+	border-top: 1.5px solid var(--rule-strong);
+}
+
+.tab-row {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	gap: var(--space-12);
+}
+
+.tab-follow {
+	width: 160px;
+
+	& > button {
+		height: var(--tap);
+	}
+}
+
+.tab-tempo {
+	min-width: 76px;
+	font-size: var(--text-md);
+	text-align: center;
+}
+
+.tab-group {
+	display: flex;
+	flex-direction: column;
+	gap: var(--space-8);
+}
+
+.tab-goals {
+	grid-template-columns: repeat(4, minmax(0, 1fr));
+
+	@media (max-width: 600px) {
+		& > .chip {
+			min-height: var(--tap);
+		}
+	}
+}
+
+.tab-list {
+	margin: var(--space-4) 0 0;
+	padding: 0;
+	list-style: none;
+}
+
+/* One row per exercise: the whole row is the button, ruled like a list. */
+.tab-ex {
+	appearance: none;
+	display: grid;
+	grid-template-columns: auto minmax(0, 1fr) auto;
+	align-items: center;
+	gap: var(--space-10);
+	width: 100%;
+	min-height: var(--tap);
+	padding: var(--space-10) 0;
+	border: 0;
+	border-top: 1.5px solid var(--rule);
+	background: none;
+	color: inherit;
+	font: inherit;
+	text-align: left;
+	cursor: pointer;
+	-webkit-tap-highlight-color: transparent;
+
+	li:last-child > & {
+		border-bottom: 1.5px solid var(--rule);
+	}
+}
+
+.tab-ex__text {
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+	min-width: 0;
+}
+
+.tab-ex__name {
+	font-family: var(--font-ui);
+	font-size: var(--text-md);
+	font-weight: 700;
+	line-height: 1.2;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+}
+
+.tab-ex[aria-pressed='false'] .tab-ex__name {
+	color: var(--fg-secondary);
+}
+
+.tab-ex__from {
+	font-family: var(--font-text);
+	font-size: var(--text-xs);
+	line-height: 1.35;
+	color: var(--fg-muted);
+}
+
+.tab-ex__best {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-end;
+	gap: 2px;
+
+	& .silk {
+		font-size: var(--text-2xs);
+	}
+
+	& .lcd {
+		min-width: 4.4em;
+		padding: 2px 6px;
+		font-size: var(--text-xs);
+		text-align: center;
+	}
+}
+
 /* Desktop ------------------------------------------------------------------------------ */
 @media (min-width: 960px) {
 	.view > .trainer-plate {
@@ -820,6 +1229,30 @@
 	}
 
 	.view > .changes-setup {
+		grid-area: setup;
+	}
+
+	#view-trainer.trainer--tab:not([hidden]) {
+		grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+		grid-template-areas:
+			'mode mode'
+			'stage setup'
+			'stage mic';
+		grid-template-rows: auto auto 1fr;
+	}
+
+	#view-trainer.trainer--tab.trainer--running:not([hidden]) {
+		grid-template-areas:
+			'mode mode'
+			'stage mic';
+		grid-template-rows: auto 1fr;
+	}
+
+	.view > .tab-stage {
+		grid-area: stage;
+	}
+
+	.view > .tab-setup {
 		grid-area: setup;
 	}
 }

@@ -108,6 +108,7 @@
 					<button type="button" data-exercise="intervals" aria-pressed="false">Intervals</button>
 					<button type="button" data-exercise="chords" aria-pressed="false">Chords</button>
 					<button type="button" data-exercise="changes" aria-pressed="false">Changes</button>
+					<button type="button" data-exercise="tab" aria-pressed="false">Tab</button>
 				</div>
 			</div>
 
@@ -251,6 +252,71 @@
 					<div class="chips has-lamps changes-chips" role="group" aria-labelledby="changesChordsLabel"></div>
 				</div>
 				<div class="changes-summary"></div>
+			</div>
+
+			<!-- Technique exercises on tab (ts/features/trainer/tab.view.ts): the strip moves by
+			     itself under a still playhead, with the metronome (Tempo) or note by note (Wait). -->
+			<div class="tab-stage" data-only="tab" hidden>
+				<div class="tab-head">
+					<span class="silk tab-goal"></span>
+					<h2 class="tab-title"></h2>
+					<p class="tab-how"></p>
+				</div>
+				<div class="window">
+					<div class="tab-paper" role="img">
+						<span class="tab-strings" aria-hidden="true"></span>
+						<div class="tab-track" aria-hidden="true"><div class="tab-strip"></div></div>
+						<div class="tab-clef" aria-hidden="true"><b>T</b><b>A</b><b>B</b></div>
+						<span class="tab-now" aria-hidden="true"></span>
+					</div>
+				</div>
+				<div class="window">
+					<div class="lcd tab-status"><span class="tab-status__main"></span><span class="tab-status__side"></span></div>
+				</div>
+				<div class="window">
+					<div class="lcd tab-tape">
+						<span class="tab-tape__label" aria-hidden="true">Last</span>
+						<ol class="tab-marks" role="img" aria-label="No notes yet"></ol>
+						<span class="tab-tally" aria-hidden="true"></span>
+					</div>
+				</div>
+				<div class="tab-transport">
+					<button class="btn btn--large key--hot" type="button" data-action="tab-start" aria-keyshortcuts="Space">Start</button>
+					<button class="key key--lit tab-loop" type="button" aria-pressed="true">Loop</button>
+				</div>
+				<p class="changes-status tab-message" aria-live="polite"></p>
+				<span class="sr-only tab-live" aria-live="polite"></span>
+			</div>
+
+			<div class="tab-setup" data-only="tab" hidden>
+				<div class="tab-row">
+					<span class="silk" id="tabTempoLabel">Tempo</span>
+					<div class="changes-stepper" role="group" aria-labelledby="tabTempoLabel">
+						<button class="key key--step" type="button" data-tab-bpm="-5" aria-label="5 BPM slower">▼</button>
+						<span class="window"><span class="lcd tab-tempo">60 BPM</span></span>
+						<button class="key key--step" type="button" data-tab-bpm="5" aria-label="5 BPM faster">▲</button>
+					</div>
+				</div>
+				<div class="tab-row">
+					<span class="silk" id="tabFollowLabel">Follow</span>
+					<div class="segmented tab-follow" role="group" aria-labelledby="tabFollowLabel">
+						<button type="button" data-tab-follow="tempo" aria-pressed="true">Tempo</button>
+						<button type="button" data-tab-follow="wait" aria-pressed="false">Wait</button>
+					</div>
+				</div>
+				<label class="switch switch--slide tab-speedup">
+					<span class="switch__text">
+						<span class="switch__title">Speed up <span class="lamp"></span></span>
+						<span class="switch__desc">+5 BPM after two clean loops</span>
+					</span>
+					<input type="checkbox" class="switch__input" />
+					<span class="silk">Off</span><span class="switch__track"></span><span class="silk">On</span>
+				</label>
+				<div class="tab-group">
+					<span class="silk" id="tabGoalsLabel">Exercises</span>
+					<div class="chips tab-goals" role="group" aria-labelledby="tabGoalsLabel"></div>
+					<ul class="tab-list" aria-label="Exercises"></ul>
+				</div>
 			</div>
 			<button class="help-link" type="button" data-help="trainer" aria-haspopup="dialog" aria-label="How to use the trainer"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.6 9.4a2.5 2.5 0 0 1 4.8.9c0 1.7-2.4 2.2-2.4 3.7"/><path d="M12 17.2h.01"/></svg></button>
 		</section>
@@ -1063,6 +1129,37 @@
 						</label>
 					</div>
 				</div>
+				<h3 class="settings-group__sub">Tab</h3>
+				<div class="panel settings-card">
+					<div class="settings__section">
+						<label class="switch">
+							<span class="switch__text">
+								<span class="switch__title">Follow</span>
+								<span class="switch__desc">With the metronome, or wait for each note</span>
+							</span>
+							<select class="select select--small" data-setting="tabFollow">
+								<option value="tempo">Tempo</option>
+								<option value="wait">Wait</option>
+							</select>
+						</label>
+						<label class="switch">
+							<span class="switch__text">
+								<span class="switch__title">Loop</span>
+								<span class="switch__desc">Play the exercise over and over</span>
+							</span>
+							<input type="checkbox" class="switch__input" data-setting="tabLoop" />
+							<span class="switch__track"></span>
+						</label>
+						<label class="switch">
+							<span class="switch__text">
+								<span class="switch__title">Speed up</span>
+								<span class="switch__desc">+5 BPM after two clean loops</span>
+							</span>
+							<input type="checkbox" class="switch__input" data-setting="tabSpeedUp" />
+							<span class="switch__track"></span>
+						</label>
+					</div>
+				</div>
 			</section>
 
 			<section class="settings-group" data-group="metronome">
@@ -1248,6 +1345,14 @@
 			<li>Pick a pair of chords (or up to four) and press Start with the mic on.</li>
 			<li><b>One minute</b>: switch back and forth as fast as you can; every clean change counts. Beat your best.</li>
 			<li><b>In time</b>: change on the metronome's beat; each change is marked hit, early, late or missed. Headphones work best.</li>
+		</ul>
+		<h3>Tab</h3>
+		<ul>
+			<li>Pick an exercise from the list; the tab moves by itself, so you never scroll. Play what sits in the red band.</li>
+			<li><b>Tempo</b>: after a bar of clicks the tab slides with the metronome; every note is marked on time (green), early or late (amber) or missed (red).</li>
+			<li><b>Wait</b>: no clicks; the tab stops on each note until the mic hears it, and tells you when a note is a fret or two off.</li>
+			<li><b>Loop</b> repeats the exercise; <b>Speed up</b> adds 5 BPM after two clean loops. Your fastest clean loop is kept per exercise.</li>
+			<li>Through a speaker the mic can hear the clicks: headphones work best.</li>
 		</ul>
 	</template>
 

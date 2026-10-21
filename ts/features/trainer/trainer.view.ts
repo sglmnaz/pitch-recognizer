@@ -10,12 +10,14 @@ import { createReadout } from '../../ui/readout'
 import { micNeedChanged } from '../../ui/mic-block'
 import { createEarView } from './ear.view'
 import { createChangesView } from './changes.view'
+import { createTabView } from './tab.view'
 import { createScoreboard } from './led'
 
 /**
- * Four exercises behind one segmented control: Notes (match the note on the
- * staff with the mic), the ear drills Intervals / Chords (ts/features/trainer/ear.view.ts) and
- * Changes, chord-change drills played into the mic (ts/features/trainer/changes.view.ts).
+ * Five exercises behind one segmented control: Notes (match the note on the
+ * staff with the mic), the ear drills Intervals / Chords (ts/features/trainer/ear.view.ts),
+ * Changes, chord-change drills played into the mic (ts/features/trainer/changes.view.ts),
+ * and Tab, technique exercises on a moving tab strip (ts/features/trainer/tab.view.ts).
  * Switching exercises calls micNeedChanged(): Chords has no use for the mic.
  */
 export function createTrainerView(root: HTMLElement): View {
@@ -150,9 +152,10 @@ export function createTrainerView(root: HTMLElement): View {
 	/* Exercise switch ------------------------------------------------------ */
 	const ear = createEarView(root)
 	const changes = createChangesView(root)
+	const tab = createTabView(root)
 	const exercise = () => Settings.get().trainerExercise
-	const kindOf = (ex: string) => (ex === 'notes' || ex === 'changes' ? ex : 'ear')
-	const active = () => ({ notes, ear, changes })[kindOf(exercise())]
+	const kindOf = (ex: string) => (ex === 'notes' || ex === 'changes' || ex === 'tab' ? ex : 'ear')
+	const active = () => ({ notes, ear, changes, tab })[kindOf(exercise())]
 
 	function applyExercise() {
 		const ex = exercise()
@@ -160,6 +163,7 @@ export function createTrainerView(root: HTMLElement): View {
 		showExercise(ex)
 		root.classList.toggle('trainer--ear', kind === 'ear')
 		root.classList.toggle('trainer--changes', kind === 'changes')
+		root.classList.toggle('trainer--tab', kind === 'tab')
 		for (const element of root.querySelectorAll<HTMLElement>('[data-only]')) element.hidden = !element.dataset.only!.split(' ').includes(kind)
 	}
 
@@ -189,7 +193,7 @@ export function createTrainerView(root: HTMLElement): View {
 		},
 		reset: () => active().reset(),
 		onReading: (reading) => active().onReading(reading),
-		// Intervals only listen when sung answers are on; Changes always does.
-		wantsMic: () => exercise() === 'notes' || exercise() === 'changes' || (exercise() === 'intervals' && Settings.get().earSing),
+		// Intervals only listen when sung answers are on; Changes and Tab always do.
+		wantsMic: () => exercise() === 'notes' || exercise() === 'changes' || exercise() === 'tab' || (exercise() === 'intervals' && Settings.get().earSing),
 	}
 }

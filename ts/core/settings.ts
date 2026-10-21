@@ -3,6 +3,7 @@ import { possibleFrequencies, possibleFrequenciesWithoutAccidentals, type NoteIn
 import { clampA4, tuningById } from '../music/tuning.ts'
 import { DEFAULT_INTERVALS, DEFAULT_QUALITIES, pool } from '../music/ear.ts'
 import * as Changes from '../music/changes.ts'
+import * as Tab from '../music/tab.ts'
 import { readJSON, writeJSON } from './storage.ts'
 
 export interface Settings {
@@ -90,7 +91,7 @@ export interface Settings {
 
 	/* Trainer: ear training (ts/music/ear.ts) */
 	/** Which exercise the Trainer shows. */
-	trainerExercise: 'notes' | 'intervals' | 'chords' | 'changes'
+	trainerExercise: 'notes' | 'intervals' | 'chords' | 'changes' | 'tab'
 	/** Interval ids (ts/music/ear.ts INTERVALS) and chord quality ids (QUALITIES) asked. */
 	earIntervals: string[]
 	earChords: string[]
@@ -117,6 +118,18 @@ export interface Settings {
 	changesSpeedUp: boolean
 	/** 3-2-1 before a one-minute session, a bar of clicks before an in-time one. */
 	changesCountIn: boolean
+
+	/* Trainer: technique exercises on tab (ts/music/tab.ts) */
+	/** The exercise (Tab.EXERCISE_IDS); its tempo and record live with it (Tab.loadRecord). */
+	tabExercise: string
+	/** Tempo: the tab moves with the metronome. Wait: it waits for each note. */
+	tabFollow: 'tempo' | 'wait'
+	/** Play the exercise over and over, or once. */
+	tabLoop: boolean
+	/** Tempo: +5 BPM after two clean loops. */
+	tabSpeedUp: boolean
+	/** The exercise list shows this goal only ('all' = every exercise). */
+	tabGoal: 'all' | Tab.Goal
 }
 
 const STORAGE_KEY = 'pitch-recognizer:settings'
@@ -180,6 +193,13 @@ const defaults: Settings = {
 	changesBeats: 4,
 	changesSpeedUp: false,
 	changesCountIn: true,
+
+	/* Trainer: tab */
+	tabExercise: Tab.EXERCISE_IDS[0],
+	tabFollow: 'tempo',
+	tabLoop: true,
+	tabSpeedUp: false,
+	tabGoal: 'all',
 }
 
 const listeners = new Set<() => void>()
@@ -265,7 +285,7 @@ export function load(): Settings {
 
 		leftHanded: bool(s.leftHanded, d.leftHanded),
 
-		trainerExercise: oneOf(s.trainerExercise, ['notes', 'intervals', 'chords', 'changes']),
+		trainerExercise: oneOf(s.trainerExercise, ['notes', 'intervals', 'chords', 'changes', 'tab']),
 		// Unknown ids dropped, nothing left = defaults.
 		earIntervals: pool('intervals', strings(s.earIntervals)),
 		earChords: pool('chords', strings(s.earChords)),
@@ -282,6 +302,12 @@ export function load(): Settings {
 		changesBeats: oneOf(s.changesBeats, [d.changesBeats, ...Changes.BEATS_PER_CHORD]),
 		changesSpeedUp: bool(s.changesSpeedUp, d.changesSpeedUp),
 		changesCountIn: bool(s.changesCountIn, d.changesCountIn),
+
+		tabExercise: oneOf(s.tabExercise, Tab.EXERCISE_IDS),
+		tabFollow: oneOf(s.tabFollow, ['tempo', 'wait']),
+		tabLoop: bool(s.tabLoop, d.tabLoop),
+		tabSpeedUp: bool(s.tabSpeedUp, d.tabSpeedUp),
+		tabGoal: oneOf(s.tabGoal, ['all', ...Tab.GOALS.map((g) => g.id)]),
 	}
 }
 
