@@ -1,7 +1,7 @@
 // The timing log of a Changes In time or Tab session: field data instead of
 // guesses. When the clicks are heard, when the mic hears strums and picks,
-// which strums were changes and to what chord, what each judged change or note
-// was off by. Summed up in a few lines and drawn as a timeline on the
+// which strums were changes and to what chord (and why the others were not),
+// what each judged change or note was off by. Summed up in a few lines and drawn as a timeline on the
 // calibration page (Diagnostics → Last session), saved whole in a field report.
 import * as Metronome from '../../core/metronome'
 import * as Microphone from '../../core/microphone'
@@ -13,8 +13,14 @@ export type ProbeEntry =
 	| { kind: 'strum'; at: number }
 	/** Mic check: a strum counted (the sound after it had pitch). */
 	| { kind: 'counted'; at: number }
-	/** Changes: a strum placed as a change to `symbol` (`struck` = `at`: In time dates a change by its strum). */
-	| { kind: 'named'; at: number; symbol: string; struck: number }
+	/** Changes: a strum placed as a change to `symbol` (dated by the strum). */
+	| { kind: 'named'; at: number; symbol: string }
+	/**
+	 * Changes: a strum that was no change. `none`: no drill chord in its sound;
+	 * `same`: the chord ringing; `louder` / `clearer`: a strum after it took the
+	 * change (the fingers leaving the old chord), see changes.session.ts.
+	 */
+	| { kind: 'passed'; at: number; symbol: string | null; why: 'none' | 'same' | 'louder' | 'clearer' }
 	| { kind: 'judged'; dt: number | null; mark: string }
 	| { kind: 'pick'; at: number }
 	| { kind: 'due'; at: number }
@@ -66,17 +72,18 @@ export function createProbe() {
 		lines.push(`beats ${beats.length} · heardAt − outputTimestamp median ${ms(median(stamped))}`)
 		const strums = of('strum').map((e) => e.at)
 		const named = of('named')
-		if (named.length) {
-			lines.push(`strums heard ${strums.length} · chords named ${named.length} · dated by a strum ${named.length}`)
-			lines.push(`named − dating strum (25/50/75%) ${quartiles(named.map((n) => n.at - n.struck))}`)
-			lines.push('each named chord: ms back to the last 3 strums before it')
-			for (const n of named.slice(0, 16)) {
-				const back = strums
-					.filter((t) => t <= n.at)
-					.slice(-3)
-					.reverse()
-					.map((t) => ms(n.at - t))
-				lines.push(`  ${n.symbol.padEnd(3)} strum    ${back.join(' / ')}`)
+		const passed = of('passed')
+		if (named.length || passed.length) {
+			const why = (reason: string) => passed.filter((p) => p.why === reason).length
+			lines.push(
+				`strums heard ${strums.length} · changes ${named.length} · not changes: no drill chord ${why('none')} · the chord ringing ${why('same')} · a louder strum after ${why('louder')} · a clearer one after ${why('clearer')}`
+			)
+			// The strums that gave way to a later one: where a change can land on the wrong strum.
+			const gave = passed.filter((p) => p.why === 'louder' || p.why === 'clearer')
+			if (gave.length) lines.push('gave way: the strum, why, and the change after it (ms later)')
+			for (const p of gave.slice(0, 16)) {
+				const next = named.find((n) => n.at > p.at)
+				lines.push(`  ${(p.symbol ?? '–').padEnd(3)} ${p.why.padEnd(7)} ${next ? `${next.symbol.padEnd(3)} +${ms(next.at - p.at)}` : '–'}`)
 			}
 		}
 		const judged = of('judged')
@@ -124,8 +131,6 @@ export interface TimelineRow {
 	strums: number[]
 	/** The strum that dated it (null: missed). */
 	chosen: number | null
-	/** When the chord was first named (null: not named near it). */
-	named: number | null
 	dt: number | null
 	mark: string
 }
@@ -144,15 +149,14 @@ export function changesTimeline(entries: ProbeEntry[]): TimelineRow[] {
 	// Slots are judged in order, one mark each.
 	return judged.map((j, i) => {
 		const slot = slots[i]
-		if (!slot) return { index: i + 1, target: '?', strums: [], chosen: null, named: null, dt: j.dt, mark: j.mark }
+		if (!slot) return { index: i + 1, target: '?', strums: [], chosen: null, dt: j.dt, mark: j.mark }
 		const d = slot.downbeat
 		const naming = named.find((n) => n.symbol === slot.target && near(n.at, d))
 		return {
 			index: i + 1,
 			target: slot.target,
 			strums: strums.filter((t) => near(t, d)).map((t) => t - d),
-			chosen: naming ? naming.struck - d : null,
-			named: naming ? naming.at - d : null,
+			chosen: naming ? naming.at - d : null,
 			dt: j.dt,
 			mark: j.mark,
 		}

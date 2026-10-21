@@ -24,6 +24,7 @@ import {
 } from '../ts/music/changes.ts'
 import { createHeldGate } from '../ts/music/tab.ts'
 import { createChangesSession, type MetronomeControl, type SessionUi, verdict } from '../ts/features/trainer/changes.session.ts'
+import type { ProbeEntry } from '../ts/features/trainer/timing-probe.ts'
 import { check, finish } from './check.ts'
 
 const FRAME = 1000 / 60
@@ -354,6 +355,7 @@ check(
 				events.push(['hitMs', hitMs])
 			},
 			announce: (text) => void events.push(['announce', text]),
+			probe: (entry) => void events.push(['probe', entry]),
 		}
 		const metronome: MetronomeControl = {
 			configure() {},
@@ -497,6 +499,17 @@ check(
 	{
 		const offsets = offsetsOf(inTime(100, { everyBeat: true, liftMs: 180, secondPeakMs: 130 }))
 		check('in time: not the lifted fingers (a louder strum follows), not the second peak (the same chord): the strum', near(offsets, 85), show(offsets))
+	}
+	{
+		// The timing log says why each strum that was no change was not.
+		const why = (h: ReturnType<typeof inTime>) => new Set((h.of('probe') as ProbeEntry[]).flatMap((e) => (e.kind === 'passed' ? [e.why] : [])))
+		const lifted = why(inTime(100, { everyBeat: true, liftMs: 180, secondPeakMs: 130 }))
+		const open = why(inTime(100, { liftMs: 500, liftLevel: 1 }))
+		check(
+			'in time: the log names re-strums, lifted fingers and open strings',
+			lifted.has('same') && lifted.has('louder') && open.has('clearer'),
+			`${[...lifted]} | ${[...open]}`
+		)
 	}
 	{
 		// Right on the click it would read as the click (CLICK_HEARD_MS): a strum a little ahead, as players do (−50 … −190 ms on the reports).

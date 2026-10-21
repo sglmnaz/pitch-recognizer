@@ -147,7 +147,6 @@ function timelineRow(row: TimelineRow): HTMLElement {
 	label.append(el('b', '', undefined, `${row.index} · ${row.target}`), el('span', '', undefined, row.chosen !== null ? 'strum' : 'not heard'))
 	const track = el('span', 'lcd dg-track')
 	track.append(el('span', 'dg-zone'), el('span', 'dg-zero'), ...row.strums.map((t) => el('span', 'dg-tick', t)))
-	if (row.named !== null) track.append(el('span', 'dg-named', row.named, 'N'))
 	if (row.chosen !== null) track.append(el('span', 'dg-chosen', row.chosen))
 	const frame = el('span', 'window')
 	frame.append(track)

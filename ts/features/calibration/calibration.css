@@ -436,11 +436,6 @@
 	border-bottom: 8px solid currentColor;
 }
 
-.dg-key-named {
-	font: 700 10px / 1 var(--font-ui);
-	font-style: normal;
-}
-
 .dg-axis,
 .dg-tl {
 	display: grid;
@@ -531,12 +526,6 @@
 	border: 6px solid transparent;
 	border-top: 0;
 	border-bottom: 9px solid var(--lcd-warn);
-}
-
-.dg-named {
-	top: 1px;
-	transform: translateX(-50%);
-	font: 700 10px / 1 var(--font-ui);
 }
 
 .dg-dt {

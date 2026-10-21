@@ -286,20 +286,22 @@ export function createChangesSession(ui: SessionUi, metronome: MetronomeControl)
 	/** In time: a strum, DECIDE_MS on. A change if it sounds like another of the drill's chords than the one ringing. */
 	function place(at: number) {
 		const chord = Changes.drillChord(profileAfter(at), config.sequence)
-		if (!chord || chord === playing) return
+		if (!chord || chord === playing) return ui.probe?.({ kind: 'passed', at, symbol: chord, why: chord ? 'same' : 'none' })
 		const loud = (t: number) => Math.max(0, ...levels.filter((l) => l.at >= t && l.at <= t + LOUD_MS).map((l) => l.volume))
 		const share = (t: number) => {
 			const profile = profileAfter(t)
 			return profile ? Changes.chordShare(profile, chord) : 0
 		}
 		// A strum much louder soon after (not a click), or one sounding clearly more like the chord, is the change; this one, the fingers leaving the old chord.
-		if (strums.some((s) => !s.click && s.at > at && s.at <= at + LOUDER_MS && loud(s.at) >= LOUDER * loud(at))) return
+		if (strums.some((s) => !s.click && s.at > at && s.at <= at + LOUDER_MS && loud(s.at) >= LOUDER * loud(at)))
+			return ui.probe?.({ kind: 'passed', at, symbol: chord, why: 'louder' })
 		const mine = share(at)
 		const later = strums.filter((s) => s.at > at && s.at <= at + BETTER_MS)
-		if (later.some((s) => Changes.drillChord(profileAfter(s.at), config.sequence) === chord && share(s.at) >= mine + BETTER)) return
+		if (later.some((s) => Changes.drillChord(profileAfter(s.at), config.sequence) === chord && share(s.at) >= mine + BETTER))
+			return ui.probe?.({ kind: 'passed', at, symbol: chord, why: 'clearer' })
 		playing = chord
 		onsets.push({ symbol: chord, at: at - STRUM_LATENCY_MS, fresh: true })
-		ui.probe?.({ kind: 'named', at, symbol: chord, struck: at })
+		ui.probe?.({ kind: 'named', at, symbol: chord })
 	}
 
 	/**
