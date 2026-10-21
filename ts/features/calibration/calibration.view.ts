@@ -139,10 +139,7 @@ function timelineRow(row: TimelineRow): HTMLElement {
 	const outlier = row.dt === null || Math.abs(row.dt) > OUTLIER_MS
 	const line = el('div', outlier ? 'dg-tl dg-tl--out' : 'dg-tl')
 	const label = el('span', 'dg-label')
-	label.append(
-		el('b', '', undefined, `${row.index} · ${row.target}`),
-		el('span', '', undefined, row.chosen !== null ? 'strum' : row.named !== null ? 'naming' : 'not heard')
-	)
+	label.append(el('b', '', undefined, `${row.index} · ${row.target}`), el('span', '', undefined, row.chosen !== null ? 'strum' : 'not heard'))
 	const track = el('span', 'lcd dg-track')
 	track.append(el('span', 'dg-zone'), el('span', 'dg-zero'), ...row.strums.map((t) => el('span', 'dg-tick', t)))
 	if (row.named !== null) track.append(el('span', 'dg-named', row.named, 'N'))

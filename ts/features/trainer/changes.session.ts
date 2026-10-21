@@ -46,11 +46,6 @@ const COUNT_IN_S = 3
 const COUNT_IN_BEATS = 4
 // Onsets older than this cannot fall in any slot still waiting to be judged.
 const ONSET_KEEP_MS = 10_000
-// In time: through a speaker the mic hears each click as an attack. One within
-// this of the last click heard is the click, not a strum (a chord change on the
-// beat still counts: another name came between). Calibration knob: widen it if
-// clicks still read as strums on a phone with a slow input path.
-const CLICK_MASK_MS = 40
 // In time: where a click lands among the strums (frame times are less the Mic
 // delay): this long after its heardAt, give or take CLICK_HEARD_WITHIN_MS (on
 // a field report every click sat 19–24 ms on). A strum there may be the click:
@@ -92,7 +87,7 @@ export interface SessionUi {
 	 */
 	marked(marks: Changes.Mark[], offsets: (number | null)[], hitMs: number): void
 	announce(text: string, force?: boolean): void
-	/** ?debug: the timing log (timing-probe.ts). */
+	/** The session's timing log (timing-probe.ts), for the calibration page and field reports. */
 	probe?(entry: ProbeEntry): void
 }
 
@@ -314,8 +309,7 @@ export function createChangesSession(ui: SessionUi, metronome: MetronomeControl)
 	 * True when a One-minute session's time just ran out (the view ends it).
 	 */
 	function frame(now: number, strum: boolean, symbol: string | null, chroma: Float32Array | null = null, volume = 0, noise = 0): boolean {
-		const attack = strum && !(clicking && Math.abs(now - lastClickAt) <= CLICK_MASK_MS)
-		const onset = stabilizer.feed(symbol, now, attack)
+		const onset = stabilizer.feed(symbol, now, strum)
 		ui.heard(stabilizer.current())
 		if (config.mode === 'minute' && phase === 'countin') {
 			if (now >= goAt) begin(now)
@@ -330,7 +324,7 @@ export function createChangesSession(ui: SessionUi, metronome: MetronomeControl)
 			ui.clock(clockText(left))
 			return left <= 0
 		} else if (config.mode === 'time' && running()) {
-			// Confirmed HELD_MS late: a click since is the next one, hence the one before it too.
+			// Confirmed Tab.HELD_MS late: a click since is the next one, hence the one before it too.
 			const isClick = (t: number) =>
 				[lastClickAt - clickGap, lastClickAt, lastClickAt + clickGap].some((at) => Math.abs(t - at - CLICK_HEARD_MS) <= CLICK_HEARD_WITHIN_MS)
 			for (const at of held.feed(now, strum, volume, noise)) {

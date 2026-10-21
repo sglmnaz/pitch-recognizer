@@ -1,6 +1,6 @@
 // The timing log of a Changes In time or Tab session: field data instead of
-// guesses. When the clicks are heard, when the mic hears strums and picks, how
-// long the recognizer takes to name a chord, what each judged change or note
+// guesses. When the clicks are heard, when the mic hears strums and picks,
+// which strums were changes and to what chord, what each judged change or note
 // was off by. Summed up in a few lines and drawn as a timeline on the
 // calibration page (Diagnostics → Last session), saved whole in a field report.
 import * as Metronome from '../../core/metronome'
@@ -13,7 +13,8 @@ export type ProbeEntry =
 	| { kind: 'strum'; at: number }
 	/** Mic check: a strum counted (the sound after it had pitch). */
 	| { kind: 'counted'; at: number }
-	| { kind: 'named'; at: number; symbol: string; struck: number | null }
+	/** Changes: a strum placed as a change to `symbol` (`struck` = `at`: In time dates a change by its strum). */
+	| { kind: 'named'; at: number; symbol: string; struck: number }
 	| { kind: 'judged'; dt: number | null; mark: string }
 	| { kind: 'pick'; at: number }
 	| { kind: 'due'; at: number }
@@ -66,9 +67,8 @@ export function createProbe() {
 		const strums = of('strum').map((e) => e.at)
 		const named = of('named')
 		if (named.length) {
-			const dated = named.filter((n) => n.struck !== null)
-			lines.push(`strums heard ${strums.length} · chords named ${named.length} · dated by a strum ${dated.length}`)
-			lines.push(`named − dating strum (25/50/75%) ${quartiles(dated.map((n) => n.at - n.struck!))}`)
+			lines.push(`strums heard ${strums.length} · chords named ${named.length} · dated by a strum ${named.length}`)
+			lines.push(`named − dating strum (25/50/75%) ${quartiles(named.map((n) => n.at - n.struck))}`)
 			lines.push('each named chord: ms back to the last 3 strums before it')
 			for (const n of named.slice(0, 16)) {
 				const back = strums
@@ -76,7 +76,7 @@ export function createProbe() {
 					.slice(-3)
 					.reverse()
 					.map((t) => ms(n.at - t))
-				lines.push(`  ${n.symbol.padEnd(3)} ${n.struck === null ? 'fallback' : 'strum   '} ${back.join(' / ')}`)
+				lines.push(`  ${n.symbol.padEnd(3)} strum    ${back.join(' / ')}`)
 			}
 		}
 		const judged = of('judged')
@@ -122,7 +122,7 @@ export interface TimelineRow {
 	index: number
 	target: string
 	strums: number[]
-	/** The strum that dated it (null: dated by its naming, or missed). */
+	/** The strum that dated it (null: missed). */
 	chosen: number | null
 	/** When the chord was first named (null: not named near it). */
 	named: number | null
@@ -151,7 +151,7 @@ export function changesTimeline(entries: ProbeEntry[]): TimelineRow[] {
 			index: i + 1,
 			target: slot.target,
 			strums: strums.filter((t) => near(t, d)).map((t) => t - d),
-			chosen: naming?.struck != null ? naming.struck - d : null,
+			chosen: naming ? naming.struck - d : null,
 			named: naming ? naming.at - d : null,
 			dt: j.dt,
 			mark: j.mark,
