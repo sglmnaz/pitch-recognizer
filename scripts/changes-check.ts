@@ -268,6 +268,12 @@ const strums = (symbols: string[], ms: number): Segments => symbols.map((s) => [
 
 /* Session state machine (ts/features/trainer/changes.session.ts) ------------- */
 {
+	// Pitch-class profiles of the two chords as the strings sound them.
+	const CHROMA: Record<string, Float32Array> = {
+		G: Float32Array.from({ length: 12 }, (_, pc) => ([7, 11, 2].includes(pc) ? 1 / 3 : 0)),
+		C: Float32Array.from({ length: 12 }, (_, pc) => ([0, 4, 7].includes(pc) ? 1 / 3 : 0)),
+	}
+
 	/** A session with a recording UI and a fake metronome (tempo, running). */
 	function harness() {
 		const events: [string, unknown][] = []
@@ -343,20 +349,28 @@ const strums = (symbols: string[], ms: number): Segments => symbols.map((s) => [
 	 * recognizer names the chord `namingMs` after the downbeat, straight from
 	 * the last one (no gap), so only the strum makes it a change.
 	 */
-	function inTime(strumOffset: number, ms = 12_000, namingMs = RECOGNITION_LATENCY_MS) {
+	function inTime(strumOffset: number, ms = 12_000, namingMs = RECOGNITION_LATENCY_MS, { everyBeat = false, profiles = false } = {}) {
 		const h = harness()
 		h.session.start({ mode: 'time', sequence: ['G', 'C'], seconds: 60, beats: 2, bpm: 120, speedUp: true, countIn: true, volume: 1 }, 0)
 		const downbeats: number[] = []
+		const beats: number[] = []
 		let nextClick = 0
 		let index = 0
 		for (let t = 0; t < ms; t += FRAME) {
 			for (; nextClick <= t; index++, nextClick += 60_000 / h.metro.bpm) {
-				h.session.beat({ time: 0, bar: Math.floor(index / 2), beat: index % 2, sub: 0, accent: 1, bpm: h.metro.bpm, heardAt: nextClick }, nextClick)
+				h.session.beat(
+					{ time: 0, bar: Math.floor(index / 2), beat: index % 2, sub: 0, accent: 1, bpm: h.metro.bpm, heardAt: nextClick, stampedAt: null },
+					nextClick
+				)
 				if (index >= 4 && index % 2 === 0) downbeats.push(nextClick)
+				if (index >= 4) beats.push(nextClick)
 			}
 			const named = downbeats.filter((d) => d + namingMs <= t).length
-			const strum = downbeats.some((d) => d + strumOffset > t - FRAME && d + strumOffset <= t)
-			h.session.frame(t, strum, named ? ['G', 'C'][(named - 1) % 2] : 'G')
+			const strum = (everyBeat ? beats : downbeats).some((d) => d + strumOffset > t - FRAME && d + strumOffset <= t)
+			// What the strings sound like: the chord changes at the strum on its downbeat.
+			const played = downbeats.filter((d) => d + strumOffset <= t).length
+			const profile = profiles ? CHROMA[played ? ['G', 'C'][(played - 1) % 2] : 'G'] : null
+			h.session.frame(t, strum, named ? ['G', 'C'][(named - 1) % 2] : 'G', profile)
 		}
 		return h
 	}
@@ -382,6 +396,19 @@ const strums = (symbols: string[], ms: number): Segments => symbols.map((s) => [
 		)
 		const result = session.end(false)
 		check('in time: ending stops the clicks and reports the tempo', !metro.running && result?.mode === 'time' && result.bpm === metro.bpm)
+	}
+	{
+		// A Xiaomi: chords named a second after the strum, strummed on every beat.
+		// The first strum that sounds like the new chord dates it; without the
+		// profiles the change would be dated by naming and read ~700 ms late.
+		const h = inTime(100, 12_000, 1100, { everyBeat: true, profiles: true })
+		const marks = h.of('marked')
+		const offsets = h.of('offset') as (number | null)[]
+		check(
+			'in time: named a second late, strummed on every beat: dated by the strum that sounds like the new chord',
+			marks.length >= 5 && marks.every((m) => m === 'hit') && offsets.every((dt) => dt !== null && Math.abs(dt - 100) <= 35),
+			`${marks.join(' ')} | ${offsets.map((dt) => (dt === null ? '-' : dt.toFixed(0))).join(' ')}`
+		)
 	}
 	{
 		// A phone: the chord is named 600 ms after the downbeat, not the bench's 283 ms.

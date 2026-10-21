@@ -167,7 +167,7 @@ export function createMicCalibration(root: HTMLElement): { frame(): void; cancel
 		const read = Latency.estimateDelay(clicks, picks, beatMs, Latency.MIC_AHEAD_MS)
 		if (!read) return say('Not enough clicks heard. Turn the volume up, take off headphones and try again.')
 		if (read.spread > Latency.MAX_SPREAD_MS) return say(`Clicks heard too unevenly (±${Math.round(read.spread)} ms). Try again somewhere quieter.`)
-		const ms = Latency.delaySetting(read.lag, Latency.MAX_MIC_DELAY_MS)
+		const ms = Latency.delaySetting(read.lag, Latency.MAX_MIC_DELAY_MS, Latency.MIN_MIC_DELAY_MS)
 		Settings.update({ micDelayMs: ms })
 		say(`The mic heard ${read.taps} clicks ${Math.round(read.lag)} ms late: set to ${ms} ms.`)
 	}

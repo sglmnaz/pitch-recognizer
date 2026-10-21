@@ -4,6 +4,8 @@
 // ts/music/changes.ts, the session state machine in ./changes.session.ts, the
 // recognizer seam in ./changes.recognizer.ts; this view draws and wires them.
 import * as Changes from '../../music/changes'
+import * as Microphone from '../../core/microphone'
+import * as Tab from '../../music/tab'
 import * as Metronome from '../../core/metronome'
 import * as Settings from '../../core/settings'
 import { clamp } from '../../core/math'
@@ -19,6 +21,7 @@ import { focusMicButton } from '../../ui/mic-block'
 import { faking, heardChord, installDebugHook, resetHeard, strummed } from './changes.recognizer'
 import { showLed } from './led'
 import { clockText, createChangesSession, verdict } from './changes.session'
+import { createProbe, probing, showProbe } from './timing-probe'
 
 // Screen readers hear the count at most this often (a change can come every 250 ms).
 const ANNOUNCE_MS = 4000
@@ -343,8 +346,10 @@ export function createChangesView(root: HTMLElement): View {
 		upcoming.textContent = first
 	}
 
+	const probe = createProbe()
 	const session = createChangesSession(
 		{
+			probe: probe.log,
 			heard: showHeard,
 			countIn: showCount,
 			target: setTarget,
@@ -380,6 +385,7 @@ export function createChangesView(root: HTMLElement): View {
 		const s = Settings.get()
 		const mode = s.changesMode
 		resetHeard()
+		probe.clear()
 		result.hidden = true
 		status.textContent = ''
 		stage.dataset.drill = mode
@@ -417,6 +423,7 @@ export function createChangesView(root: HTMLElement): View {
 	function finish(finished: boolean, reason = '') {
 		const wasTime = session.config().mode === 'time'
 		const ended = session.end(finished)
+		if (wasTime && probing()) showProbe(status, probe.summary())
 		wakeLock.release()
 		if (ended?.mode === 'minute') {
 			const { count, before } = ended
@@ -471,13 +478,16 @@ export function createChangesView(root: HTMLElement): View {
 	})
 
 	// In time: downbeats from the metronome.
-	Metronome.onBeat((event) => session.beat(event, performance.now()))
+	// heardAt: when the click is heard, the time the Mic delay is measured against (the callback can run a frame later).
+	Metronome.onBeat((event) => session.beat(event, event.heardAt))
 
 	/* Per frame ----------------------------------------------------------------- */
 	function frame() {
 		const now = performance.now()
 		// The session gets the time it was played: the mic hears it Mic delay later (Settings).
-		if (session.frame(now - Settings.get().micDelayMs, strummed(now), heardChord(now)?.symbol ?? null)) finish(true)
+		const power = Microphone.getFramePower()
+		const chroma = power ? Tab.chromaOf(power.power, power.binHz, Settings.get().a4) : null
+		if (session.frame(now - Settings.get().micDelayMs, strummed(now), heardChord(now)?.symbol ?? null, chroma)) finish(true)
 	}
 
 	// ?debug: fake chords drive frames while the mic is off.

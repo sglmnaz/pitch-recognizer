@@ -14,6 +14,7 @@ import { reducedMotion } from '../../ui/media'
 import { screenLock } from '../../ui/screen-lock'
 import { focusMicButton } from '../../ui/mic-block'
 import { createTabSession, type TabResult } from './tab.session'
+import { createProbe, probing, showProbe } from './timing-probe'
 
 // One beat takes this much paper whatever the subdivision, so 16ths sit
 // closer than 8ths and a bar always reads as a bar.
@@ -280,8 +281,10 @@ export function createTabView(root: HTMLElement): View {
 	}
 
 	// Marks arrive loop by loop, in order, a little after each note.
+	const probe = createProbe()
 	const session = createTabSession(
 		{
+			probe: probe.log,
 			countIn: (left) => showStatus(`Count-in · ${left}`, `♩ = ${Metronome.getState().bpm || Tab.loadRecord(exercise()).bpm}`),
 			marked(index, mark, marks) {
 				const n = exercise().notes.length
@@ -359,6 +362,7 @@ export function createTabView(root: HTMLElement): View {
 		light(null)
 		session.resetHearing()
 		onsets.reset()
+		probe.clear()
 		session.start({ exercise: ex, follow: s.tabFollow, bpm: Tab.loadRecord(ex).bpm, loop: s.tabLoop, speedUp: s.tabSpeedUp, volume: s.metroVolume, a4: s.a4 })
 		setRunningUi(true)
 		wakeLock.hold()
@@ -368,6 +372,7 @@ export function createTabView(root: HTMLElement): View {
 	function finish(reason = '') {
 		const ex = session.config()?.exercise ?? exercise()
 		const ended = session.end()
+		if (probing()) showProbe(message, probe.summary())
 		wakeLock.release()
 		if (frameId) cancelAnimationFrame(frameId)
 		frameId = 0

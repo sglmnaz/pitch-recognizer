@@ -6,6 +6,7 @@
 // `TabSessionUi`; `npm run check:tab` drives it with a fake clock and metronome.
 import * as Tab from '../../music/tab.ts'
 import type * as Metronome from '../../core/metronome.ts'
+import type { ProbeEntry } from './timing-probe.ts'
 
 const COUNT_IN_BEATS = Tab.BEATS_PER_BAR
 // A note is judged once nothing heard later can still count for it: a pick at
@@ -47,6 +48,8 @@ export interface TabSessionUi {
 	/** Wait: the note waited on, and the last wrong note heard (null = none). */
 	waiting(index: number, wrong: number | null): void
 	announce(text: string, force?: boolean): void
+	/** ?debug: the timing log (timing-probe.ts). */
+	probe?(entry: ProbeEntry): void
 }
 
 export type MetronomeControl = Pick<typeof Metronome, 'configure' | 'setTempo' | 'start' | 'stop' | 'getState'>
@@ -168,6 +171,7 @@ export function createTabSession(ui: TabSessionUi, metronome: MetronomeControl) 
 		const beatMs = 60000 / event.bpm
 		clock = { index, at: now, beatMs }
 		if (index < COUNT_IN_BEATS) return ui.countIn(COUNT_IN_BEATS - index)
+		ui.probe?.({ kind: 'beat', heardAt: event.heardAt, stampedAt: event.stampedAt })
 		phase = 'running'
 		const b = index - COUNT_IN_BEATS
 		const loop = Math.floor(b / loopBeats())
@@ -189,11 +193,13 @@ export function createTabSession(ui: TabSessionUi, metronome: MetronomeControl) 
 			const before = notes[(i || notes.length) - 1]
 			const repeat = (i > 0 || loop > 0) && Tab.samePitchClass(Tab.targetMidi(before), Tab.midiOf(note))
 			due.push({ index: i, loop, at, midi: Tab.targetMidi(note), stepMs, repeat, ...(note.bend ? { until: at + (note.length ?? 1) * stepMs } : {}) })
+			ui.probe?.({ kind: 'due', at })
 		})
 	}
 
 	function settle(item: Due, mark: Tab.Mark) {
 		marks.push(mark)
+		ui.probe?.({ kind: 'judged', dt: null, mark })
 		ui.marked(item.index, mark, marks)
 		const state = loopState.get(item.loop)
 		if (!state) return
@@ -293,7 +299,10 @@ export function createTabSession(ui: TabSessionUi, metronome: MetronomeControl) 
 			}
 			return !config.loop && target >= exercise().notes.length
 		}
-		if (attack) heard.picks.push(now - Tab.ATTACK_LATENCY_MS)
+		if (attack) {
+			heard.picks.push(now - Tab.ATTACK_LATENCY_MS)
+			ui.probe?.({ kind: 'pick', at: now - Tab.ATTACK_LATENCY_MS })
+		}
 		if (midi !== null || chroma) heard.frames.push({ at: now, midi, chroma })
 		if (event) heard.events.push(event)
 		if (frequency !== null) readings.push({ at: now, frequency })

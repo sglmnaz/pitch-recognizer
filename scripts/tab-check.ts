@@ -178,7 +178,7 @@ function tempoSession(exercise: Tab.TabExercise, beats: number, player: (note: T
 	for (let t = 0; t < 500 + beats * 1100 && !ended; t += FRAME) {
 		if (t >= nextBeat && beat < beats) {
 			beatBpm = m.bpm
-			const event: BeatEvent = { time: 0, bar: Math.floor(beat / 4), beat: beat % 4, sub: 0, accent: beat % 4 ? 1 : 2, bpm: beatBpm, heardAt: nextBeat }
+			const event: BeatEvent = { time: 0, bar: Math.floor(beat / 4), beat: beat % 4, sub: 0, accent: beat % 4 ? 1 : 2, bpm: beatBpm, heardAt: nextBeat, stampedAt: null }
 			session.beat(event, nextBeat)
 			const inLoop = (beat - 4) % (exercise.steps / exercise.perBeat)
 			if (beat >= 4) {
@@ -369,7 +369,7 @@ function realSession(id: string, bpm: number, late = 0, off = 0): Tab.Mark[] {
 		const now = (end / SR) * 1000
 		for (; beat < beats && t0 + beat * beatMs <= now; beat++) {
 			const at = t0 + beat * beatMs
-			session.beat({ time: 0, bar: Math.floor(beat / 4), beat: beat % 4, sub: 0, accent: 1, bpm, heardAt: at }, at)
+			session.beat({ time: 0, bar: Math.floor(beat / 4), beat: beat % 4, sub: 0, accent: 1, bpm, heardAt: at, stampedAt: null }, at)
 		}
 		const window = signal.subarray(end - FFT_SIZE, end)
 		processFrame(window, SR, now)

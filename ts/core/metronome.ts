@@ -42,6 +42,8 @@ export interface BeatEvent {
 	bpm: number
 	/** performance.now() time the click is heard at: the callback itself can run up to a frame later. */
 	heardAt: number
+	/** The same per AudioContext.getOutputTimestamp() (plus the user's delay), to check heardAt against; null where unsupported. */
+	stampedAt: number | null
 }
 
 export interface State {
@@ -142,6 +144,11 @@ export function onBeat(callback: (event: BeatEvent) => void): () => void {
 	return () => listeners.delete(callback)
 }
 
+/** What the click's AudioContext reports of its latency, ms (null before the first start). */
+export function latencies(): { outputMs: number | null; baseMs: number | null } {
+	return { outputMs: ctx ? (ctx.outputLatency ?? 0) * 1000 : null, baseMs: ctx ? (ctx.baseLatency ?? 0) * 1000 : null }
+}
+
 export function getState(): State {
 	return { running, bpm: liveBpm, ...heard }
 }
@@ -209,7 +216,7 @@ const stepTime = () => beatTime + (sub * beatDur) / config.subdivision
 
 function playStep(time: number) {
 	const accent = config.accents[beat] ?? 1
-	pending.push({ time, bar, beat, sub, accent, bpm: liveBpm, heardAt: 0 })
+	pending.push({ time, bar, beat, sub, accent, bpm: liveBpm, heardAt: 0, stampedAt: null })
 	if (accent === 0) return
 	click(time, accent === 2 && sub === 0, sub > 0 ? LEVEL.sub : accent === 2 ? LEVEL.accent : LEVEL.normal)
 }
@@ -257,9 +264,12 @@ function flush() {
 	// A click scheduled for `time` reaches the ears outputLatency later, plus
 	// what the device adds without telling the browser (the user's setting).
 	const now = ctx.currentTime - (ctx.outputLatency || 0) - config.outputDelayMs / 1000
+	const stamp = pending.length && pending[0].time <= now ? ctx.getOutputTimestamp?.() : undefined
 	while (pending.length && pending[0].time <= now) {
 		const event = pending.shift()!
 		event.heardAt = performance.now() - (now - event.time) * 1000
+		if (stamp?.performanceTime && stamp.contextTime !== undefined)
+			event.stampedAt = stamp.performanceTime + (event.time - stamp.contextTime) * 1000 + config.outputDelayMs
 		heard = { bar: event.bar, beat: event.beat }
 		for (const listener of listeners) {
 			try {

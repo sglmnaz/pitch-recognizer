@@ -21,7 +21,8 @@ export const MAX_DELAY_MS = 400
 // heard click may come up to MIC_AHEAD_MS early or a beat less that late.
 export const MIC_CALIBRATION_BPM = 40
 export const MIC_CALIBRATION_CLICKS = 12
-export const MIC_AHEAD_MS = 300
+export const MIC_AHEAD_MS = 500
+export const MIN_MIC_DELAY_MS = -500
 export const MAX_MIC_DELAY_MS = 1000
 
 export interface DelayEstimate {
@@ -67,6 +68,6 @@ export function estimateDelay(clicks: number[], taps: number[], beatMs: number, 
  * touchscreen's own delay (some tens of ms on a phone), so it can come out a
  * little high; nudge it down by hand if needed.
  */
-export function delaySetting(lag: number, max = MAX_DELAY_MS): number {
-	return Math.min(max, Math.max(MIN_DELAY_MS, Math.round(lag / 5) * 5))
+export function delaySetting(lag: number, max = MAX_DELAY_MS, min = MIN_DELAY_MS): number {
+	return Math.min(max, Math.max(min, Math.round(lag / 5) * 5))
 }

@@ -3,6 +3,8 @@
 // metronome's downbeats; nothing here touches the DOM or the audio graph, so
 // `npm run check:changes` runs it in Node.
 import { readJSON, writeJSON } from '../core/storage.ts'
+import { parseChordSymbol } from './chord-library.ts'
+import { semitonesOf } from './scales.ts'
 
 /** Open chords a beginner changes between, spelt as the recognizer names them. */
 export const CHANGE_CHORDS = ['C', 'G', 'D', 'A', 'E', 'Am', 'Em', 'Dm', 'F', 'A7', 'D7', 'E7', 'G7']
@@ -129,6 +131,16 @@ export function createStabilizer(): Stabilizer {
 		},
 		current: () => (stable ? symbol : null),
 	}
+}
+
+/** The share of a pitch-class profile (12 shares, C first) on the notes of chord `symbol`; 0 if it does not parse. */
+export function chordShare(chroma: ArrayLike<number>, symbol: string): number {
+	const chord = parseChordSymbol(symbol)
+	if (!chord) return 0
+	const pcs = new Set(semitonesOf(chord.type).map((s) => (chord.rootPc + s) % 12))
+	let share = 0
+	for (const pc of pcs) share += chroma[pc]
+	return share
 }
 
 /* One-minute changes --------------------------------------------------------- */
