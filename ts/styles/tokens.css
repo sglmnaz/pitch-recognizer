@@ -154,6 +154,16 @@
 	--foot-ink: #cfc9bc;
 	--foot-edge: inset 0 1px 0 rgba(255, 255, 255, 0.12), inset 0 -2px 0 #0e0d0c, 0 0 0 1px #0e0d0c, 0 2px 2px rgba(0, 0, 0, 0.3);
 	--foot-edge-down: inset 0 1px 2px rgba(0, 0, 0, 0.5), 0 0 0 1px #0e0d0c;
+
+	/* Guarded key (components/guard.css): the red Confirm key and the smoked
+	   glass shutter over it, the same on every theme; the frame as a key's. */
+	--guard-frame: 0 0 0 var(--outline-width) var(--outline), 0 2px 3px rgba(0, 0, 0, 0.25);
+	--guard-key: radial-gradient(90% 130% at 50% 35%, #f0504a, #c62828 55%, #9e1c1c);
+	--guard-key-front: #6a1210;
+	--guard-key-ink: #fff0ee;
+	--guard-glass: linear-gradient(180deg, rgba(20, 24, 22, 0.9), rgba(8, 10, 9, 0.95));
+	--guard-legend: #ff6a5c;
+	--guard-legend-glow: rgba(255, 59, 47, 0.6);
 }
 
 @media (max-width: 600px) {
@@ -1066,6 +1076,7 @@
 	/* How far the keys' bezel stands out of their box: the small displays and
 	   the dropdowns grow by it so they stand as tall as the keys (panel.css). */
 	--key-ring: 3px;
+	--guard-frame: var(--bezel), 0 2px 3px 3px rgba(0, 0, 0, 0.14);
 	/* Low caps with a flat face: the bezel does the framing. */
 	--key-chamfer: 1px;
 	--key-cheek: 1px;

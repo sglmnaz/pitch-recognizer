@@ -1,0 +1,97 @@
+/* The guarded key (ts/ui/guard-key.ts): a smoked-glass shutter marked RESET
+   runs in the key's frame over a red CONFIRM key as wide as the frame, and
+   leaves through its right edge. Colours: the --guard-* tokens. */
+.guard {
+	position: relative;
+	flex: none;
+	display: block;
+	width: 112px;
+	height: 40px;
+	overflow: hidden;
+	border-radius: var(--key-radius);
+	background: var(--outline);
+	box-shadow: var(--guard-frame);
+	touch-action: pan-y;
+	user-select: none;
+	-webkit-user-select: none;
+
+	@media (max-width: 600px) {
+		height: var(--tap);
+	}
+}
+
+.guard__confirm,
+.guard__shutter {
+	position: absolute;
+	inset: 0;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: var(--space-6);
+	padding: 0;
+	border: 0;
+	border-radius: max(0px, calc(var(--key-radius) - 1px));
+	font: 600 var(--text-sm) / 1 var(--font-ui);
+	letter-spacing: 0.2em;
+	text-transform: uppercase;
+	cursor: pointer;
+	-webkit-tap-highlight-color: transparent;
+}
+
+.guard__confirm {
+	color: var(--guard-key-ink);
+	background: var(--guard-key);
+	box-shadow:
+		inset 0 1px 0 rgba(255, 255, 255, 0.35),
+		inset 0 -3px 0 var(--guard-key-front);
+	text-shadow: 0 0 6px rgba(255, 255, 255, 0.35);
+
+	&:active {
+		padding-top: 3px;
+		box-shadow: inset 0 2px 3px rgba(0, 0, 0, 0.45);
+	}
+}
+
+/* Smoked glass with a highlight, the legend lit in red behind it. */
+.guard__shutter {
+	color: var(--guard-legend);
+	text-shadow: 0 0 6px var(--guard-legend-glow);
+	background: var(--guard-glass);
+	box-shadow:
+		inset 0 1px 0 rgba(255, 255, 255, 0.18),
+		inset 0 0 0 1px rgba(255, 255, 255, 0.06),
+		-2px 0 3px rgba(0, 0, 0, 0.5);
+	cursor: grab;
+	transition: transform 0.3s cubic-bezier(0.25, 1.25, 0.5, 1);
+
+	&::before {
+		content: '';
+		position: absolute;
+		top: 4px;
+		left: 10px;
+		right: 40%;
+		height: 5px;
+		border-radius: 3px;
+		background: linear-gradient(90deg, rgba(255, 255, 255, 0.28), transparent);
+	}
+
+	& svg {
+		width: 14px;
+		height: 14px;
+	}
+
+	.guard.is-open & {
+		transform: translateX(101%);
+	}
+
+	.guard.is-dragging & {
+		transition: none;
+		cursor: grabbing;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.guard__shutter {
+		transition: none;
+	}
+}

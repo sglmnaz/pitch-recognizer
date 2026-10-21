@@ -4,7 +4,7 @@ import { INTERVALS, QUALITIES } from '../../music/ear'
 import type { View } from '../../ui/view'
 import { subscribeVisible, svgEl } from '../../ui/dom'
 import * as Theme from '../../ui/theme'
-import { resetKey } from '../../ui/reset-key'
+import { guardKey } from '../../ui/guard-key'
 import { guardTouches } from '../../ui/touch-guard'
 import { showCalibrationState } from '../calibration/calibration-state'
 
@@ -56,9 +56,9 @@ export function createSettingsView(root: HTMLElement, from: () => string | null)
 		})
 	}
 
-	// A Reset key on each section's band: back to the defaults of what that
-	// section shows (read from its controls, so a new control is covered by
-	// itself). Two taps (ts/ui/reset-key.ts).
+	// Each section's first row: Reset to defaults, back to the defaults of what
+	// that section shows (read from its controls, so a new control is covered
+	// by itself), behind a guarded key (ts/ui/guard-key.ts).
 	for (const group of root.querySelectorAll<HTMLElement>('.settings-group[data-group]')) {
 		const keys = new Set<keyof Settings.Settings>()
 		for (const el of group.querySelectorAll<HTMLElement>('[data-setting], [data-chips]'))
@@ -69,7 +69,7 @@ export function createSettingsView(root: HTMLElement, from: () => string | null)
 		if (!keys.size && !appearance) continue
 
 		const title = group.querySelector('.settings-group__title')?.textContent ?? 'section'
-		const button = resetKey(title, () => {
+		const guard = guardKey(`the ${title} settings`, () => {
 			if (appearance) {
 				Theme.setTheme('system')
 				Theme.setDisplay('auto')
@@ -78,8 +78,13 @@ export function createSettingsView(root: HTMLElement, from: () => string | null)
 			}
 			Settings.reset([...keys])
 		})
-		button.classList.add('settings-group__reset')
-		group.querySelector('.settings-group__title')?.after(button)
+		// A card of its own before the section's first card or sub-heading (Trainer starts with Notes).
+		const card = document.createElement('div')
+		card.className = 'panel settings-card settings-reset'
+		card.innerHTML =
+			'<div class="settings__section"><div class="switch"><span class="switch__text"><span class="switch__title">Reset to defaults</span><span class="switch__desc">Every setting of this section</span></span></div></div>'
+		card.querySelector('.switch')!.append(guard)
+		group.querySelector(':scope > :is(.settings-card, .settings-group__sub)')?.before(card)
 	}
 
 	/* Sections fold (accordion) ------------------------------------------- */
@@ -105,7 +110,7 @@ export function createSettingsView(root: HTMLElement, from: () => string | null)
 		const body = document.createElement('div')
 		body.className = 'settings-group__body'
 		body.id = `settings-${name}`
-		body.append(...Array.from(group.children).filter((child) => child !== title && !child.classList.contains('settings-group__reset')))
+		body.append(...Array.from(group.children).filter((child) => child !== title))
 		group.append(body)
 		const entry = { group, title, toggle, chevron, body, open: false }
 		toggle.addEventListener('click', () => setOpen(entry, !entry.open))
