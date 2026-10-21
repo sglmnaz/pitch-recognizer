@@ -231,6 +231,8 @@ export interface VoicingSpecOptions {
 	vertical?: boolean
 	/** The tuning the voicing was generated for (default standard). */
 	tuning?: number[]
+	/** Shows a note name or chord symbol (ts/ui/names.ts noteName); letters by default. */
+	name?: (note: string) => string
 }
 
 /**
@@ -239,7 +241,7 @@ export interface VoicingSpecOptions {
  * nut, the barre, finger numbers and the 4-fret window from `voicing.from`.
  */
 export function voicingSpec(voicing: Voicing, rootPc: number, type: ChordType, options: VoicingSpecOptions = {}): NeckSpec {
-	const { labels = 'degrees', fingers = true, vertical = true, tuning = STRINGS } = options
+	const { labels = 'degrees', fingers = true, vertical = true, tuning = STRINGS, name = (note: string) => note } = options
 	const chord = spellChord(ROOTS[mod12(rootPc)], type)
 	const semitones = semitonesOf(type)
 	const indexOf = (midi: number) => semitones.findIndex((s) => mod12(rootPc + s) === mod12(midi))
@@ -252,7 +254,7 @@ export function voicingSpec(voicing: Voicing, rootPc: number, type: ChordType, o
 			string,
 			fret,
 			role: degreeRole(degree),
-			label: labels === 'degrees' ? degree : labels === 'notes' ? chord.notes[i] : '',
+			label: labels === 'degrees' ? degree : labels === 'notes' ? name(chord.notes[i]) : '',
 			detail: degree,
 			finger: fingers && voicing.fingers[string] ? voicing.fingers[string] : undefined,
 		})
@@ -262,7 +264,7 @@ export function voicingSpec(voicing: Voicing, rootPc: number, type: ChordType, o
 		barres: voicing.barre ? [voicing.barre] : [],
 		strings: voicing.frets.map((f) => (f < 0 ? 'muted' : f === 0 ? 'open' : null)),
 		window: { from: voicing.from, frets: WINDOW, vertical },
-		noteName: (midi) => chord.notes[indexOf(midi)] ?? ROOTS[mod12(midi)],
-		label: `${chord.symbol}${voicing.inversion ? ' (inversion)' : ''}, ${shapeString(voicing)}`,
+		noteName: (midi) => name(chord.notes[indexOf(midi)] ?? ROOTS[mod12(midi)]),
+		label: `${name(chord.symbol)}${voicing.inversion ? ' (inversion)' : ''}, ${shapeString(voicing)}`,
 	}
 }

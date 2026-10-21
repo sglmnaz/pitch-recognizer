@@ -15,6 +15,7 @@ import { OPEN_CHORD_EVENT } from '../../ui/events'
 import { bindSegmented, liveRegion, scoped, svgEl } from '../../ui/dom'
 import { micNeedChanged } from '../../ui/mic-block'
 import { withStepper } from '../../ui/stepper'
+import { noteName, spokenName } from '../../music/note-names'
 
 // ponytail: the 8 best shapes; the generator has dozens, add "more" if asked.
 const VOICINGS = 8
@@ -37,13 +38,6 @@ export interface ChordModes {
 	/** Listen is showing: the recognizer wants the mic and its readings. */
 	listening(): boolean
 }
-
-// "C#/Db" read aloud as "C sharp or D flat".
-const spoken = (label: string) =>
-	label
-		.split('/')
-		.map((n) => n[0] + (n[1] === '#' ? ' sharp' : n[1] === 'b' ? ' flat' : ''))
-		.join(' or ')
 
 const capitalized = (text: string) => text[0].toUpperCase() + text.slice(1)
 
@@ -133,8 +127,9 @@ export function createChordModes(root: HTMLElement): ChordModes {
 	// Root: a small LCD dropdown between ◀ ▶, the type a wider one beside it.
 	rootSelect.append(
 		...ROOT_LABELS.map((label, pc) => {
-			const option = new Option(label, String(pc))
-			option.setAttribute('aria-label', spoken(label))
+			const option = new Option(noteName(label), String(pc))
+			// "C#/Db" read aloud as "C sharp or D flat".
+			option.setAttribute('aria-label', spokenName(label))
 			return option
 		})
 	)
@@ -203,7 +198,7 @@ export function createChordModes(root: HTMLElement): ChordModes {
 				strum.type = 'button'
 				// The chord is the sound: no key click over it.
 				strum.dataset.feedback = 'none'
-				strum.setAttribute('aria-label', `Play ${symbol}, ${shapeString(voicing)}, ${caption.position}`)
+				strum.setAttribute('aria-label', `Play ${noteName(symbol)}, ${shapeString(voicing)}, ${caption.position}`)
 				strum.addEventListener('click', () => play(shapeNotes(voicing.frets).midis))
 				const foot = el('div', '', 'voicing__foot')
 				foot.append(el('span', caption.position, 'silk'), strum)
@@ -221,15 +216,15 @@ export function createChordModes(root: HTMLElement): ChordModes {
 		const key = `${rootPc}|${type.symbol}`
 		if (key === builtFor) return
 		builtFor = key
-		symbolEl.textContent = chord.symbol
-		nameEl.replaceChildren(...chordName(chord.root, type.name))
+		symbolEl.textContent = noteName(chord.symbol)
+		nameEl.replaceChildren(...chordName(noteName(chord.root), type.name))
 		// Note over degree, one column each, printed on the display.
 		notesEl.replaceChildren(
 			...chord.notes.map((note, i) => {
 				const tone = document.createElement('span')
 				tone.setAttribute('role', 'listitem')
 				tone.className = 'chord-tone'
-				tone.append(note, el('small', chord.degrees[i]))
+				tone.append(noteName(note), el('small', chord.degrees[i]))
 				return tone
 			})
 		)
@@ -242,9 +237,9 @@ export function createChordModes(root: HTMLElement): ChordModes {
 				const button = document.createElement('button')
 				button.type = 'button'
 				button.className = 'key key-chip'
-				const keyName = use.minor ? `${use.key.slice(0, -1)} minor` : `${use.key} major`
+				const keyName = use.minor ? `${noteName(use.key.slice(0, -1))} minor` : `${noteName(use.key)} major`
 				button.setAttribute('aria-label', `${use.numeral} in ${keyName}. Show the ${keyName} chord`)
-				button.append(el('small', use.numeral), use.key)
+				button.append(el('small', use.numeral), noteName(use.key))
 				button.addEventListener('click', () => {
 					const tonic = parseChordSymbol(use.key)
 					if (!tonic) return
@@ -322,7 +317,7 @@ export function createChordModes(root: HTMLElement): ChordModes {
 		// Dots wear the best match's degree colours and spelling.
 		const degrees = top ? degreeMap(top.rootPc, top.type) : new Map<number, string>()
 		const names = new Map(top ? top.notes.map((n) => [pitchClassOf(n), n]) : [])
-		const name = (midi: number) => names.get(midi % 12) ?? ROOTS[midi % 12]
+		const name = (midi: number) => noteName(names.get(midi % 12) ?? ROOTS[midi % 12])
 		const dots: Dot[] = shape.flatMap((fret, string) => {
 			if (fret < 0) return []
 			const midi = STRINGS[string] + fret
@@ -339,7 +334,7 @@ export function createChordModes(root: HTMLElement): ChordModes {
 		if (empty && (document.activeElement === strumButton || document.activeElement === clearButton))
 			neckSvg.querySelector<SVGGElement>('[data-s][tabindex="0"]')?.focus()
 		strumButton.disabled = clearButton.disabled = empty
-		announce(top ? `Best match: ${top.symbol}, ${top.root} ${top.type.name}${top.bass ? ` over ${top.bass}` : ''}` : '')
+		announce(top ? `Best match: ${noteName(top.symbol)}, ${noteName(top.root)} ${top.type.name}${top.bass ? ` over ${noteName(top.bass)}` : ''}` : '')
 
 		if (empty) return results.replaceChildren(message('Tap a fret on each string you play; tap it again to clear. Open strings sit left of the nut.'))
 		if (!matches.length) return results.replaceChildren(message(pcs.size < 2 ? 'Mark at least two different notes.' : 'No chord found. Is the root marked?'))
@@ -349,18 +344,18 @@ export function createChordModes(root: HTMLElement): ChordModes {
 				const diff = matchNotes(match, pcs)
 				const text = el('span', '', 'chord-result__text')
 				const name = el('span', '', 'chord-result__name')
-				name.append(...chordName(match.root, match.type.name, match.bass))
-				text.append(name, el('span', `${diff.length ? diff.join(' · ') : 'exact'} · ${match.notes.join(' ')}`, 'chord-result__detail'))
+				name.append(...chordName(noteName(match.root), match.type.name, match.bass && noteName(match.bass)))
+				text.append(name, el('span', `${diff.length ? diff.join(' · ') : 'exact'} · ${match.notes.map(noteName).join(' ')}`, 'chord-result__detail'))
 				const fit = el('span', '', 'chord-result__fit')
 				fit.setAttribute('aria-hidden', 'true')
 				const lit = Math.max(1, FIT_LAMPS - Math.ceil(match.missing + match.extra))
 				for (let i = 0; i < FIT_LAMPS; i++) fit.append(el('span', '', i < lit ? 'lamp is-on' : 'lamp'))
 				const open = el('button', 'Open', 'key chord-result__open')
 				open.type = 'button'
-				open.setAttribute('aria-label', `Open ${match.symbol} in the Library`)
+				open.setAttribute('aria-label', `Open ${noteName(match.symbol)} in the Library`)
 				open.addEventListener('click', () => openChord(match.symbol))
 				const item = el('li', '', 'chord-result')
-				item.append(el('span', match.symbol, 'chord-result__symbol'), text, fit, open)
+				item.append(el('span', noteName(match.symbol), 'chord-result__symbol'), text, fit, open)
 				return item
 			})
 		)

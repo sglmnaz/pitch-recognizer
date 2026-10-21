@@ -6,6 +6,7 @@ import type { PitchReading } from '../../core/microphone'
 import type { View } from '../../ui/view'
 import { liveRegion, subscribeVisible } from '../../ui/dom'
 import { createReadout } from '../../ui/readout'
+import { noteName } from '../../music/note-names'
 import { withStepper } from '../../ui/stepper'
 
 // The tuning select's first entry: no target strings, name whatever is played.
@@ -59,8 +60,8 @@ export function createTunerView(root: HTMLElement): View {
 			key.className = 'key'
 			// It plays its own note: no key click on top.
 			key.dataset.feedback = 'none'
-			key.textContent = `${string.name}${string.octave}`
-			key.setAttribute('aria-label', `${string.name}${string.octave}, hear reference tone`)
+			key.textContent = noteName(`${string.name}${string.octave}`)
+			key.setAttribute('aria-label', `${key.textContent}, hear reference tone`)
 			return key
 		})
 		stringsRow.replaceChildren(...keys)
@@ -91,8 +92,9 @@ export function createTunerView(root: HTMLElement): View {
 		clearTimeout(refTimer)
 		const ms = Sound.playTone(string.frequency, Settings.get().toneVolume)
 		refIndex = index
-		readout.show(`${string.name}${string.octave}`, `Reference\n${string.frequency.toFixed(1)} Hz`, 0, false)
-		announce(`Playing ${string.name}${string.octave}`)
+		const name = noteName(`${string.name}${string.octave}`)
+		readout.show(name, `Reference\n${string.frequency.toFixed(1)} Hz`, 0, false)
+		announce(`Playing ${name}`)
 		// While it rings the mic hears the speaker, not the guitar: readings
 		// are ignored until it has died away.
 		refTimer = window.setTimeout(() => {
@@ -150,12 +152,12 @@ export function createTunerView(root: HTMLElement): View {
 				// still reads against D until it gets there.
 				const near = nearestString(reading.frequency, strings)
 				const string = strings[near.index]
-				label = `${string.name}${string.octave}`
+				label = noteName(`${string.name}${string.octave}`)
 				cents = near.cents
 				prefix = `String ${strings.length - near.index} · `
 			} else {
 				const closest = getClosestNote(reading.frequency, a4)
-				label = closest.note.split('/')[0]
+				label = noteName(closest.note.split('/')[0])
 				cents = centsBetween(reading.frequency, closest.frequency)
 			}
 

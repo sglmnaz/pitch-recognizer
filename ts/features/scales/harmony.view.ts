@@ -15,6 +15,7 @@ import { OPEN_CHORD_EVENT } from '../../ui/events'
 import { bindSegmented, liveRegion, scoped, setPressed } from '../../ui/dom'
 import { createCircle } from './circle'
 import { createProgressionPlayer } from './progression-player'
+import { noteName } from '../../music/note-names'
 
 // A strum: low string to high, this far apart (a quick downstroke).
 const STRUM_S = 0.025
@@ -167,22 +168,22 @@ export function createHarmony(root: HTMLElement, host: HarmonyHost) {
 					// It strums the chord: no key click over it.
 					button.dataset.feedback = 'none'
 					// Starts with the visible text (voice control), then says it in words.
-					button.setAttribute('aria-label', `${chord.numeral} ${chord.symbol}, ${chord.root} ${chord.type.name}`)
+					button.setAttribute('aria-label', `${chord.numeral} ${noteName(chord.symbol)}, ${noteName(chord.root)} ${chord.type.name}`)
 					const numeral = document.createElement('span')
 					numeral.className = 'harmony-chord__numeral'
 					numeral.textContent = chord.numeral
 					const symbol = document.createElement('span')
 					symbol.className = 'harmony-chord__symbol'
-					symbol.textContent = chord.symbol
+					symbol.textContent = noteName(chord.symbol)
 					button.append(numeral, symbol)
 					button.addEventListener('click', () => select(i))
 					return button
 				})
 			)
-			const scaleName = scaleTitle(spellScale(ROOTS[rootPc], type).root, type).split(' · ')[0]
+			const scaleName = scaleTitle(noteName(spellScale(ROOTS[rootPc], type).root), type).split(' · ')[0]
 			chordsNote.hidden = source === type
 			if (source && source !== type)
-				chordsNote.textContent = `${scaleName} is built from ${spellScale(ROOTS[rootPc], source).root} ${source.name.toLowerCase()}: these are its chords.`
+				chordsNote.textContent = `${scaleName} is built from ${noteName(spellScale(ROOTS[rootPc], source).root)} ${source.name.toLowerCase()}: these are its chords.`
 		}
 		setPressed(Array.from(chordRow.children), (_, i) => i === selected)
 		showSize(chordView)
@@ -190,14 +191,14 @@ export function createHarmony(root: HTMLElement, host: HarmonyHost) {
 		detail.hidden = selected === null
 		if (selected === null) return
 		const chord = chords[selected]
-		detailSymbol.textContent = chord.symbol
-		detailName.textContent = `${chord.numeral} · ${chord.root} ${chord.type.name}`
+		detailSymbol.textContent = noteName(chord.symbol)
+		detailName.textContent = `${chord.numeral} · ${noteName(chord.root)} ${chord.type.name}`
 		const voicing = voicingOf(chord)
-		detailNotes.textContent = chord.notes.join(' ') + (voicing ? `  ·  ${shapeString(voicing)}` : '')
-		openLink.setAttribute('aria-label', `Open ${chord.symbol} in Chords`)
+		detailNotes.textContent = chord.notes.map(noteName).join(' ') + (voicing ? `  ·  ${shapeString(voicing)}` : '')
+		openLink.setAttribute('aria-label', `Open ${noteName(chord.symbol)} in Chords`)
 		if (!voicing) return
 		// The printed card: finger numbers in the dots (like the Chords library's 'fingers' labels).
-		const spec = voicingSpec(voicing, chord.rootPc, chord.type, { labels: 'none', fingers: false })
+		const spec = voicingSpec(voicing, chord.rootPc, chord.type, { labels: 'none', fingers: false, name: noteName })
 		for (const dot of spec.dots) dot.label = String(voicing.fingers[dot.string] || '')
 		diagram.render(spec)
 	}
@@ -209,7 +210,7 @@ export function createHarmony(root: HTMLElement, host: HarmonyHost) {
 			stop()
 			progKey = key
 			// 'A minor'; a mode: 'G Mixolydian' (the 12-bar blues is in G, not C).
-			progKeyName = keyName(rootPc, type).split(/,| · /)[0]
+			progKeyName = keyName(rootPc, type, noteName).split(/,| · /)[0]
 			progList.replaceChildren(
 				...progressionsFor(type).map((progression, index) => {
 					const list = resolveProgression(progression, rootPc)
@@ -229,7 +230,7 @@ export function createHarmony(root: HTMLElement, host: HarmonyHost) {
 					// A step sequencer: one key per bar, its lamp lit while the bar plays.
 					const row = document.createElement('ol')
 					row.className = 'progression__chords'
-					row.setAttribute('aria-label', list.map((c) => c.symbol).join(', '))
+					row.setAttribute('aria-label', list.map((c) => noteName(c.symbol)).join(', '))
 					row.append(
 						...list.map((chord) => {
 							const li = document.createElement('li')
@@ -238,7 +239,7 @@ export function createHarmony(root: HTMLElement, host: HarmonyHost) {
 								'<span class="lamp"></span><span class="key progression__chord"><span class="harmony-chord__numeral"></span><span class="harmony-chord__symbol"></span></span>'
 							const key = li.children[1]
 							key.children[0].textContent = chord.numeral
-							key.children[1].textContent = chord.symbol
+							key.children[1].textContent = noteName(chord.symbol)
 							return li
 						})
 					)
@@ -279,7 +280,7 @@ export function createHarmony(root: HTMLElement, host: HarmonyHost) {
 
 	function renderCircle(rootPc: number, type: ScaleType) {
 		circle.render(rootPc, type)
-		keyNote.textContent = keyOf(rootPc, type) ? keyName(rootPc, type) : `${scaleTitle(spellScale(ROOTS[rootPc], type).root, type)} has no key signature.`
+		keyNote.textContent = keyOf(rootPc, type) ? keyName(rootPc, type, noteName) : `${scaleTitle(noteName(spellScale(ROOTS[rootPc], type).root), type)} has no key signature.`
 	}
 
 	/* Identify: scales a marked chord fits -------------------------------- */
@@ -288,13 +289,13 @@ export function createHarmony(root: HTMLElement, host: HarmonyHost) {
 		const top = pcs.size >= 3 ? identifyChords(pcs, marked[0] % 12)[0] : undefined
 		fits.hidden = !(top && top.missing === 0 && top.extra === 0)
 		if (fits.hidden) return
-		fitsChord.textContent = top!.symbol
+		fitsChord.textContent = noteName(top!.symbol)
 		fitsList.replaceChildren(
 			...scalesForChord(pcs, top!.rootPc).map((match) => {
 				const button = document.createElement('button')
 				button.type = 'button'
 				button.className = 'key chord-fits__scale'
-				button.textContent = scaleTitle(match.root, match.type).split(' · ')[0]
+				button.textContent = scaleTitle(noteName(match.root), match.type).split(' · ')[0]
 				button.title = `Explore ${button.textContent}`
 				button.addEventListener('click', () => host.setScale(match.rootPc, match.type))
 				return button

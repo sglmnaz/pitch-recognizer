@@ -5,6 +5,7 @@
 // that shows a neck follows them alike.
 import * as Settings from '../core/settings'
 import { FRETS, ROOTS, STRINGS } from '../music/scales'
+import { noteName } from '../music/note-names'
 import { phone } from './media'
 
 /** root / tone / note: the degree palette; marked: solid (Identify, off any
@@ -272,7 +273,7 @@ export function createFretboard(svg: SVGSVGElement, board: HTMLElement | null, o
 
 		const box = spec.box ?? null
 		const dots = new Map(spec.dots.map((d) => [`${d.string}-${d.fret}`, d]))
-		const noteName = spec.noteName ?? ((midi: number) => ROOTS[midi % 12])
+		const nameOf = spec.noteName ?? ((midi: number) => noteName(ROOTS[midi % 12]))
 		const parts: string[] = []
 
 		// Chord diagrams leave the inlays out: they would sit under the dots.
@@ -326,7 +327,7 @@ export function createFretboard(svg: SVGSVGElement, board: HTMLElement | null, o
 				const dot = dots.get(`${s}-${fret}`)
 				// A chord diagram draws only its dots (nothing to tap or light elsewhere).
 				if (win && !dot) continue
-				const name = esc(noteName(midi))
+				const name = esc(nameOf(midi))
 				const isMarked = Boolean(dot && (dot.marked || dot.role === 'marked'))
 				const classes = ['cell']
 				if (dot) classes.push('cell--dot')
@@ -339,18 +340,22 @@ export function createFretboard(svg: SVGSVGElement, board: HTMLElement | null, o
 				const full = win ? CHORD.r : dot?.role === 'root' ? ROOT_R : DOT_R
 				const r = Math.max(MIN_R, Math.min(full, half + 0.4))
 				const font = r < full ? `style="font-size:${Math.max(MIN_FONT, r * 1.15).toFixed(1)}px"` : ''
+				// Do Re Mi names run to four characters (Sol#): squeezed into the dot
+				// rather than spilling over it. Letters and degrees fit as they are.
+				const text = dot ? dot.label : label
+				const squeeze = text.length >= 4 || (text.length === 3 && /^[A-Z][a-zé]/.test(text)) ? ` textLength="${(2 * r - 4).toFixed(1)}" lengthAdjust="spacingAndGlyphs"` : ''
 				const focusable = spec.toggles || dot !== undefined
 				// Buttons only when a tap does something; otherwise the svg's label speaks for it.
 				const button = interactive
 					? ` role="button" tabindex="${focusable ? 0 : -1}"` +
-						` aria-label="${ROOTS[open % 12]} string, ${fret === 0 ? 'open' : `fret ${fret}`}, ${name}${dot?.detail ? ` (${esc(dot.detail)})` : ''}"` +
+						` aria-label="${noteName(ROOTS[open % 12])} string, ${fret === 0 ? 'open' : `fret ${fret}`}, ${name}${dot?.detail ? ` (${esc(dot.detail)})` : ''}"` +
 						(spec.toggles ? ` aria-pressed="${isMarked}"` : '')
 					: ''
 				parts.push(
 					`<g class="${classes.join(' ')}" data-s="${s}" data-f="${fret}" data-midi="${midi}"${button}` +
 						`><rect class="cell__hit" ${rect(at - half, s - 0.5, at + half, s + 0.5)}/>` +
 						`<circle ${pt(at, s, 'c')} r="${r}"/>` +
-						`<text ${pt(at, s)} ${font}>${label}</text></g>`
+						`<text ${pt(at, s)} ${font}${squeeze}>${label}</text></g>`
 				)
 			}
 		})

@@ -6,6 +6,7 @@ import { chordModelReady, loadChordModel, PITCH_CLASSES, resetChordTracking, tra
 import { scoped } from '../../ui/dom'
 import type { View } from '../../ui/view'
 import { chordName, createChordModes } from './chord-library.view'
+import { noteName } from '../../music/note-names'
 
 // A new label (chord or "none") must win for this long before it is shown.
 // trackChord's HMM already keeps a strum's attack and decay from flickering
@@ -22,7 +23,7 @@ const OPEN_HINT = 'Voicings, notes and keys of the chord you play'
 /** 'C#m7' → 'C# minor 7th', the name the Library gives it. */
 function fullName(symbol: string) {
 	const type = parseChordSymbol(symbol)?.type
-	return type ? chordName(symbol.replace(/^([A-G][#b]?).*/, '$1'), type.name) : []
+	return type ? chordName(noteName(symbol.replace(/^([A-G][#b]?).*/, '$1')), type.name) : []
 }
 
 /** Only Listen uses the mic (the modes call micNeedChanged on a switch). */
@@ -45,7 +46,7 @@ export function createChordsView(root: HTMLElement): View {
 		bar.className = 'chroma__bar'
 		const label = document.createElement('span')
 		label.className = 'chroma__label'
-		label.textContent = pitchClass
+		label.textContent = noteName(pitchClass)
 		bin.append(bar, label)
 		$('.chroma').append(bin)
 		return bin
@@ -56,13 +57,14 @@ export function createChordsView(root: HTMLElement): View {
 	let candidateSince = 0
 
 	function render(label: string | null, notes: string[], idleText: string) {
-		symbol.textContent = label ?? '--'
+		const shownName = label && noteName(label)
+		symbol.textContent = shownName ?? '--'
 		symbol.classList.toggle('lcd__dim', label === null)
 		name.replaceChildren(...(label ? fullName(label) : []))
-		notesLine.textContent = label ? notes.join(' · ') : idleText
+		notesLine.textContent = label ? notes.map(noteName).join(' · ') : idleText
 		openKey.setAttribute('aria-disabled', String(label === null))
-		openKey.setAttribute('aria-label', label ? `Open ${label} in the Library` : 'Open in the Library (no chord yet)')
-		openHint.textContent = label ? `Voicings, notes and keys for ${label}` : OPEN_HINT
+		openKey.setAttribute('aria-label', label ? `Open ${shownName} in the Library` : 'Open in the Library (no chord yet)')
+		openHint.textContent = label ? `Voicings, notes and keys for ${shownName}` : OPEN_HINT
 	}
 
 	// Each column lights from the bottom up to its level (chords.css clips the dot column).

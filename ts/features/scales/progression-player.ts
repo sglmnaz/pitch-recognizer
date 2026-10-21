@@ -4,6 +4,7 @@
 import * as Settings from '../../core/settings'
 import * as Sound from '../../core/sound'
 import type { KeyChord } from '../../music/harmony'
+import { noteName } from '../../music/note-names'
 
 // Progressions: four beats a bar, one chord a bar, strummed on beats 1 and 3.
 const BEATS = 4
@@ -49,7 +50,7 @@ export function createProgressionPlayer(hooks: PlayerHooks) {
 		Sound.stopAll()
 		playing = { index, chords: list, bar: 0 }
 		nextBarAt = performance.now()
-		hooks.announce(`Playing ${name}: ${list.map((c) => c.symbol).join(', ')}`)
+		hooks.announce(`Playing ${name}: ${list.map((c) => noteName(c.symbol)).join(', ')}`)
 		playBar()
 	}
 

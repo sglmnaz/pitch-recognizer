@@ -11,6 +11,7 @@ import { micNeedChanged } from '../../ui/mic-block'
 import { createEarView } from './ear.view'
 import { createChangesView } from './changes.view'
 import { createTabView } from './tab.view'
+import { noteName, noteSystem } from '../../music/note-names'
 import { createScoreboard } from './led'
 
 /**
@@ -44,10 +45,10 @@ export function createTrainerView(root: HTMLElement): View {
 		}
 	}
 
-	// First enharmonic spelling, with the octave number dropped while matching
-	// any octave (where the number would be misleading).
+	// First enharmonic spelling, in the chosen names, with the octave number
+	// dropped while matching any octave (where the number would be misleading).
 	function displayNote(name: string): string {
-		const spelling = name.split('/')[0]
+		const spelling = noteName(name.split('/')[0])
 		return Settings.get().matchAnyOctave ? spelling.replace(/[0-9]/g, '') : spelling
 	}
 
@@ -59,7 +60,9 @@ export function createTrainerView(root: HTMLElement): View {
 		const { target } = Game.getState()
 		promptHint.textContent = Settings.get().matchAnyOctave ? 'Match this note (any octave)' : 'Match this note'
 		promptNote.textContent = displayNote(target.note)
-		promptAlt.textContent = displayNote(target.altName)
+		// The other name under it: Do Re Mi under letters, letters under any other system.
+		const other = noteSystem() === 'letters' ? target.altName : target.note.split('/')[0]
+		promptAlt.textContent = Settings.get().matchAnyOctave ? other.replace(/[0-9]/g, '') : other
 		MusicRenderer.render(target)
 		applyStaffTheme()
 	}

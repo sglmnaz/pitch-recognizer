@@ -4,6 +4,7 @@ import { clampA4, tuningById } from '../music/tuning.ts'
 import { DEFAULT_INTERVALS, DEFAULT_QUALITIES, pool } from '../music/ear.ts'
 import * as Changes from '../music/changes.ts'
 import * as Tab from '../music/tab.ts'
+import { NOTE_SYSTEMS, type NoteSystem } from '../music/note-names.ts'
 import { readJSON, writeJSON } from './storage.ts'
 import { clamp as limit } from './math.ts'
 import { MAX_DELAY_MS, MAX_MIC_DELAY_MS, MIN_DELAY_MS, MIN_MIC_DELAY_MS } from './latency.ts'
@@ -17,6 +18,8 @@ export interface Settings {
 	lightStaff: boolean
 	/** Notes (by scientific name) the user has switched off as targets. */
 	disabledNotes: string[]
+	/** How notes are named everywhere they are shown (ts/music/note-names.ts); auto: Do Re Mi on an Italian device, letters elsewhere. */
+	noteNames: 'auto' | NoteSystem
 	/** Scales fretboard palette: follow the app theme, or force one. */
 	fretboardTheme: 'auto' | 'light' | 'dark'
 	/** Run the neck top to bottom like a chord diagram (any screen width). */
@@ -150,6 +153,7 @@ const defaults: Settings = {
 	matchAnyOctave: false,
 	lightStaff: false,
 	disabledNotes: [],
+	noteNames: 'auto',
 	fretboardTheme: 'auto',
 	fretboardVertical: false,
 	scaleLabels: 'notes',
@@ -257,6 +261,7 @@ export function load(): Settings {
 		matchAnyOctave: bool(s.matchAnyOctave, d.matchAnyOctave),
 		lightStaff: bool(s.lightStaff, d.lightStaff),
 		disabledNotes: strings(s.disabledNotes),
+		noteNames: oneOf(s.noteNames, ['auto', ...NOTE_SYSTEMS]),
 		fretboardTheme: oneOf(s.fretboardTheme, ['auto', 'light', 'dark']),
 		fretboardVertical: bool(s.fretboardVertical, d.fretboardVertical),
 		scaleLabels: oneOf(s.scaleLabels, ['notes', 'intervals', 'none']),

@@ -20,6 +20,7 @@ import { MAX_FLATNESS, spectralFlatness } from '../../music/changes'
 import { createHeldGate } from '../../music/tab'
 import { changesTimeline, lastSession, onSession, TIMELINE_AFTER, TIMELINE_BEFORE, type TimelineRow } from '../trainer/timing-probe'
 import { createDelayCalibration, createMicCalibration } from './delay-calibration'
+import { noteName } from '../../music/note-names'
 import * as FieldReport from './field-report'
 
 const TAB_LABELS: Record<string, string> = {
@@ -125,7 +126,7 @@ function createMicCheck(card: HTMLElement) {
 			}
 			const chord = heardChord(now)
 			if (chord && chord !== lastChord && lastStrum !== null) namingText.textContent = String(Math.round(now - lastStrum))
-			if (chord !== lastChord) chordText.textContent = chord ?? '–'
+			if (chord !== lastChord) chordText.textContent = chord ? noteName(chord) : '–'
 			lastChord = chord
 		},
 	}
@@ -144,7 +145,7 @@ function timelineRow(row: TimelineRow): HTMLElement {
 	const outlier = row.dt === null || Math.abs(row.dt) > OUTLIER_MS
 	const line = el('div', outlier ? 'dg-tl dg-tl--out' : 'dg-tl')
 	const label = el('span', 'dg-label')
-	label.append(el('b', '', undefined, `${row.index} · ${row.target}`), el('span', '', undefined, row.chosen !== null ? 'strum' : 'not heard'))
+	label.append(el('b', '', undefined, `${row.index} · ${noteName(row.target)}`), el('span', '', undefined, row.chosen !== null ? 'strum' : 'not heard'))
 	const track = el('span', 'lcd dg-track')
 	track.append(el('span', 'dg-zone'), el('span', 'dg-zero'), ...row.strums.map((t) => el('span', 'dg-tick', t)))
 	if (row.chosen !== null) track.append(el('span', 'dg-chosen', row.chosen))

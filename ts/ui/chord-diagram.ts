@@ -4,6 +4,7 @@ import type { ChordType } from '../music/chord-theory'
 import { voicingSpec, type Voicing } from '../music/chord-shapes'
 import { svgEl } from './dom'
 import { createFretboard } from './fretboard'
+import { noteName } from '../music/note-names'
 
 /** As the chordLabels setting; 'fingers' puts the finger numbers in the dots instead of a row below. */
 export type DiagramLabels = 'degrees' | 'notes' | 'fingers' | 'none'
@@ -37,8 +38,8 @@ export function chordDiagram(rootPc: number, type: ChordType, voicing: Voicing |
 		render() {
 			if (!voicing) return
 			const labels = typeof opts.labels === 'function' ? opts.labels() : opts.labels
-			if (labels !== 'fingers') return board.render(voicingSpec(voicing, rootPc, type, { labels, fingers: opts.fingers }))
-			const spec = voicingSpec(voicing, rootPc, type, { labels: 'none', fingers: false })
+			if (labels !== 'fingers') return board.render(voicingSpec(voicing, rootPc, type, { labels, fingers: opts.fingers, name: noteName }))
+			const spec = voicingSpec(voicing, rootPc, type, { labels: 'none', fingers: false, name: noteName })
 			for (const dot of spec.dots) dot.label = voicing.fingers[dot.string] ? String(voicing.fingers[dot.string]) : ''
 			board.render(spec)
 		},

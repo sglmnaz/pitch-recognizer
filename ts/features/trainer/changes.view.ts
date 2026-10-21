@@ -22,6 +22,7 @@ import { faking, heardChord, installDebugHook, resetHeard, strummed } from './ch
 import { showLed } from './led'
 import { clockText, createChangesSession, verdict } from './changes.session'
 import { createProbe } from './timing-probe'
+import { noteName } from '../../music/note-names'
 import * as FieldReport from '../calibration/field-report'
 
 // Screen readers hear the count at most this often (a change can come every 250 ms).
@@ -32,7 +33,7 @@ const GHOSTS = 8
 
 const MARK_TEXT: Record<Changes.Mark, string> = { hit: 'on time', early: 'early', late: 'late', miss: 'missed' }
 
-const pairLabel = (sequence: string[]) => sequence.join('–')
+const pairLabel = (sequence: string[]) => sequence.map(noteName).join('–')
 // In time's LED shows the share of changes on time; its label carries the unit.
 const ON_TIME_LABEL = 'On time %'
 
@@ -99,7 +100,7 @@ export function createChangesView(root: HTMLElement): View {
 				fingers: false,
 			})
 			const caption = document.createElement('figcaption')
-			caption.textContent = symbol
+			caption.textContent = noteName(symbol)
 			figure.append(diagram.el, caption)
 			diagram.render()
 			return { symbol, figure, diagram }
@@ -123,7 +124,7 @@ export function createChangesView(root: HTMLElement): View {
 			button.className = 'chip changes-preset'
 			button.dataset.preset = preset.join()
 			button.textContent = pairLabel(preset)
-			button.setAttribute('aria-label', preset.join(', '))
+			button.setAttribute('aria-label', preset.map(noteName).join(', '))
 			button.addEventListener('click', () => Settings.update({ changesChords: [...preset] }))
 			return button
 		})
@@ -136,7 +137,7 @@ export function createChangesView(root: HTMLElement): View {
 			chip.type = 'button'
 			chip.className = 'chip'
 			chip.dataset.chord = symbol
-			chip.textContent = symbol
+			chip.textContent = noteName(symbol)
 			chip.addEventListener('click', () => {
 				const chords = selection()
 				if (chords.includes(symbol)) Settings.update({ changesChords: chords.filter((c) => c !== symbol) })
@@ -212,7 +213,7 @@ export function createChangesView(root: HTMLElement): View {
 			// Four chosen: the rest cannot be added (aria-disabled keeps them focusable).
 			chip.setAttribute('aria-disabled', String(!on && chords.length >= Changes.MAX_CHORDS))
 		}
-		order.textContent = chords.length ? chords.join(' → ') : ''
+		order.textContent = chords.length ? chords.map(noteName).join(' → ') : ''
 		renderSummary()
 	}
 
@@ -221,11 +222,11 @@ export function createChangesView(root: HTMLElement): View {
 	const sequence = () => (isRunning() ? session.config().sequence : selection())
 
 	function setTarget(symbol: string, then: string) {
-		target.textContent = symbol
+		target.textContent = noteName(symbol)
 		target.classList.remove('changes-target--count')
 		next.textContent = then
 		const seq = sequence()
-		upcoming.textContent = seq[(seq.indexOf(symbol) + 1) % seq.length]
+		upcoming.textContent = noteName(seq[(seq.indexOf(symbol) + 1) % seq.length])
 		markTargetShape(symbol)
 	}
 
@@ -269,7 +270,7 @@ export function createChangesView(root: HTMLElement): View {
 		}
 		if (valid()) {
 			renderShapes(chords)
-			setTarget(chords[0], s.changesMode === 'time' ? `then ${chords[1]}` : `Start on ${chords[0]}, change to ${chords[1]}`)
+			setTarget(chords[0], s.changesMode === 'time' ? `then ${noteName(chords[1])}` : `Start on ${noteName(chords[0])}, change to ${noteName(chords[1])}`)
 		} else {
 			renderShapes(chords)
 			target.textContent = '–'
@@ -290,7 +291,7 @@ export function createChangesView(root: HTMLElement): View {
 	}
 
 	function showHeard(symbol: string | null) {
-		const text = symbol ?? '—'
+		const text = symbol ? noteName(symbol) : '—'
 		if (heardText.textContent !== text) heardText.textContent = text
 	}
 
@@ -344,8 +345,8 @@ export function createChangesView(root: HTMLElement): View {
 	function showCount(left: number, first: string) {
 		target.textContent = String(left)
 		target.classList.add('changes-target--count')
-		next.textContent = `Get ready on ${first}`
-		upcoming.textContent = first
+		next.textContent = `Get ready on ${noteName(first)}`
+		upcoming.textContent = noteName(first)
 	}
 
 	const probe = createProbe()

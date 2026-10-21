@@ -172,17 +172,22 @@ export function keyOf(rootPc: number, type: ScaleType): Key | null {
 }
 
 /** The key's name as the circle spells it: 'C major', 'D# minor'. */
-function keyTitle(key: Key): string {
+function keyTitle(key: Key, name: (note: string) => string): string {
 	const k = CIRCLE[circleIndex(key.pc, key.family)]
-	return key.family === 'major' ? `${k.major} major` : `${k.minor} minor`
+	return key.family === 'major' ? `${name(k.major)} major` : `${name(k.minor)} minor`
 }
 
-/** 'A minor, no sharps or flats'; a mode: 'D Dorian · parent C major, no sharps or flats'. '' without a key. */
-export function keyName(rootPc: number, type: ScaleType): string {
+/**
+ * 'A minor, no sharps or flats'; a mode: 'D Dorian · parent C major, no sharps or flats'. '' without a key.
+ * `name` shows the note names (ts/ui/names.ts noteName), letters by default.
+ */
+export function keyName(rootPc: number, type: ScaleType, name = (note: string) => note): string {
 	const key = keyOf(rootPc, type)
 	if (!key) return ''
 	const signature = signatureName(CIRCLE[circleIndex(key.pc, key.family)].accidentals)
-	return key.mode ? `${spellScale(ROOTS[mod12(rootPc)], type).root} ${type.name} · parent ${keyTitle(key)}, ${signature}` : `${keyTitle(key)}, ${signature}`
+	return key.mode
+		? `${name(spellScale(ROOTS[mod12(rootPc)], type).root)} ${type.name} · parent ${keyTitle(key, name)}, ${signature}`
+		: `${keyTitle(key, name)}, ${signature}`
 }
 
 /** 2 → '2 sharps', -1 → '1 flat', 0 → 'no sharps or flats'. */

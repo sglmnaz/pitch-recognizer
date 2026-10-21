@@ -6,6 +6,7 @@
 import * as Changes from '../../music/changes.ts'
 import * as Tab from '../../music/tab.ts'
 import type * as Metronome from '../../core/metronome.ts'
+import { noteName } from '../../music/note-names.ts'
 import type { ProbeEntry } from './timing-probe.ts'
 
 // In time hears each change by its sound, not by the chord recognizer: right
@@ -169,7 +170,7 @@ export function createChangesSession(ui: SessionUi, metronome: MetronomeControl)
 			goAt = now + (config.countIn ? COUNT_IN_S * 1000 : 0)
 			phase = config.countIn ? 'countin' : 'running'
 			if (phase === 'running') begin(now)
-			else ui.announce(`Get ready on ${config.sequence[0]}`, true)
+			else ui.announce(`Get ready on ${noteName(config.sequence[0])}`, true)
 			return
 		}
 		// Accent each chord's first beat; nothing else of the Metronome tab's setup applies.
@@ -187,8 +188,8 @@ export function createChangesSession(ui: SessionUi, metronome: MetronomeControl)
 		lastClickAt = -Infinity
 		clickGap = Infinity
 		phase = config.countIn ? 'countin' : 'running'
-		ui.target(config.sequence[0], `then ${config.sequence[1]}`)
-		ui.announce(`Play ${config.sequence[0]} on the first beat`, true)
+		ui.target(config.sequence[0], `then ${noteName(config.sequence[1])}`)
+		ui.announce(`Play ${noteName(config.sequence[0])} on the first beat`, true)
 	}
 
 	/** One-minute: the clock starts; whatever is already ringing is the starting chord. */
@@ -203,7 +204,7 @@ export function createChangesSession(ui: SessionUi, metronome: MetronomeControl)
 
 	function showCounterTarget() {
 		const from = counter.at
-		ui.target(counter.target(), from ? `from ${from}` : `Strum ${config.sequence[0]} to start`)
+		ui.target(counter.target(), from ? `from ${noteName(from)}` : `Strum ${noteName(config.sequence[0])} to start`)
 	}
 
 	/** Ends the session; `finished` = ran its course (a One-minute result is stored). */
@@ -247,7 +248,7 @@ export function createChangesSession(ui: SessionUi, metronome: MetronomeControl)
 		slot = (index - lead) / config.beats
 		const seq = config.sequence
 		const current = seq[slot % seq.length]
-		ui.target(current, `then ${seq[(slot + 1) % seq.length]}`)
+		ui.target(current, `then ${noteName(seq[(slot + 1) % seq.length])}`)
 		ui.clock(`${event.bpm} BPM`)
 		// The first chord is where the player starts, not a change.
 		if (slot > 0) {

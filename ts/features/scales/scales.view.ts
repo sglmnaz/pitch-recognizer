@@ -27,6 +27,7 @@ import { withStepper } from '../../ui/stepper'
 import { phone } from '../../ui/media'
 import { resultButton } from '../../ui/note-chip'
 import { micState, onMicChange, setListening } from '../../ui/mic-block'
+import { noteName } from '../../music/note-names'
 
 // ponytail: results capped; a couple of marked notes already narrow it to a
 // screenful, add paging if someone wants to browse all ~150 for a single note.
@@ -96,7 +97,7 @@ export function createScalesView(root: HTMLElement): View {
 	})
 
 	/* Static controls ----------------------------------------------------- */
-	ROOTS.forEach((name, pc) => rootSelect.add(new Option(name, String(pc))))
+	ROOTS.forEach((name, pc) => rootSelect.add(new Option(noteName(name), String(pc))))
 	rootSelect.addEventListener('change', () => {
 		rootPc = Number(rootSelect.value)
 		stopPlaying()
@@ -303,7 +304,7 @@ export function createScalesView(root: HTMLElement): View {
 
 	function renderStrip(shown: Shown, highlighted: (degree: string) => boolean) {
 		const spelled = spellScale(ROOTS[shown.rootPc], shown.type)
-		infoTitle.textContent = scaleTitle(spelled.root, shown.type)
+		infoTitle.textContent = scaleTitle(noteName(spelled.root), shown.type)
 		strip.replaceChildren(
 			...degreesOf(shown.type).map((degree, i) => {
 				const chip = document.createElement('button')
@@ -314,7 +315,7 @@ export function createScalesView(root: HTMLElement): View {
 				chip.title = on ? 'Tap to stop colouring this degree' : 'Tap to colour this degree on the neck'
 				// Just the degree as a roman numeral (♭III): the note is on the neck.
 				chip.textContent = romanDegree(degree)
-				chip.setAttribute('aria-label', `Degree ${degree}, ${spelled.notes[i]}`)
+				chip.setAttribute('aria-label', `Degree ${degree}, ${noteName(spelled.notes[i])}`)
 				chip.addEventListener('click', () => {
 					const n = degreeNumber(degree)
 					const degrees = new Set(Settings.get().scaleDegrees)
@@ -334,9 +335,9 @@ export function createScalesView(root: HTMLElement): View {
 		for (const match of matches.slice(0, MAX_RESULTS)) {
 			const isSelected = selected?.rootPc === match.rootPc && selected.type === match.type
 			const button = resultButton('scale-result', [
-				['scale-result__title', scaleTitle(match.root, match.type)],
+				['scale-result__title', scaleTitle(noteName(match.root), match.type)],
 				['scale-result__extra', match.extra === 0 ? 'exact' : `+${match.extra}`],
-				['scale-result__notes', match.notes.join(' ')],
+				['scale-result__notes', match.notes.map(noteName).join(' ')],
 			])
 			button.setAttribute('aria-pressed', String(isSelected))
 			button.addEventListener('click', () => {
@@ -367,7 +368,7 @@ export function createScalesView(root: HTMLElement): View {
 		const chord = harmony.chord()
 		const chordDegrees = new Map(chord ? degreesOf(chord.type).map((d, i) => [pitchClassOf(chord.notes[i]), d]) : [])
 		chord?.notes.forEach((n) => names.has(pitchClassOf(n)) || names.set(pitchClassOf(n), n))
-		const name = (midi: number) => names.get(midi % 12) ?? ROOTS[midi % 12]
+		const name = (midi: number) => noteName(names.get(midi % 12) ?? ROOTS[midi % 12])
 		const dots: Dot[] = []
 		STRINGS.forEach((_, string) => {
 			for (let fret = 0; fret <= FRETS; fret++) {
@@ -409,7 +410,7 @@ export function createScalesView(root: HTMLElement): View {
 		legend.hidden = !shown
 		if (!shown) return
 		const chord = harmony.chord()
-		legendRoot.textContent = chord ? `${chord.symbol} root` : 'root'
+		legendRoot.textContent = chord ? `${noteName(chord.symbol)} root` : 'root'
 		if (chord) {
 			legendRoot.hidden = legendTone.hidden = false
 			legendTone.textContent = 'chord tones'
@@ -453,7 +454,7 @@ export function createScalesView(root: HTMLElement): View {
 		if (shown) renderStrip(shown, highlighted).notes.forEach((n) => names.set(pitchClassOf(n), n))
 		else stopPlaying()
 
-		markedText.textContent = markedPcs.size ? [...markedPcs].map((pc) => names.get(pc) ?? ROOTS[pc]).join(' ') : 'Tap the neck to mark notes'
+		markedText.textContent = markedPcs.size ? [...markedPcs].map((pc) => noteName(names.get(pc) ?? ROOTS[pc])).join(' ') : 'Tap the neck to mark notes'
 		markedText.classList.toggle('scales-marked--empty', markedPcs.size === 0)
 		clearButton.disabled = marked.size === 0
 

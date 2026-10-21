@@ -6,6 +6,7 @@ import { subscribeVisible, svgEl } from '../../ui/dom'
 import * as Theme from '../../ui/theme'
 import { guardKey } from '../../ui/guard-key'
 import { guardTouches } from '../../ui/touch-guard'
+import { noteName } from '../../music/note-names'
 import { showCalibrationState } from '../calibration/calibration-state'
 
 /**
@@ -223,7 +224,7 @@ export function createSettingsView(root: HTMLElement, from: () => string | null)
 		// Rebuild only when the set of notes changed (i.e. accidentals toggled);
 		// otherwise just refresh the pressed state so focus is preserved.
 		if (chips.childElementCount !== notes.length) {
-			chips.replaceChildren(...notes.map((note) => makeChip(note.note, note.note.split('/')[0])))
+			chips.replaceChildren(...notes.map((note) => makeChip(note.note, noteName(note.note.split('/')[0]))))
 		} else {
 			for (let i = 0; i < notes.length; i++) {
 				const chip = chips.children[i] as HTMLButtonElement

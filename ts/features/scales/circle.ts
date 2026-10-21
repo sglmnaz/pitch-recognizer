@@ -7,6 +7,7 @@
 // the bezel is the HTML box around the svg.
 import { CIRCLE, circleIndex, keyOf, MAJOR, MINOR, signatureName } from '../../music/harmony'
 import type { ScaleType } from '../../music/scales'
+import { noteName, spokenName } from '../../music/note-names'
 import { svgEl } from '../../ui/dom'
 
 // Radii in the 290 viewBox. The two rings meet at SPLIT; each is ~33 deep,
@@ -20,7 +21,8 @@ const MAJOR_TEXT = 101
 const MINOR_TEXT = 77
 const GLASS = 52 // the hub's LCD, inside a black ring up to 57
 
-const glyphs = (name: string) => name.replace(/#/g, '♯').replace(/([A-G])b/g, '$1♭')
+// Printed with ♯ / ♭, in the chosen note names.
+const glyphs = (name: string) => noteName(name.replace(/#/g, '♯').replace(/([A-G])b/g, '$1♭'))
 const sigShort = (n: number) => (n === 0 ? 'no ♯ / ♭' : `${Math.abs(n)} ${n > 0 ? '♯' : '♭'}`)
 // Clockwise from 12 o'clock, like the dial.
 const at = (r: number, deg: number) => [C + r * Math.sin((deg * Math.PI) / 180), C - r * Math.cos((deg * Math.PI) / 180)]
@@ -63,11 +65,7 @@ export function createCircle(circle: SVGSVGElement, onChoose: (rootPc: number, t
 		CIRCLE.forEach((key, i) => {
 			const name = ring === 'major' ? key.major : `${key.minor}m`
 			const alt = ring === 'major' ? key.majorAlt : key.minorAlt && `${key.minorAlt}m`
-			const spoken = (n: string) =>
-				n
-					.replace('#', ' sharp')
-					.replace(/^([A-G])b/, '$1 flat')
-					.replace(/m$/, '')
+			const spoken = (n: string) => spokenName(n.replace(/m$/, ''))
 			const g = svgEl('g', {
 				class: `circle__key circle__key--${ring}`,
 				role: 'button',

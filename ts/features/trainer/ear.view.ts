@@ -8,6 +8,7 @@ import { getClosestNote, midiOfFrequency } from '../../core/notes'
 import type { PitchReading } from '../../core/microphone'
 import type { View } from '../../ui/view'
 import { onBareKey, subscribeVisible } from '../../ui/dom'
+import { noteName } from '../../music/note-names'
 import { createScoreboard } from './led'
 
 // Long enough to see the green, short enough to keep the drill moving.
@@ -289,7 +290,7 @@ export function createEarView(root: HTMLElement): View {
 			const now = performance.now()
 			if (hold?.midi !== midi) {
 				hold = { midi, since: now }
-				showHint(`Hearing ${getClosestNote(reading.frequency, a4).note.split('/')[0]}…`)
+				showHint(`Hearing ${noteName(getClosestNote(reading.frequency, a4).note.split('/')[0])}…`)
 				return
 			}
 			if (now - hold.since < HOLD_MS) return

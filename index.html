@@ -838,6 +838,22 @@
 						</label>
 					</div>
 					<div class="settings__section">
+						<!-- Changing it reloads the app (main.ts): every view names notes as it draws. -->
+						<label class="switch">
+							<span class="switch__text">
+								<span class="switch__title">Note names</span>
+								<span class="switch__desc">Auto: Do Re Mi on an Italian device, letters elsewhere</span>
+							</span>
+							<select class="select select--small" data-setting="noteNames">
+								<option value="auto">Auto</option>
+								<option value="letters">C D E</option>
+								<option value="solfege">Do Re Mi</option>
+								<option value="french">Do Ré Mi (French)</option>
+								<option value="german">C D … H (German)</option>
+							</select>
+						</label>
+					</div>
+					<div class="settings__section">
 						<label class="switch">
 							<span class="switch__text">
 								<span class="switch__title">Key sounds</span>

@@ -16,6 +16,7 @@ import { screenLock } from '../../ui/screen-lock'
 import { focusMicButton } from '../../ui/mic-block'
 import { createTabSession, type TabResult } from './tab.session'
 import { createProbe } from './timing-probe'
+import { noteName } from '../../music/note-names'
 import * as FieldReport from '../calibration/field-report'
 
 // One beat takes this much paper whatever the subdivision, so 16ths sit
@@ -33,7 +34,7 @@ const TAPE_MARKS = 16
 const MARK_GLYPH: Record<Tab.Mark, string> = { hit: '✓', early: '←', late: '→', miss: '×' }
 const STRING_NAME = ['', 'high E', 'B', 'G', 'D', 'A', 'low E']
 const NOTE_NAMES = ['C', 'C♯', 'D', 'D♯', 'E', 'F', 'F♯', 'G', 'G♯', 'A', 'A♯', 'B']
-const noteName = (midi: number) => `${NOTE_NAMES[midi % 12]}${Math.floor(midi / 12) - 1}`
+const pitchName = (midi: number) => noteName(`${NOTE_NAMES[midi % 12]}${Math.floor(midi / 12) - 1}`)
 
 /** How far off a wrong note is, in frets on the string being played. */
 function offBy(heard: number, wanted: number): string {
@@ -253,7 +254,7 @@ export function createTabView(root: HTMLElement): View {
 		if (!note) return
 		const want = Tab.targetMidi(note)
 		const where = `${STRING_NAME[note.string]} string · fret ${note.fret}${note.bend ? ` bend to ${note.fret + note.bend}` : ''}`
-		showStatus(`${where} · ${noteName(want)}`, wrong === null ? 'Waiting' : `${noteName(wrong)} · ${offBy(wrong, want)}`)
+		showStatus(`${where} · ${pitchName(want)}`, wrong === null ? 'Waiting' : `${pitchName(wrong)} · ${offBy(wrong, want)}`)
 	}
 
 	function renderIdle() {
