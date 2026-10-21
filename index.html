@@ -148,7 +148,7 @@
 						<div class="meter__ticks">
 							<span class="meter__tick"></span>
 							<span class="meter__tick"></span>
-							<span class="meter__tick meter__tick--center"></span>
+							<span class="meter__tick"></span>
 							<span class="meter__tick"></span>
 							<span class="meter__tick"></span>
 						</div>
@@ -449,7 +449,7 @@
 					<span class="silk">In keys</span>
 					<ul class="chord-keys__list"></ul>
 				</div>
-				<div class="chord-voicings">
+				<div>
 					<ol class="voicings" aria-label="Voicings"></ol>
 					<p class="hint voicings__empty" hidden>No playable voicing within four frets.</p>
 				</div>
@@ -476,7 +476,7 @@
 
 		<!-- Scales: explorer + identifier on one fretboard (ts/features/scales/scales.view.ts). -->
 		<section class="view view--scales" id="view-scales" role="tabpanel" aria-labelledby="tab-scales" hidden>
-			<div class="plate scales-plate">
+			<div class="plate">
 				<div class="plate__brand"><b>PLUCK</b><span>SCALE FINDER · SF-100</span></div>
 				<div class="scales-controls">
 					<div class="view-top">
@@ -493,7 +493,7 @@
 						<select class="select scales-type" aria-label="Scale"></select>
 					</div>
 					<div class="scales-marked-row scales-identify" hidden>
-						<span class="window scales-marked-window"><span class="lcd scales-marked"></span></span>
+						<span class="window"><span class="lcd scales-marked"></span></span>
 						<button class="key" type="button" data-action="clear">Clear</button>
 					</div>
 				</div>
@@ -531,7 +531,7 @@
 							</div>
 							<span class="silk">Position</span>
 							<div class="segmented segmented--small scales-positions" role="group" aria-label="Position"></div>
-							<label class="switch display__switch">
+							<label class="switch">
 								<span class="switch__text"><span class="switch__title">Vertical neck</span></span>
 								<input type="checkbox" class="switch__input" data-action="vertical" />
 								<span class="switch__track"></span>

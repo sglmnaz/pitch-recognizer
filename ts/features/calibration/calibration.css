@@ -1,7 +1,8 @@
 /*
  * Calibration (ts/features/calibration/): the page's two guided steps, its
  * Diagnostics (field report, mic check, the last session's timeline, fine-tune),
- * the Calibration card on top of Settings and the CAL keys of Changes and Tab.
+ * the Calibration section on top of Settings and the Timing calibration link of
+ * Changes and Tab.
  * Approved mockup: Claude Design, "Calibrazione". Colours are tokens only; what
  * sits on an LCD uses the LCD's own (--lcd-*), so every theme and display works.
  */

@@ -4,15 +4,6 @@
 	padding-inline: 14px;
 }
 
-/* The solid (primary) button of the old look: now the hot key. */
-.btn--solid {
-	--k-face: var(--key3-face);
-	--k-hi: var(--key3-hi);
-	--k-side: var(--key3-side);
-	--k-front: var(--key3-front);
-	--k-ink: var(--key3-ink);
-}
-
 .btn--block {
 	width: 100%;
 }
