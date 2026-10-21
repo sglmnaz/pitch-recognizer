@@ -4,14 +4,24 @@
 // It lines the audio up with the log by the metronome clicks the mic recorded,
 // finds the strums in the sound itself (the loud onsets), and runs the app's
 // own front end on the recording (ts/core/microphone.ts processFrame, the
-// Changes strum rule, Tab's pick detector) to count what each detector fires
-// for every real strum. Field data instead of guesses (docs/adr/0009).
+// Changes strum detector through Tab's held gate, Tab's pick detector) to
+// count what each detector fires for every real strum, then places the
+// changes by sound as Trainer → Changes In time does. Field data instead of
+// guesses (docs/adr/0009).
+//
+// Environment:
+//   A4=hz            the profiles on another reference than the session's
+//   LOUDER=, LOUDER_MS=, BETTER=, BETTER_MS=, CLICK=louder|off
+//                    the In time rules' knobs (defaults: changes.session.ts; LOUDER=off, BETTER=off drop a rule)
+//   TUNE=1           a grid of strum-detector settings
+//   PROFILES=1       the mean pitch-class profile of each chord as played
+//   DUMP=n           the first n strums with their level and drill-chord shares
+//   NOISE=1          how loud strums (and Tab's picks) still are AFTER ms on (default 100) over the noise floor
 import { readFileSync } from 'node:fs'
 import { appBand, decode } from './audio.ts'
-import { FFT_SIZE, getStats, isSounding, processFrame } from '../ts/core/microphone.ts'
-import { chromaOf, createOnsetDetector, newestEnergy } from '../ts/music/tab.ts'
-import { chordShare, createStrumDetector, spectralFlatness } from '../ts/music/changes.ts'
-import { getFramePower } from '../ts/core/microphone.ts'
+import { FFT_SIZE, getFramePower, getStats, processFrame } from '../ts/core/microphone.ts'
+import { chromaOf, createHeldGate, createOnsetDetector, newestEnergy } from '../ts/music/tab.ts'
+import { chordShare, createStrumDetector, drillChord, MAX_FLATNESS, spectralFlatness } from '../ts/music/changes.ts'
 
 const args = process.argv.slice(2)
 const [jsonPath, audioPath] = args.filter((a) => !a.startsWith('--') && !/^\d+$/.test(a))
@@ -70,72 +80,67 @@ for (let x = -300; x <= 500; x += 2) {
 }
 console.log(`audio ${(audio.length / SR).toFixed(1)} s at ${SR} Hz · ${beats.length} beats in the log`)
 console.log(`clicks: audio = heardAt − recordStartedAt + ${offset.x} ms (${offset.matched} of ${beats.length} beats found as onsets)`)
+/** A time of the session's log on the recording. */
+const toAudio = (sessionTime: number) => sessionTime - report.recordStartedAt + offset.x
 
 /* Real strums: loud guitar-band onsets, the first of each 150 ms. */
 const strums: number[] = []
 for (const o of onsets(band, 40)) if (!strums.length || o.at - strums[strums.length - 1] > 150) strums.push(o.at)
+/** The real strum nearest `click`, within 400 ms. */
+const nearestStrum = (click: number) => strums.filter((s) => Math.abs(s - click) < 400).sort((a, b) => Math.abs(a - click) - Math.abs(b - click))[0]
 
 /* The app's front end on the recording, one frame every 1000/fps ms. */
-const STRUM_RISE = 1.5
-const STRUM_WINDOW_MS = 250
-const STRUM_REFRACTORY_MS = 120
+const a4 = Number(process.env.A4) || Number(report.settings.a4) || 440
 const picker = createOnsetDetector()
 const strumDetector = createStrumDetector()
+// As the Changes session: a strum counts once it rings (Tab.createHeldGate).
+const held = createHeldGate()
+let fired = 0
 const appStrums: number[] = []
-let levels: { at: number; volume: number }[] = []
-let lastStrum = Number.NEGATIVE_INFINITY
-const levelStrums: number[] = []
-const attackStrums: number[] = []
 const picks: number[] = []
-// Per frame: its level and pitch-class profile (as the Changes view feeds the session).
-// The mic's learned noise floor (RMS) per frame.
-const floors: { at: number; floor: number }[] = []
+// Per frame: its level, the mic's learned noise floor (RMS), its newest energy, pitch-class profile and flatness.
+const frames: { at: number; volume: number; floor: number; energy: number; chroma: Float32Array | null; flatness: number | null }[] = []
 // Every pitched frame's cents off the nearest semitone on the session's A4: how the guitar is tuned.
 const cents: number[] = []
-const frames: { at: number; volume: number; chroma: Float32Array | null; flatness: number | null }[] = []
-const a4 = Number(process.env.A4) || Number(report.settings.a4) || 440
-const newest: { at: number; energy: number }[] = []
 const step = SR / fps
 for (let end = FFT_SIZE; end <= band.length; end += step) {
 	const at = ms(end)
 	const frame = band.subarray(Math.round(end) - FFT_SIZE, Math.round(end))
 	processFrame(frame, SR, at)
-	const { reason, volume, pitch, noiseFloor } = getStats()
-	floors.push({ at, floor: noiseFloor })
+	const { volume, pitch, noiseFloor } = getStats()
 	if (pitch > 0) cents.push(((((1200 * Math.log2(pitch / (Number(report.settings.a4) || 440)) + 50) % 100) + 100) % 100) - 50)
-	levels.push({ at, volume })
-	levels = levels.filter((l) => l.at >= at - STRUM_WINDOW_MS)
-	const quietest = Math.min(...levels.map((l) => l.volume))
-	const attack = reason === 'attack'
-	const rise = isSounding() && volume > STRUM_RISE * quietest
-	if (attack || rise) {
-		if (at - lastStrum >= STRUM_REFRACTORY_MS) (attack ? attackStrums : levelStrums).push(at)
-		lastStrum = at
-	}
-	if (picker.feed(at, newestEnergy(frame))) picks.push(at)
-	newest.push({ at, energy: newestEnergy(frame) })
-	if (strumDetector.feed(at, newestEnergy(frame))) appStrums.push(at)
+	const energy = newestEnergy(frame)
+	if (picker.feed(at, energy)) picks.push(at)
+	const strum = strumDetector.feed(at, energy)
+	if (strum) fired++
+	appStrums.push(...held.feed(at, strum, volume, noiseFloor))
 	const power = getFramePower()
 	frames.push({
 		at,
 		volume,
+		floor: noiseFloor,
+		energy,
 		chroma: power ? chromaOf(power.power, power.binHz, a4) : null,
 		flatness: power ? spectralFlatness(power.power, power.binHz) : null,
 	})
 }
+console.log(`held: kept ${appStrums.length} of ${fired} strums`)
 
-/* As the app (Tab.createHeldGate): a strum counts only if the sound 80 ms on is still 2 (HELD=k) times the noise floor; HELD=off keeps all. */
-if (process.env.HELD !== 'off') {
-	const k = Number(process.env.HELD ?? 2)
-	const before = appStrums.length
-	const kept = appStrums.filter((t) => {
-		const f = frames.find((x) => x.at >= t + 80)
-		const n = floors.find((x) => x.at === t)?.floor ?? 0
-		return f !== undefined && f.volume >= k * n
-	})
-	appStrums.length = 0
-	appStrums.push(...kept)
-	console.log(`held ${k}: kept ${kept.length} of ${before} strums`)
+/** Mean pitch-class profile of the frames 40–200 ms after `t` (only those with pitch, as the session, when `tonal`); null if none. */
+function profileAfter(t: number, tonal = false): Float32Array | null {
+	const near = frames.filter((f) => f.chroma && f.at >= t + 40 && f.at <= t + 200 && (!tonal || (f.flatness !== null && f.flatness < MAX_FLATNESS)))
+	if (!near.length) return null
+	const mean = new Float32Array(12)
+	for (const f of near) for (let i = 0; i < 12; i++) mean[i] += f.chroma![i] / near.length
+	return mean
+}
+/** How loud a strum is: the peak level over its first 80 ms (changes.session.ts LOUD_MS). */
+const loud = (t: number) => Math.max(0, ...frames.filter((f) => f.at >= t && f.at <= t + 80).map((f) => f.volume))
+/** Level AFTER ms on over the noise floor at `t`. */
+const heldOver = (t: number, after: number) => {
+	const f = frames.find((x) => x.at >= t + after)
+	const n = frames.find((x) => x.at === t)?.floor ?? Number.NaN
+	return f ? f.volume / n : Number.NaN
 }
 
 /* What each detector fired per real strum (−100 … +300 ms from it), and away from any. */
@@ -151,117 +156,106 @@ function tally(name: string, fired: number[]) {
 }
 console.log(`real strums in the sound: ${strums.length}`)
 tally('Changes strum detector', appStrums)
-tally(
-	'old rule (before 10/21)',
-	[...attackStrums, ...levelStrums].sort((a, b) => a - b)
-)
-tally('  of which attack state', attackStrums)
-tally('  of which level rise', levelStrums)
 tally('Tab pick detector', picks)
 
-/* The log: each judged change against the real strum nearest its click. */
 const slots = report.entries.filter((e) => e.kind === 'slot')
-const judged = report.entries.filter((e) => e.kind === 'judged')
+const sequence = report.settings.changesChords as string[]
+
+/* The log: each judged change against the real strum nearest its click. */
 if (slots.length) {
-	const truth: number[] = []
-	for (const [i, j] of judged.entries()) {
-		if (j.dt === null) continue
-		const click = (slots[i]?.downbeat as number) - report.recordStartedAt + offset.x
-		const near = strums.filter((s) => Math.abs(s - click) < 400).sort((a, b) => Math.abs(a - click) - Math.abs(b - click))[0]
-		if (near !== undefined) truth.push(Math.round(near - click) - Math.round(j.dt as number))
-	}
+	const judged = report.entries.filter((e) => e.kind === 'judged')
+	const real = judged.map((_, i) => {
+		const click = toAudio(slots[i]?.downbeat as number)
+		const near = nearestStrum(click)
+		return near === undefined ? null : Math.round(near - click)
+	})
+	const truth = judged.flatMap((j, i) => (j.dt === null || real[i] === null ? [] : [real[i] - Math.round(j.dt as number)]))
 	const sorted = [...truth].sort((a, b) => a - b)
 	const q = (p: number) => sorted[Math.min(sorted.length - 1, Math.floor(p * sorted.length))]
 	console.log(`changes: real strum − click vs the app's dt, difference (25/50/75%): ${q(0.25)} / ${q(0.5)} / ${q(0.75)} ms over ${truth.length}`)
-	const real = judged.map((_, i) => {
-		const click = (slots[i]?.downbeat as number) - report.recordStartedAt + offset.x
-		const near = strums.filter((s) => Math.abs(s - click) < 400).sort((a, b) => Math.abs(a - click) - Math.abs(b - click))[0]
-		return near === undefined ? null : Math.round(near - click)
-	})
 	console.log(`real strum − click per change: ${real.map((r) => (r === null ? '–' : r)).join(' ')}`)
 	console.log(`the app's dt per change:       ${judged.map((j) => (j.dt === null ? 'miss' : Math.round(j.dt as number))).join(' ')}`)
 }
 
-/* The same with the profiles: does a strum sound like the chord named, more than like the one before? */
+/* Each real change strum by its sound alone: the drill's chord its profile 40–200 ms on favours, against the chord due. */
 if (slots.length) {
-	const sequence = report.settings.changesChords as string[]
-	const profileAfter = (t: number) => {
-		const near = frames.filter((f) => f.chroma && f.at >= t + 40 && f.at <= t + 200)
-		if (!near.length) return null
-		const mean = new Float32Array(12)
-		for (const f of near) for (let i = 0; i < 12; i++) mean[i] += f.chroma![i] / near.length
-		return mean
-	}
-	const sounds = (t: number, chord: string) => {
-		const before = sequence[(sequence.indexOf(chord) - 1 + sequence.length) % sequence.length]
-		const p = profileAfter(t)
-		return p !== null && chordShare(p, chord) > chordShare(p, before)
-	}
-	const loud = (t: number) => Math.max(0, ...frames.filter((f) => f.at >= t && f.at <= t + 80).map((f) => f.volume))
-	const ruleFires = [...attackStrums, ...levelStrums].sort((a, b) => a - b)
-	const named = report.entries.filter((e) => e.kind === 'named')
-	const toAudio = (sessionTime: number) => sessionTime - report.recordStartedAt + offset.x
-	for (const [name, fires] of [
-		['old strum rule', ruleFires],
-		['app strum detector', appStrums],
-	] as const) {
-		console.log(`strums from the ${name}:`)
-		const rules = {
-			// Before the field report: the first strum that sounds like the chord, up to 150 ms before the naming.
-			firstSounding: (cands: number[], n: number, chord: string) =>
-				cands.filter((t) => t <= n - 150).find((t) => sounds(t, chord)) ?? cands.filter((t) => t >= n - 800 && t <= n - 150).pop(),
-			// The app (changes.session.ts strumOf): of those that sound like it, the first at least half as loud as the loudest.
-			firstLoud: (cands: number[], n: number, chord: string) => {
-				const ok = cands.filter((t) => t <= n + 100 && sounds(t, chord))
-				const pool = ok.length ? ok : cands.filter((t) => t >= n - 800 && t <= n + 100)
-				if (!pool.length) return undefined
-				const top = Math.max(...pool.map(loud))
-				return pool.find((t) => loud(t) >= top / 2)
-			},
+	let right = 0
+	let none = 0
+	const misses: string[] = []
+	for (const slot of slots) {
+		const truth = nearestStrum(toAudio(slot.downbeat as number))
+		if (truth === undefined) continue
+		const p = profileAfter(truth)
+		if (!p) {
+			none++
+			continue
 		}
-		for (const [name, rule] of Object.entries(rules)) {
-			let previous = Number.NEGATIVE_INFINITY
-			const errors: number[] = []
-			for (const slot of slots) {
-				const click = toAudio(slot.downbeat as number)
-				const naming = named.find((n) => n.symbol === slot.target && toAudio(n.at as number) > click - 1000 && toAudio(n.at as number) < click + 2000)
-				const truth = strums.filter((s) => Math.abs(s - click) < 400).sort((a, b) => Math.abs(a - click) - Math.abs(b - click))[0]
-				if (!naming || truth === undefined) continue
-				const n = toAudio(naming.at as number)
-				const chosen = rule(
-					fires.filter((t) => t > previous && t >= n - 1500),
-					n,
-					slot.target as string
-				)
-				if (chosen === undefined) {
-					errors.push(Number.NaN)
-					continue
-				}
-				previous = chosen
-				errors.push(Math.round(chosen - truth))
-			}
-			const off = errors.filter((e) => !(Math.abs(e) <= 60)).length
-			console.log(
-				`rule ${name.padEnd(16)} ${off} of ${errors.length} more than 60 ms off (or none): ${errors.map((e) => (Number.isNaN(e) ? '–' : e)).join(' ')}`
-			)
-		}
+		const shares = sequence.map((c) => chordShare(p, c))
+		if (sequence[shares.indexOf(Math.max(...shares))] === slot.target) right++
+		else misses.push(`${slot.target}: ${sequence.map((c, i) => `${c} ${shares[i].toFixed(2)}`).join(' ')}`)
 	}
+	console.log(`\nthe chord due, by each change strum's profile alone: right ${right} · wrong ${misses.length} · no profile ${none}`)
+	for (const m of misses) console.log(`  wrong: ${m}`)
 }
 
-/* Strum detector candidates, tried on this recording: a jump in the energy of the
-   newest samples over the quietest of the last LOOK ms and over the frame before,
-   then nothing for REFRACTORY ms (a plain refractory, not one that a sustained rise keeps extending). */
+/* In time by sound alone, as changes.session.ts place() does: each strum's profile (frames with pitch) picks
+   the drill's chord (Changes.drillChord); a change is a strum of a chord other than the one ringing, unless a
+   strum LOUDER× as loud follows within LOUDER_MS (not where the mic hears a click, CLICK=louder), or one within
+   BETTER_MS reads the same chord with BETTER more share. Clicks: the log's beats after the count-in, 22 ± 15 ms
+   on (the session also knows the count-in's). Judged against the real strums. */
+if (slots.length) {
+	const louder = Number(process.env.LOUDER ?? 3)
+	const louderMs = Number(process.env.LOUDER_MS ?? 300)
+	const better = Number(process.env.BETTER ?? 0.1)
+	const betterMs = Number(process.env.BETTER_MS ?? 700)
+	const clickAt = beats.map((b) => b + offset.x + 22)
+	const isClick = (t: number) => process.env.CLICK !== 'off' && clickAt.some((c) => Math.abs(t - c) <= 15)
+	const chordAt = (t: number) => drillChord(profileAfter(t, true), sequence)
+	const shareAt = (t: number, chord: string) => {
+		const p = profileAfter(t, true)
+		return p ? chordShare(p, chord) : 0
+	}
+	let playing: string | null = null
+	const changes: { at: number; chord: string }[] = []
+	for (const t of appStrums) {
+		const chord = chordAt(t)
+		if (!chord || chord === playing) continue
+		if (appStrums.some((u) => u > t && u <= t + louderMs && !isClick(u) && loud(u) >= louder * loud(t))) continue
+		const mine = shareAt(t, chord)
+		if (appStrums.some((u) => u > t && u <= t + betterMs && chordAt(u) === chord && shareAt(u, chord) >= mine + better)) continue
+		changes.push({ at: t, chord })
+		playing = chord
+	}
+	const errors: (number | null)[] = []
+	// As the player sees it: the change for each downbeat, ms off its click (hit within ±200 at these tempos).
+	const fromClick: (number | null)[] = []
+	for (const slot of slots) {
+		const click = toAudio(slot.downbeat as number)
+		const truth = nearestStrum(click)
+		const change = changes.find((c) => c.chord === slot.target && Math.abs(c.at - click) < 1200)
+		fromClick.push(change ? Math.round(change.at - click) : null)
+		if (truth === undefined) continue
+		errors.push(change ? Math.round(change.at - truth) : null)
+	}
+	const hits = fromClick.filter((d) => d !== null && Math.abs(d) <= 200).length
+	console.log(`by sound, from the click: ${hits} of ${fromClick.length} within ±200 ms · ${fromClick.map((d) => (d === null ? '–' : d)).join(' ')}`)
+	const off = errors.filter((e) => e === null || Math.abs(e) > 60).length
+	console.log(`\nby sound alone: ${off} of ${errors.length} changes more than 60 ms off or not found: ${errors.map((e) => (e === null ? '–' : e)).join(' ')}`)
+}
+
+/* TUNE: strum detector candidates, tried on this recording: a jump in the energy of the newest samples over
+   the quietest of the last LOOK ms and over the frame before, then nothing for REFRACTORY ms. */
 if (process.env.TUNE) {
 	for (const look of [60, 100]) {
 		for (const rise of [2, 3, 4, 6, 10]) {
 			for (const refractory of [80, 120]) {
 				const fired: number[] = []
 				let last = Number.NEGATIVE_INFINITY
-				for (let i = 1; i < newest.length; i++) {
-					const { at, energy } = newest[i]
+				for (let i = 1; i < frames.length; i++) {
+					const { at, energy } = frames[i]
 					let quietest = Infinity
-					for (let j = i - 1; j >= 0 && newest[j].at >= at - look; j--) quietest = Math.min(quietest, newest[j].energy)
-					if (energy > rise * quietest && energy > 1.3 * newest[i - 1].energy && at - last >= refractory) {
+					for (let j = i - 1; j >= 0 && frames[j].at >= at - look; j--) quietest = Math.min(quietest, frames[j].energy)
+					if (energy > rise * quietest && energy > 1.3 * frames[i - 1].energy && at - last >= refractory) {
 						fired.push(at)
 						last = at
 					}
@@ -272,159 +266,16 @@ if (process.env.TUNE) {
 	}
 }
 
-/* Each real strum by its sound alone: the drill's chord its profile 40–200 ms on favours, against the chord due. */
-if (slots.length) {
-	const sequence = report.settings.changesChords as string[]
-	const profile = (t: number, from = 40, to = 200) => {
-		const near = frames.filter((f) => f.chroma && f.at >= t + from && f.at <= t + to)
-		if (!near.length) return null
-		const mean = new Float32Array(12)
-		for (const f of near) for (let i = 0; i < 12; i++) mean[i] += f.chroma![i] / near.length
-		return mean
-	}
-	let right = 0
-	let wrong = 0
-	let none = 0
-	const misses: string[] = []
-	for (const slot of slots) {
-		const click = (slot.downbeat as number) - report.recordStartedAt + offset.x
-		const truth = strums.filter((s) => Math.abs(s - click) < 400).sort((a, b) => Math.abs(a - click) - Math.abs(b - click))[0]
-		if (truth === undefined) continue
-		const p = profile(truth)
-		if (!p) {
-			none++
-			continue
-		}
-		const shares = sequence.map((c) => chordShare(p, c))
-		const best = sequence[shares.indexOf(Math.max(...shares))]
-		if (best === slot.target) right++
-		else {
-			wrong++
-			misses.push(`${slot.target}: ${sequence.map((c, i) => `${c} ${shares[i].toFixed(2)}`).join(' ')}`)
-		}
-	}
-	console.log(`
-the chord due, by each change strum's profile alone: right ${right} · wrong ${wrong} · no profile ${none}`)
-	for (const m of misses) console.log(`  wrong: ${m}`)
-}
-
-/* How chord-like the strum detector's fires are: the drill chord's share (best) and the top three pitch classes' share. */
-if (slots.length) {
-	const sequence = report.settings.changesChords as string[]
-	const profileOf = (t: number) => {
-		const near = frames.filter((f) => f.chroma && f.at >= t + 40 && f.at <= t + 200)
-		if (!near.length) return null
-		const mean = new Float32Array(12)
-		for (const f of near) for (let i = 0; i < 12; i++) mean[i] += f.chroma![i] / near.length
-		return mean
-	}
-	const describe = (t: number) => {
-		const p = profileOf(t)
-		if (!p) return null
-		const best = Math.max(...sequence.map((c) => chordShare(p, c)))
-		const top3 = [...p]
-			.sort((a, b) => b - a)
-			.slice(0, 3)
-			.reduce((a, b) => a + b, 0)
-		return { best, top3 }
-	}
-	const real = appStrums
-		.filter((t) => strums.some((s) => Math.abs(t - s) < 60))
-		.map(describe)
-		.filter((d) => d !== null)
-	const stray = appStrums
-		.filter((t) => !strums.some((s) => t >= s - 100 && t <= s + 300))
-		.map(describe)
-		.filter((d) => d !== null)
-	const q = (v: number[]) => {
-		const s = [...v].sort((a, b) => a - b)
-		const at = (p: number) => s[Math.min(s.length - 1, Math.floor(p * s.length))]
-		return s.length ? `min ${at(0).toFixed(2)} · 10% ${at(0.1).toFixed(2)} · median ${at(0.5).toFixed(2)} · max ${at(0.999).toFixed(2)}` : '–'
-	}
-	console.log(`
-real strums (${real.length}): drill chord share ${q(real.map((d) => d.best))} | top-3 share ${q(real.map((d) => d.top3))}`)
-	console.log(`stray fires (${stray.length}): drill chord share ${q(stray.map((d) => d.best))} | top-3 share ${q(stray.map((d) => d.top3))}`)
-}
-
-/* In time by sound alone (no recognizer): each strum's profile 40–200 ms on (frames flatter than
-   FLAT left out) picks the drill's chord; a change is a strum of a chord other than the one ringing,
-   unless a strum 3× as loud follows within 300 ms (then that one); the clicks heard are no strums.
-   As changes.session.ts does; judged against the real strums. */
-if (slots.length) {
-	const sequence = report.settings.changesChords as string[]
-	const tonal = frames.filter((f) => f.chroma && f.flatness !== null && f.flatness < 0.25)
-	const profileAt = (t: number) => {
-		const near = tonal.filter((f) => f.at >= t + 40 && f.at <= t + 200)
-		if (!near.length) return null
-		const mean = new Float32Array(12)
-		for (const f of near) for (let i = 0; i < 12; i++) mean[i] += f.chroma![i] / near.length
-		return mean
-	}
-	const shareAt = (t: number, chord: string) => {
-		const p = profileAt(t)
-		return p ? chordShare(p, chord) : 0
-	}
-	const chordAt = (t: number) => {
-		const p = profileAt(t)
-		if (!p) return null
-		const shares = sequence.map((c) => chordShare(p, c))
-		const best = Math.max(...shares)
-		return shares.filter((x) => x === best).length === 1 ? sequence[shares.indexOf(best)] : null
-	}
-	const loud = (t: number) => Math.max(0, ...frames.filter((f) => f.at >= t && f.at <= t + 80).map((f) => f.volume))
-	// CLICK=mask: strums where the mic hears a click are left out; louder: they never take a change as the louder one; off (default): as any strum.
-	const clickMode = process.env.CLICK ?? 'off'
-	const clickAt = beats.map((b) => b + offset.x + 22)
-	const isClick = (t: number) => clickMode !== 'off' && clickAt.some((c) => Math.abs(t - c) <= 15)
-	const heard = clickMode === 'mask' ? appStrums.filter((t) => !isClick(t)) : appStrums
-	// NEXT=1: a change only to the chord after the one ringing. BETTER=m: a strum within BETTER_MS sounding m more like the chord takes it.
-	const better = process.env.BETTER ? Number(process.env.BETTER) : null
-	const betterMs = Number(process.env.BETTER_MS ?? 700)
-	let playing: string | null = null
-	const changes: { at: number; chord: string }[] = []
-	for (const t of heard) {
-		const chord = chordAt(t)
-		if (!chord || chord === playing) continue
-		if (process.env.NEXT && playing !== null && chord !== sequence[(sequence.indexOf(playing) + 1) % sequence.length]) continue
-		if (
-			process.env.LOUDER !== 'off' &&
-			heard.some((u) => u > t && u <= t + Number(process.env.LOUDER_MS ?? 300) && !isClick(u) && loud(u) >= Number(process.env.LOUDER ?? 3) * loud(t))
-		)
-			continue
-		if (better !== null && heard.some((u) => u > t && u <= t + betterMs && chordAt(u) === chord && shareAt(u, chord) >= shareAt(t, chord) + better)) continue
-		changes.push({ at: t, chord })
-		playing = chord
-	}
-	const errors: (number | null)[] = []
-	// As the player sees it: the change for each downbeat, ms off its click (hit within ±200 at these tempos).
-	const fromClick: (number | null)[] = []
-	for (const slot of slots) {
-		const click = (slot.downbeat as number) - report.recordStartedAt + offset.x
-		const truth = strums.filter((s) => Math.abs(s - click) < 400).sort((a, b) => Math.abs(a - click) - Math.abs(b - click))[0]
-		const change = changes.find((c) => c.chord === slot.target && Math.abs(c.at - click) < 1200)
-		fromClick.push(change ? Math.round(change.at - click) : null)
-		if (truth === undefined) continue
-		errors.push(change ? Math.round(change.at - truth) : null)
-	}
-	const hits = fromClick.filter((d) => d !== null && Math.abs(d) <= 200).length
-	console.log(`by sound, from the click: ${hits} of ${fromClick.length} within ±200 ms · ${fromClick.map((d) => (d === null ? '–' : d)).join(' ')}`)
-	const off = errors.filter((e) => e === null || Math.abs(e) > 60).length
-	console.log(`
-by sound alone: ${off} of ${errors.length} changes more than 60 ms off or not found: ${errors.map((e) => (e === null ? '–' : e)).join(' ')}`)
-}
-
-/* The mean profile of each chord as played (strums from its downbeat to the next one), to see whether they differ at all. */
+/* PROFILES: the mean profile of each chord as played (strums from its downbeat to the next one), to see whether they differ at all. */
 if (slots.length && process.env.PROFILES) {
 	const names = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']
 	const byChord = new Map<string, Float32Array[]>()
 	slots.forEach((slot, i) => {
-		const from = (slot.downbeat as number) - report.recordStartedAt + offset.x - 200
-		const to = slots[i + 1] ? (slots[i + 1].downbeat as number) - report.recordStartedAt + offset.x - 200 : from + 2000
+		const from = toAudio(slot.downbeat as number) - 200
+		const to = slots[i + 1] ? toAudio(slots[i + 1].downbeat as number) - 200 : from + 2000
 		for (const t of strums.filter((s) => s >= from && s < to)) {
-			const near = frames.filter((f) => f.chroma && f.at >= t + 40 && f.at <= t + 200)
-			if (!near.length) continue
-			const m = new Float32Array(12)
-			for (const f of near) for (let k = 0; k < 12; k++) m[k] += f.chroma![k]
+			const m = profileAfter(t)
+			if (!m) continue
 			const sum = m.reduce((a, b) => a + b, 0)
 			for (let k = 0; k < 12; k++) m[k] /= sum
 			const list = byChord.get(slot.target as string) ?? []
@@ -439,106 +290,53 @@ if (slots.length && process.env.PROFILES) {
 	}
 }
 
-{
-	const sorted = [...cents].sort((a, b) => a - b)
-	const at = (p: number) => sorted[Math.floor(p * (sorted.length - 1))]?.toFixed(0)
-	const bins = new Array(10).fill(0)
-	for (const c of cents) bins[Math.min(9, Math.floor((c + 50) / 10))]++
-	if (process.env.HIST) console.log(`cents −50…+50 by 10: ${bins.join(' ')}`)
-	console.log(`
-tuning: ${cents.length} pitched frames, cents off the nearest semitone (A4 ${report.settings.a4}) 25/50/75%: ${at(0.25)} / ${at(0.5)} / ${at(0.75)}`)
-}
-
-/* DUMP: every app strum with its offset from the nearest click, level and drill-chord shares. */
+/* DUMP: the first n app strums with their offset from the nearest click, level and drill-chord shares. */
 if (slots.length && process.env.DUMP) {
-	const sequence = report.settings.changesChords as string[]
 	const clicks = beats.map((b) => b + offset.x)
-	const downs = new Map(slots.map((s) => [Math.round((s.downbeat as number) - report.recordStartedAt + offset.x), s.target as string]))
+	const downs = new Map(slots.map((s) => [Math.round(toAudio(s.downbeat as number)), s.target as string]))
 	for (const t of appStrums.slice(0, Number(process.env.DUMP))) {
-		const near = frames.filter((f) => f.chroma && f.flatness !== null && f.flatness < 0.25 && f.at >= t + 40 && f.at <= t + 200)
-		const m = new Float32Array(12)
-		for (const f of near) for (let i = 0; i < 12; i++) m[i] += f.chroma![i] / near.length
+		const m = profileAfter(t, true)
 		const click = clicks.reduce((a, b) => (Math.abs(b - t) < Math.abs(a - t) ? b : a))
 		const due = downs.get(Math.round(click))
-		const level = Math.max(0, ...frames.filter((f) => f.at >= t && f.at <= t + 80).map((f) => f.volume))
 		console.log(
-			`${(t / 1000).toFixed(2).padStart(6)}s ${String(Math.round(t - click)).padStart(5)} ms ${due ? `▼${due.padEnd(3)}` : '    '} lvl ${level.toFixed(4)} flat ${near.length ? '' : 'none'} ${sequence.map((c) => `${c} ${near.length ? chordShare(m, c).toFixed(2) : '-'}`).join(' ')}`
+			`${(t / 1000).toFixed(2).padStart(6)}s ${String(Math.round(t - click)).padStart(5)} ms ${due ? `▼${due.padEnd(3)}` : '    '} lvl ${loud(t).toFixed(4)} flat ${m ? '' : 'none'} ${sequence.map((c) => `${c} ${m ? chordShare(m, c).toFixed(2) : '-'}`).join(' ')}`
 		)
 	}
 }
 
-/* FLOOR: each strum's newest energy over the room's (10th percentile of the 3 s before), real strums against stray fires. */
-if (process.env.FLOOR) {
-	const room = (t: number) => {
-		const e = newest
-			.filter((n) => n.at >= t - 3000 && n.at < t - 100)
-			.map((n) => n.energy)
-			.sort((a, b) => a - b)
-		return e.length ? e[Math.floor(e.length * 0.1)] : Number.NaN
-	}
-	const ratio = (t: number) => (newest.find((n) => n.at === t)?.energy ?? Number.NaN) / room(t)
-	const real = appStrums.filter((t) => strums.some((s) => Math.abs(t - s) < 60)).map(ratio)
-	const stray = appStrums.filter((t) => !strums.some((s) => t >= s - 100 && t <= s + 300)).map(ratio)
-	const q = (v: number[]) => {
-		const s = v.filter((x) => Number.isFinite(x)).sort((a, b) => a - b)
-		return s.length ? `min ${s[0].toFixed(0)} · 5% ${s[Math.floor(s.length * 0.05)].toFixed(0)} · median ${s[s.length >> 1].toFixed(0)}` : '–'
-	}
-	console.log(
-		`\nstrum energy over the room's: real (${real.length}) ${q(real)} | stray (${stray.length}) ${q(stray)} · room ${room(newest.at(-1)!.at).toExponential(1)}`
-	)
-}
-
-/* NOISE: each strum's newest energy over the mic's learned noise floor (squared), real strums against stray fires. */
+/* NOISE: how loud the sound still is AFTER ms on over the noise floor (Tab.createHeldGate's measure): a strum rings, a noise spike does not. */
 if (process.env.NOISE) {
-	const over = (t: number) => {
-		const e = newest.find((n) => n.at === t)?.energy ?? Number.NaN
-		const f = floors.find((n) => n.at === t)?.floor ?? Number.NaN
-		return e / (f * f)
-	}
-	const real = appStrums.filter((t) => strums.some((s) => Math.abs(t - s) < 60)).map(over)
-	const sorted = real.filter(Number.isFinite).sort((a, b) => a - b)
-	// How loud the sound still is AFTER ms on (frame RMS over the floor): a strum rings, a noise spike does not.
 	const after = Number(process.env.AFTER ?? 100)
-	const held = (t: number) => {
-		const f = frames.find((x) => x.at >= t + after)
-		const n = floors.find((x) => x.at === t)?.floor ?? Number.NaN
-		return f ? f.volume / n : Number.NaN
-	}
+	const lowest = (v: number[], n: number) =>
+		v
+			.slice(0, n)
+			.map((x) => x.toFixed(1))
+			.join(' ')
 	const ring = appStrums
 		.filter((t) => strums.some((s) => Math.abs(t - s) < 60))
-		.map(held)
+		.map((t) => heldOver(t, after))
 		.filter(Number.isFinite)
 		.sort((a, b) => a - b)
-	console.log(
-		`level ${after} ms on over the floor: real (${ring.length}) lowest 5: ${ring
-			.slice(0, 5)
-			.map((x) => x.toFixed(1))
-			.join(' ')} · median ${ring[ring.length >> 1]?.toFixed(0)}`
-	)
-	console.log(`
-strum energy over the noise floor²: real (${sorted.length}) min ${sorted[0]?.toFixed(1)} · 5% ${sorted[Math.floor(sorted.length * 0.05)]?.toFixed(1)} · 10% ${sorted[Math.floor(sorted.length * 0.1)]?.toFixed(1)} · median ${sorted[sorted.length >> 1]?.toFixed(0)} · lowest 5: ${sorted
-		.slice(0, 5)
-		.map((x) => x.toFixed(1))
-		.join(' ')}`)
+	console.log(`\nlevel ${after} ms on over the floor: real (${ring.length}) lowest 5: ${lowest(ring, 5)} · median ${ring[ring.length >> 1]?.toFixed(0)}`)
+	// A Tab report: the picks nearest each note due.
+	const dues = report.entries.filter((e) => e.kind === 'due').map((e) => toAudio(e.at as number))
+	if (dues.length) {
+		const notes = dues
+			.map((d) => picks.filter((p) => Math.abs(p - d) <= 150).sort((a, b) => Math.abs(a - d) - Math.abs(b - d))[0])
+			.filter((p) => p !== undefined)
+			.map((p) => heldOver(p, after))
+			.filter(Number.isFinite)
+			.sort((a, b) => a - b)
+		console.log(
+			`tab: picks by the notes due (${notes.length} of ${dues.length}), level ${after} ms on over the floor, lowest 8: ${lowest(notes, 8)} · median ${notes[notes.length >> 1]?.toFixed(1)}`
+		)
+	}
 }
 
-/* NOISE on a Tab report: the picks nearest each note due, and how loud their sound still is 80 ms on over the floor. */
-if (process.env.NOISE && report.entries.some((e) => e.kind === 'due')) {
-	const dues = report.entries.filter((e) => e.kind === 'due').map((e) => (e.at as number) - report.recordStartedAt + offset.x)
-	const held = dues
-		.map((d) => picks.filter((p) => Math.abs(p - d) <= 150).sort((a, b) => Math.abs(a - d) - Math.abs(b - d))[0])
-		.filter((p) => p !== undefined)
-		.map((p) => {
-			const f = frames.find((x) => x.at >= p + 80)
-			const n = floors.find((x) => x.at === p)?.floor ?? Number.NaN
-			return f ? f.volume / n : Number.NaN
-		})
-		.filter(Number.isFinite)
-		.sort((a, b) => a - b)
+{
+	const sorted = [...cents].sort((a, b) => a - b)
+	const at = (p: number) => sorted[Math.floor(p * (sorted.length - 1))]?.toFixed(0)
 	console.log(
-		`tab: picks by the notes due (${held.length} of ${dues.length}), level 80 ms on over the floor, lowest 8: ${held
-			.slice(0, 8)
-			.map((x) => x.toFixed(1))
-			.join(' ')} · median ${held[held.length >> 1]?.toFixed(1)}`
+		`\ntuning: ${cents.length} pitched frames, cents off the nearest semitone (A4 ${report.settings.a4}) 25/50/75%: ${at(0.25)} / ${at(0.5)} / ${at(0.75)}`
 	)
 }
