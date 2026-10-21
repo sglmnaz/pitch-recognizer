@@ -131,6 +131,8 @@ export const it: Dictionary = {
 	'Chord size': 'Tipo di accordi',
 	Triads: 'Triadi',
 	'7ths': 'Settime',
+	'Triad: 3 notes, the 1st, 3rd and 5th from each degree. 7th: the same plus the 7th, 4 notes.':
+		'Triade: 3 note, la 1ª, la 3ª e la 5ª da ogni grado. Settima: la stessa più la 7ª, 4 note.',
 	'Chords of the scale, tap to hear and show': 'Accordi della scala, tocca per sentirli e vederli',
 	'▶ Strum': '▶ Suona',
 	'Open in Chords': 'Apri in Accordi',

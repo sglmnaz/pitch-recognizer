@@ -12,7 +12,8 @@ import { chordSource, keyName, keyOf, progressionsFor, resolveProgression, scale
 import { pitchClassOf, ROOTS, scaleTitle, spellScale, type ScaleType } from '../../music/scales'
 import { shapeNotes } from '../../music/chord-library'
 import { OPEN_CHORD_EVENT } from '../../ui/events'
-import { bindSegmented, liveRegion, scoped, setPressed } from '../../ui/dom'
+import { liveRegion, scoped, setPressed } from '../../ui/dom'
+import { clamp } from '../../core/math'
 import { createCircle } from './circle'
 import { createProgressionPlayer } from './progression-player'
 import { noteName } from '../../music/note-names'
@@ -20,6 +21,10 @@ import { t } from '../../core/i18n'
 
 // A strum: low string to high, this far apart (a quick downstroke).
 const STRUM_S = 0.025
+
+// The transport key's legend: ▶ while stopped, ■ while it plays.
+const PLAY_ICON = '<svg viewBox="0 0 12 14" aria-hidden="true"><path d="M1 1 11 7 1 13Z" fill="currentColor"/></svg>'
+const STOP_ICON = '<svg viewBox="0 0 12 12" aria-hidden="true"><rect x="1" y="1" width="10" height="10" fill="currentColor"/></svg>'
 
 type Pane = 'chords' | 'progressions' | 'circle'
 
@@ -54,7 +59,7 @@ export function createHarmony(root: HTMLElement, host: HarmonyHost) {
 	const { $$ } = scoped(section)
 	const paneButtons = $$<HTMLButtonElement>('[data-pane]')
 	const panes = $$('[data-pane-body]')
-	const sizeGroup = $('.harmony__size')
+	const sizeSwitch = $<HTMLInputElement>('[data-action="sevenths"]')
 	const chordsNote = $<HTMLElement>('.harmony__note--chords')
 	const chordRow = $<HTMLElement>('.harmony-chords')
 	const detail = $<HTMLElement>('.chord-detail')
@@ -83,6 +88,11 @@ export function createHarmony(root: HTMLElement, host: HarmonyHost) {
 	let chordsKey = ''
 	let progKey = ''
 	let progKeyName = ''
+	// Each progression's chords, and the step tapped to hear it alone: its
+	// lamp stays lit (and the neck shows it) while it rings.
+	let progChords: KeyChord[][] = []
+	let preview: { index: number; bar: number } | null = null
+	let previewTimer = 0
 
 	/* Controls ------------------------------------------------------------ */
 	paneButtons.forEach((button) =>
@@ -91,11 +101,14 @@ export function createHarmony(root: HTMLElement, host: HarmonyHost) {
 			// Playback belongs to the Progressions pane; the tapped chord lights
 			// the neck only while the Chords pane shows.
 			if (pane !== 'progressions') stop(false, t('Stopped'))
+			endPreview()
 			host.redraw()
 		})
 	)
-	const showSize = bindSegmented(sizeGroup, 'data-chord-view', (value) => Settings.update({ chordView: value as Settings.Settings['chordView'] }))
+	sizeSwitch.addEventListener('change', () => Settings.update({ chordView: sizeSwitch.checked ? 'sevenths' : 'triads' }))
 	loopSwitch.addEventListener('change', () => Settings.update({ progressionLoop: loopSwitch.checked }))
+	for (const button of $$<HTMLButtonElement>('[data-bpm]'))
+		button.addEventListener('click', () => Settings.update({ progressionBpm: clamp(Settings.get().progressionBpm + Number(button.dataset.bpm), 60, 140) }))
 	$<HTMLButtonElement>('[data-action="strum"]').addEventListener('click', () => {
 		if (selected === null) return
 		Sound.stopAll()
@@ -146,6 +159,26 @@ export function createHarmony(root: HTMLElement, host: HarmonyHost) {
 	})
 	const stop = player.stop
 
+	/** Plays one bar of a progression on its own; a progression playing stops. */
+	function previewBar(index: number, bar: number) {
+		stop()
+		Sound.stopAll()
+		strum(progChords[index][bar])
+		preview = { index, bar }
+		clearTimeout(previewTimer)
+		previewTimer = window.setTimeout(() => {
+			endPreview()
+			host.redraw()
+		}, Sound.NOTE_MS)
+		host.redraw()
+	}
+
+	function endPreview() {
+		clearTimeout(previewTimer)
+		preview = null
+		syncProgressions()
+	}
+
 	/* Chords -------------------------------------------------------------- */
 	function renderChords(rootPc: number, type: ScaleType) {
 		const { chordView } = Settings.get()
@@ -190,7 +223,7 @@ export function createHarmony(root: HTMLElement, host: HarmonyHost) {
 				})
 		}
 		setPressed(Array.from(chordRow.children), (_, i) => i === selected)
-		showSize(chordView)
+		sizeSwitch.checked = chordView === 'sevenths'
 
 		detail.hidden = selected === null
 		if (selected === null) return
@@ -212,47 +245,59 @@ export function createHarmony(root: HTMLElement, host: HarmonyHost) {
 		const key = `${rootPc}|${type.name}`
 		if (key !== progKey) {
 			stop()
+			endPreview()
 			progKey = key
 			// 'A minor'; a mode: 'G Mixolydian' (the 12-bar blues is in G, not C).
 			progKeyName = keyName(rootPc, type, noteName).split(/,| · /)[0]
+			const progressions = progressionsFor(type)
+			progChords = progressions.map((progression) => resolveProgression(progression, rootPc))
 			progList.replaceChildren(
-				...progressionsFor(type).map((progression, index) => {
-					const list = resolveProgression(progression, rootPc)
+				...progressions.map((progression, index) => {
+					const list = progChords[index]
 					const item = document.createElement('li')
 					item.className = 'progression'
-					const head = document.createElement('div')
-					head.className = 'progression__head'
 					const name = document.createElement('span')
 					name.className = 'progression__name'
 					name.textContent = t(progression.name)
+					// A step sequencer: the transport key at the head of the row, then
+					// one small key per bar with its lamp in the cap and the degree
+					// printed under it. A step plays its chord alone.
+					const row = document.createElement('div')
+					row.className = 'progression__row'
 					const button = document.createElement('button')
 					button.type = 'button'
 					button.className = 'key progression__play'
 					button.dataset.feedback = 'none'
-					button.addEventListener('click', () => (player.playing()?.index === index ? stop(true, t('Stopped')) : player.play(index, list, t(progression.name))))
-					head.append(name, button)
-					// A step sequencer: one key per bar, its lamp lit while the bar plays.
-					const row = document.createElement('ol')
-					row.className = 'progression__chords'
-					row.setAttribute('aria-label', list.map((c) => noteName(c.symbol)).join(', '))
-					row.append(
-						...list.map((chord) => {
+					button.addEventListener('click', () => (player.playing()?.index === index ? stop(true, t('Stopped')) : play(index, list, t(progression.name))))
+					const steps = document.createElement('ol')
+					steps.className = 'progression__chords'
+					steps.setAttribute('aria-label', list.map((c) => noteName(c.symbol)).join(', '))
+					steps.append(
+						...list.map((chord, bar) => {
 							const li = document.createElement('li')
-							li.className = 'progression__bar'
 							li.innerHTML =
-								'<span class="lamp"></span><span class="key progression__chord"><span class="harmony-chord__numeral"></span><span class="harmony-chord__symbol"></span></span>'
-							const key = li.children[1]
-							key.children[0].textContent = chord.numeral
-							key.children[1].textContent = noteName(chord.symbol)
+								'<button type="button" class="progression__step" data-feedback="none"><span class="key progression__chord"><span class="lamp"></span><span></span></span><span class="progression__numeral"></span></button>'
+							const step = li.firstElementChild as HTMLButtonElement
+							step.querySelector('.progression__chord')!.lastElementChild!.textContent = noteName(chord.symbol)
+							step.lastElementChild!.textContent = chord.numeral
+							// Starts with the visible text (voice control), then says it in words.
+							step.setAttribute('aria-label', `${noteName(chord.symbol)} ${chord.numeral}, ${noteName(chord.root)} ${t(chord.type.name)}`)
+							step.addEventListener('click', () => previewBar(index, bar))
 							return li
 						})
 					)
-					item.append(head, row)
+					row.append(button, steps)
+					item.append(name, row)
 					return item
 				})
 			)
 		}
 		syncProgressions()
+	}
+
+	function play(index: number, list: KeyChord[], name: string) {
+		endPreview()
+		player.play(index, list, name)
 	}
 
 	function syncProgressions() {
@@ -265,16 +310,18 @@ export function createHarmony(root: HTMLElement, host: HarmonyHost) {
 			const on = playing?.index === index
 			const button = item.querySelector<HTMLButtonElement>('.progression__play')!
 			const name = item.querySelector('.progression__name')!.textContent
-			button.textContent = on ? t('■ Stop') : t('▶ Play')
-			// Like a tape deck's transport key: down while it plays.
+			button.innerHTML = on ? STOP_ICON : PLAY_ICON
+			// Like a tape deck's transport key: down and lit while it plays.
 			button.classList.toggle('is-down', on)
+			button.classList.toggle('key--lit', on)
 			button.setAttribute('aria-label', on ? t('Stop {name}', { name }) : t('Play {name}', { name }))
-			item.querySelectorAll('.progression__bar').forEach((bar, i) => {
-				const now = on && i === playing!.bar - 1
-				bar.firstElementChild!.classList.toggle('is-on', now)
-				bar.lastElementChild!.classList.toggle('is-down', now)
-				if (now) bar.setAttribute('aria-current', 'true')
-				else bar.removeAttribute('aria-current')
+			item.querySelectorAll('.progression__step').forEach((step, bar) => {
+				const now = on ? bar === playing!.bar - 1 : preview?.index === index && preview.bar === bar
+				const cap = step.firstElementChild!
+				cap.classList.toggle('is-down', now)
+				cap.firstElementChild!.classList.toggle('is-on', now)
+				if (now && on) step.setAttribute('aria-current', 'true')
+				else step.removeAttribute('aria-current')
 			})
 		})
 	}
@@ -339,11 +386,12 @@ export function createHarmony(root: HTMLElement, host: HarmonyHost) {
 		},
 		/** A progression is sounding: the Scales view's mic ignores what it hears. */
 		playing: () => player.playing() !== null,
-		/** The chord to light on the neck: the bar playing, else the one tapped. */
+		/** The chord to light on the neck: the bar playing or the step ringing, else the one tapped. */
 		chord(): KeyChord | null {
 			if (state?.mode !== 'explore') return null
 			const playing = player.playing()
 			if (playing) return playing.chords[playing.bar - 1] ?? null
+			if (preview) return progChords[preview.index]?.[preview.bar] ?? null
 			return selected === null || shownPane !== 'chords' ? null : (chords[selected] ?? null)
 		},
 		stop,

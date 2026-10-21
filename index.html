@@ -588,11 +588,15 @@
 				<div class="harmony__pane" data-pane-body="chords">
 					<div class="harmony__bar">
 						<span class="harmony__title">Chords of the scale</span>
-						<div class="segmented segmented--small harmony__size" role="group" aria-label="Chord size">
-							<button type="button" data-chord-view="triads">Triads</button>
-							<button type="button" data-chord-view="sevenths">7ths</button>
-						</div>
+						<!-- Triads or sevenths: a slide switch, the two names printed either side. -->
+						<label class="switch switch--slide harmony__size">
+							<span class="silk">Triads</span>
+							<input type="checkbox" class="switch__input" data-action="sevenths" aria-label="Sevenths" />
+							<span class="switch__track"></span>
+							<span class="silk">7ths</span>
+						</label>
 					</div>
+					<p class="harmony__note">Triad: 3 notes, the 1st, 3rd and 5th from each degree. 7th: the same plus the 7th, 4 notes.</p>
 					<p class="harmony__note harmony__note--chords" hidden></p>
 					<div class="harmony-chords" role="group" aria-label="Chords of the scale, tap to hear and show"></div>
 					<div class="chord-detail" hidden>
@@ -611,14 +615,22 @@
 				</div>
 
 				<div class="harmony__pane" data-pane-body="progressions" hidden>
+					<!-- The key and Loop (a slide switch), then Tempo as in Trainer → Tab (▼ LCD ▲). -->
 					<div class="harmony__bar">
 						<span class="harmony__note harmony__note--progressions"></span>
-						<span class="window"><span class="lcd harmony__bpm"></span></span>
-						<label class="switch harmony__loop" title="Start over at the end">
-							<span class="switch__text"><span class="switch__title">Loop</span></span>
-							<input type="checkbox" class="switch__input" data-action="loop" />
+						<label class="switch switch--slide harmony__loop" title="Start over at the end">
+							<span class="silk">Loop</span>
+							<input type="checkbox" class="switch__input" data-action="loop" aria-label="Loop" />
 							<span class="switch__track"></span>
 						</label>
+					</div>
+					<div class="harmony__bar">
+						<span class="silk" id="progTempoLabel">Tempo</span>
+						<div class="changes-stepper" role="group" aria-labelledby="progTempoLabel">
+							<button class="key key--step" type="button" data-bpm="-5" aria-label="5 BPM slower">▼</button>
+							<span class="window"><span class="lcd harmony__bpm"></span></span>
+							<button class="key key--step" type="button" data-bpm="5" aria-label="5 BPM faster">▲</button>
+						</div>
 					</div>
 					<ul class="progressions"></ul>
 				</div>
@@ -1517,7 +1529,8 @@
 		<h3>Chords, progressions, circle</h3>
 		<ul>
 			<li><b>Chords</b>: the chords built on each degree, with roman numerals. Tap one to hear it and see its notes on the neck.</li>
-			<li><b>Progressions</b>: common progressions in this key. Play and Loop; the tempo is in Settings → Scales.</li>
+			<li><b>Chords</b> shows triads (3 notes: 1st, 3rd, 5th) or 7ths (4 notes, the 7th added): switch with Triads ⟷ 7ths.</li>
+			<li><b>Progressions</b>: common progressions in this key. ▶ plays one, ■ stops it; tap a chord to hear it alone. Tempo ▼ ▲ and Loop sit above the list.</li>
 			<li><b>Circle</b>: the circle of fifths. Tap a key to switch to it.</li>
 		</ul>
 		<h3>Identify</h3>
@@ -1648,7 +1661,8 @@
 		<h3>Accordi, progressioni, cerchio</h3>
 		<ul>
 			<li><b>Accordi</b>: gli accordi costruiti su ogni grado, con i numeri romani. Toccane uno per sentirlo e vederne le note sul manico.</li>
-			<li><b>Progressioni</b>: progressioni comuni in questa tonalità. Suona e Loop; il tempo è in Impostazioni → Scale.</li>
+			<li><b>Accordi</b> mostra le triadi (3 note: 1ª, 3ª, 5ª) o le settime (4 note, con la 7ª): si cambia con Triadi ⟷ Settime.</li>
+			<li><b>Progressioni</b>: progressioni comuni in questa tonalità. ▶ ne suona una, ■ la ferma; tocca un accordo per sentirlo da solo. Tempo ▼ ▲ e Loop stanno sopra l'elenco.</li>
 			<li><b>Cerchio</b>: il circolo delle quinte. Tocca una tonalità per passare a quella.</li>
 		</ul>
 		<h3>Identifica</h3>

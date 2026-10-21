@@ -366,12 +366,9 @@
 	flex: 1;
 }
 
-.harmony__size > button {
-	min-width: 56px;
-
-	@media (max-width: 600px) {
-		min-height: var(--tap);
-	}
+.harmony__size,
+.harmony__loop {
+	padding: 0;
 }
 
 .harmony__note {
@@ -392,8 +389,7 @@
 	}
 }
 
-.harmony-chord,
-.progression__chord {
+.harmony-chord {
 	flex-direction: column;
 	gap: 3px;
 	padding-inline: var(--space-4);
@@ -498,22 +494,20 @@
 	font-size: var(--text-lg);
 }
 
-/* Progressions: a step sequencer each, one key per bar with a lamp above
-   that lights on the bar playing; BPM and Loop over the list. */
+/* Progressions: a step sequencer each, the transport key at the head of
+   the row, then one small key per bar with its lamp in the cap (lit on the
+   bar playing or the step ringing) and the degree printed under it; Tempo
+   (▼ LCD ▲, as in Trainer → Tab) and Loop over the list. */
 .harmony__bpm {
-	padding: 5px 10px;
+	min-width: 76px;
 	font-size: var(--text-md);
-}
-
-.harmony__loop {
-	gap: var(--space-8);
-	padding: 0;
+	text-align: center;
 }
 
 .progressions {
 	display: grid;
-	grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-	gap: var(--space-20) var(--space-24);
+	grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+	gap: var(--space-16) var(--space-24);
 	margin: 0;
 	padding: 0;
 	list-style: none;
@@ -526,56 +520,90 @@
 .progression {
 	display: flex;
 	flex-direction: column;
-	gap: var(--space-10);
-	padding-top: var(--space-12);
+	gap: var(--space-6);
+	padding-top: var(--space-10);
 	border-top: 1.5px solid var(--rule);
 }
 
-.progression__head {
-	display: flex;
-	align-items: center;
-	justify-content: space-between;
+.progression__name {
+	font-size: var(--text-sm);
+	font-weight: var(--label-weight);
+	letter-spacing: 0.12em;
+	text-transform: uppercase;
+	color: var(--fg-secondary);
+}
+
+.progression__row {
+	display: grid;
+	grid-template-columns: var(--tap) minmax(0, 1fr);
+	align-items: start;
 	gap: var(--space-8);
 }
 
-.progression__name {
-	font-size: var(--text-md);
-	font-weight: var(--label-weight);
-	letter-spacing: 0.1em;
-	text-transform: uppercase;
-}
-
 .progression__play {
-	min-width: 88px;
-	height: 34px;
+	height: 40px;
+	padding-inline: 0;
 
-	@media (max-width: 600px) {
-		height: var(--tap);
+	& svg {
+		width: 11px;
+		height: 12px;
 	}
 }
 
 .progression__chords {
 	display: grid;
 	grid-template-columns: repeat(4, minmax(0, 1fr));
-	gap: var(--space-12) var(--space-8);
+	gap: var(--space-6) var(--space-8);
 	margin: 0;
 	padding: 0;
 	list-style: none;
 }
 
-.progression__bar {
+/* The whole step is the hit area (cap + degree, 44 px and more). */
+.progression__step {
+	appearance: none;
 	display: flex;
 	flex-direction: column;
 	align-items: center;
-	gap: var(--space-8);
+	gap: var(--space-4);
+	width: 100%;
+	padding: 0;
+	border: 0;
+	background: none;
+	color: inherit;
+	font: inherit;
+	cursor: pointer;
+	-webkit-tap-highlight-color: transparent;
 }
 
-/* A step's key shows the bar; it is not pressed by hand (no sink on touch). */
 .progression__chord {
 	align-self: stretch;
-	height: 46px;
-	cursor: default;
-	pointer-events: none;
+	flex-direction: column;
+	gap: var(--space-4);
+	height: 40px;
+	padding-inline: var(--space-4);
+	font-size: var(--text-lg);
+	letter-spacing: 0.02em;
+	text-transform: none;
+
+	& > .lamp {
+		width: 12px;
+		height: 3px;
+	}
+
+	& > :last-child {
+		max-width: 100%;
+		overflow: hidden;
+		text-overflow: ellipsis;
+	}
+}
+
+.progression__numeral {
+	font-size: var(--text-xs);
+	font-weight: 600;
+	letter-spacing: 0.06em;
+	line-height: 1;
+	color: var(--fg-secondary);
 }
 
 /* Circle of fifths: a clock-face dial (circle.ts). The bezel is this box in
@@ -583,6 +611,7 @@
    face in light, black in dark and night; the key's sector backlit amber. */
 .harmony__pane--circle {
 	align-items: center;
+	padding-block: var(--space-12) var(--space-4);
 	text-align: center;
 }
 
