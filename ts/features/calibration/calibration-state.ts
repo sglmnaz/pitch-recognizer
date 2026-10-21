@@ -3,6 +3,7 @@
 // as the Settings section and the page show it: the value, when it was done,
 // a lamp green once done, amber until then.
 import * as Settings from '../../core/settings'
+import { currentLanguage, t } from '../../core/i18n'
 
 /** Wires every [data-action="open-calibration"] under `root` to open the page. */
 export function bindCalibrationLinks(root: ParentNode) {
@@ -14,7 +15,7 @@ export function bindCalibrationLinks(root: ParentNode) {
 }
 
 const signed = (ms: number) => `${ms < 0 ? '−' : ms > 0 ? '+' : ''}${Math.abs(ms)} ms`
-const day = (at: number) => new Date(at).toLocaleDateString(undefined, { day: 'numeric', month: 'short' })
+const day = (at: number) => new Date(at).toLocaleDateString(currentLanguage(), { day: 'numeric', month: 'short' })
 
 /** Fills the [data-cal-*] parts under `root` (lamp, value, when) for both steps. */
 export function showCalibrationState(root: ParentNode) {
@@ -30,7 +31,8 @@ export function showCalibrationState(root: ParentNode) {
 			lamp.classList.toggle('lamp--warn', !done)
 			lamp.classList.add('is-on')
 		}
-		for (const el of root.querySelectorAll<HTMLElement>(`[data-cal-value="${key}"]`)) el.textContent = done ? signed(ms) : (el.dataset.calEmpty ?? '— —')
-		for (const el of root.querySelectorAll<HTMLElement>(`[data-cal-when="${key}"]`)) el.textContent = done ? `Done ${day(at)}` : 'Not done'
+		for (const el of root.querySelectorAll<HTMLElement>(`[data-cal-value="${key}"]`))
+			el.textContent = done ? signed(ms) : el.dataset.calEmpty ? t(el.dataset.calEmpty) : '— —'
+		for (const el of root.querySelectorAll<HTMLElement>(`[data-cal-when="${key}"]`)) el.textContent = done ? t('Done {day}', { day: day(at) }) : t('Not done')
 	}
 }

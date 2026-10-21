@@ -32,6 +32,21 @@
 			root.dataset.theme = theme[0]
 			root.dataset.mode = theme[1]
 			if (displays.hasOwnProperty(display)) root.dataset.display = display
+			// The language, as ts/core/locale.ts picks it: the stored choice, else the
+			// device's if it is Italian. Not English: the page stays hidden until
+			// ts/language.ts has translated it, so English never flashes first.
+			var language = null
+			try {
+				language = JSON.parse(localStorage.getItem('pitch-recognizer:settings') || '{}').language
+			} catch (error) {}
+			var tags = navigator.languages || []
+			for (var i = 0; language !== 'en' && language !== 'it' && i < tags.length; i++) {
+				var prefix = tags[i].toLowerCase().split('-')[0]
+				if (prefix === 'en' || prefix === 'it') language = prefix
+			}
+			if (language !== 'it') language = 'en'
+			root.lang = language
+			if (language !== 'en') root.dataset.i18n = 'pending'
 			// The browser chrome too, so a light theme never starts with a dark bar.
 			document.querySelector('meta[name="theme-color"]').setAttribute('content', colors[theme[0]][theme[1]])
 		})()
@@ -205,7 +220,7 @@
 						<p class="changes-heard">Hearing <span>—</span></p>
 						<span class="changes-tag changes-tag--now" aria-hidden="true">Now</span>
 						<span class="changes-arrow" aria-hidden="true">▶</span>
-						<span class="changes-tag changes-tag--next" aria-hidden="true">Next</span>
+						<span class="changes-tag changes-tag--next" aria-hidden="true" data-i18n="chord">Next</span>
 						<div class="lcd__big changes-upcoming" aria-hidden="true"></div>
 						<div class="changes-beats" aria-hidden="true"></div>
 						<div class="changes-result" hidden></div>
@@ -700,7 +715,7 @@
 				<div class="metro-knobs">
 					<div class="metro-knob">
 						<span class="silk" id="metroSubLabel">Subdivision</span>
-						<div class="rotary" role="radiogroup" aria-labelledby="metroSubLabel" data-rotary="sub">
+						<div class="rotary" role="radiogroup" aria-labelledby="metroSubLabel" data-rotary="sub" data-i18n="knob">
 							<button class="rotary__pos" type="button" role="radio" data-value="1"><span class="lamp"></span>None</button>
 							<button class="rotary__pos" type="button" role="radio" data-value="2"><span class="lamp"></span>8ths</button>
 							<button class="rotary__pos" type="button" role="radio" data-value="3"><span class="lamp"></span>Triplets</button>
@@ -710,7 +725,7 @@
 					</div>
 					<div class="metro-knob">
 						<span class="silk" id="metroSoundLabel">Sound</span>
-						<div class="rotary" role="radiogroup" aria-labelledby="metroSoundLabel" data-rotary="sound">
+						<div class="rotary" role="radiogroup" aria-labelledby="metroSoundLabel" data-rotary="sound" data-i18n="knob">
 							<button class="rotary__pos" type="button" role="radio" data-value="click"><span class="lamp"></span>Click</button>
 							<button class="rotary__pos" type="button" role="radio" data-value="wood"><span class="lamp"></span>Wood</button>
 							<button class="rotary__pos" type="button" role="radio" data-value="beep"><span class="lamp"></span>Beep</button>
@@ -841,11 +856,22 @@
 						</label>
 					</div>
 					<div class="settings__section">
-						<!-- Changing it reloads the app (main.ts): every view names notes as it draws. -->
+						<!-- Changing either reloads the app (ts/language.ts): every view speaks and names notes as it draws. -->
+						<label class="switch">
+							<span class="switch__text">
+								<span class="switch__title">Language</span>
+								<span class="switch__desc">Auto: the device's, if Pluck speaks it</span>
+							</span>
+							<select class="select select--small" data-setting="language">
+								<option value="auto">Auto</option>
+								<option value="en" lang="en">English</option>
+								<option value="it" lang="it">Italiano</option>
+							</select>
+						</label>
 						<label class="switch">
 							<span class="switch__text">
 								<span class="switch__title">Note names</span>
-								<span class="switch__desc">Auto: Do Re Mi on an Italian device, letters elsewhere</span>
+								<span class="switch__desc">Auto: Do Re Mi in Italian, letters in English</span>
 							</span>
 							<select class="select select--small" data-setting="noteNames">
 								<option value="auto">Auto</option>
@@ -991,7 +1017,7 @@
 								<span class="switch__title">Play as</span>
 								<span class="switch__desc">Tapping a chord strums it or picks each string</span>
 							</span>
-							<select class="select select--small" data-setting="chordPlay">
+							<select class="select select--small" data-setting="chordPlay" data-i18n="play">
 								<option value="strum">Strum</option>
 								<option value="arpeggio">Arpeggio</option>
 							</select>
@@ -1380,7 +1406,7 @@
 						<div class="dg-row2"><span>Level · room noise</span><span data-levels>–</span></div>
 						<div class="dg-nums"><span><b data-strums>0</b>Strums</span><span><b data-chord>–</b>Chord heard</span><span><b data-naming>–</b>ms to name it</span></div>
 					</div></div>
-					<div class="dg-lamps" aria-hidden="true"><span class="dg-lamp"><span class="lamp lamp--ok" data-strum-lamp></span><span class="silk">Strum</span></span><span class="dg-lamp"><span class="lamp lamp--ok" data-sounding-lamp></span><span class="silk">Sounding</span></span></div>
+					<div class="dg-lamps" aria-hidden="true" data-i18n="lamp"><span class="dg-lamp"><span class="lamp lamp--ok" data-strum-lamp></span><span class="silk">Strum</span></span><span class="dg-lamp"><span class="lamp lamp--ok" data-sounding-lamp></span><span class="silk">Sounding</span></span></div>
 				</div>
 
 				<div class="dg-card">
@@ -1557,7 +1583,7 @@
 		<h3>Settings</h3>
 		<ul>
 			<li>Grouped by tab; opening Settings from a tab jumps to that tab's group.</li>
-			<li>Appearance: light, dark or follow the device. Fretboard: board colours and left-handed mode for every neck and chord diagram.</li>
+			<li>Appearance: light, dark or follow the device; language and note names (Do Re Mi, letters, French or German). Fretboard: board colours and left-handed mode for every neck and chord diagram.</li>
 			<li>Concert pitch (A4) under Tuner applies to every tab that names notes.</li>
 		</ul>
 		<h3>Microphone</h3>
@@ -1568,6 +1594,137 @@
 		<h3>Install</h3>
 		<ul>
 			<li>Add Pluck to your home screen for a full-screen app that also works offline.</li>
+		</ul>
+	</template>
+
+	<!-- The guide in Italian (ts/ui/help.ts opens help-<tab>-<lang> when there is one).
+	     Keep in step with the English pages above. -->
+	<template id="help-tuner-it" data-title="Tuner">
+		<h3>Accordare una corda</h3>
+		<ul>
+			<li>Scegli l'accordatura in alto (Standard, Drop D, DADGAD…), oppure <b>Cromatico</b> per riconoscere qualsiasi nota.</li>
+			<li>Suona una corda alla volta e lasciala vibrare; smorza le altre.</li>
+			<li>Ago a sinistra del centro: la corda è <b>calante</b>, tendila. A destra: <b>crescente</b>, allentala.</li>
+			<li>Accanto alla nota si accende un <b>segno di spunta</b> quando la corda è entro la tolleranza (±5 cent di base, la fascia verde sul quadrante).</li>
+		</ul>
+		<h3>Da sapere</h3>
+		<ul>
+			<li>Con un'accordatura scelta la lettura è sempre rispetto alla corda più vicina di quell'accordatura, così anche una corda molto lontana indica la sua nota.</li>
+			<li>Tocca il tasto di una corda per sentire la sua nota di riferimento.</li>
+			<li>Chitarra elettrica senza amplificatore: tieni il telefono a circa 10 cm dalle corde, in una stanza silenziosa.</li>
+			<li>Diapason (A4), tolleranza e volume del tono sono in Impostazioni → Tuner.</li>
+		</ul>
+	</template>
+
+	<template id="help-chords-it" data-title="Accordi">
+		<h3>Ascolta</h3>
+		<ul>
+			<li>Suona un accordo su tutte le sue corde e lascialo risuonare: il nome compare appena è stabile.</li>
+			<li>Riconosce maggiori, minori, 7, m7, maj7, 9, sus2 e sus4. Le note singole non vengono nominate.</li>
+			<li><b>Apri</b> mostra l'accordo nella Libreria.</li>
+		</ul>
+		<h3>Libreria</h3>
+		<ul>
+			<li>Scegli una fondamentale e un tipo di accordo per vederne le note, i gradi e le tonalità a cui appartiene (con il numero romano).</li>
+			<li>Sotto ci sono le posizioni più facili: <b>Suona</b> sotto un diagramma la fa sentire.</li>
+			<li>Etichette dei pallini (gradi, note, dita) e accordo o arpeggio sono in Impostazioni → Accordi.</li>
+		</ul>
+		<h3>Identifica</h3>
+		<ul>
+			<li>Tocca un tasto per corda sul manico; la colonna prima del capotasto è la corda a vuoto. Tocca di nuovo per togliere. Le corde non segnate contano come smorzate.</li>
+			<li>Gli accordi trovati si aggiornano mentre tocchi, le spie mostrano quanto ognuno corrisponde; <b>Apri</b> ne mostra uno nella Libreria. Suona fa sentire la tua forma.</li>
+		</ul>
+	</template>
+
+	<template id="help-scales-it" data-title="Scale">
+		<h3>Esplora</h3>
+		<ul>
+			<li>Scegli una tonica e una scala: il manico mostra ogni nota, colorata per grado (tonica, 3ª e 5ª, le altre).</li>
+			<li>Display → Gradi colorati: tocca un grado per colorarlo sul manico (si accende la sua spia).</li>
+			<li>▶ Suona scala la fa sentire; tocca una nota qualsiasi sul manico per sentirla.</li>
+			<li>Display apre le opzioni di visualizzazione: gradi colorati, nomi delle note o intervalli, posizioni 1–5, manico verticale.</li>
+			<li>Ascolta illumina la nota che suoni sulla chitarra.</li>
+		</ul>
+		<h3>Accordi, progressioni, cerchio</h3>
+		<ul>
+			<li><b>Accordi</b>: gli accordi costruiti su ogni grado, con i numeri romani. Toccane uno per sentirlo e vederne le note sul manico.</li>
+			<li><b>Progressioni</b>: progressioni comuni in questa tonalità. Suona e Loop; il tempo è in Impostazioni → Scale.</li>
+			<li><b>Cerchio</b>: il circolo delle quinte. Tocca una tonalità per passare a quella.</li>
+		</ul>
+		<h3>Identifica</h3>
+		<ul>
+			<li>Tocca le note sul manico, o suonale con il microfono acceso: la lista mostra le scale che le contengono. Toccane una per esplorarla.</li>
+			<li>Se le note formano un accordo, vedi anche le scale in cui quell'accordo sta.</li>
+		</ul>
+	</template>
+
+	<template id="help-trainer-it" data-title="Esercizi">
+		<h3>Note</h3>
+		<ul>
+			<li>Sul pentagramma compare una nota: suonala o cantala e tienila finché conta. Salta passa alla prossima.</li>
+			<li>Quali note, alterazioni e qualsiasi ottava sono in Impostazioni → Esercizi.</li>
+		</ul>
+		<h3>Intervalli e Accordi</h3>
+		<ul>
+			<li>Premi Suona, ascolta, poi tocca l'intervallo (o il tipo di accordo) che hai sentito.</li>
+			<li>Una risposta sbagliata mostra quella giusta; poi tocca un tasto qualsiasi per sentire come suona.</li>
+			<li>Tastiera: <kbd>Spazio</kbd> ripete, <kbd>Invio</kbd> passa alla domanda successiva.</li>
+			<li>Per rispondere agli intervalli cantando, attiva <b>Rispondi cantando</b> nelle Impostazioni (meglio con le cuffie).</li>
+		</ul>
+		<h3>Cambi</h3>
+		<ul>
+			<li>Scegli una coppia di accordi (o fino a quattro) e premi Avvia con il microfono acceso.</li>
+			<li><b>Un minuto</b>: passa dall'uno all'altro il più veloce possibile; conta ogni cambio pulito. Batti il tuo record.</li>
+			<li><b>A tempo</b>: cambia sul battito del metronomo. Il display mostra cosa sente il microfono, l'accordo da suonare e il successivo, e illumina il battito dell'accordo su cui sei. L'ago sotto mostra quanto il tuo ultimo cambio era lontano dal battito: a sinistra della zona verde sei in anticipo, a destra in ritardo; i punti sono i cambi precedenti. Un cambio perso accende la spia Perso. Meglio con le cuffie. Calibra prima il microfono (Calibrazione, in fondo all'esercizio; una volta per telefono): senza, ogni cambio risulta in ritardo o in anticipo.</li>
+		</ul>
+		<h3>Tab</h3>
+		<ul>
+			<li>Scegli un esercizio dalla lista; la tablatura scorre da sola, non devi mai scorrere tu. Suona quello che sta nella fascia rossa.</li>
+			<li><b>Tempo</b>: dopo una misura di click la tablatura scorre con il metronomo; ogni nota viene segnata a tempo (verde), in anticipo o in ritardo (ambra) o persa (rosso).</li>
+			<li><b>Attendi</b>: niente click; la tablatura si ferma su ogni nota finché il microfono non la sente, e ti dice quando una nota è un tasto o due fuori.</li>
+			<li><b>Loop</b> ripete l'esercizio; <b>Accelera</b> aggiunge 5 BPM dopo due giri puliti. Il tuo giro pulito più veloce resta salvato per ogni esercizio.</li>
+			<li>Con l'altoparlante il microfono può sentire i click: meglio con le cuffie.</li>
+		</ul>
+	</template>
+
+	<template id="help-metronome-it" data-title="Metronomo">
+		<h3>Tempo</h3>
+		<ul>
+			<li>Trascina il cursore, usa − / + (tieni premuto per ripetere) e −10 / +10, tocca il numero per scrivere un tempo, oppure tocca <b>Tap</b> a tempo.</li>
+			<li><kbd>Spazio</kbd> avvia e ferma.</li>
+		</ul>
+		<h3>Battiti</h3>
+		<ul>
+			<li>Tocca un battito per cambiarlo: normale (una barra), accento (due barre), muto (nessuna). Il battito che suona si illumina con un anello rosso.</li>
+			<li>Misura imposta i battiti per misura e il valore del battito.</li>
+			<li>La manopola Suddivisione aggiunge ottavi, terzine o sedicesimi, la manopola Suono sceglie il click: tocca una posizione, o tocca la manopola per girarla di uno scatto.</li>
+		</ul>
+		<h3>Accelerando</h3>
+		<ul>
+			<li>Attivalo e imposta di quanto alzare il tempo, ogni quante misure e fino a quale tempo. Parte dal tempo attuale.</li>
+		</ul>
+		<h3>Da sapere</h3>
+		<ul>
+			<li>Il lampo sul primo battito è in Impostazioni → Metronomo; il metronomo continua a suonare mentre lo regoli.</li>
+			<li>Lo schermo resta acceso mentre suona; passare a una scheda diversa da Impostazioni lo ferma.</li>
+		</ul>
+	</template>
+
+	<template id="help-settings-it" data-title="Pluck">
+		<h3>Impostazioni</h3>
+		<ul>
+			<li>Raggruppate per scheda; aprendo le Impostazioni da una scheda si salta al suo gruppo.</li>
+			<li>Aspetto: chiaro, scuro o come il dispositivo; lingua e nomi delle note (Do Re Mi, lettere, francese o tedesco). Manico: colori e modalità mancino per ogni manico e diagramma.</li>
+			<li>Il diapason (A4) sotto Tuner vale per ogni scheda che nomina le note.</li>
+		</ul>
+		<h3>Microfono</h3>
+		<ul>
+			<li>Pluck ascolta dal microfono: consentilo quando il browser lo chiede. Se l'hai bloccato, riattivalo nelle impostazioni del sito del browser.</li>
+			<li>Le schede che non lo usano (Metronomo, Impostazioni, Libreria degli accordi…) lo spengono; si riaccende quando torni.</li>
+		</ul>
+		<h3>Installa</h3>
+		<ul>
+			<li>Aggiungi Pluck alla schermata Home per avere un'app a tutto schermo che funziona anche offline.</li>
 		</ul>
 	</template>
 

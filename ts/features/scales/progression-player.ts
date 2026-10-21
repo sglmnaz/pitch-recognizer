@@ -5,6 +5,7 @@ import * as Settings from '../../core/settings'
 import * as Sound from '../../core/sound'
 import type { KeyChord } from '../../music/harmony'
 import { noteName } from '../../music/note-names'
+import { t } from '../../core/i18n'
 
 // Progressions: four beats a bar, one chord a bar, strummed on beats 1 and 3.
 const BEATS = 4
@@ -32,7 +33,7 @@ export function createProgressionPlayer(hooks: PlayerHooks) {
 	function playBar() {
 		if (!playing) return
 		if (playing.bar >= playing.chords.length) {
-			if (!Settings.get().progressionLoop) return stop(true, 'Finished')
+			if (!Settings.get().progressionLoop) return stop(true, t('Finished'))
 			playing.bar = 0
 		}
 		const chord = playing.chords[playing.bar]
@@ -50,7 +51,7 @@ export function createProgressionPlayer(hooks: PlayerHooks) {
 		Sound.stopAll()
 		playing = { index, chords: list, bar: 0 }
 		nextBarAt = performance.now()
-		hooks.announce(`Playing ${name}: ${list.map((c) => noteName(c.symbol)).join(', ')}`)
+		hooks.announce(t('Playing {name}: {chords}', { name, chords: list.map((c) => noteName(c.symbol)).join(', ') }))
 		playBar()
 	}
 

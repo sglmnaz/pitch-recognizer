@@ -9,6 +9,7 @@ import { CIRCLE, circleIndex, keyOf, MAJOR, MINOR, signatureName } from '../../m
 import type { ScaleType } from '../../music/scales'
 import { noteName, spokenName } from '../../music/note-names'
 import { svgEl } from '../../ui/dom'
+import { t } from '../../core/i18n'
 
 // Radii in the 290 viewBox. The two rings meet at SPLIT; each is ~33 deep,
 // 34 px for a thumb on a 300 px dial (a 340 px phone column).
@@ -23,7 +24,7 @@ const GLASS = 52 // the hub's LCD, inside a black ring up to 57
 
 // Printed with ♯ / ♭, in the chosen note names.
 const glyphs = (name: string) => noteName(name.replace(/#/g, '♯').replace(/([A-G])b/g, '$1♭'))
-const sigShort = (n: number) => (n === 0 ? 'no ♯ / ♭' : `${Math.abs(n)} ${n > 0 ? '♯' : '♭'}`)
+const sigShort = (n: number) => (n === 0 ? t('no ♯ / ♭') : `${Math.abs(n)} ${n > 0 ? '♯' : '♭'}`)
 // Clockwise from 12 o'clock, like the dial.
 const at = (r: number, deg: number) => [C + r * Math.sin((deg * Math.PI) / 180), C - r * Math.cos((deg * Math.PI) / 180)]
 
@@ -87,7 +88,7 @@ export function createCircle(circle: SVGSVGElement, onChoose: (rootPc: number, t
 
 	// Pointing at 12 o'clock; render() turns it to the key.
 	const index = svgEl('path', { class: 'circle__index', d: `M${C - 7} ${C - 143}L${C + 7} ${C - 143}L${C} ${C - 130}Z` })
-	const hubKey = text({ class: 'circle__hub-label', x: C, y: C - 17 }, 'KEY')
+	const hubKey = text({ class: 'circle__hub-label', x: C, y: C - 17 }, t('KEY'))
 	const hubName = text({ class: 'circle__hub-name', x: C, y: C + 10 })
 	const hubSub = text({ class: 'circle__hub-sub', x: C, y: C + 28 })
 	circle.append(
@@ -146,7 +147,7 @@ export function createCircle(circle: SVGSVGElement, onChoose: (rootPc: number, t
 			index.toggleAttribute('hidden', current < 0)
 			if (current < 0) {
 				hubName.textContent = '—'
-				hubSub.textContent = 'no key'
+				hubSub.textContent = t('no key')
 				return
 			}
 			// The backlight is brightest at the middle of the lit sector.

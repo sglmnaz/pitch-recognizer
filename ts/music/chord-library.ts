@@ -6,6 +6,7 @@
 import { CHORD_TYPES, chordsOfScale, chordType, spellChord, type ChordMatch, type ChordType } from './chord-theory.ts'
 import { shapeString, type Voicing } from './chord-shapes.ts'
 import { degreesOf, pitchClassOf, ROOTS, SCALE_TYPES, semitonesOf, spellScale, STRINGS } from './scales.ts'
+import { t } from '../core/i18n.ts'
 
 const mod12 = (n: number) => ((n % 12) + 12) % 12
 
@@ -106,9 +107,10 @@ export function shapeNotes(frets: number[], tuning: number[] = STRINGS) {
 	}
 }
 
-/** '1 · x32010' and where it sits: 'open', 'barre · fret 3', 'fret 5'. */
+/** '1 · x32010' and where it sits: 'open', 'barre · fret 3', 'fret 5' (in the app's language). */
 export function voicingCaption(voicing: Voicing, index: number) {
-	const position = voicing.frets.includes(0) ? 'open' : `${voicing.barre ? 'barre · ' : ''}fret ${voicing.base}`
+	const n = voicing.base
+	const position = voicing.frets.includes(0) ? t('voicing|open') : voicing.barre ? t('barre · fret {n}', { n }) : t('fret {n}', { n })
 	return { title: `${index + 1} · ${shapeString(voicing)}`, position }
 }
 
@@ -129,13 +131,13 @@ const ORDINAL: Record<string, string> = {
 // A played note outside the chord, named by its interval above the root.
 const ADDED = ['1', 'b9', '9', '#9', '3', '11', '#11', '5', 'b13', '13', 'b7', '7']
 
-/** How a match differs from what was played: ['no 5th', '+ add9']; [] = exact. */
+/** How a match differs from what was played: ['no 5th', '+ add9']; [] = exact. In the app's language. */
 export function matchNotes(match: ChordMatch, played: Set<number>): string[] {
 	const semitones = semitonesOf(match.type)
 	const tones = new Set(semitones.map((s) => mod12(match.rootPc + s)))
 	const missing = degreesOf(match.type)
 		.filter((_, i) => !played.has(mod12(match.rootPc + semitones[i])))
-		.map((d) => `no ${ORDINAL[d] ?? d}`)
+		.map((d) => t('no {degree}', { degree: d === '1' ? t('chord|root') : ORDINAL[d] ? t(ORDINAL[d]) : d }))
 	const extra = [...played].filter((pc) => !tones.has(pc)).map((pc) => `+ add${ADDED[mod12(pc - match.rootPc)]}`)
 	return [...missing, ...extra]
 }

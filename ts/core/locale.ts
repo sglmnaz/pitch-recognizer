@@ -13,3 +13,6 @@ export function deviceLanguage(languages: readonly string[] = globalThis.navigat
 	}
 	return 'en'
 }
+
+/** The language a setting means: auto is the device's. */
+export const languageFor = (choice: 'auto' | Language, languages?: readonly string[]): Language => (choice === 'auto' ? deviceLanguage(languages) : choice)

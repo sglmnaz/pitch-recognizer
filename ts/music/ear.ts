@@ -3,6 +3,7 @@
 // answers back; nothing here touches the DOM or the audio graph, so
 // `npm run check:ear` runs it in Node.
 import { readString, writeString } from '../core/storage.ts'
+import { t } from '../core/i18n.ts'
 
 export type Exercise = 'intervals' | 'chords'
 export type Direction = 'up' | 'down' | 'harmonic'
@@ -78,7 +79,14 @@ export interface Question {
 	direction: Direction
 }
 
+/** The answer's English name (INTERVALS / QUALITIES), an id of the record keys. */
 export const labelOf = (exercise: Exercise, id: string) => (exercise === 'intervals' ? INTERVALS : QUALITIES).find((item) => item.id === id)?.name ?? id
+
+/** The answer's name in the app's language; intervals have their own context ('interval|minor 7th' is not the chord). */
+export function nameOf(exercise: Exercise, id: string): string {
+	const name = labelOf(exercise, id)
+	return exercise === 'intervals' ? t(`interval|${name}`) : t(name)
+}
 
 /** The enabled ids that still exist, in table order; all defaults if none survive. */
 export function pool(exercise: Exercise, enabled: readonly string[]): string[] {

@@ -8,6 +8,7 @@ import { liveRegion, subscribeVisible } from '../../ui/dom'
 import { createReadout } from '../../ui/readout'
 import { noteName } from '../../music/note-names'
 import { withStepper } from '../../ui/stepper'
+import { num, t } from '../../core/i18n'
 
 // The tuning select's first entry: no target strings, name whatever is played.
 const CHROMATIC = 'chromatic'
@@ -36,8 +37,8 @@ export function createTunerView(root: HTMLElement): View {
 	// nearest string however far it is (a drop-D low E reads against D, not as
 	// "D#"). Chromatic names the nearest note of any pitch; its keys keep the
 	// last tuning's strings as reference tones.
-	tuningSelect.add(new Option('Chromatic', CHROMATIC))
-	TUNINGS.forEach((tuning) => tuningSelect.add(new Option(tuning.name, tuning.id)))
+	tuningSelect.add(new Option(t('tuner|Chromatic'), CHROMATIC))
+	TUNINGS.forEach((tuning) => tuningSelect.add(new Option(t(tuning.name), tuning.id)))
 	// The LCD selector: ◀ ▶ step through the tunings, a tap on it opens the list.
 	withStepper(tuningSelect)
 	tuningSelect.addEventListener('change', () =>
@@ -61,7 +62,7 @@ export function createTunerView(root: HTMLElement): View {
 			// It plays its own note: no key click on top.
 			key.dataset.feedback = 'none'
 			key.textContent = noteName(`${string.name}${string.octave}`)
-			key.setAttribute('aria-label', `${key.textContent}, hear reference tone`)
+			key.setAttribute('aria-label', t('{note}, hear reference tone', { note: key.textContent }))
 			return key
 		})
 		stringsRow.replaceChildren(...keys)
@@ -93,8 +94,8 @@ export function createTunerView(root: HTMLElement): View {
 		const ms = Sound.playTone(string.frequency, Settings.get().toneVolume)
 		refIndex = index
 		const name = noteName(`${string.name}${string.octave}`)
-		readout.show(name, `Reference\n${string.frequency.toFixed(1)} Hz`, 0, false)
-		announce(`Playing ${name}`)
+		readout.show(name, `${t('Reference')}\n${num(string.frequency, 1)} Hz`, 0, false)
+		announce(t('Playing {note}', { note: name }))
 		// While it rings the mic hears the speaker, not the guitar: readings
 		// are ignored until it has died away.
 		refTimer = window.setTimeout(() => {
@@ -110,7 +111,7 @@ export function createTunerView(root: HTMLElement): View {
 
 	/* Readout ------------------------------------------------------------- */
 	function idle() {
-		readout.idle('Play a note to begin')
+		readout.idle(t('Play a note to begin'))
 		announce('')
 	}
 
@@ -137,7 +138,7 @@ export function createTunerView(root: HTMLElement): View {
 			if (refIndex !== null || Sound.isRinging()) return
 
 			if (!reading) {
-				readout.idle('Listening…', false)
+				readout.idle(t('Listening…'), false)
 				announce('')
 				return
 			}
@@ -154,7 +155,7 @@ export function createTunerView(root: HTMLElement): View {
 				const string = strings[near.index]
 				label = noteName(`${string.name}${string.octave}`)
 				cents = near.cents
-				prefix = `String ${strings.length - near.index} · `
+				prefix = `${t('String {n}', { n: strings.length - near.index })} · `
 			} else {
 				const closest = getClosestNote(reading.frequency, a4)
 				label = noteName(closest.note.split('/')[0])
@@ -166,8 +167,8 @@ export function createTunerView(root: HTMLElement): View {
 			// cents with a true minus sign.
 			const rounded = Math.round(cents)
 			const signed = `${rounded > 0 ? '+' : rounded < 0 ? '−' : ''}${Math.abs(rounded)}`
-			readout.show(label, `${prefix}${reading.frequency.toFixed(1)} Hz\n${signed} cents`, cents, inTune)
-			announce(inTune ? `${label}, in tune` : label)
+			readout.show(label, `${prefix}${num(reading.frequency, 1)} Hz\n${t('{cents} cents', { cents: signed })}`, cents, inTune)
+			announce(inTune ? t('{note}, in tune', { note: label }) : label)
 		},
 	}
 }

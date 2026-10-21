@@ -41,6 +41,11 @@ button {
 	font-family: inherit;
 }
 
+/* Not English: nothing shows until ts/language.ts has translated the page (the head script sets it). */
+:root[data-i18n='pending'] body {
+	visibility: hidden;
+}
+
 /* The hidden attribute always hides, whatever display a class sets. */
 [hidden] {
 	/* biome-ignore lint/complexity/noImportantStyles: it must beat every class. */

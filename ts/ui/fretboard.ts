@@ -7,6 +7,7 @@ import * as Settings from '../core/settings'
 import { FRETS, ROOTS, STRINGS } from '../music/scales'
 import { noteName } from '../music/note-names'
 import { phone } from './media'
+import { t } from '../core/i18n'
 
 /** root / tone / note: the degree palette; marked: solid (Identify, off any
  * shown scale); optional: a dashed outline (e.g. a chord tone you may drop). */
@@ -343,12 +344,13 @@ export function createFretboard(svg: SVGSVGElement, board: HTMLElement | null, o
 				// Do Re Mi names run to four characters (Sol#): squeezed into the dot
 				// rather than spilling over it. Letters and degrees fit as they are.
 				const text = dot ? dot.label : label
-				const squeeze = text.length >= 4 || (text.length === 3 && /^[A-Z][a-zé]/.test(text)) ? ` textLength="${(2 * r - 4).toFixed(1)}" lengthAdjust="spacingAndGlyphs"` : ''
+				const squeeze =
+					text.length >= 4 || (text.length === 3 && /^[A-Z][a-zé]/.test(text)) ? ` textLength="${(2 * r - 4).toFixed(1)}" lengthAdjust="spacingAndGlyphs"` : ''
 				const focusable = spec.toggles || dot !== undefined
 				// Buttons only when a tap does something; otherwise the svg's label speaks for it.
 				const button = interactive
 					? ` role="button" tabindex="${focusable ? 0 : -1}"` +
-						` aria-label="${noteName(ROOTS[open % 12])} string, ${fret === 0 ? 'open' : `fret ${fret}`}, ${name}${dot?.detail ? ` (${esc(dot.detail)})` : ''}"` +
+						` aria-label="${esc(fret === 0 ? t('{string} string, open, {note}', { string: noteName(ROOTS[open % 12]), note: nameOf(midi) }) : t('{string} string, fret {fret}, {note}', { string: noteName(ROOTS[open % 12]), fret, note: nameOf(midi) }))}${dot?.detail ? ` (${esc(dot.detail)})` : ''}"` +
 						(spec.toggles ? ` aria-pressed="${isMarked}"` : '')
 					: ''
 				parts.push(

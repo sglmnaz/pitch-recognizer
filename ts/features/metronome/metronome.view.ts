@@ -7,6 +7,7 @@ import { reducedMotion } from '../../ui/media'
 import { bindRotary } from '../../ui/rotary'
 import { screenLock } from '../../ui/screen-lock'
 import { resetKey } from '../../ui/reset-key'
+import { plural, t } from '../../core/i18n'
 
 const MAX_BEATS = 12
 // Taps further apart than this start a new measurement; the average covers the
@@ -247,7 +248,7 @@ export function createMetronomeView(root: HTMLElement): View & { stop(): void } 
 			fitBpm()
 		}
 		slider.value = String(bpm)
-		name.textContent = tempoName(bpm)
+		name.textContent = t(tempoName(bpm))
 	}
 
 	Metronome.onBeat((event) => {
@@ -304,8 +305,8 @@ export function createMetronomeView(root: HTMLElement): View & { stop(): void } 
 
 	function renderTrainer() {
 		const { metroTrainerOn: on, metroTrainerStep: step, metroTrainerBars: bars, metroTrainerTarget: target, metroBpm: start } = Settings.get()
-		const barsText = `${bars} ${bars === 1 ? 'bar' : 'bars'}`
-		trainerDesc.textContent = on ? `From ${start} BPM, +${step} every ${barsText}` : 'Speeds up while you play'
+		const barsText = plural(bars, '{n} bar', '{n} bars')
+		trainerDesc.textContent = on ? t('From {start} BPM, +{step} every {bars}', { start, step, bars: barsText }) : t('Speeds up while you play')
 		trainerValues.step.textContent = `+${step}`
 		trainerValues.bars.textContent = barsText
 		trainerValues.target.textContent = `${target}`
@@ -319,12 +320,12 @@ export function createMetronomeView(root: HTMLElement): View & { stop(): void } 
 		progressFill.style.width = `${span > 0 ? clamp(((bpm - start) / span) * 100, 0, 100) : 0}%`
 		progressText.textContent =
 			span <= 0
-				? `Set “Up to” above ${start} BPM`
+				? t('Set “Up to” above {start} BPM', { start })
 				: !running
-					? `Starts at ${start} BPM`
+					? t('Starts at {start} BPM', { start })
 					: bpm >= target
-						? `Target reached · ${target} BPM`
-						: `${bpm} → ${target} BPM${bars > 1 ? ` · bar ${barInStep + 1} of ${bars}` : ''}`
+						? t('Target reached · {target} BPM', { target })
+						: `${bpm} → ${target} BPM${bars > 1 ? ` · ${t('bar {n} of {bars}', { n: barInStep + 1, bars })}` : ''}`
 	}
 
 	/* Rendering from settings ----------------------------------------------- */
@@ -351,7 +352,7 @@ export function createMetronomeView(root: HTMLElement): View & { stop(): void } 
 		beats.forEach((button, beat) => {
 			const accent = accents[beat] ?? 1
 			button.dataset.accent = String(accent)
-			button.setAttribute('aria-label', `Beat ${beat + 1}, ${labels[accent]}. Tap to change`)
+			button.setAttribute('aria-label', t('Beat {n}, {level}. Tap to change', { n: beat + 1, level: t(labels[accent]) }))
 		})
 
 		showBpm(Metronome.getState().bpm)
@@ -365,7 +366,7 @@ export function createMetronomeView(root: HTMLElement): View & { stop(): void } 
 		renderTrainer()
 
 		const running = owned
-		startLabel.textContent = running ? 'Stop' : 'Start'
+		startLabel.textContent = running ? t('Stop') : t('Start')
 		startButton.setAttribute('aria-pressed', String(running))
 	}
 
@@ -375,7 +376,7 @@ export function createMetronomeView(root: HTMLElement): View & { stop(): void } 
 
 	// Reset (two taps): every metronome setting back to its default, tempo included.
 	const metroKeys = (Object.keys(Settings.get()) as (keyof Settings.Settings)[]).filter((key) => key.startsWith('metro'))
-	const reset = resetKey('the metronome', () => {
+	const reset = resetKey(t('the metronome'), () => {
 		Settings.reset(metroKeys)
 		Metronome.setTempo(Settings.get().metroBpm)
 	})

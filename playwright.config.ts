@@ -12,7 +12,13 @@ const sizes = {
 }
 const themes: Options['theme'][] = ['light', 'dark']
 // Night shares the dark mode's layout: one width is enough to catch a missing token.
-const extra: { size: keyof typeof sizes; theme: Options['theme'] }[] = [{ size: 'phone', theme: 'night' }]
+// Italian (an it-IT device: the app follows it) on phones, light and dark, where
+// the longer words are tightest; tests/visual/i18n.spec.ts runs there only.
+const extra: { size: keyof typeof sizes; theme: Options['theme']; locale?: string }[] = [
+	{ size: 'phone', theme: 'night' },
+	{ size: 'phone', theme: 'light', locale: 'it-IT' },
+	{ size: 'phone', theme: 'dark', locale: 'it-IT' },
+]
 
 export default defineConfig<Options>({
 	testDir: 'tests/visual',
@@ -33,12 +39,20 @@ export default defineConfig<Options>({
 		// The PWA service worker would cache between tests.
 		serviceWorkers: 'block',
 	},
-	projects: [...(Object.keys(sizes) as (keyof typeof sizes)[]).flatMap((size) => themes.map((theme) => ({ size, theme }))), ...extra].map(
-		({ size, theme }) => ({
-			name: `${size}-${theme}`,
-			use: { ...devices['Desktop Chrome'], viewport: sizes[size], deviceScaleFactor: 1, colorScheme: theme === 'light' ? 'light' : 'dark', theme },
-		})
-	),
+	projects: [
+		...(Object.keys(sizes) as (keyof typeof sizes)[]).flatMap((size) => themes.map((theme) => ({ size, theme, locale: undefined as string | undefined }))),
+		...extra,
+	].map(({ size, theme, locale }) => ({
+		name: `${size}-${theme}${locale ? `-${locale.slice(0, 2)}` : ''}`,
+		use: {
+			...devices['Desktop Chrome'],
+			viewport: sizes[size],
+			deviceScaleFactor: 1,
+			colorScheme: theme === 'light' ? 'light' : 'dark',
+			theme,
+			...(locale ? { locale } : {}),
+		},
+	})),
 	// The production build, as deployed: built fresh every run, never a stale server.
 	webServer: {
 		command: `npm run build && npm run preview -- --port ${PORT} --strictPort`,

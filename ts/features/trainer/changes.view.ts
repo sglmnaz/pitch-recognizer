@@ -24,6 +24,7 @@ import { clockText, createChangesSession, verdict } from './changes.session'
 import { createProbe } from './timing-probe'
 import { noteName } from '../../music/note-names'
 import * as FieldReport from '../calibration/field-report'
+import { plural, t } from '../../core/i18n'
 
 // Screen readers hear the count at most this often (a change can come every 250 ms).
 const ANNOUNCE_MS = 4000
@@ -170,9 +171,9 @@ export function createChangesView(root: HTMLElement): View {
 			i === last ? `<circle class="spark__dot spark__dot--last" cx="${cx}" cy="${cy}" r="3.5"/>` : `<circle class="spark__dot" cx="${cx}" cy="${cy}" r="2"/>`
 		)
 		return (
-			`<span class="silk">Last ${history.length} sessions</span>` +
+			`<span class="silk">${t('Last {n} sessions', { n: history.length })}</span>` +
 			'<span class="window"><span class="paper chart">' +
-			`<svg class="spark" viewBox="0 0 ${w} ${h}" role="img" aria-label="Last ${history.length} sessions: ${history.join(', ')}">` +
+			`<svg class="spark" viewBox="0 0 ${w} ${h}" role="img" aria-label="${t('Last {n} sessions: {counts}', { n: history.length, counts: history.join(', ') })}">` +
 			`<line class="spark__best" x1="${pad}" x2="${w - pad}" y1="${y(best).toFixed(1)}" y2="${y(best).toFixed(1)}"/>` +
 			`<polyline class="spark__line" points="${points.join(' ')}"/>${dots.join('')}</svg></span></span>`
 		)
@@ -181,21 +182,21 @@ export function createChangesView(root: HTMLElement): View {
 	function renderSummary() {
 		const s = Settings.get()
 		if (!valid()) {
-			summary.textContent = 'Pick 2 to 4 chords.'
+			summary.textContent = t('Pick 2 to 4 chords.')
 			return
 		}
 		if (s.changesMode === 'time') {
 			// Numbers only in the markup. Through a speaker the mic hears the clicks too.
 			summary.innerHTML =
-				`<span>${s.changesBeats} ${s.changesBeats === 1 ? 'beat' : 'beats'} per chord${s.changesSpeedUp ? ' · speeds up' : ''}</span>` +
-				'<span>Headphones work best: the mic can hear the clicks.</span>'
+				`<span>${plural(s.changesBeats, '{n} beat per chord', '{n} beats per chord')}${s.changesSpeedUp ? ` · ${t('speeds up')}` : ''}</span>` +
+				`<span>${t('Headphones work best: the mic can hear the clicks.')}</span>`
 			return
 		}
 		const { best, history } = Changes.loadRecord(selection(), s.changesDuration)
 		const length = s.changesDuration < 60 ? `${s.changesDuration} s` : `${s.changesDuration / 60} min`
 		summary.innerHTML = history.length
-			? `<span class="silk">Best · <b>${best}</b> in ${length}</span>${sparkline(history, best)}`
-			: `<span>No ${length} sessions of ${pairLabel(selection())} yet.</span>`
+			? `<span class="silk">${t('Best · <b>{best}</b> in {length}', { best, length })}</span>${sparkline(history, best)}`
+			: `<span>${t('No {length} sessions of {chords} yet.', { length, chords: pairLabel(selection()) })}</span>`
 	}
 
 	function renderSetup() {
@@ -261,16 +262,21 @@ export function createChangesView(root: HTMLElement): View {
 		sizeCounter(s.changesMode !== 'time')
 		if (s.changesMode === 'time') {
 			clock.textContent = `${s.changesBpm} BPM`
-			countLabel.textContent = ON_TIME_LABEL
+			countLabel.textContent = t(ON_TIME_LABEL)
 			showLed(countValue, null)
 		} else {
 			clock.textContent = clockText(s.changesDuration * 1000)
-			countLabel.textContent = 'Changes'
+			countLabel.textContent = t('Changes')
 			showLed(countValue, 0)
 		}
 		if (valid()) {
 			renderShapes(chords)
-			setTarget(chords[0], s.changesMode === 'time' ? `then ${noteName(chords[1])}` : `Start on ${noteName(chords[0])}, change to ${noteName(chords[1])}`)
+			setTarget(
+				chords[0],
+				s.changesMode === 'time'
+					? t('then {chord}', { chord: noteName(chords[1]) })
+					: t('Start on {first}, change to {second}', { first: noteName(chords[0]), second: noteName(chords[1]) })
+			)
 		} else {
 			renderShapes(chords)
 			target.textContent = '–'
@@ -285,7 +291,7 @@ export function createChangesView(root: HTMLElement): View {
 		stage.dataset.phase = session.phase()
 		setup.hidden = running
 		root.classList.toggle('trainer--running', running)
-		startButton.textContent = running ? 'Stop' : session.phase() === 'done' ? 'Start again' : 'Start'
+		startButton.textContent = running ? t('Stop') : session.phase() === 'done' ? t('Start again') : t('Start')
 		// The hot key starts; Stop is an ordinary key.
 		startButton.classList.toggle('key--hot', !running)
 	}
@@ -318,7 +324,7 @@ export function createChangesView(root: HTMLElement): View {
 		if (mark) meter.dataset.mark = mark
 		else delete meter.dataset.mark
 		zone.style.setProperty('--hit', onScale(hitMs))
-		meterValue.textContent = !mark ? '—' : shown === null ? 'Missed' : `${signed(shown)} · ${MARK_TEXT[mark]}`
+		meterValue.textContent = !mark ? '—' : shown === null ? t('Missed') : `${signed(shown)} · ${t(MARK_TEXT[mark])}`
 		needle.hidden = shown === null
 		if (shown !== null) needle.style.setProperty('--x', onScale(shown))
 		const before = offsets.slice(Math.max(0, last - GHOSTS), Math.max(0, last))
@@ -337,15 +343,25 @@ export function createChangesView(root: HTMLElement): View {
 		missLamp.classList.toggle('is-on', mark === 'miss')
 		const hits = marks.filter((m) => m === 'hit').length
 		const misses = marks.filter((m) => m === 'miss').length
-		tally.textContent = marks.length ? `On time ${hits} / ${marks.length}${misses ? ` · ${misses} missed` : ''}` : ''
-		const lastText = shown === null ? 'missed' : `${MARK_TEXT[mark]}, ${Math.abs(shown)} ms ${shown < 0 ? 'before' : 'after'} the beat`
-		scale.setAttribute('aria-label', mark ? `Last change ${lastText}. ${hits} of ${marks.length} changes on time.` : 'No changes yet')
+		tally.textContent = marks.length
+			? `${t('On time {hits} / {total}', { hits, total: marks.length })}${misses ? ` · ${t('{n} missed', { n: misses })}` : ''}`
+			: ''
+		const lastText =
+			shown === null
+				? t('missed')
+				: shown < 0
+					? t('{mark}, {ms} ms before the beat', { mark: t(MARK_TEXT[mark]), ms: Math.abs(shown) })
+					: t('{mark}, {ms} ms after the beat', { mark: t(MARK_TEXT[mark]), ms: Math.abs(shown) })
+		scale.setAttribute(
+			'aria-label',
+			mark ? t('Last change {what}. {hits} of {total} changes on time.', { what: lastText, hits, total: marks.length }) : t('No changes yet')
+		)
 	}
 
 	function showCount(left: number, first: string) {
 		target.textContent = String(left)
 		target.classList.add('changes-target--count')
-		next.textContent = `Get ready on ${noteName(first)}`
+		next.textContent = t('Get ready on {chord}', { chord: noteName(first) })
 		upcoming.textContent = noteName(first)
 	}
 
@@ -361,7 +377,7 @@ export function createChangesView(root: HTMLElement): View {
 			counted(count) {
 				showLed(countValue, count)
 				flash()
-				announce(`${count} ${count === 1 ? 'change' : 'changes'}`)
+				announce(plural(count, '{n} change', '{n} changes'))
 			},
 			marked(marks, offsets, hitMs) {
 				renderMeter(marks, offsets, hitMs)
@@ -381,7 +397,7 @@ export function createChangesView(root: HTMLElement): View {
 	function start() {
 		if (!valid()) return
 		if (!micLive && !faking()) {
-			status.textContent = 'The microphone is off. Press Listen, then Start.'
+			status.textContent = t('The microphone is off. Press Listen, then Start.')
 			focusMicButton()
 			return
 		}
@@ -398,11 +414,11 @@ export function createChangesView(root: HTMLElement): View {
 		sizeCounter(mode === 'minute')
 		if (mode === 'minute') {
 			showLed(countValue, 0)
-			countLabel.textContent = 'Changes'
+			countLabel.textContent = t('Changes')
 			clock.textContent = clockText(s.changesDuration * 1000)
 		} else {
 			showLed(countValue, null)
-			countLabel.textContent = ON_TIME_LABEL
+			countLabel.textContent = t(ON_TIME_LABEL)
 			clock.textContent = `${s.changesBpm} BPM`
 		}
 		session.start(
@@ -432,24 +448,24 @@ export function createChangesView(root: HTMLElement): View {
 		if (ended?.mode === 'minute') {
 			const { count, before } = ended
 			const said = verdict(count, before)
-			showResult(String(count), count === 1 ? 'change' : 'changes', [said, `Best ${Math.max(before.best, count)}`])
-			announce(`Time. ${count} changes. ${said}.`, true)
+			showResult(String(count), plural(count, 'change', 'changes'), [said, t('Best {n}', { n: Math.max(before.best, count) })])
+			announce(t('Time. {changes}. {verdict}.', { changes: plural(count, '{n} change', '{n} changes'), verdict: said }), true)
 			status.textContent = ''
 		} else if (ended?.mode === 'time') {
 			const { marks } = ended
 			const pct = Changes.accuracy(marks)
 			const n = (m: Changes.Mark) => marks.filter((x) => x === m).length
-			showResult(`${pct}%`, 'on time', [
-				`${n('hit')} of ${marks.length} changes`,
-				`${n('late')} late · ${n('early')} early · ${n('miss')} missed`,
-				`Ended at ${ended.bpm} BPM`,
+			showResult(`${pct}%`, t('on time'), [
+				t('{hits} of {total} changes', { hits: n('hit'), total: marks.length }),
+				t('{late} late · {early} early · {missed} missed', { late: n('late'), early: n('early'), missed: n('miss') }),
+				t('Ended at {bpm} BPM', { bpm: ended.bpm }),
 			])
-			announce(`${pct} percent on time, ${n('hit')} of ${marks.length} changes.`, true)
+			announce(t('{pct} percent on time, {hits} of {total} changes.', { pct, hits: n('hit'), total: marks.length }), true)
 			// Stopped by the page, not the player: say why under the result.
 			status.textContent = reason
 		} else {
 			result.hidden = true
-			status.textContent = reason || (wasTime ? 'Stopped.' : 'Stopped. Sessions count only when the time runs out.')
+			status.textContent = reason || (wasTime ? t('Stopped.') : t('Stopped. Sessions count only when the time runs out.'))
 			renderIdle()
 		}
 		setRunningUi(false)
@@ -478,7 +494,7 @@ export function createChangesView(root: HTMLElement): View {
 	// Hidden page or locked screen: the mic and the timers stall, so no count
 	// or mark from here on would mean anything. End it rather than pause it.
 	document.addEventListener('visibilitychange', () => {
-		if (document.hidden && isRunning()) finish(false, 'Stopped: the page was hidden.')
+		if (document.hidden && isRunning()) finish(false, t('Stopped: the page was hidden.'))
 	})
 
 	// In time: downbeats from the metronome.
@@ -535,7 +551,7 @@ export function createChangesView(root: HTMLElement): View {
 			resetHeard()
 			session.resetHearing()
 			showHeard(null)
-			if (isRunning()) finish(false, 'Stopped: the microphone went off.')
+			if (isRunning()) finish(false, t('Stopped: the microphone went off.'))
 		},
 
 		onReading() {

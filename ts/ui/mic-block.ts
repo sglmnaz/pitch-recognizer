@@ -9,6 +9,7 @@ import { initDebug, updateDebug } from './debug'
 import { byId } from './dom'
 import type { View } from './view'
 import { drawWaveform } from './waveform'
+import { t } from '../core/i18n'
 
 export type MicState = 'off' | 'waiting' | 'listening' | 'blocked'
 
@@ -87,12 +88,16 @@ function syncMicUi() {
 	const waiting = micActive && Microphone.isSuspended()
 	waitingShown = waiting
 	const listening = micActive && !waiting
-	micLabel.textContent = micBlocked ? 'Blocked' : listening ? 'Listening' : waiting ? 'Tap to start' : 'Idle'
+	micLabel.textContent = micBlocked ? t('Blocked') : listening ? t('Listening') : waiting ? t('Tap to start') : t('Idle')
 	micButton.setAttribute('aria-pressed', String(micActive))
 	micButton.classList.toggle('mic-toggle--live', listening)
-	micButton.title = listening ? 'Stop listening' : 'Start listening'
+	micButton.title = listening ? t('Stop listening') : t('Start listening')
 	setHint(
-		micBlocked ? 'The browser is blocking the microphone. Allow it in the site settings to use this.' : waiting ? 'Tap anywhere to start the microphone.' : ''
+		micBlocked
+			? t('The browser is blocking the microphone. Allow it in the site settings to use this.')
+			: waiting
+				? t('Tap anywhere to start the microphone.')
+				: ''
 	)
 	for (const listener of listeners) listener()
 }

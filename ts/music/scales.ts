@@ -1,5 +1,6 @@
 // Pure scale data + helpers: spelling, fretboard positions and the identifier.
 // No DOM, so `npm run check:scales` can run it under Node.
+import { t } from '../core/i18n.ts'
 
 export interface ScaleType {
 	name: string
@@ -143,7 +144,7 @@ export function identifyScales(marked: Set<number>, bassPc?: number): ScaleMatch
 	return matches.sort((a, b) => a.rank - b.rank)
 }
 
-export const scaleTitle = (root: string, type: ScaleType) => `${root} ${type.name}${type.aka ? ` · ${type.aka}` : ''}`
+export const scaleTitle = (root: string, type: ScaleType) => `${root} ${t(type.name)}${type.aka ? ` · ${t(type.aka)}` : ''}`
 
 /* Degrees, positions, playback runs ------------------------------------- */
 

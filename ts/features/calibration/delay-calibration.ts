@@ -4,6 +4,7 @@ import * as Settings from '../../core/settings'
 import * as Latency from '../../core/latency'
 import * as Tab from '../../music/tab'
 import { micState, setListening } from '../../ui/mic-block'
+import { t } from '../../core/i18n'
 
 /**
  * The parts of a step card (index.html, #view-calibration) a run fills: its
@@ -22,7 +23,7 @@ function stepParts(step: HTMLElement, clicks: number) {
 		count: (n: number) => (count.textContent = String(n)),
 		begin() {
 			run.hidden = false
-			start.textContent = 'Cancel'
+			start.textContent = t('Cancel')
 			count.textContent = '0'
 			dots.replaceChildren(...Array.from({ length: clicks }, () => document.createElement('i')))
 			dots.style.setProperty('--n', String(clicks))
@@ -36,7 +37,7 @@ function stepParts(step: HTMLElement, clicks: number) {
 		end() {
 			run.hidden = true
 			// Start or Redo (data-label, set by the calibration view).
-			start.textContent = start.dataset.label ?? 'Start'
+			start.textContent = start.dataset.label ?? t('Start')
 		},
 	}
 }
@@ -59,12 +60,12 @@ export function createDelayCalibration(step: HTMLElement, onDone: () => void): {
 	let finishTimer = 0
 
 	function start() {
-		if (Metronome.getState().running) return ui.say('Stop the metronome first, then calibrate.')
+		if (Metronome.getState().running) return ui.say(t('Stop the metronome first, then calibrate.'))
 		clicks = []
 		taps = []
 		ui.begin()
 		pad.disabled = false
-		ui.say(`Listen for ${Latency.LISTEN_CLICKS} clicks, then tap the pad on every click you hear.`)
+		ui.say(t('Listen for {n} clicks, then tap the pad on every click you hear.', { n: Latency.LISTEN_CLICKS }))
 		const s = Settings.get()
 		Metronome.configure({
 			beats: 4,
@@ -80,7 +81,7 @@ export function createDelayCalibration(step: HTMLElement, onDone: () => void): {
 			clicks.push(event.heardAt)
 			ui.tick(clicks.length - 1)
 			const left = Latency.CALIBRATION_CLICKS - clicks.length
-			if (clicks.length > Latency.LISTEN_CLICKS) ui.say(left > 0 ? `Tap on every click · ${left} to go` : 'Last one…')
+			if (clicks.length > Latency.LISTEN_CLICKS) ui.say(left > 0 ? t('Tap on every click · {n} to go', { n: left }) : t('Last one…'))
 			// The last click still gets its tap: stop a beat later.
 			if (left === 0) finishTimer = window.setTimeout(finish, beatMs)
 		})
@@ -101,18 +102,18 @@ export function createDelayCalibration(step: HTMLElement, onDone: () => void): {
 	function finish() {
 		stopClicks()
 		const read = Latency.estimateDelay(clicks, taps, beatMs)
-		if (!read) return ui.say('Not enough taps. Try again, one tap on each click.')
-		if (read.spread > Latency.MAX_SPREAD_MS) return ui.say(`Taps too uneven (±${Math.round(read.spread)} ms). Try again, as steady as you can.`)
+		if (!read) return ui.say(t('Not enough taps. Try again, one tap on each click.'))
+		if (read.spread > Latency.MAX_SPREAD_MS) return ui.say(t('Taps too uneven (±{ms} ms). Try again, as steady as you can.', { ms: Math.round(read.spread) }))
 		const ms = Latency.delaySetting(read.lag)
 		Settings.update({ audioDelayMs: ms, audioCalibratedAt: Date.now() })
-		ui.say(`Measured ${Math.round(read.lag)} ms from ${read.taps} taps: set to ${ms} ms.`)
+		ui.say(t('Measured {lag} ms from {taps} taps: set to {ms} ms.', { lag: Math.round(read.lag), taps: read.taps, ms }))
 		onDone()
 	}
 
 	function cancel() {
 		if (!off) return
 		stopClicks()
-		ui.say('Cancelled.')
+		ui.say(t('Cancelled.'))
 	}
 
 	function tap(at: number) {
@@ -156,11 +157,11 @@ export function createMicCalibration(step: HTMLElement, onDone: () => void): { f
 	let finishTimer = 0
 
 	function start() {
-		if (Metronome.getState().running) return ui.say('Stop the metronome first, then calibrate.')
+		if (Metronome.getState().running) return ui.say(t('Stop the metronome first, then calibrate.'))
 		clicks = []
 		frames = []
 		ui.begin()
-		ui.say('Keep still and quiet: the phone plays a click every 1.5 s and listens for it.')
+		ui.say(t('Keep still and quiet: the phone plays a click every 1.5 s and listens for it.'))
 		const s = Settings.get()
 		Metronome.configure({
 			beats: 4,
@@ -196,13 +197,21 @@ export function createMicCalibration(step: HTMLElement, onDone: () => void): { f
 
 	function finish() {
 		stopRun()
-		if (!frames.length) return ui.say('The microphone is off or blocked: allow it, then try again.')
+		if (!frames.length) return ui.say(t('The microphone is off or blocked: allow it, then try again.'))
 		const read = Latency.estimateOnsetDelay(clicks, frames, beatMs, Latency.MIC_AHEAD_MS)
-		if (!read) return ui.say('Not enough clicks heard. Turn the volume up, take off headphones and try again.')
-		if (read.spread > Latency.MAX_SPREAD_MS) return ui.say(`Clicks heard too unevenly (±${Math.round(read.spread)} ms). Try again somewhere quieter.`)
+		if (!read) return ui.say(t('Not enough clicks heard. Turn the volume up, take off headphones and try again.'))
+		if (read.spread > Latency.MAX_SPREAD_MS)
+			return ui.say(t('Clicks heard too unevenly (±{ms} ms). Try again somewhere quieter.', { ms: Math.round(read.spread) }))
 		const ms = Latency.delaySetting(read.lag, Latency.MAX_MIC_DELAY_MS, Latency.MIN_MIC_DELAY_MS)
 		Settings.update({ micDelayMs: ms, micCalibratedAt: Date.now() })
-		ui.say(`The mic heard ${read.taps} of ${clicks.length - Latency.LISTEN_CLICKS} clicks, steady within ±${Math.round(read.spread)} ms: set to ${ms} ms.`)
+		ui.say(
+			t('The mic heard {heard} of {clicks} clicks, steady within ±{spread} ms: set to {ms} ms.', {
+				heard: read.taps,
+				clicks: clicks.length - Latency.LISTEN_CLICKS,
+				spread: Math.round(read.spread),
+				ms,
+			})
+		)
 		onDone()
 	}
 
@@ -210,7 +219,7 @@ export function createMicCalibration(step: HTMLElement, onDone: () => void): { f
 		if (!off) return
 		stopRun()
 		// A mic that fails to start stops itself, and that resets the view: say why.
-		ui.say(micState() === 'blocked' ? 'The microphone is blocked: allow it in the browser, then try again.' : 'Cancelled.')
+		ui.say(micState() === 'blocked' ? t('The microphone is blocked: allow it in the browser, then try again.') : t('Cancelled.'))
 	}
 
 	step.querySelector('[data-start]')!.addEventListener('click', () => (off ? cancel() : start()))

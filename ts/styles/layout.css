@@ -170,6 +170,14 @@
 	}
 }
 
+/* A long word in another language (IMPOSTAZIONI): untracked and a size down, so it fits a sixth of a phone. */
+.tab__label--long {
+	@media (max-width: 600px) {
+		font-size: 8.5px;
+		letter-spacing: 0;
+	}
+}
+
 /* Views ------------------------------------------------------------------ */
 .view {
 	display: flex;

@@ -1,5 +1,7 @@
+import { currentLanguage } from '../core/i18n'
+
 /**
- * The guide: every tab has a ? button (data-help="<tab>") that opens one shared
+ * The guide: every tab has a Guide key (data-help="<tab>") that opens one shared
  * <dialog>, filled from that tab's <template id="help-<tab>"> in index.html.
  * The native modal dialog handles focus trapping, Escape and returning focus.
  */
@@ -11,7 +13,9 @@ export function initHelp() {
 	document.addEventListener('click', (event) => {
 		const button = (event.target as Element).closest<HTMLElement>('[data-help]')
 		if (!button) return
-		const template = document.getElementById(`help-${button.dataset.help}`) as HTMLTemplateElement | null
+		// The page in the app's language (help-tuner-it), else the English one.
+		const template = (document.getElementById(`help-${button.dataset.help}-${currentLanguage()}`) ??
+			document.getElementById(`help-${button.dataset.help}`)) as HTMLTemplateElement | null
 		if (!template) return
 		title.textContent = template.dataset.title ?? ''
 		body.replaceChildren(template.content.cloneNode(true))

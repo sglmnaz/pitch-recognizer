@@ -13,6 +13,7 @@ import { createChangesView } from './changes.view'
 import { createTabView } from './tab.view'
 import { noteName, noteSystem } from '../../music/note-names'
 import { createScoreboard } from './led'
+import { t } from '../../core/i18n'
 
 /**
  * Five exercises behind one segmented control: Notes (match the note on the
@@ -58,7 +59,7 @@ export function createTrainerView(root: HTMLElement): View {
 
 	function showTarget() {
 		const { target } = Game.getState()
-		promptHint.textContent = Settings.get().matchAnyOctave ? 'Match this note (any octave)' : 'Match this note'
+		promptHint.textContent = Settings.get().matchAnyOctave ? t('Match this note (any octave)') : t('Match this note')
 		promptNote.textContent = displayNote(target.note)
 		// The other name under it: Do Re Mi under letters, letters under any other system.
 		const other = noteSystem() === 'letters' ? target.altName : target.note.split('/')[0]
@@ -83,14 +84,14 @@ export function createTrainerView(root: HTMLElement): View {
 		updateScoreboard()
 		Game.nextNote()
 		showTarget()
-		clearReadout('Nice — next note')
+		clearReadout(t('Nice — next note'))
 	}
 
 	skipButton.addEventListener('click', () => {
 		Game.skip()
 		showTarget()
 		updateScoreboard()
-		clearReadout('Skipped')
+		clearReadout(t('Skipped'))
 	})
 
 	// React to settings changes: keep the target valid against the new pool and
@@ -105,7 +106,7 @@ export function createTrainerView(root: HTMLElement): View {
 		Game.revalidateTarget()
 		showTarget()
 		if (Game.getState().target !== previous) {
-			clearReadout('Play the note shown above')
+			clearReadout(t('Play the note shown above'))
 		}
 	})
 
@@ -118,11 +119,11 @@ export function createTrainerView(root: HTMLElement): View {
 			ensureStarted()
 			updateScoreboard()
 			applyStaffTheme()
-			clearReadout('Play the note shown above')
+			clearReadout(t('Play the note shown above'))
 		},
 
 		reset() {
-			clearReadout('Press Listen to start')
+			clearReadout(t('Press Listen to start'))
 		},
 
 		onReading(reading: PitchReading | null) {
@@ -132,7 +133,7 @@ export function createTrainerView(root: HTMLElement): View {
 			const evaluation = Game.evaluate(reading, performance.now())
 
 			if (!reading || !evaluation.detected) {
-				clearReadout(`Find ${targetLabel()}`)
+				clearReadout(t('Find {note}', { note: targetLabel() }))
 				return
 			}
 
@@ -141,7 +142,7 @@ export function createTrainerView(root: HTMLElement): View {
 
 			readout.show(
 				displayNote(closest.note),
-				evaluation.onTarget ? 'Hold it steady…' : `Find ${targetLabel()}`,
+				evaluation.onTarget ? t('Hold it steady…') : t('Find {note}', { note: targetLabel() }),
 				cents,
 				evaluation.onTarget && Math.abs(cents) < 20
 			)

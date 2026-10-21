@@ -7,6 +7,7 @@ import { scoped } from '../../ui/dom'
 import type { View } from '../../ui/view'
 import { chordName, createChordModes } from './chord-library.view'
 import { noteName } from '../../music/note-names'
+import { t } from '../../core/i18n'
 
 // A new label (chord or "none") must win for this long before it is shown.
 // trackChord's HMM already keeps a strum's attack and decay from flickering
@@ -17,8 +18,6 @@ const CHORD_CONFIRM_MS = 150
 // short gap between strums (the gate closing on a decay) keeps its evidence.
 const SILENCE_RESET_MS = 300
 const tracker = withSilenceReset({ track: trackChord, reset: resetChordTracking }, SILENCE_RESET_MS)
-
-const OPEN_HINT = 'Voicings, notes and keys of the chord you play'
 
 /** 'C#m7' → 'C# minor 7th', the name the Library gives it. */
 function fullName(symbol: string) {
@@ -57,14 +56,14 @@ export function createChordsView(root: HTMLElement): View {
 	let candidateSince = 0
 
 	function render(label: string | null, notes: string[], idleText: string) {
-		const shownName = label && noteName(label)
-		symbol.textContent = shownName ?? '--'
+		const shownName = label ? noteName(label) : ''
+		symbol.textContent = label ? shownName : '--'
 		symbol.classList.toggle('lcd__dim', label === null)
 		name.replaceChildren(...(label ? fullName(label) : []))
 		notesLine.textContent = label ? notes.map(noteName).join(' · ') : idleText
 		openKey.setAttribute('aria-disabled', String(label === null))
-		openKey.setAttribute('aria-label', label ? `Open ${shownName} in the Library` : 'Open in the Library (no chord yet)')
-		openHint.textContent = label ? `Voicings, notes and keys for ${shownName}` : OPEN_HINT
+		openKey.setAttribute('aria-label', label ? t('Open {chord} in the Library', { chord: shownName }) : t('Open in the Library (no chord yet)'))
+		openHint.textContent = label ? t('Voicings, notes and keys for {chord}', { chord: shownName }) : t('Voicings, notes and keys of the chord you play')
 	}
 
 	// Each column lights from the bottom up to its level (chords.css clips the dot column).
@@ -75,7 +74,7 @@ export function createChordsView(root: HTMLElement): View {
 		})
 	}
 
-	function idle(text = 'Strum a chord') {
+	function idle(text = t('Strum a chord')) {
 		tracker.reset()
 		shown = null
 		candidate = null
@@ -111,7 +110,7 @@ export function createChordsView(root: HTMLElement): View {
 			}
 			if (candidate !== shown && now - candidateSince >= CHORD_CONFIRM_MS) {
 				shown = candidate
-				render(shown, chord?.notes ?? [], loud ? 'Not a chord' : 'Listening…')
+				render(shown, chord?.notes ?? [], loud ? t('Not a chord') : t('Listening…'))
 			}
 
 			drawChroma(analysis?.chroma ?? new Array(12).fill(0), shown && chord?.name === shown ? chord.notes : [])

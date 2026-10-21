@@ -22,6 +22,7 @@ import { changesTimeline, lastSession, onSession, TIMELINE_AFTER, TIMELINE_BEFOR
 import { createDelayCalibration, createMicCalibration } from './delay-calibration'
 import { noteName } from '../../music/note-names'
 import * as FieldReport from './field-report'
+import { currentLanguage, num, plural, t } from '../../core/i18n'
 
 const TAB_LABELS: Record<string, string> = {
 	tuner: 'Tuner',
@@ -79,7 +80,7 @@ function createMicCheck(card: HTMLElement) {
 		strumCount.textContent = '0'
 		chordText.textContent = '–'
 		namingText.textContent = '–'
-		button.textContent = 'Stop'
+		button.textContent = t('Stop')
 		resetHeard()
 		loadChordModel().catch(() => {}) // logged once by the loader
 		setListening(true)
@@ -88,7 +89,7 @@ function createMicCheck(card: HTMLElement) {
 	function stop() {
 		if (!on) return
 		on = false
-		button.textContent = 'Start'
+		button.textContent = t('Start')
 		const fired = entries.filter((e) => e.kind === 'strum').length
 		const summary = `Mic check · ${strums} strums counted of ${fired} fired · noise floor ${Math.round(dB(Microphone.getStats().noiseFloor))} dB`
 		FieldReport.sessionEnded({ entries, summary }, 'Mic check')
@@ -145,13 +146,13 @@ function timelineRow(row: TimelineRow): HTMLElement {
 	const outlier = row.dt === null || Math.abs(row.dt) > OUTLIER_MS
 	const line = el('div', outlier ? 'dg-tl dg-tl--out' : 'dg-tl')
 	const label = el('span', 'dg-label')
-	label.append(el('b', '', undefined, `${row.index} · ${noteName(row.target)}`), el('span', '', undefined, row.chosen !== null ? 'strum' : 'not heard'))
+	label.append(el('b', '', undefined, `${row.index} · ${noteName(row.target)}`), el('span', '', undefined, row.chosen !== null ? t('strum') : t('not heard')))
 	const track = el('span', 'lcd dg-track')
 	track.append(el('span', 'dg-zone'), el('span', 'dg-zero'), ...row.strums.map((t) => el('span', 'dg-tick', t)))
 	if (row.chosen !== null) track.append(el('span', 'dg-chosen', row.chosen))
 	const frame = el('span', 'window')
 	frame.append(track)
-	line.append(label, frame, el('span', outlier ? 'dg-dt off' : 'dg-dt hit', undefined, row.dt === null ? 'miss' : signed(row.dt)))
+	line.append(label, frame, el('span', outlier ? 'dg-dt off' : 'dg-dt hit', undefined, row.dt === null ? t('miss') : signed(row.dt)))
 	return line
 }
 
@@ -186,7 +187,7 @@ export function createCalibrationView(root: HTMLElement, from: () => string | nu
 
 	function renderReports() {
 		arm.checked = FieldReport.isArmed()
-		armed.textContent = FieldReport.isArmed() ? 'On: every session is recorded, up to 3 minutes each; the last 3 are kept' : 'Off'
+		armed.textContent = FieldReport.isArmed() ? t('On: every session is recorded, up to 3 minutes each; the last 3 are kept') : t('Off')
 		files.replaceChildren(
 			...FieldReport.getReports().map((report) => {
 				const row = document.createElement('div')
@@ -196,14 +197,14 @@ export function createCalibrationView(root: HTMLElement, from: () => string | nu
 				title.textContent = report.title
 				const meta = document.createElement('span')
 				const seconds = Math.round(report.durationMs / 1000)
-				meta.textContent = `${report.when.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })} · ${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')} · audio + ${report.events} events · ${((report.audio.size + report.log.size) / 1e6).toFixed(1)} MB`
+				meta.textContent = `${report.when.toLocaleTimeString(currentLanguage(), { hour: '2-digit', minute: '2-digit' })} · ${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')} · ${t('audio + {n} events', { n: report.events })} · ${num((report.audio.size + report.log.size) / 1e6, 1)} MB`
 				text.append(title, meta)
 				const keys = document.createElement('span')
 				keys.className = 'dg-file__keys'
 				keys.append(
-					key('Download', () => FieldReport.downloadReport(report)),
-					key('Share', () => FieldReport.shareReport(report)),
-					key('✕', () => FieldReport.deleteReport(report), `Delete the report ${report.title}`)
+					key(t('Download'), () => FieldReport.downloadReport(report)),
+					key(t('Share'), () => FieldReport.shareReport(report)),
+					key('✕', () => FieldReport.deleteReport(report), t('Delete the report {title}', { title: report.title }))
 				)
 				row.append(text, keys)
 				return row
@@ -211,7 +212,7 @@ export function createCalibrationView(root: HTMLElement, from: () => string | nu
 		)
 		const count = FieldReport.getReports().length
 		all.hidden = count < 2
-		allLabel.textContent = `All ${count} reports`
+		allLabel.textContent = t('All {n} reports', { n: count })
 	}
 	const all = $<HTMLElement>('[data-reports-all]')
 	const allLabel = $<HTMLElement>('[data-reports-all-label]')
@@ -243,9 +244,11 @@ export function createCalibrationView(root: HTMLElement, from: () => string | nu
 		if (!session) return
 		const timelineRows = session.exercise === 'changes' ? changesTimeline(session.entries) : []
 		const outliers = timelineRows.filter((r) => r.dt === null || Math.abs(r.dt) > OUTLIER_MS).length
-		const name = session.exercise === 'changes' ? 'Changes · In time' : 'Tab'
-		const at = new Date(session.endedAt).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })
-		sessionSub.textContent = timelineRows.length ? `${name} · ${at} · ${timelineRows.length} changes · ${outliers} outliers in red` : `${name} · ${at}`
+		const name = session.exercise === 'changes' ? t('Changes · In time') : t('Tab')
+		const at = new Date(session.endedAt).toLocaleTimeString(currentLanguage(), { hour: '2-digit', minute: '2-digit' })
+		sessionSub.textContent = timelineRows.length
+			? `${name} · ${at} · ${plural(timelineRows.length, '{n} change', '{n} changes')} · ${t('{n} outliers in red', { n: outliers })}`
+			: `${name} · ${at}`
 		timeline.hidden = !timelineRows.length
 		rows.replaceChildren(...timelineRows.map(timelineRow))
 		log.textContent = session.summary
@@ -253,16 +256,16 @@ export function createCalibrationView(root: HTMLElement, from: () => string | nu
 	onSession(renderSession)
 	logButton.addEventListener('click', () => {
 		log.hidden = !log.hidden
-		logButton.textContent = log.hidden ? 'Show log' : 'Hide log'
+		logButton.textContent = log.hidden ? t('Show log') : t('Hide log')
 	})
 	copyButton.addEventListener('click', () => {
 		const text = lastSession()?.summary ?? ''
 		navigator.clipboard?.writeText(text).then(
-			() => (copyButton.textContent = 'Copied'),
+			() => (copyButton.textContent = t('Copied')),
 			() => {
 				// No clipboard: show the log to select by hand.
 				log.hidden = false
-				copyButton.textContent = 'Select the log'
+				copyButton.textContent = t('Select the log')
 			}
 		)
 	})
@@ -282,10 +285,11 @@ export function createCalibrationView(root: HTMLElement, from: () => string | nu
 		showCalibrationState(root)
 		for (const [key, step] of Object.entries(steps)) {
 			const start = step.querySelector<HTMLElement>('[data-start]')!
-			start.dataset.label = (key === 'audio' ? s.audioCalibratedAt : s.micCalibratedAt) ? 'Redo' : 'Start'
+			const redo = Boolean(key === 'audio' ? s.audioCalibratedAt : s.micCalibratedAt)
+			start.dataset.label = redo ? t('Redo') : t('Start')
 			// The key keeps saying Cancel while its run goes on.
-			if (start.textContent !== 'Cancel') start.textContent = start.dataset.label
-			start.classList.toggle('key--hot', start.dataset.label === 'Start')
+			if (start.textContent !== t('Cancel')) start.textContent = start.dataset.label
+			start.classList.toggle('key--hot', !redo)
 		}
 		for (const el of $$<HTMLElement>('[data-fine]')) {
 			const ms = s[el.dataset.fine as keyof typeof RANGES]
@@ -293,7 +297,7 @@ export function createCalibrationView(root: HTMLElement, from: () => string | nu
 		}
 		const latency = Metronome.latencies()
 		const track = Microphone.getStream()?.getAudioTracks()[0]?.getSettings() as { latency?: number; sampleRate?: number } | undefined
-		device.textContent = `Browser: output ${latency.outputMs === null ? '– (play a click first)' : `${Math.round(latency.outputMs)} ms`} · mic ${track?.latency === undefined ? '–' : `${Math.round(track.latency * 1000)} ms`}${track?.sampleRate ? ` · ${track.sampleRate / 1000} kHz` : ''}`
+		device.textContent = `${t('Browser: output')} ${latency.outputMs === null ? t('– (play a click first)') : `${Math.round(latency.outputMs)} ms`} · ${t('mic')} ${track?.latency === undefined ? '–' : `${Math.round(track.latency * 1000)} ms`}${track?.sampleRate ? ` · ${track.sampleRate / 1000} kHz` : ''}`
 	}
 	Settings.subscribe(() => {
 		if (!root.hidden) render()
@@ -301,7 +305,7 @@ export function createCalibrationView(root: HTMLElement, from: () => string | nu
 
 	return {
 		onActivate() {
-			const label = `◀ Back to ${TAB_LABELS[from() ?? 'settings'] ?? 'Settings'}`
+			const label = `◀ ${t('Back to {tab}', { tab: t(TAB_LABELS[from() ?? 'settings'] ?? 'Settings') })}`
 			backLink.textContent = label
 			backLabel.textContent = label.replace('◀ ', '')
 			ready.hidden = true

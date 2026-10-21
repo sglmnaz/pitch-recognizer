@@ -10,6 +10,7 @@ import type { View } from '../../ui/view'
 import { onBareKey, subscribeVisible } from '../../ui/dom'
 import { noteName } from '../../music/note-names'
 import { createScoreboard } from './led'
+import { t } from '../../core/i18n'
 
 // Long enough to see the green, short enough to keep the drill moving.
 const AUTO_ADVANCE_MS = 700
@@ -60,7 +61,7 @@ export function createEarView(root: HTMLElement): View {
 		if (key === answersKey) return
 		answersKey = key
 		answers.dataset.exercise = ex
-		answers.setAttribute('aria-label', ex === 'intervals' ? 'Intervals' : 'Chord qualities')
+		answers.setAttribute('aria-label', ex === 'intervals' ? t('Intervals') : t('Chord qualities'))
 		answers.replaceChildren(
 			...ids.map((id) => {
 				const button = document.createElement('button')
@@ -72,7 +73,7 @@ export function createEarView(root: HTMLElement): View {
 				short.textContent = id
 				const name = document.createElement('span')
 				name.className = 'ear-answer__name'
-				name.textContent = Ear.labelOf(ex, id)
+				name.textContent = Ear.nameOf(ex, id)
 				button.append(short, name)
 				button.addEventListener('click', () => onAnswer(id))
 				return button
@@ -102,7 +103,7 @@ export function createEarView(root: HTMLElement): View {
 		if (!total) {
 			const empty = document.createElement('li')
 			empty.className = 'ear-stats__empty'
-			empty.textContent = `Your weakest ${ex === 'intervals' ? 'intervals' : 'chords'} show up here.`
+			empty.textContent = ex === 'intervals' ? t('Your weakest intervals show up here.') : t('Your weakest chords show up here.')
 			statsList.replaceChildren(empty)
 			return
 		}
@@ -111,7 +112,7 @@ export function createEarView(root: HTMLElement): View {
 				const share = stat.right / stat.total
 				const row = document.createElement('li')
 				row.className = 'ear-stat'
-				row.title = Ear.labelOf(ex, stat.id)
+				row.title = Ear.nameOf(ex, stat.id)
 				row.innerHTML = '<span class="ear-stat__id"></span><span class="window vu"></span><span class="ear-stat__n"></span>'
 				row.querySelector('.ear-stat__id')!.textContent = stat.id
 				const lit = Math.round(share * VU_SEGMENTS)
@@ -123,7 +124,7 @@ export function createEarView(root: HTMLElement): View {
 					})
 				)
 				row.querySelector('.ear-stat__n')!.textContent = `${stat.right}/${stat.total}`
-				row.setAttribute('aria-label', `${Ear.labelOf(ex, stat.id)}: ${stat.right} of ${stat.total} right`)
+				row.setAttribute('aria-label', t('{name}: {right} of {total} right', { name: Ear.nameOf(ex, stat.id), right: stat.right, total: stat.total }))
 				return row
 			})
 		)
@@ -131,17 +132,18 @@ export function createEarView(root: HTMLElement): View {
 
 	function showHint(text?: string) {
 		const q = question()
-		const prefix = q?.exercise === 'intervals' ? `${DIRECTION_TEXT[q.direction]}. ` : 'Strummed. '
+		const prefix = q?.exercise === 'intervals' ? `${t(DIRECTION_TEXT[q.direction])}. ` : `${t('Strummed.')} `
 		if (text) hint.textContent = text
-		else if (!played) hint.textContent = `${prefix}Press Play to hear it.`
+		else if (!played) hint.textContent = prefix + t('Press Play to hear it.')
 		else if (q?.exercise === 'intervals' && micLive && Settings.get().earSing) {
-			hint.textContent = `${prefix}Tap the answer, or sing or play the ${q.direction === 'harmonic' ? 'upper' : 'second'} note.`
-		} else hint.textContent = `${prefix}${q?.exercise === 'intervals' ? 'Tap the interval.' : 'Tap its quality.'}`
+			hint.textContent =
+				prefix + (q.direction === 'harmonic' ? t('Tap the answer, or sing or play the upper note.') : t('Tap the answer, or sing or play the second note.'))
+		} else hint.textContent = prefix + (q?.exercise === 'intervals' ? t('Tap the interval.') : t('Tap its quality.'))
 	}
 
 	function showQuestion() {
-		promptText.textContent = question()!.exercise === 'intervals' ? 'Which interval?' : 'Which chord?'
-		playLabel.textContent = played ? 'Replay' : 'Play'
+		promptText.textContent = question()!.exercise === 'intervals' ? t('Which interval?') : t('Which chord?')
+		playLabel.textContent = played ? t('Replay') : t('Play')
 		showHint()
 	}
 
@@ -201,10 +203,13 @@ export function createEarView(root: HTMLElement): View {
 			if (button.dataset.id === q.id) button.dataset.state = 'right'
 			else if (button.dataset.id === id) button.dataset.state = 'wrong'
 		}
-		const name = Ear.labelOf(ex, q.id)
+		const name = Ear.nameOf(ex, q.id)
+		const other = Ear.nameOf(ex, id)
 		feedback.textContent = correct
-			? `Correct — ${name}`
-			: `Not quite — it was ${/^[aeiou]/.test(name) ? 'an' : 'a'} ${name}, not ${Ear.labelOf(ex, id)}. Tap any answer to hear it.`
+			? t('Correct — {name}', { name })
+			: /^[aeiou]/.test(Ear.labelOf(ex, q.id))
+				? t('Not quite — it was an {name}, not {other}. Tap any answer to hear it.', { name, other })
+				: t('Not quite — it was a {name}, not {other}. Tap any answer to hear it.', { name, other })
 		feedback.dataset.state = correct ? 'right' : 'wrong'
 		nextButton.hidden = false
 		updateScoreboard()
@@ -290,7 +295,7 @@ export function createEarView(root: HTMLElement): View {
 			const now = performance.now()
 			if (hold?.midi !== midi) {
 				hold = { midi, since: now }
-				showHint(`Hearing ${noteName(getClosestNote(reading.frequency, a4).note.split('/')[0])}…`)
+				showHint(t('Hearing {note}…', { note: noteName(getClosestNote(reading.frequency, a4).note.split('/')[0]) }))
 				return
 			}
 			if (now - hold.since < HOLD_MS) return

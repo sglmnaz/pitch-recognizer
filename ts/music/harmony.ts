@@ -4,6 +4,7 @@
 // runs it under Node.
 import { chordType, type ChordType } from './chord-theory.ts'
 import { degreeNumber, degreesOf, identifyScales, pitchClassOf, ROOTS, SCALE_TYPES, spellFrom, spellScale, type ScaleMatch, type ScaleType } from './scales.ts'
+import { plural, t } from '../core/i18n.ts'
 
 const mod12 = (n: number) => ((n % 12) + 12) % 12
 const scaleNamed = (name: string) => SCALE_TYPES.find((t) => t.name === name)!
@@ -174,7 +175,7 @@ export function keyOf(rootPc: number, type: ScaleType): Key | null {
 /** The key's name as the circle spells it: 'C major', 'D# minor'. */
 function keyTitle(key: Key, name: (note: string) => string): string {
 	const k = CIRCLE[circleIndex(key.pc, key.family)]
-	return key.family === 'major' ? `${name(k.major)} major` : `${name(k.minor)} minor`
+	return key.family === 'major' ? t('{note} major', { note: name(k.major) }) : t('{note} minor', { note: name(k.minor) })
 }
 
 /**
@@ -186,14 +187,19 @@ export function keyName(rootPc: number, type: ScaleType, name = (note: string) =
 	if (!key) return ''
 	const signature = signatureName(CIRCLE[circleIndex(key.pc, key.family)].accidentals)
 	return key.mode
-		? `${name(spellScale(ROOTS[mod12(rootPc)], type).root)} ${type.name} · parent ${keyTitle(key, name)}, ${signature}`
+		? t('{scale} · parent {key}, {signature}', {
+				scale: `${name(spellScale(ROOTS[mod12(rootPc)], type).root)} ${t(type.name)}`,
+				key: keyTitle(key, name),
+				signature,
+			})
 		: `${keyTitle(key, name)}, ${signature}`
 }
 
 /** 2 → '2 sharps', -1 → '1 flat', 0 → 'no sharps or flats'. */
 export function signatureName(accidentals: number): string {
 	const n = Math.abs(accidentals)
-	return n === 0 ? 'no sharps or flats' : `${n} ${accidentals > 0 ? 'sharp' : 'flat'}${n > 1 ? 's' : ''}`
+	if (n === 0) return t('no sharps or flats')
+	return accidentals > 0 ? plural(n, '{n} sharp', '{n} sharps') : plural(n, '{n} flat', '{n} flats')
 }
 
 /* Scales for a chord ----------------------------------------------------- */

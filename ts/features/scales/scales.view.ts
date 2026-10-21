@@ -28,6 +28,7 @@ import { phone } from '../../ui/media'
 import { resultButton } from '../../ui/note-chip'
 import { micState, onMicChange, setListening } from '../../ui/mic-block'
 import { noteName } from '../../music/note-names'
+import { t } from '../../core/i18n'
 
 // ponytail: results capped; a couple of marked notes already narrow it to a
 // screenful, add paging if someone wants to browse all ~150 for a single note.
@@ -104,7 +105,7 @@ export function createScalesView(root: HTMLElement): View {
 		render()
 	})
 
-	SCALE_TYPES.forEach((type, i) => typeSelect.add(new Option(type.aka ? `${type.name} (${type.aka})` : type.name, String(i))))
+	SCALE_TYPES.forEach((type, i) => typeSelect.add(new Option(type.aka ? `${t(type.name)} (${t(type.aka)})` : t(type.name), String(i))))
 	typeSelect.addEventListener('change', () => {
 		typeIndex = Number(typeSelect.value)
 		stopPlaying()
@@ -114,11 +115,11 @@ export function createScalesView(root: HTMLElement): View {
 	withStepper(rootSelect)
 	withStepper(typeSelect)
 
-	const positionButtons = ['Neck', '1', '2', '3', '4', '5'].map((label, k) => {
+	const positionButtons = [t('position|Neck'), '1', '2', '3', '4', '5'].map((label, k) => {
 		const button = document.createElement('button')
 		button.type = 'button'
 		button.textContent = label
-		button.setAttribute('aria-label', k ? `Position ${k}` : 'Whole neck')
+		button.setAttribute('aria-label', k ? t('Position {n}', { n: k }) : t('Whole neck'))
 		button.addEventListener('click', () => setPosition(k))
 		positionRow.append(button)
 		return button
@@ -215,15 +216,15 @@ export function createScalesView(root: HTMLElement): View {
 		const listening = state === 'listening'
 		const on = mode === 'explore' ? listening : addByEar && listening
 		// Same words as the shared toggle (ts/ui/mic-block.ts); Identify names what listening does there.
-		micLabel.textContent = mode === 'identify' ? 'Play to mark' : state === 'blocked' ? 'Blocked' : listening ? 'Listening' : 'Idle'
-		micButton.title = mode === 'explore' ? 'Light up the notes you play on the guitar' : 'Mark the notes you play on the guitar'
+		micLabel.textContent = mode === 'identify' ? t('Play to mark') : state === 'blocked' ? t('Blocked') : listening ? t('Listening') : t('Idle')
+		micButton.title = mode === 'explore' ? t('Light up the notes you play on the guitar') : t('Mark the notes you play on the guitar')
 		micButton.setAttribute('aria-pressed', String(on))
 		micButton.classList.toggle('mic-toggle--live', listening)
 		const text =
 			state === 'blocked'
-				? 'The browser is blocking the microphone. Allow it in the site settings to use this.'
+				? t('The browser is blocking the microphone. Allow it in the site settings to use this.')
 				: state === 'waiting' && (on || mode === 'explore')
-					? 'Tap anywhere to start the microphone.'
+					? t('Tap anywhere to start the microphone.')
 					: ''
 		hint.textContent = text
 		const hintChanged = hint.hidden !== !text
@@ -256,8 +257,8 @@ export function createScalesView(root: HTMLElement): View {
 		clearTimeout(playTimer)
 		playTimer = 0
 		playingMidi = null
-		playLabel.textContent = '▶ Play scale'
-		playButton.title = 'Play scale'
+		playLabel.textContent = t('▶ Play scale')
+		playButton.title = t('Play scale')
 		applyLit()
 	}
 
@@ -274,8 +275,8 @@ export function createScalesView(root: HTMLElement): View {
 			applyLit()
 			playTimer = window.setTimeout(tick, STEP_MS)
 		}
-		playLabel.textContent = '■ Stop'
-		playButton.title = 'Stop'
+		playLabel.textContent = t('■ Stop')
+		playButton.title = t('Stop')
 		tick()
 	}
 
@@ -300,7 +301,11 @@ export function createScalesView(root: HTMLElement): View {
 
 	const ROMAN = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII']
 	/** '3' → 'III', 'b3' → '♭III', '#4' → '♯IV'. */
-	const romanDegree = (degree: string) => degree.replace('b', '♭').replace('#', '♯').replace(/\d+/, (n) => ROMAN[(Number(n) - 1) % 7])
+	const romanDegree = (degree: string) =>
+		degree
+			.replace('b', '♭')
+			.replace('#', '♯')
+			.replace(/\d+/, (n) => ROMAN[(Number(n) - 1) % 7])
 
 	function renderStrip(shown: Shown, highlighted: (degree: string) => boolean) {
 		const spelled = spellScale(ROOTS[shown.rootPc], shown.type)
@@ -312,10 +317,10 @@ export function createScalesView(root: HTMLElement): View {
 				chip.className = 'key scale-degree'
 				const on = highlighted(degree)
 				chip.setAttribute('aria-pressed', String(on))
-				chip.title = on ? 'Tap to stop colouring this degree' : 'Tap to colour this degree on the neck'
+				chip.title = on ? t('Tap to stop colouring this degree') : t('Tap to colour this degree on the neck')
 				// Just the degree as a roman numeral (♭III): the note is on the neck.
 				chip.textContent = romanDegree(degree)
-				chip.setAttribute('aria-label', `Degree ${degree}, ${noteName(spelled.notes[i])}`)
+				chip.setAttribute('aria-label', t('Degree {degree}, {note}', { degree, note: noteName(spelled.notes[i]) }))
 				chip.addEventListener('click', () => {
 					const n = degreeNumber(degree)
 					const degrees = new Set(Settings.get().scaleDegrees)
@@ -336,7 +341,7 @@ export function createScalesView(root: HTMLElement): View {
 			const isSelected = selected?.rootPc === match.rootPc && selected.type === match.type
 			const button = resultButton('scale-result', [
 				['scale-result__title', scaleTitle(noteName(match.root), match.type)],
-				['scale-result__extra', match.extra === 0 ? 'exact' : `+${match.extra}`],
+				['scale-result__extra', match.extra === 0 ? t('exact') : `+${match.extra}`],
 				['scale-result__notes', match.notes.map(noteName).join(' ')],
 			])
 			button.setAttribute('aria-pressed', String(isSelected))
@@ -353,7 +358,7 @@ export function createScalesView(root: HTMLElement): View {
 		if (matches.length > MAX_RESULTS) {
 			const more = document.createElement('li')
 			more.className = 'scale-results__more'
-			more.textContent = `${matches.length - MAX_RESULTS} more — mark more notes to narrow it down`
+			more.textContent = t('{n} more — mark more notes to narrow it down', { n: matches.length - MAX_RESULTS })
 			results.append(more)
 		}
 	}
@@ -410,17 +415,17 @@ export function createScalesView(root: HTMLElement): View {
 		legend.hidden = !shown
 		if (!shown) return
 		const chord = harmony.chord()
-		legendRoot.textContent = chord ? `${noteName(chord.symbol)} root` : 'root'
+		legendRoot.textContent = chord ? t('{chord} root', { chord: noteName(chord.symbol) }) : t('root')
 		if (chord) {
 			legendRoot.hidden = legendTone.hidden = false
-			legendTone.textContent = 'chord tones'
+			legendTone.textContent = t('chord tones')
 			return
 		}
 		const present = new Set(degreesOf(shown.type).map(degreeNumber))
-		const tones = scaleDegrees.filter((n) => n > 1 && present.has(n)).map((n) => ORDINALS[n])
+		const tones = scaleDegrees.filter((n) => n > 1 && present.has(n)).map((n) => t(ORDINALS[n]))
 		legendRoot.hidden = !scaleDegrees.includes(1)
 		legendTone.hidden = tones.length === 0
-		legendTone.textContent = tones.length > 1 ? `${tones.slice(0, -1).join(', ')} and ${tones.at(-1)}` : (tones[0] ?? '')
+		legendTone.textContent = tones.length > 1 ? t('{list} and {last}', { list: tones.slice(0, -1).join(', '), last: tones.at(-1)! }) : (tones[0] ?? '')
 	}
 
 	function render() {
@@ -449,12 +454,12 @@ export function createScalesView(root: HTMLElement): View {
 		playButton.disabled = !shown
 		positionChip.hidden = !(shown && position)
 		// "Pos 5 ×" on narrow phones (CSS hides the "ition"), so the toolbar fits.
-		positionChip.innerHTML = `Pos<span>ition</span> ${position} ×`
+		positionChip.innerHTML = t('Pos<span>ition</span> {n} ×', { n: position })
 		const names = new Map<number, string>()
 		if (shown) renderStrip(shown, highlighted).notes.forEach((n) => names.set(pitchClassOf(n), n))
 		else stopPlaying()
 
-		markedText.textContent = markedPcs.size ? [...markedPcs].map((pc) => noteName(names.get(pc) ?? ROOTS[pc])).join(' ') : 'Tap the neck to mark notes'
+		markedText.textContent = markedPcs.size ? [...markedPcs].map((pc) => noteName(names.get(pc) ?? ROOTS[pc])).join(' ') : t('Tap the neck to mark notes')
 		markedText.classList.toggle('scales-marked--empty', markedPcs.size === 0)
 		clearButton.disabled = marked.size === 0
 

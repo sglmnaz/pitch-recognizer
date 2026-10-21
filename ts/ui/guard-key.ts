@@ -2,6 +2,7 @@
 // defaults). A smoked-glass shutter marked RESET covers a red CONFIRM key as
 // wide as the frame: slide the shutter away (or tap it) and the key is there
 // for GUARD_MS, then the shutter closes by itself. A stray tap never resets.
+import { t } from '../core/i18n'
 
 const GUARD_MS = 3000
 // Dragged past this share of its width, a released shutter stays open.
@@ -11,20 +12,20 @@ const DONE_MS = 700
 const ICON =
 	'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12a8 8 0 1 0 2.4-5.7" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/><path d="M4 3.5V8h4.5" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>'
 
-/** `what` names the thing reset, for screen readers. */
+/** `what` names the thing reset, for screen readers, in the app's language ('the Tuner settings'). */
 export function guardKey(what: string, onConfirm: () => void): HTMLElement {
 	const frame = document.createElement('span')
 	frame.className = 'guard'
 	const confirm = document.createElement('button')
 	confirm.type = 'button'
 	confirm.className = 'guard__confirm'
-	confirm.textContent = 'Confirm'
-	confirm.setAttribute('aria-label', `Reset ${what} to the defaults`)
+	confirm.textContent = t('Confirm')
+	confirm.setAttribute('aria-label', t('Reset {what} to the defaults', { what }))
 	const shutter = document.createElement('button')
 	shutter.type = 'button'
 	shutter.className = 'guard__shutter'
-	shutter.innerHTML = `${ICON}<span>Reset</span>`
-	shutter.setAttribute('aria-label', `Reset ${what}: open the guard`)
+	shutter.innerHTML = `${ICON}<span>${t('Reset')}</span>`
+	shutter.setAttribute('aria-label', t('Reset {what}: open the guard', { what }))
 	frame.append(confirm, shutter)
 
 	let timer = 0
@@ -73,10 +74,10 @@ export function guardKey(what: string, onConfirm: () => void): HTMLElement {
 		if (!frame.classList.contains('is-open')) return
 		onConfirm()
 		clearTimeout(timer)
-		confirm.textContent = 'Done'
+		confirm.textContent = t('Done')
 		setTimeout(() => {
 			setOpen(false)
-			confirm.textContent = 'Confirm'
+			confirm.textContent = t('Confirm')
 		}, DONE_MS)
 	})
 	return frame

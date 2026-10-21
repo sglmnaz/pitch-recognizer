@@ -16,6 +16,7 @@ import { bindSegmented, liveRegion, scoped, setPressed } from '../../ui/dom'
 import { createCircle } from './circle'
 import { createProgressionPlayer } from './progression-player'
 import { noteName } from '../../music/note-names'
+import { t } from '../../core/i18n'
 
 // A strum: low string to high, this far apart (a quick downstroke).
 const STRUM_S = 0.025
@@ -89,7 +90,7 @@ export function createHarmony(root: HTMLElement, host: HarmonyHost) {
 			pane = button.dataset.pane as Pane
 			// Playback belongs to the Progressions pane; the tapped chord lights
 			// the neck only while the Chords pane shows.
-			if (pane !== 'progressions') stop(false, 'Stopped')
+			if (pane !== 'progressions') stop(false, t('Stopped'))
 			host.redraw()
 		})
 	)
@@ -168,7 +169,7 @@ export function createHarmony(root: HTMLElement, host: HarmonyHost) {
 					// It strums the chord: no key click over it.
 					button.dataset.feedback = 'none'
 					// Starts with the visible text (voice control), then says it in words.
-					button.setAttribute('aria-label', `${chord.numeral} ${noteName(chord.symbol)}, ${noteName(chord.root)} ${chord.type.name}`)
+					button.setAttribute('aria-label', `${chord.numeral} ${noteName(chord.symbol)}, ${noteName(chord.root)} ${t(chord.type.name)}`)
 					const numeral = document.createElement('span')
 					numeral.className = 'harmony-chord__numeral'
 					numeral.textContent = chord.numeral
@@ -183,7 +184,10 @@ export function createHarmony(root: HTMLElement, host: HarmonyHost) {
 			const scaleName = scaleTitle(noteName(spellScale(ROOTS[rootPc], type).root), type).split(' · ')[0]
 			chordsNote.hidden = source === type
 			if (source && source !== type)
-				chordsNote.textContent = `${scaleName} is built from ${noteName(spellScale(ROOTS[rootPc], source).root)} ${source.name.toLowerCase()}: these are its chords.`
+				chordsNote.textContent = t('{scale} is built from {source}: these are its chords.', {
+					scale: scaleName,
+					source: `${noteName(spellScale(ROOTS[rootPc], source).root)} ${t(source.name).toLowerCase()}`,
+				})
 		}
 		setPressed(Array.from(chordRow.children), (_, i) => i === selected)
 		showSize(chordView)
@@ -192,10 +196,10 @@ export function createHarmony(root: HTMLElement, host: HarmonyHost) {
 		if (selected === null) return
 		const chord = chords[selected]
 		detailSymbol.textContent = noteName(chord.symbol)
-		detailName.textContent = `${chord.numeral} · ${noteName(chord.root)} ${chord.type.name}`
+		detailName.textContent = `${chord.numeral} · ${noteName(chord.root)} ${t(chord.type.name)}`
 		const voicing = voicingOf(chord)
 		detailNotes.textContent = chord.notes.map(noteName).join(' ') + (voicing ? `  ·  ${shapeString(voicing)}` : '')
-		openLink.setAttribute('aria-label', `Open ${noteName(chord.symbol)} in Chords`)
+		openLink.setAttribute('aria-label', t('Open {chord} in Chords', { chord: noteName(chord.symbol) }))
 		if (!voicing) return
 		// The printed card: finger numbers in the dots (like the Chords library's 'fingers' labels).
 		const spec = voicingSpec(voicing, chord.rootPc, chord.type, { labels: 'none', fingers: false, name: noteName })
@@ -220,12 +224,12 @@ export function createHarmony(root: HTMLElement, host: HarmonyHost) {
 					head.className = 'progression__head'
 					const name = document.createElement('span')
 					name.className = 'progression__name'
-					name.textContent = progression.name
+					name.textContent = t(progression.name)
 					const button = document.createElement('button')
 					button.type = 'button'
 					button.className = 'key progression__play'
 					button.dataset.feedback = 'none'
-					button.addEventListener('click', () => (player.playing()?.index === index ? stop(true, 'Stopped') : player.play(index, list, progression.name)))
+					button.addEventListener('click', () => (player.playing()?.index === index ? stop(true, t('Stopped')) : player.play(index, list, t(progression.name))))
 					head.append(name, button)
 					// A step sequencer: one key per bar, its lamp lit while the bar plays.
 					const row = document.createElement('ol')
@@ -254,17 +258,17 @@ export function createHarmony(root: HTMLElement, host: HarmonyHost) {
 	function syncProgressions() {
 		const { progressionBpm, progressionLoop } = Settings.get()
 		const playing = player.playing()
-		progNote.textContent = progKeyName && `In ${progKeyName}`
+		progNote.textContent = progKeyName && t('In {key}', { key: progKeyName })
 		bpm.textContent = `${progressionBpm} BPM`
 		loopSwitch.checked = progressionLoop
 		Array.from(progList.children).forEach((item, index) => {
 			const on = playing?.index === index
 			const button = item.querySelector<HTMLButtonElement>('.progression__play')!
 			const name = item.querySelector('.progression__name')!.textContent
-			button.textContent = on ? '■ Stop' : '▶ Play'
+			button.textContent = on ? t('■ Stop') : t('▶ Play')
 			// Like a tape deck's transport key: down while it plays.
 			button.classList.toggle('is-down', on)
-			button.setAttribute('aria-label', `${on ? 'Stop' : 'Play'} ${name}`)
+			button.setAttribute('aria-label', on ? t('Stop {name}', { name }) : t('Play {name}', { name }))
 			item.querySelectorAll('.progression__bar').forEach((bar, i) => {
 				const now = on && i === playing!.bar - 1
 				bar.firstElementChild!.classList.toggle('is-on', now)
@@ -280,7 +284,9 @@ export function createHarmony(root: HTMLElement, host: HarmonyHost) {
 
 	function renderCircle(rootPc: number, type: ScaleType) {
 		circle.render(rootPc, type)
-		keyNote.textContent = keyOf(rootPc, type) ? keyName(rootPc, type, noteName) : `${scaleTitle(noteName(spellScale(ROOTS[rootPc], type).root), type)} has no key signature.`
+		keyNote.textContent = keyOf(rootPc, type)
+			? keyName(rootPc, type, noteName)
+			: t('{scale} has no key signature.', { scale: scaleTitle(noteName(spellScale(ROOTS[rootPc], type).root), type) })
 	}
 
 	/* Identify: scales a marked chord fits -------------------------------- */
@@ -296,7 +302,7 @@ export function createHarmony(root: HTMLElement, host: HarmonyHost) {
 				button.type = 'button'
 				button.className = 'key chord-fits__scale'
 				button.textContent = scaleTitle(noteName(match.root), match.type).split(' · ')[0]
-				button.title = `Explore ${button.textContent}`
+				button.title = t('Explore {scale}', { scale: button.textContent })
 				button.addEventListener('click', () => host.setScale(match.rootPc, match.type))
 				return button
 			})

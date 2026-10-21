@@ -1,6 +1,6 @@
 import * as Settings from '../../core/settings'
 import { clamp } from '../../core/math'
-import { INTERVALS, QUALITIES } from '../../music/ear'
+import * as Ear from '../../music/ear'
 import type { View } from '../../ui/view'
 import { subscribeVisible, svgEl } from '../../ui/dom'
 import * as Theme from '../../ui/theme'
@@ -8,6 +8,7 @@ import { guardKey } from '../../ui/guard-key'
 import { guardTouches } from '../../ui/touch-guard'
 import { noteName } from '../../music/note-names'
 import { showCalibrationState } from '../calibration/calibration-state'
+import { t } from '../../core/i18n'
 
 /**
  * The Settings tab: the switches and selects of every tab, the per-note target
@@ -18,10 +19,10 @@ import { showCalibrationState } from '../calibration/calibration-state'
 export function createSettingsView(root: HTMLElement, from: () => string | null): View {
 	// Theme and LCD colour (ts/ui/theme.ts): two dropdowns.
 	const themeSelect = root.querySelector<HTMLSelectElement>('select[data-theme-choice]')!
-	themeSelect.replaceChildren(...Theme.THEMES.map((t) => new Option(t.label, t.id, false, t.id === Theme.getTheme())))
+	themeSelect.replaceChildren(...Theme.THEMES.map((theme) => new Option(t(theme.label), theme.id, false, theme.id === Theme.getTheme())))
 	themeSelect.addEventListener('change', () => Theme.setTheme(themeSelect.value))
 	const displaySelect = root.querySelector<HTMLSelectElement>('[data-display-choice]')!
-	displaySelect.replaceChildren(...Theme.DISPLAYS.map((d) => new Option(d.label, d.id, false, d.id === Theme.getDisplay())))
+	displaySelect.replaceChildren(...Theme.DISPLAYS.map((d) => new Option(t(d.label), d.id, false, d.id === Theme.getDisplay())))
 	displaySelect.addEventListener('change', () => Theme.setDisplay(displaySelect.value))
 
 	// A long page scrolled with the thumb: brushing a control must not change it.
@@ -69,8 +70,8 @@ export function createSettingsView(root: HTMLElement, from: () => string | null)
 		const appearance = group.dataset.group === 'appearance'
 		if (!keys.size && !appearance) continue
 
-		const title = group.querySelector('.settings-group__title')?.textContent ?? 'section'
-		const guard = guardKey(`the ${title} settings`, () => {
+		const title = group.querySelector('.settings-group__title')?.textContent ?? t('section')
+		const guard = guardKey(t('the {section} settings', { section: title }), () => {
 			if (appearance) {
 				Theme.setTheme('system')
 				Theme.setDisplay('auto')
@@ -82,8 +83,7 @@ export function createSettingsView(root: HTMLElement, from: () => string | null)
 		// A card of its own before the section's first card or sub-heading (Trainer starts with Notes).
 		const card = document.createElement('div')
 		card.className = 'panel settings-card settings-reset'
-		card.innerHTML =
-			'<div class="settings__section"><div class="switch"><span class="switch__text"><span class="switch__title">Reset to defaults</span><span class="switch__desc">Every setting of this section</span></span></div></div>'
+		card.innerHTML = `<div class="settings__section"><div class="switch"><span class="switch__text"><span class="switch__title">${t('Reset to defaults')}</span><span class="switch__desc">${t('Every setting of this section')}</span></span></div></div>`
 		card.querySelector('.switch')!.append(guard)
 		group.querySelector(':scope > :is(.settings-card, .settings-group__sub)')?.before(card)
 	}
@@ -171,10 +171,10 @@ export function createSettingsView(root: HTMLElement, from: () => string | null)
 		const sent = 'vibrate' in navigator ? navigator.vibrate(300) : null
 		vibrationResult.textContent =
 			sent === null
-				? 'This browser has no vibration'
+				? t('This browser has no vibration')
 				: sent
-					? 'Sent. Felt nothing? The phone mutes it: check its vibration and touch feedback settings'
-					: 'The browser refused it'
+					? t('Sent. Felt nothing? The phone mutes it: check its vibration and touch feedback settings')
+					: t('The browser refused it')
 	})
 
 	// Update and reload: ask the service worker for a new version first. The PWA
@@ -250,15 +250,16 @@ export function createSettingsView(root: HTMLElement, from: () => string | null)
 	const earChips = Array.from(root.querySelectorAll<HTMLElement>('[data-chips]'))
 	for (const container of earChips) {
 		const key = container.dataset.chips as 'earIntervals' | 'earChords'
-		const items = key === 'earIntervals' ? INTERVALS : QUALITIES
+		const items = key === 'earIntervals' ? Ear.INTERVALS : Ear.QUALITIES
 		container.replaceChildren(
 			...items.map((item) => {
 				const chip = document.createElement('button')
 				chip.type = 'button'
 				chip.className = 'chip'
 				chip.textContent = item.id
-				chip.title = item.name
-				chip.setAttribute('aria-label', item.name)
+				const name = Ear.nameOf(key === 'earIntervals' ? 'intervals' : 'chords', item.id)
+				chip.title = name
+				chip.setAttribute('aria-label', name)
 				chip.addEventListener('click', () => {
 					const enabled = Settings.get()[key]
 					const next = enabled.includes(item.id) ? enabled.filter((id) => id !== item.id) : [...enabled, item.id]
@@ -287,7 +288,7 @@ export function createSettingsView(root: HTMLElement, from: () => string | null)
 	const unlock = root.querySelector<HTMLButtonElement>('[data-unlock]')!
 	function setLocked(locked: boolean) {
 		lockPanel.hidden = locked
-		unlock.textContent = locked ? 'Change' : 'Done'
+		unlock.textContent = locked ? t('Change') : t('Done')
 		unlock.setAttribute('aria-expanded', String(!locked))
 	}
 	unlock.addEventListener('click', () => setLocked(!lockPanel.hidden))

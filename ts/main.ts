@@ -1,4 +1,6 @@
 import './styles/main.css'
+// First: the language and note names every module after it speaks.
+import './language'
 import * as Sound from './core/sound'
 import { createTrainerView } from './features/trainer/trainer.view'
 import { createTunerView } from './features/tuner/tuner.view'
@@ -16,15 +18,6 @@ import { enhanceSelects } from './ui/dropdown'
 import { initFeedback } from './ui/feedback'
 import { bindCalibrationLinks } from './features/calibration/calibration-state'
 import { watchForUpdates } from './ui/update-prompt'
-import * as Settings from './core/settings'
-import { deviceLanguage } from './core/locale'
-import { noteSystemFor, useNoteSystem } from './music/note-names'
-
-// Before any view is built: they name notes as they draw (a change of the
-// setting reloads the app).
-useNoteSystem(noteSystemFor(Settings.get().noteNames, deviceLanguage()))
-const bootNoteNames = Settings.get().noteNames
-Settings.subscribe(() => Settings.get().noteNames !== bootNoteNames && location.reload())
 
 const tabButtons = Array.from(document.querySelectorAll<HTMLButtonElement>('[data-tab]'))
 

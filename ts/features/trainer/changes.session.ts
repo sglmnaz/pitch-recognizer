@@ -8,6 +8,7 @@ import * as Tab from '../../music/tab.ts'
 import type * as Metronome from '../../core/metronome.ts'
 import { noteName } from '../../music/note-names.ts'
 import type { ProbeEntry } from './timing-probe.ts'
+import { t } from '../../core/i18n.ts'
 
 // In time hears each change by its sound, not by the chord recognizer: right
 // after a change its 370 ms window still holds the old chord (on field reports
@@ -109,14 +110,14 @@ export const clockText = (ms: number) => {
 export function verdict(count: number, before: Changes.ChangeRecord): string {
 	const delta = count - before.best
 	return !count
-		? 'No changes heard, not saved'
+		? t('No changes heard, not saved')
 		: !before.history.length
-			? 'First session'
+			? t('First session')
 			: delta > 0
-				? `New best, +${delta}`
+				? t('New best, +{n}', { n: delta })
 				: delta === 0
-					? 'Ties your best'
-					: `${delta} from your best`
+					? t('Ties your best')
+					: t('{n} from your best', { n: delta })
 }
 
 export function createChangesSession(ui: SessionUi, metronome: MetronomeControl) {
@@ -170,7 +171,7 @@ export function createChangesSession(ui: SessionUi, metronome: MetronomeControl)
 			goAt = now + (config.countIn ? COUNT_IN_S * 1000 : 0)
 			phase = config.countIn ? 'countin' : 'running'
 			if (phase === 'running') begin(now)
-			else ui.announce(`Get ready on ${noteName(config.sequence[0])}`, true)
+			else ui.announce(t('Get ready on {chord}', { chord: noteName(config.sequence[0]) }), true)
 			return
 		}
 		// Accent each chord's first beat; nothing else of the Metronome tab's setup applies.
@@ -188,8 +189,8 @@ export function createChangesSession(ui: SessionUi, metronome: MetronomeControl)
 		lastClickAt = -Infinity
 		clickGap = Infinity
 		phase = config.countIn ? 'countin' : 'running'
-		ui.target(config.sequence[0], `then ${noteName(config.sequence[1])}`)
-		ui.announce(`Play ${noteName(config.sequence[0])} on the first beat`, true)
+		ui.target(config.sequence[0], t('then {chord}', { chord: noteName(config.sequence[1]) }))
+		ui.announce(t('Play {chord} on the first beat', { chord: noteName(config.sequence[0]) }), true)
 	}
 
 	/** One-minute: the clock starts; whatever is already ringing is the starting chord. */
@@ -199,12 +200,12 @@ export function createChangesSession(ui: SessionUi, metronome: MetronomeControl)
 		const ringing = stabilizer.current()
 		if (ringing) counter.onChord({ symbol: ringing, at: now, fresh: true })
 		showCounterTarget()
-		ui.announce('Go', true)
+		ui.announce(t('Go'), true)
 	}
 
 	function showCounterTarget() {
 		const from = counter.at
-		ui.target(counter.target(), from ? `from ${noteName(from)}` : `Strum ${noteName(config.sequence[0])} to start`)
+		ui.target(counter.target(), from ? t('from {chord}', { chord: noteName(from) }) : t('Strum {chord} to start', { chord: noteName(config.sequence[0]) }))
 	}
 
 	/** Ends the session; `finished` = ran its course (a One-minute result is stored). */
@@ -242,13 +243,13 @@ export function createChangesSession(ui: SessionUi, metronome: MetronomeControl)
 		if (pendingBpm) {
 			// Takes effect from the next beat line: this chord's first beat is already scheduled.
 			metronome.setTempo(pendingBpm)
-			ui.announce(`Two clean passes. Up to ${pendingBpm} BPM.`, true)
+			ui.announce(t('Two clean passes. Up to {bpm} BPM.', { bpm: pendingBpm }), true)
 			pendingBpm = 0
 		}
 		slot = (index - lead) / config.beats
 		const seq = config.sequence
 		const current = seq[slot % seq.length]
-		ui.target(current, `then ${noteName(seq[(slot + 1) % seq.length])}`)
+		ui.target(current, t('then {chord}', { chord: noteName(seq[(slot + 1) % seq.length]) }))
 		ui.clock(`${event.bpm} BPM`)
 		// The first chord is where the player starts, not a change.
 		if (slot > 0) {
