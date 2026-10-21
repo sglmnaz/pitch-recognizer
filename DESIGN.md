@@ -75,7 +75,7 @@ head script's `displays` map. The Settings select fills itself.
 | Plate | `--plate`, `--plate-edge`, `--plate-ink`, `--plate-ink-2`, `--plate-shine` | `.plate` |
 | Keys | `--key-face`, `--key-hi`, `--key-side`, `--key-front`, `--key-ink`, `--key-drop`, `--key-lip`, `--key-drop-down`; grey `--key2-*`; hot `--key3-*` | key.css |
 | Lamps | `--lamp-off/on/glow`, `--lamp-ok-*`, `--lamp-warn-*`, `--lamp-ring` | lamp.css, tab bar, readout |
-| Window, LCD | `--window`, `--window-shadow`; `--lcd-bg`, `--lcd-ink`, `--lcd-dim`, `--lcd-glow`, `--lcd-shadow` | `.window`, `.lcd`, selects, readouts |
+| Window, LCD | `--window`, `--window-shadow`; `--lcd-bg`, `--lcd-ink`, `--lcd-dim`, `--lcd-glow`, `--lcd-shadow`; derived `--lcd-ok` / `--lcd-warn` / `--lcd-bad` (lamp colours mixed into the ink: verdicts on any LCD) | `.window`, `.lcd`, selects, readouts, Changes meter |
 | LED | `--led-bg`, `--led-on`, `--led-off`, `--led-glow`, `--led-unlit` | counters, VU bars |
 | Paper | `--paper`, `--paper-ink`, `--paper-grid`, `--paper-pen`, `--paper-edge` | staff, charts, diagrams, guide |
 | Rocker, track | `--rocker-plate`, `--rocker-up`, `--rocker-down`, `--rocker-ink`, `--track` | switches, faders |

@@ -628,12 +628,8 @@
 	gap: var(--space-10);
 }
 
-/* The verdict colours on the LCD: the theme's success / warning / accent inks. */
+/* Verdict colours: --lcd-ok / --lcd-warn / --lcd-bad (tokens.css), readable on every LCD and display. */
 .changes-meter {
-	--mark-hit: var(--success);
-	--mark-off: var(--warning);
-	--mark-miss: var(--accent);
-
 	padding: var(--space-10) var(--space-12) var(--space-8);
 }
 
@@ -654,15 +650,15 @@
 }
 
 .changes-meter[data-mark='hit'] .changes-meter__value {
-	color: var(--mark-hit);
+	color: var(--lcd-ok);
 }
 
 .changes-meter:is([data-mark='early'], [data-mark='late']) .changes-meter__value {
-	color: var(--mark-off);
+	color: var(--lcd-warn);
 }
 
 .changes-meter[data-mark='miss'] .changes-meter__value {
-	color: var(--mark-miss);
+	color: var(--lcd-bad);
 }
 
 /* ±500 ms full scale (SCALE_MS in changes.view.ts), a tick every 100 ms, 0 in the middle;
@@ -702,8 +698,8 @@
 	inset-block: 0;
 	left: calc(50% - var(--hit, 20) * 0.5%);
 	width: calc(var(--hit, 20) * 1%);
-	background: color-mix(in srgb, var(--mark-hit) 16%, transparent);
-	border-inline: 1px dashed color-mix(in srgb, var(--mark-hit) 70%, transparent);
+	background: color-mix(in srgb, var(--lcd-ok) 16%, transparent);
+	border-inline: 1px dashed color-mix(in srgb, var(--lcd-ok) 70%, transparent);
 
 	span {
 		position: absolute;
@@ -712,7 +708,7 @@
 		font-size: 9px;
 		letter-spacing: 0.16em;
 		white-space: nowrap;
-		color: var(--mark-hit);
+		color: var(--lcd-ok);
 	}
 }
 
@@ -729,11 +725,11 @@
 	height: 6px;
 	margin-left: -3px;
 	border-radius: 50%;
-	background: var(--mark-off);
+	background: var(--lcd-warn);
 	opacity: var(--o, 0.5);
 
 	&[data-mark='hit'] {
-		background: var(--mark-hit);
+		background: var(--lcd-ok);
 	}
 }
 
@@ -742,7 +738,7 @@
 	bottom: 0;
 	width: 3px;
 	margin-left: -1.5px;
-	color: var(--mark-off);
+	color: var(--lcd-warn);
 	background: currentColor;
 
 	&::before {
@@ -757,7 +753,7 @@
 }
 
 .changes-meter[data-mark='hit'] .changes-needle {
-	color: var(--mark-hit);
+	color: var(--lcd-ok);
 }
 
 .changes-under {

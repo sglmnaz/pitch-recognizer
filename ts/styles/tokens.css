@@ -1296,6 +1296,13 @@
 	--staff-bg: var(--paper);
 	--staff-ink: var(--paper-ink);
 
+	/* Verdict colours drawn on an LCD (Changes In time's meter): the lamp
+	   colours mixed half into the LCD's own ink, so they keep the ink's
+	   contrast on any LCD (dark or light, any data-display) in any theme. */
+	--lcd-ok: color-mix(in oklab, var(--lamp-ok-on) 50%, var(--lcd-ink));
+	--lcd-warn: color-mix(in oklab, var(--lamp-warn-on) 50%, var(--lcd-ink));
+	--lcd-bad: color-mix(in oklab, var(--lamp-on) 50%, var(--lcd-ink));
+
 	/* Every neck is printed on paper like the chord diagrams ("N2"): black
 	   lines, the root in red ink, 3rd and 5th solid black, other scale notes
 	   outlined. */
