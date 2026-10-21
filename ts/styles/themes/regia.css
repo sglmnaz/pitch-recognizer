@@ -436,6 +436,12 @@
 		font-weight: 500;
 		color: var(--ink);
 	}
+
+	/* A long word in another language (IMPOSTAZIONI), as in layout.css. */
+	[data-theme='regia'] .tab__label--long {
+		font-size: 8.5px;
+		letter-spacing: 0;
+	}
 }
 
 /* The tab lamps get the bezel's light lower edge too. */
