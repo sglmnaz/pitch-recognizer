@@ -172,10 +172,16 @@ input.metro-bpm__value {
 	opacity: 0.5;
 }
 
-/* The beat playing: a red ring round the display, its lit bars brighter (the
-   unlit ones stay dark, so the beat's state still reads). No press effect:
+/* The beat playing: a red ring round the display (lit at once, fading out
+   after), its lit bars brighter (the unlit ones stay dark, so the beat's
+   state still reads). No press effect:
    the display already answers a tap. */
+.metro-beat__display {
+	transition: box-shadow var(--t-lamp-off) ease-out;
+}
+
 .metro-beat.is-now .metro-beat__display {
+	transition-duration: var(--t-lamp-on);
 	box-shadow:
 		inset 0 2px 3px rgba(0, 0, 0, 0.6),
 		0 0 0 var(--outline-width) var(--outline),

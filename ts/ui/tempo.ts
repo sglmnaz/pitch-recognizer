@@ -1,3 +1,5 @@
+import { flash } from './dom'
+
 // Setting a tempo, the Metronome's way, shared by every view that has one:
 // keys that act on pointer-down and repeat when held, and numbers on an LCD
 // that can be typed (tap the number, the phone's number pad opens).
@@ -56,7 +58,9 @@ export function numberField(input: HTMLInputElement, get: () => number, set: (va
 	}
 	function show(value: number, force = false) {
 		if (!force && document.activeElement === input) return
-		input.value = String(value)
+		const next = String(value)
+		if (input.value !== '' && input.value !== next) flash(input)
+		input.value = next
 		fit()
 	}
 	input.addEventListener('focus', () => input.select())

@@ -142,6 +142,20 @@
 	/* Minimum touch target on phones. */
 	--tap: 44px;
 
+	/* Motion (CLAUDE.md, Style guide → Feel): short and barely noticed. A key
+	   sinks as the finger lands and comes back a little slower; a lamp or a lit
+	   legend lights quickly and fades out like a small bulb; a switch snaps
+	   across; a knob settles on its detent without overshoot; an LCD figure
+	   brightens in. All 0 with reduced motion (below). */
+	--t-press: 70ms;
+	--t-release: 110ms;
+	--t-lamp-on: 80ms;
+	--t-lamp-off: 220ms;
+	--t-switch: 90ms;
+	--t-knob: 160ms;
+	--t-lcd: 90ms;
+	--lamp-fade: background-color var(--t-lamp-off) ease-out, box-shadow var(--t-lamp-off) ease-out;
+
 	/* Vertical rhythm between the blocks of a view. Phones tighten it so a
 	   view's main interaction fits one screen above the docked tab bar. */
 	--stack: 20px;
@@ -191,6 +205,18 @@
 @media (max-width: 600px) {
 	:root {
 		--stack: 14px;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	:root {
+		--t-press: 0ms;
+		--t-release: 0ms;
+		--t-lamp-on: 0ms;
+		--t-lamp-off: 0ms;
+		--t-switch: 0ms;
+		--t-knob: 0ms;
+		--t-lcd: 0ms;
 	}
 }
 

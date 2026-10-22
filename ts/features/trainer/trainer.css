@@ -223,6 +223,7 @@
 		border-radius: var(--lamp-radius);
 		background: var(--lamp-off);
 		box-shadow: var(--lamp-ring);
+		transition: var(--lamp-fade);
 	}
 
 	&[data-state='right']::after {

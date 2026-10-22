@@ -163,14 +163,18 @@ on the glass. Keep those lists in the same order. Each select in Settings → Ap
 - **Keys** (`.key`, `.btn`, `.chip`, `.link-btn`, segmented keys): a lit top
   chamfer, shaded cheeks, a front edge, a dark outline. Latched keys sink 3 px
   and go a shade darker while the panel lip shades their top; the box never
-  changes size and nothing animates. Variants: `.key--step` (grey ◀ ▶ ▼ ▲),
+  changes size (see Motion for how fast). Variants: `.key--step` (grey ◀ ▶ ▼ ▲),
   `.key--hot` (orange Start), `.key--lit` (legend lights red when on: Listen),
   `.key--flat` (no drop shadow).
 - **Interlocked keys** (`.segmented`): a dark well holding a row of keys,
   exactly one down. The mode switch at the top of a view carries a lamp above
   each key (`.has-lamps`).
-- **Rocker switches** (`.switch`): label left, an O / I rocker right; the I
-  half lights red when on.
+- **Switches** (`.switch`): label left, a 0 / 1 rocker right (the radar
+  panel's, Componenti 73 in Claude Design): a light frame round a dark paddle,
+  the 1 (a bar) on top, the 0 (a ring) below; the half pressed in sits dark and
+  deep, the other stands out; on, the 1 is pressed and lights in the lamp
+  colour. `.switch--slide` keeps its channel and knurled knob (Broadcast: the
+  bat-handle toggle).
 - **Selects**: an LCD window; the open list is the system's. `withStepper()`
   (ts/ui/stepper.ts) adds ◀ ▶ keys.
 - **Readout**: an LCD with the note in dot matrix, Hz and cents below, a green
@@ -189,5 +193,18 @@ on the glass. Keep those lists in the same order. Each select in Settings → Ap
 
 ## Motion
 
-Keys snap, they don't animate. The needle tracks pitch (80 ms linear); lamps
-switch instantly. Reduced motion turns off what little else moves.
+Short and barely noticed (CLAUDE.md, Style guide → Feel); the durations are
+tokens in tier 1 of tokens.css, all 0 with reduced motion:
+
+| Token | Value | What moves |
+|-------|-------|------------|
+| `--t-press` | 70 ms | a key sinks as the finger lands (`--k-top` / `--k-front-h`, registered with `@property` so they animate) |
+| `--t-release` | 110 ms | it comes back up; a tab's icon sinks 1.5 px while pressed |
+| `--t-lamp-on` / `--t-lamp-off` | 80 / 220 ms | lamps, lit legends and the Metronome's beat ring light quickly and fade like a small bulb (`--lamp-fade`) |
+| `--t-switch` | 90 ms | the 0 / 1 rocker's halves; the slide switch's knob |
+| `--t-knob` | 160 ms | a rotary settles on its detent, no overshoot |
+| `--t-lcd` | 90 ms | a figure that changes on a glass brightens in from the unlit segments (`flash()` in ts/ui/dom.ts: the stepper's select, typed numbers; skipped while values stream) |
+
+Faders follow the finger with no delay (their look stays as it is, Broadcast's
+console caps included). The needle tracks pitch (80 ms linear). Every
+movement also clicks and ticks: ts/ui/feedback.ts.

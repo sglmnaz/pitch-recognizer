@@ -8,12 +8,26 @@
  * A latched key ([aria-pressed='true'], [aria-selected='true'], .is-down) or
  * one held down (:active) sinks: the cap starts --key-sink lower, its front
  * edge shortens by as much (the base stays put), it goes a shade darker and
- * the panel lip shades its top; the legend moves down with it. No transition:
- * a key snaps. ::after stays free for a lamp above the key (lamp.css).
+ * the panel lip shades its top; the legend moves down with it. It sinks in
+ * --t-press as the finger lands and comes back in --t-release (tokens.css); a
+ * lit legend fades like a lamp. ::after stays free for a lamp above the key (lamp.css).
  *
  * Colours come from --k-* (set per variant below, read from the theme), so a
  * new kind of key is one block of five custom properties.
  */
+/* Registered so the sink can be animated (a plain custom property jumps). */
+@property --k-top {
+	syntax: '<length>';
+	inherits: true;
+	initial-value: 0px;
+}
+
+@property --k-front-h {
+	syntax: '<length>';
+	inherits: true;
+	initial-value: 6px;
+}
+
 :where(.key, .btn, .chip, .link-btn, .segmented > button) {
 	--k-face: var(--key-face);
 	--k-hi: var(--key-hi);
@@ -47,6 +61,11 @@
 	cursor: pointer;
 	user-select: none;
 	-webkit-tap-highlight-color: transparent;
+	transition:
+		--k-top var(--t-release) ease-out,
+		--k-front-h var(--t-release) ease-out,
+		color var(--t-lamp-off) ease-out,
+		text-shadow var(--t-lamp-off) ease-out;
 
 	&::before {
 		content: '';
@@ -63,12 +82,17 @@
 		box-shadow:
 			0 0 0 var(--outline-width) var(--outline),
 			var(--key-drop);
+		transition:
+			background-color var(--t-release) ease-out,
+			border-color var(--t-release) ease-out,
+			box-shadow var(--t-release) ease-out;
 	}
 
 	&:is([aria-pressed='true'], [aria-selected='true'], .is-down),
 	&:active:not(:disabled, [aria-disabled='true']) {
 		--k-top: var(--key-sink);
 		--k-front-h: calc(var(--key-edge) - var(--key-sink));
+		transition-duration: var(--t-press), var(--t-press), var(--t-lamp-on), var(--t-lamp-on);
 		/* A shade darker: the variant's own colours, mixed toward black. */
 		&::before {
 			border-color: color-mix(in srgb, var(--k-hi) var(--key-down), #000) color-mix(in srgb, var(--k-side) var(--key-down), #000)
@@ -77,6 +101,7 @@
 			box-shadow:
 				0 0 0 var(--outline-width) var(--outline),
 				var(--key-drop-down);
+			transition-duration: var(--t-press);
 		}
 	}
 

@@ -1,8 +1,10 @@
 /*
- * Switch rows: label on the left, a rocker on the right. The rocker is the
- * hidden checkbox's .switch__track: a dark plate holding a rocker that tips to
- * O (off, left half up) or I (on, right half down and lit red), like a mobile
- * toggle turned into hardware.
+ * Switch rows: label on the left, a 0 / 1 rocker on the right (the radar
+ * panel's, docs/design components 73). The rocker is the hidden checkbox's
+ * .switch__track: a light frame round a dark paddle, the 1 half on top (a
+ * bar), the 0 half below (a ring). The half pressed in sits dark and deep, the
+ * other stands out lit from above; on, the 1 is pressed and lights in the
+ * lamp colour. The halves change in --t-switch (tokens.css).
  */
 .switch {
 	display: flex;
@@ -41,35 +43,78 @@
 }
 
 .switch__track {
-	flex: none;
-	width: 44px;
-	height: 28px;
-	padding: 3px;
-	border-radius: var(--radius);
-	background: var(--rocker-plate);
-	box-shadow: 0 1px 0 var(--plate-shine);
+	--glyph: var(--key4-ink);
+	--half-up: var(--rocker-up);
+	--half-in: color-mix(in srgb, var(--rocker-plate) 55%, #000);
+	--lift: inset 0 1px 0 rgba(255, 255, 255, 0.2), inset 0 -6px 8px -5px rgba(0, 0, 0, 0.45);
+	--sink: inset 0 4px 5px rgba(0, 0, 0, 0.85);
 
-	/* The rocker: the raised half is lighter, the pressed half darker; the I
-	   glyph sits on the right half. */
+	flex: none;
+	position: relative;
+	width: 30px;
+	height: 46px;
+	box-sizing: border-box;
+	border: 2px solid color-mix(in srgb, var(--panel) 55%, #000);
+	border-radius: var(--radius-sm);
+	background: color-mix(in srgb, var(--panel) 65%, #fff);
+	box-shadow:
+		0 1px 0 var(--plate-shine),
+		inset 0 1px 2px rgba(0, 0, 0, 0.2);
+
+	/* The paddle's two halves: ::before is the 1 (a bar), ::after the 0 (a ring). */
+	&::before,
 	&::after {
-		content: 'I';
-		display: grid;
-		place-items: center;
-		height: 100%;
-		padding-left: 50%;
-		border-radius: var(--radius-sm);
-		background: linear-gradient(90deg, var(--rocker-down) 0 50%, var(--rocker-up) 50%);
-		font-family: var(--font-ui);
-		font-size: var(--text-2xs);
-		font-weight: 700;
-		color: var(--rocker-ink);
+		content: '';
+		position: absolute;
+		left: 3px;
+		right: 3px;
+		height: calc(50% - 3px);
+		background-repeat: no-repeat;
+		background-position: 50% 50%;
+		box-shadow: 0 0 0 1px var(--rocker-plate);
+		transition:
+			background-color var(--t-switch) ease-out,
+			box-shadow var(--t-switch) ease-out;
+	}
+
+	&::before {
+		top: 3px;
+		background-color: var(--half-up);
+		background-image: linear-gradient(var(--glyph), var(--glyph));
+		background-size: 2px 10px;
+		box-shadow:
+			0 0 0 1px var(--rocker-plate),
+			var(--lift);
+	}
+
+	&::after {
+		bottom: 3px;
+		background-color: var(--half-in);
+		background-image: radial-gradient(circle, transparent 0 3px, var(--glyph) 3.4px 4.6px, transparent 5px);
+		background-size: 12px 12px;
+		box-shadow:
+			0 0 0 1px var(--rocker-plate),
+			var(--sink);
 	}
 }
 
-.switch__input:checked + .switch__track::after {
-	background: linear-gradient(90deg, var(--rocker-up) 0 50%, var(--rocker-down) 50%);
-	color: var(--lamp-on);
-	text-shadow: 0 0 5px var(--lamp-glow);
+/* Not the slide variant below, which draws its own knob. */
+.switch__input:checked + .switch__track:not(.switch--slide .switch__track) {
+	&::before {
+		background-color: var(--half-in);
+		background-image: linear-gradient(var(--lamp-on), var(--lamp-on));
+		box-shadow:
+			0 0 0 1px var(--rocker-plate),
+			var(--sink);
+		filter: drop-shadow(0 0 3px var(--lamp-glow));
+	}
+
+	&::after {
+		background-color: var(--half-up);
+		box-shadow:
+			0 0 0 1px var(--rocker-plate),
+			var(--lift);
+	}
 }
 
 .switch__input:focus-visible + .switch__track {
@@ -97,6 +142,13 @@
 		height: 12px;
 		margin-block: var(--space-8);
 		padding: 0;
+		border: 0;
+		filter: none;
+
+		&::before {
+			content: none;
+		}
+
 		border-radius: var(--radius-sm);
 		background: var(--track);
 		box-shadow:
@@ -108,9 +160,12 @@
 			position: absolute;
 			top: -5px;
 			left: 2px;
+			right: auto;
+			bottom: auto;
 			width: 26px;
 			height: 22px;
 			padding: 0;
+			transition: left var(--t-switch) ease-out;
 			box-sizing: border-box;
 			border-style: solid;
 			border-width: 2px 3px 4px;

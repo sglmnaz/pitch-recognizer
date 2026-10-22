@@ -263,9 +263,11 @@
 		border-radius: 1px;
 		background: var(--lamp-off);
 		box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.35);
+		transition: var(--lamp-fade);
 	}
 
 	&:is([aria-pressed='true'], [aria-selected='true'])::after {
+		transition-duration: var(--t-lamp-on);
 		background: var(--lamp-on);
 		box-shadow:
 			0 0 0 1px rgba(0, 0, 0, 0.35),

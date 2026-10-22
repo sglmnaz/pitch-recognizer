@@ -83,3 +83,18 @@ export const whenVisible = (root: HTMLElement, fn: () => void) => () => {
 
 /** Settings.subscribe for a view that only redraws while it shows. */
 export const subscribeVisible = (root: HTMLElement, fn: () => void) => Settings.subscribe(whenVisible(root, fn))
+
+// A value that changes on a glass brightens in from the unlit segments
+// (panel.css .is-changing, --t-lcd). Values streaming in (a fader dragged, a
+// key held) change too fast for it: the figure just follows.
+const STREAM_MS = 150
+const lastChange = new WeakMap<Element, number>()
+export function flash(el: HTMLElement) {
+	const now = performance.now()
+	const last = lastChange.get(el) ?? 0
+	lastChange.set(el, now)
+	if (now - last < STREAM_MS) return
+	el.classList.remove('is-changing')
+	void el.offsetWidth
+	el.classList.add('is-changing')
+}

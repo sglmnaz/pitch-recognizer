@@ -1,4 +1,5 @@
 import { t } from '../core/i18n'
+import { flash } from './dom'
 
 /**
  * Puts ◀ ▶ stepper keys around a select (the LCD selector of the old-school
@@ -22,6 +23,7 @@ export function withStepper(select: HTMLSelectElement, label = select.getAttribu
 				if (select.options[i].disabled) continue
 				select.selectedIndex = i
 				select.dispatchEvent(new Event('change', { bubbles: true }))
+				flash(select)
 				return
 			}
 		})

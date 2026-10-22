@@ -203,6 +203,18 @@ input.lcd-number {
 	mask-composite: var(--lcd-mask-composite);
 }
 
+/* A value that changes on a glass (a stepper's select, a typed number):
+   the new figure brightens in from the unlit segments (ts/ui/dom.ts flash). */
+.is-changing {
+	animation: lcd-change var(--t-lcd) ease-out;
+}
+
+@keyframes lcd-change {
+	from {
+		color: var(--lcd-dim);
+	}
+}
+
 /* Unlit segments / dim LCD text. */
 .lcd__dim {
 	color: var(--lcd-dim);

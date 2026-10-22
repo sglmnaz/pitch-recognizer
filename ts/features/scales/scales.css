@@ -276,12 +276,14 @@
 		border-radius: var(--lamp-radius);
 		background: var(--lamp-off);
 		box-shadow: var(--lamp-ring);
+		transition: var(--lamp-fade);
 	}
 
 	&[aria-pressed='true'] {
 		background: var(--panel-sunk);
 
 		&::before {
+			transition-duration: var(--t-lamp-on);
 			background: var(--lamp-on);
 			box-shadow:
 				var(--lamp-ring),
