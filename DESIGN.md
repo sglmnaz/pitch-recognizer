@@ -198,12 +198,12 @@ tokens in tier 1 of tokens.css, all 0 with reduced motion:
 
 | Token | Value | What moves |
 |-------|-------|------------|
-| `--t-press` | 70 ms | a key sinks as the finger lands (`--k-top` / `--k-front-h`, registered with `@property` so they animate) |
-| `--t-release` | 110 ms | it comes back up; a tab's icon sinks 1.5 px while pressed |
-| `--t-lamp-on` / `--t-lamp-off` | 80 / 220 ms | lamps, lit legends and the Metronome's beat ring light quickly and fade like a small bulb (`--lamp-fade`) |
-| `--t-switch` | 90 ms | the 0 / 1 rocker's halves; the slide switch's knob |
-| `--t-knob` | 160 ms | a rotary settles on its detent, no overshoot |
-| `--t-lcd` | 90 ms | a figure that changes on a glass brightens in from the unlit segments (`flash()` in ts/ui/dom.ts: the stepper's select, typed numbers; skipped while values stream) |
+| `--t-press` | 35 ms | a key sinks as the finger lands (`--k-top` / `--k-front-h`, registered with `@property` so they animate) |
+| `--t-release` | 55 ms | it comes back up; a tab's icon sinks 1.5 px while pressed |
+| `--t-lamp-on` / `--t-lamp-off` | 40 / 110 ms | lamps, lit legends and the Metronome's beat ring light quickly and fade like a small bulb (`--lamp-fade`) |
+| `--t-switch` | 45 ms | the 0 / 1 rocker's halves; the slide switch's knob |
+| `--t-knob` | 80 ms | a rotary settles on its detent, no overshoot |
+| `--t-lcd` | 45 ms | a figure that changes on a glass brightens in from the unlit segments (`flash()` in ts/ui/dom.ts: the stepper's select, typed numbers; skipped while values stream) |
 
 Faders follow the finger with no delay (their look stays as it is, Broadcast's
 console caps included). The needle tracks pitch (80 ms linear). Every

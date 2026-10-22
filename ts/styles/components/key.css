@@ -6,7 +6,9 @@
  * an outline ring and a drop shadow. The button itself is only the hit area
  * and the legend, so its box never changes size.
  * A latched key ([aria-pressed='true'], [aria-selected='true'], .is-down) or
- * one held down (:active) sinks: the cap starts --key-sink lower, its front
+ * one held down (:active, or .is-pressing, set by ts/ui/feedback.ts the moment
+ * the finger lands: on touch screens :active can wait while the browser decides
+ * whether the touch is a scroll) sinks: the cap starts --key-sink lower, its front
  * edge shortens by as much (the base stays put), it goes a shade darker and
  * the panel lip shades its top; the legend moves down with it. It sinks in
  * --t-press as the finger lands and comes back in --t-release (tokens.css); a
@@ -89,7 +91,7 @@
 	}
 
 	&:is([aria-pressed='true'], [aria-selected='true'], .is-down),
-	&:active:not(:disabled, [aria-disabled='true']) {
+	&:is(:active, .is-pressing):not(:disabled, [aria-disabled='true']) {
 		--k-top: var(--key-sink);
 		--k-front-h: calc(var(--key-edge) - var(--key-sink));
 		transition-duration: var(--t-press), var(--t-press), var(--t-lamp-on), var(--t-lamp-on);

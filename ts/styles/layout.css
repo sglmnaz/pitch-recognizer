@@ -155,7 +155,7 @@
 	transition: translate var(--t-release) ease-out;
 }
 
-.tab:active svg {
+.tab:is(:active, .is-pressing) svg {
 	translate: 0 1.5px;
 	transition-duration: var(--t-press);
 }

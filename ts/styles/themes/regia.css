@@ -170,7 +170,7 @@
    mounted parts: a low cap, its flat face lit from above. */
 [data-theme='regia'] :where(.key, .btn, .link-btn) {
 	&::before,
-	&:is([aria-pressed='true'], [aria-selected='true'], .is-down, :active)::before {
+	&:is([aria-pressed='true'], [aria-selected='true'], .is-down, :active, .is-pressing)::before {
 		box-shadow:
 			var(--bezel),
 			0 2px 3px 3px rgba(0, 0, 0, 0.14);
@@ -240,7 +240,7 @@
 	}
 
 	& > button::before,
-	& > button:is([aria-pressed='true'], [aria-selected='true'], :active)::before {
+	& > button:is([aria-pressed='true'], [aria-selected='true'], :active, .is-pressing)::before {
 		box-shadow: none;
 	}
 }

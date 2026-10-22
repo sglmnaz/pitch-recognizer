@@ -108,14 +108,27 @@ const INTERLOCKED = '.segmented > button, .tab'
 const latching = (key: Element) => key.matches(`${INTERLOCKED}, [aria-pressed]`)
 const pressed = (key: Element) => key.getAttribute('aria-pressed') === 'true' || key.getAttribute('aria-selected') === 'true'
 
+// The key under the finger sinks at once (.is-pressing, key.css): on touch
+// screens :active can wait while the browser decides whether the touch is a
+// scroll, and the key then seems to lag behind its click.
+let pressing: Element | null = null
+function release() {
+	pressing?.classList.remove('is-pressing')
+	pressing = null
+}
+
 /** Wires the feedback for every key and switch in the app (call once at boot). */
 export function initFeedback() {
+	for (const type of ['pointerup', 'pointercancel', 'blur'] as const) window.addEventListener(type, release, { passive: true })
 	document.addEventListener(
 		'pointerdown',
 		(event) => {
 			if (event.button !== 0) return
 			const key = (event.target as Element).closest(KEYS)
 			if (!key || key.matches(':disabled, [aria-disabled="true"]')) return
+			release()
+			key.classList.add('is-pressing')
+			pressing = key
 			const kind = (key as HTMLElement).dataset.feedback as Kind | 'none' | undefined
 			if (kind === 'none') return
 			if (kind) feedback(kind)

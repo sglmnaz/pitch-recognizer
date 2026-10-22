@@ -147,13 +147,13 @@
 	   legend lights quickly and fades out like a small bulb; a switch snaps
 	   across; a knob settles on its detent without overshoot; an LCD figure
 	   brightens in. All 0 with reduced motion (below). */
-	--t-press: 70ms;
-	--t-release: 110ms;
-	--t-lamp-on: 80ms;
-	--t-lamp-off: 220ms;
-	--t-switch: 90ms;
-	--t-knob: 160ms;
-	--t-lcd: 90ms;
+	--t-press: 35ms;
+	--t-release: 55ms;
+	--t-lamp-on: 40ms;
+	--t-lamp-off: 110ms;
+	--t-switch: 45ms;
+	--t-knob: 80ms;
+	--t-lcd: 45ms;
 	--lamp-fade: background-color var(--t-lamp-off) ease-out, box-shadow var(--t-lamp-off) ease-out;
 
 	/* Vertical rhythm between the blocks of a view. Phones tighten it so a
