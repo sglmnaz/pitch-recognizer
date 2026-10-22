@@ -332,6 +332,7 @@ test.describe('themes', () => {
 		'copper',
 		'citrus',
 		'blackstar',
+		'lettera',
 		'regia-light',
 		'regia-dark',
 	]) {
@@ -342,7 +343,7 @@ test.describe('themes', () => {
 		})
 	}
 
-	for (const id of ['casio', 'red', 'phosphor', 'vfd', 'oled', 'ice', 'violet', 'eink', 'backlit']) {
+	for (const id of ['casio', 'red', 'phosphor', 'vfd', 'oled', 'ice', 'violet', 'eink', 'backlit', 'green', 'matrix', 'nixie', 'plasma', 'receipt', 'el']) {
 		test(`lcd ${id}`, async ({ page, open }) => {
 			await open('#metronome')
 			await remember(page, 'pitch-recognizer:display', id)

@@ -29,7 +29,7 @@
 		var(--lcd-shadow),
 		0 1px 0 var(--plate-shine);
 	position: relative;
-	background: var(--lcd-bg);
+	background: var(--lcd-texture) var(--lcd-bg);
 
 	/* Small ▾ in the display's ink, so it follows the LCD colour: one shape
 	   (two half-triangles side by side left a seam on phone screens). */

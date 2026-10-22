@@ -5,7 +5,8 @@
  * amber LCD windows, paper strips for charts.
  *
  * Theming (docs/adr/0007): <html data-theme="classic|night" data-mode="light|dark"
- * [data-display="green|amber|blue"]>.
+ * [data-display="green|amber|blue"]>; the fonts the user picks are in
+ * typefaces.css (docs/adr/0011).
  *   1. shape     sizes, fonts, key geometry: the same everywhere (:root)
  *   2. theme     every colour and material, one block per theme x mode
  *   3. display   --lcd-* only, overriding the theme's LCD when data-display is set
@@ -91,6 +92,10 @@
 	/* Older names, still read by a few rules. */
 	--font-sans: var(--font-text);
 	--font-mono: var(--font-ui);
+	/* What lies on an LCD's glass over --lcd-bg (scan lines, a pixel grid, a
+	   sheen): background layers, set by a display (tier 3). --lcd-bg stays a
+	   flat colour, since it also goes into color-mix(). */
+	--lcd-texture: none;
 
 	/* Silk-screen labels: tracked out, uppercase. */
 	--label-weight: 700;
@@ -1224,14 +1229,64 @@
 	--foot-edge-down: inset 0 1px 2px rgba(0, 0, 0, 0.6), var(--bezel);
 }
 
+/* Lettera: an Italian portable typewriter. Sage enamel panel, a cream plate
+   with a faint enamel ripple, slate keys with cream legends, cream knobs, a
+   red Start, typewriter labels (IBM Plex Mono). Light only. */
+[data-theme='lettera'],
+[data-theme='lettera'] [data-mode='light'] {
+	--font-ui: 'IBM Plex Mono UI', 'Courier New', monospace;
+	--panel: #9fb6ab;
+	--panel-sunk: #93ab9f;
+	--panel-raised: #a8bdb2;
+	--ink: #1d2622;
+	--ink-2: #2c3833;
+	--ink-3: #44524b;
+	--ink-4: #55645c;
+	--rule: rgba(29, 38, 34, 0.25);
+	--rule-strong: rgba(29, 38, 34, 0.7);
+	--outline: #1d2622;
+	--plate: repeating-radial-gradient(circle at 30% 40%, rgba(255, 255, 255, 0.05) 0 2px, transparent 2px 5px), linear-gradient(180deg, #ece5d2, #ddd4bd);
+	--plate-edge: #4f5c55;
+	--plate-ink: #2a2620;
+	--plate-ink-2: #6a6152;
+	--key-face: #33403b;
+	--key-hi: #4c5b55;
+	--key-side: #2a3531;
+	--key-front: #121816;
+	--key-ink: #efe9da;
+	--key2-face: #e9e2cf;
+	--key2-hi: #fbf7ec;
+	--key2-side: #d3cab3;
+	--key2-front: #9a9078;
+	--key2-ink: #2a2620;
+	--key3-face: #c4362c;
+	--key3-hi: #e0584c;
+	--key3-side: #a52a21;
+	--key3-front: #5e140e;
+	--key3-ink: #fff4ea;
+	--window: #1d2622;
+	--track: #1d2622;
+}
+
+[data-theme='lettera'] {
+	--key-radius: 4px;
+}
+
 /* Tier 3: display ------------------------------------------------------------ */
-/* data-display on <html> recolours the LCD windows only, whatever the theme. */
+/* data-display on <html> recolours the LCD windows only, whatever the theme.
+   A display may also lay a texture on the glass (--lcd-texture) and bring the
+   face it was drawn for (--font-display), used while Settings → Display font
+   is Auto (typefaces.css overrides it otherwise). */
+/* Grey-green: a reflective watch LCD, a polariser sheen, each segment
+   casting its shadow on the mirror behind, Share Tech Mono. */
 :root[data-display='green'] {
-	--lcd-bg: #c7c9bb;
-	--lcd-ink: #23251f;
-	--lcd-dim: rgba(35, 37, 31, 0.13);
-	--lcd-glow: none;
+	--lcd-bg: #c0c3b1;
+	--lcd-ink: #1f2219;
+	--lcd-dim: rgba(31, 34, 25, 0.11);
+	--lcd-glow: 2px 2px 0 rgba(31, 34, 25, 0.16);
 	--lcd-shadow: inset 0 4px 6px -3px rgba(0, 0, 0, 0.45);
+	--lcd-texture: linear-gradient(165deg, rgba(255, 255, 255, 0.3), transparent 38%, transparent 70%, rgba(0, 0, 0, 0.05));
+	--font-display: 'Share Tech Mono', var(--font-ui);
 }
 
 :root[data-display='amber'] {
@@ -1268,13 +1323,15 @@
 	--lcd-shadow: inset 0 4px 8px -3px rgba(0, 0, 0, 0.9);
 }
 
-/* Green phosphor */
+/* Green phosphor: a terminal's CRT, scan lines and a vignette at the edges, VT323. */
 :root[data-display='phosphor'] {
-	--lcd-bg: #06120a;
-	--lcd-ink: #62ff7a;
-	--lcd-dim: rgba(98, 255, 122, 0.12);
-	--lcd-glow: 0 0 8px rgba(90, 255, 120, 0.6);
-	--lcd-shadow: inset 0 4px 8px -3px rgba(0, 0, 0, 0.9);
+	--lcd-bg: #041a0c;
+	--lcd-ink: #5dff95;
+	--lcd-dim: rgba(93, 255, 149, 0.1);
+	--lcd-glow: 0 0 2px #8affb5, 0 0 10px rgba(60, 255, 130, 0.55);
+	--lcd-shadow: inset 0 0 18px 4px rgba(0, 0, 0, 0.85);
+	--lcd-texture: radial-gradient(130% 100% at 50% 50%, transparent 55%, rgba(0, 0, 0, 0.5)), repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.38) 0 1px, transparent 1px 3px);
+	--font-display: 'VT323', var(--font-ui);
 }
 
 /* VFD turquoise */
@@ -1330,6 +1387,64 @@
 	--lcd-dim: rgba(58, 30, 8, 0.14);
 	--lcd-glow: none;
 	--lcd-shadow: inset 0 6px 8px -4px rgba(0, 0, 0, 0.6);
+}
+
+/* Dot matrix: a pocket game console's pixel grid, dark pixels on grey-green, Doto. */
+:root[data-display='matrix'] {
+	--lcd-bg: #a7b27a;
+	--lcd-ink: #263116;
+	--lcd-dim: rgba(38, 49, 22, 0.12);
+	--lcd-glow: 1px 1px 0 rgba(38, 49, 22, 0.18);
+	--lcd-shadow: inset 0 4px 6px -3px rgba(0, 0, 0, 0.45);
+	--lcd-texture: linear-gradient(90deg, rgba(60, 72, 30, 0.13) 1px, transparent 1px) 0 0 / 3px 3px, linear-gradient(0deg, rgba(60, 72, 30, 0.13) 1px, transparent 1px) 0 0 / 3px 3px;
+	--font-display: 'Doto', var(--font-ui);
+}
+
+/* Nixie: orange neon on wire cathodes inside a glass tube. A warm haze where
+   the neon glows, the hexagonal anode mesh, the tube's curved reflections,
+   the unlit cathodes in grey metal (--lcd-dim), thin numerals (Big Shoulders). */
+:root[data-display='nixie'] {
+	--lcd-bg: #0b0503;
+	--lcd-ink: #ff9a45;
+	--lcd-dim: rgba(160, 125, 100, 0.2);
+	--lcd-glow: 0 0 1px #fff0d4, 0 0 4px #ffb35a, 0 0 10px #ff6a00, 0 0 24px rgba(255, 70, 0, 0.55);
+	--lcd-shadow: inset 0 4px 12px -3px rgba(0, 0, 0, 0.95), inset 0 0 0 1px rgba(255, 200, 150, 0.06);
+	--lcd-texture: radial-gradient(120% 55% at 50% 0%, rgba(255, 235, 210, 0.08), transparent 60%), linear-gradient(90deg, rgba(255, 220, 190, 0.07), transparent 9%, transparent 91%, rgba(255, 220, 190, 0.07)), repeating-linear-gradient(60deg, rgba(255, 150, 80, 0.09) 0 1px, transparent 1px 6px), repeating-linear-gradient(-60deg, rgba(255, 150, 80, 0.09) 0 1px, transparent 1px 6px), repeating-linear-gradient(0deg, rgba(255, 150, 80, 0.06) 0 1px, transparent 1px 6px), radial-gradient(65% 75% at 50% 55%, rgba(255, 90, 20, 0.16), transparent 70%);
+	--font-display: 'Big Shoulders Display', var(--font-ui);
+}
+
+/* Gas plasma: an 80s portable's orange panel, a fine horizontal raster, Space Mono. */
+:root[data-display='plasma'] {
+	--lcd-bg: #1b0600;
+	--lcd-ink: #ff6a1f;
+	--lcd-dim: rgba(255, 106, 31, 0.1);
+	--lcd-glow: 0 0 6px rgba(255, 90, 20, 0.6);
+	--lcd-shadow: inset 0 4px 8px -3px rgba(0, 0, 0, 0.9);
+	--lcd-texture: repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.3) 0 1px, transparent 1px 2px);
+	--font-display: 'Space Mono', var(--font-ui);
+}
+
+/* Thermal paper: a printing calculator's roll, grain and faint banding, Courier Prime. */
+:root[data-display='receipt'] {
+	--lcd-bg: #efebe1;
+	--lcd-ink: #2a2930;
+	--lcd-dim: rgba(42, 41, 48, 0.1);
+	--lcd-glow: none;
+	--lcd-shadow: inset 0 3px 5px -3px rgba(0, 0, 0, 0.35);
+	--lcd-texture: repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.025) 0 1px, transparent 1px 4px), repeating-linear-gradient(90deg, rgba(120, 100, 70, 0.03) 0 2px, transparent 2px 5px), linear-gradient(180deg, rgba(0, 0, 0, 0.04), transparent 25%, transparent 75%, rgba(0, 0, 0, 0.05));
+	--font-display: 'Courier Prime', var(--font-ui);
+}
+
+/* EL backlight: a digital watch's night light, a turquoise panel brighter in
+   the middle, Oxanium. */
+:root[data-display='el'] {
+	--lcd-bg: #3ccfbd;
+	--lcd-ink: #062a27;
+	--lcd-dim: rgba(6, 42, 39, 0.12);
+	--lcd-glow: 1px 1px 0 rgba(6, 42, 39, 0.2);
+	--lcd-shadow: inset 0 6px 10px -4px rgba(0, 0, 0, 0.55);
+	--lcd-texture: radial-gradient(70% 90% at 50% 50%, rgba(230, 255, 250, 0.45), transparent 75%);
+	--font-display: 'Oxanium', var(--font-ui);
 }
 
 /* Roles every component reads, derived from the materials above. Declared

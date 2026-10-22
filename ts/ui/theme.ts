@@ -46,6 +46,7 @@ export const THEMES: readonly Theme[] = [
 	{ id: 'copper', label: 'Copper top', palette: 'copper', mode: 'dark', themeColor: { dark: '#1f1b18' } },
 	{ id: 'citrus', label: 'Citrus', palette: 'citrus', mode: 'light', themeColor: { light: '#e2671f' } },
 	{ id: 'blackstar', label: 'Black star', palette: 'blackstar', mode: 'dark', themeColor: { dark: '#151517' } },
+	{ id: 'lettera', label: 'Lettera', palette: 'lettera', mode: 'light', themeColor: { light: '#9fb6ab' } },
 	{ id: 'regia-light', label: 'Broadcast light', palette: 'regia', mode: 'light', themeColor: { light: '#b8bdb4' } },
 	{ id: 'regia-dark', label: 'Broadcast dark', palette: 'regia', mode: 'dark', themeColor: { dark: '#27313a' } },
 ]
@@ -65,12 +66,17 @@ export const DISPLAYS = [
 	{ id: 'violet', label: 'Violet' },
 	{ id: 'eink', label: 'E-ink' },
 	{ id: 'backlit', label: 'Amber backlight' },
+	{ id: 'matrix', label: 'Dot matrix' },
+	{ id: 'nixie', label: 'Nixie' },
+	{ id: 'plasma', label: 'Gas plasma' },
+	{ id: 'receipt', label: 'Thermal paper' },
+	{ id: 'el', label: 'EL backlight' },
 ] as const
 export type Display = (typeof DISPLAYS)[number]['id']
 
 /** Labels and keys (--font-ui); 'auto' = the theme's own. Labels are the font names. */
 export const UI_FONTS = [
-	{ id: 'auto', label: 'Theme' },
+	{ id: 'auto', label: 'Auto' },
 	{ id: 'archivo', label: 'Archivo Narrow' },
 	{ id: 'saira', label: 'Saira Condensed' },
 	{ id: 'plex', label: 'IBM Plex Sans Condensed' },
@@ -79,9 +85,9 @@ export const UI_FONTS = [
 	{ id: 'mono', label: 'IBM Plex Mono' },
 ] as const
 
-/** The large values on the screens (--font-display); 'auto' = the theme's own. */
+/** The large values on the screens (--font-display); 'auto' = the display's own, else the theme's. */
 export const DISPLAY_FONTS = [
-	{ id: 'auto', label: 'Theme' },
+	{ id: 'auto', label: 'Auto' },
 	{ id: 'chakra', label: 'Chakra Petch' },
 	{ id: 'thin', label: 'Barlow Condensed Thin' },
 	{ id: 'orbitron', label: 'Orbitron' },

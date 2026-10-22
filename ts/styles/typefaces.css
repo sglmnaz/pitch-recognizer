@@ -2,8 +2,9 @@
  * Typefaces the user can pick (Settings → Appearance → UI font / Display font),
  * whatever the theme and the LCD colour: <html data-font-ui="…"
  * data-font-display="…">, set before first paint by the head script and by
- * ts/ui/theme.ts (absent = the theme's own: Barlow Semi Condensed and Chakra
- * Petch, Barlow Condensed in Broadcast). Every face is OFL (licences beside the
+ * ts/ui/theme.ts (absent = Auto: the theme's own UI face, Barlow Semi Condensed
+ * but IBM Plex Mono in Lettera; the display's own face, else the theme's:
+ * Chakra Petch, Barlow Condensed in Broadcast). Every face is OFL (licences beside the
  * files), latin subset only (English, Italian, French, German).
  *
  * The UI faces stand in for Barlow Semi Condensed in labels and keys laid out
@@ -233,28 +234,35 @@
 	font-display: swap;
 }
 
-/* UI font: labels, keys, small LCD values (--font-ui). */
-:root[data-font-ui='archivo'] {
+/* UI font: labels, keys, small LCD values (--font-ui). Also on data-mode
+   subtrees, where a theme with its own UI face (Lettera) sets it again. */
+:root[data-font-ui='archivo'],
+:root[data-font-ui='archivo'] [data-mode] {
 	--font-ui: 'Archivo Narrow UI', 'Arial Narrow', system-ui, sans-serif;
 }
 
-:root[data-font-ui='saira'] {
+:root[data-font-ui='saira'],
+:root[data-font-ui='saira'] [data-mode] {
 	--font-ui: 'Saira Condensed UI', 'Arial Narrow', system-ui, sans-serif;
 }
 
-:root[data-font-ui='plex'] {
+:root[data-font-ui='plex'],
+:root[data-font-ui='plex'] [data-mode] {
 	--font-ui: 'IBM Plex Sans Condensed UI', 'Arial Narrow', system-ui, sans-serif;
 }
 
-:root[data-font-ui='inter'] {
+:root[data-font-ui='inter'],
+:root[data-font-ui='inter'] [data-mode] {
 	--font-ui: 'Inter Tight UI', 'Arial Narrow', system-ui, sans-serif;
 }
 
-:root[data-font-ui='oxanium'] {
+:root[data-font-ui='oxanium'],
+:root[data-font-ui='oxanium'] [data-mode] {
 	--font-ui: 'Oxanium UI', 'Arial Narrow', system-ui, sans-serif;
 }
 
-:root[data-font-ui='mono'] {
+:root[data-font-ui='mono'],
+:root[data-font-ui='mono'] [data-mode] {
 	--font-ui: 'IBM Plex Mono UI', 'Arial Narrow', system-ui, sans-serif;
 }
 

@@ -284,7 +284,7 @@
 	padding: 0 var(--space-8);
 	border: 4px solid var(--window);
 	border-radius: var(--radius-lg);
-	background: var(--lcd-bg);
+	background: var(--lcd-texture) var(--lcd-bg);
 	color: var(--lcd-ink);
 	text-shadow: var(--lcd-glow);
 	box-shadow: var(--lcd-shadow);

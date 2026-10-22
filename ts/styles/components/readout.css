@@ -16,7 +16,7 @@
 	text-align: center;
 	border: 5px solid var(--window);
 	border-radius: var(--radius-lg);
-	background: var(--lcd-bg);
+	background: var(--lcd-texture) var(--lcd-bg);
 	color: var(--lcd-ink);
 	box-shadow:
 		var(--lcd-shadow),

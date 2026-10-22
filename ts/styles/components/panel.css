@@ -90,7 +90,7 @@
 	display: block;
 	padding: var(--space-6) var(--space-10);
 	border-radius: var(--radius-sm);
-	background: var(--lcd-bg);
+	background: var(--lcd-texture) var(--lcd-bg);
 	color: var(--lcd-ink);
 	text-shadow: var(--lcd-glow);
 	box-shadow: var(--lcd-shadow);

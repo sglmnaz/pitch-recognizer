@@ -45,7 +45,7 @@
 		flex: none;
 		width: 52px;
 		padding: 0;
-		background: var(--lcd-bg);
+		background: var(--lcd-texture) var(--lcd-bg);
 		text-align: center;
 		text-align-last: center;
 		text-transform: none;

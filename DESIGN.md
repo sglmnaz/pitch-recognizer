@@ -32,6 +32,7 @@ System follows the device between Light and Dark.
 | Copper top (`copper`, dark) | copper, diamond weave | brown `#1f1b18` | dark brown, 4 px corners | amber; ivory chicken-head knobs |
 | Citrus (`citrus`, light) | beige, grille weave | orange `#e2671f` | white; black Start | black, white figures; glossy black knobs |
 | Black star (`blackstar`, dark) | graphite, perforated mesh | black `#151517` | graphite, 1 px corners; silver Start | ice white; knurled knobs, red pointer |
+| Lettera (`lettera`, light) | cream enamel, faint ripple | sage `#9fb6ab` | slate, cream legends, 4 px corners; red Start | grey-green; typewriter labels (IBM Plex Mono) |
 | Broadcast light / dark (`regia`, both modes) | grey-green / blue-grey | grey-green `#b8bdb4` / blue-grey `#27313a` | low flat caps in the screens' bezel (grey-green / near-black frame); backlit ON AIR Start | vector oscilloscope: green phosphor, thin Barlow Condensed digits, graticule, glass reflection; console knobs with blue / red caps, fader caps, bat-handle toggle, reverse-printed section legends |
 
 The amp themes also set the knob through `--knob-rim`, `--knob-cap`,
@@ -65,7 +66,12 @@ LCD windows, whatever the theme. Any subtree can force a mode with its own
 
 One `:root[data-display='<id>']` block in tier 3 of tokens.css setting the five
 `--lcd-*` tokens, one entry in `DISPLAYS` (ts/ui/theme.ts) and the id in the
-head script's `displays` map. The Settings select fills itself.
+head script's `displays` map. The Settings select fills itself. A display may
+also set `--lcd-texture` (background layers over the glass: Green phosphor's
+scan lines, Dot matrix's pixel grid, Nixie's anode mesh and tube reflections,
+Thermal paper's grain; `none` by default, and `--lcd-bg` stays flat since it
+goes into `color-mix()`) and `--font-display`, the face it was drawn for, shown
+while Settings → Display font is Auto.
 
 ## Materials (tier 2 tokens)
 
