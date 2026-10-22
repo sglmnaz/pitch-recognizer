@@ -8,10 +8,6 @@
 
 /* Plate: brand and the exercise switch ----------------------------------------- */
 .trainer-mode {
-	@media (min-width: 601px) {
-		max-width: 520px;
-	}
-
 	/* Five exercises in a 288 px track at 320 px: trim the side padding and the tracking. */
 	@media (max-width: 600px) {
 		& > button {
@@ -1478,10 +1474,55 @@
 		grid-area: setup;
 	}
 
-	/* Tab: one column, as on a phone and as Scales: the strip, its keys and
-	   the exercise list want the width (two columns left each too narrow). */
+	/* Tab: the exercise and its strip across the whole width (the more of the
+	   strip, the more notes ahead), then two columns: playing (status, tape,
+	   Start, mic) on the left, the setup and the exercise list on the right.
+	   The stage's blocks join the view's grid. The last row takes the setup's
+	   extra height, so the left column stays packed at the top. */
 	#view-trainer.trainer--tab:not([hidden]) {
-		display: flex;
-		align-items: stretch;
+		grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+		grid-template-areas:
+			'mode mode'
+			'head head'
+			'paper paper'
+			'status setup'
+			'tape setup'
+			'transport setup'
+			'message setup'
+			'mic setup'
+			'. setup';
+		grid-template-rows: repeat(8, auto) 1fr;
+	}
+
+	.view > .tab-stage {
+		display: contents;
+
+		& > .tab-head {
+			grid-area: head;
+		}
+
+		& > .window:has(.tab-paper) {
+			grid-area: paper;
+		}
+
+		& > .window:has(.tab-status) {
+			grid-area: status;
+		}
+
+		& > .window:has(.tab-tape) {
+			grid-area: tape;
+		}
+
+		& > .tab-transport {
+			grid-area: transport;
+		}
+
+		& > .tab-message {
+			grid-area: message;
+		}
+	}
+
+	.view > .tab-setup {
+		grid-area: setup;
 	}
 }
