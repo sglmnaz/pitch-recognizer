@@ -356,16 +356,17 @@
 	}
 }
 
-/* Appearance: a select between ◀ ▶ (Theme, Display, the fonts). A fixed width,
-   so a long name (Bitcount Prop Double) ends in … instead of pushing the
-   row's title onto more lines, and slim ◀ ▶ keys as tall as the select. */
+/* Appearance: a select between ◀ ▶ (Theme, Display, the fonts). As wide as
+   its value up to a cap, so a long name (Bitcount Prop Double) ends in …
+   instead of pushing the row's title onto more lines; slim ◀ ▶ keys as tall
+   as the select. */
 .settings-card .stepper {
 	flex: none;
 	gap: var(--space-4);
 
 	& > .select {
 		flex: none;
-		width: 128px;
+		max-width: 128px;
 		min-width: 0;
 		text-overflow: ellipsis;
 	}
