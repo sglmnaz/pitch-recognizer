@@ -104,6 +104,9 @@
 	   lines). */
 	--lcd-value-mask: none;
 	--lcd-mask-composite: add;
+	/* The Metronome's tempo figure, scaled by a display drawn for larger
+	   figures (Nixie). */
+	--lcd-value-scale: 1;
 
 	/* Silk-screen labels: tracked out, uppercase. */
 	--label-weight: 700;
@@ -1943,17 +1946,23 @@
 	--font-display: 'Doto', var(--font-ui);
 }
 
-/* Nixie: orange neon on wire cathodes inside a glass tube. A warm haze where
-   the neon glows, the hexagonal anode mesh, the tube's curved reflections,
-   the unlit cathodes in grey metal (--lcd-dim), thin numerals (Big Shoulders). */
+/* Nixie: orange neon seen through the anode mesh. One fine mesh over the
+   whole glass and over the figure, a red haze round the figure only, edges
+   near black, thin wire numerals (Barlow Condensed Thin) a size up on the
+   Metronome's tempo. */
 :root[data-display='nixie'] {
-	--lcd-bg: #0b0503;
-	--lcd-ink: #ff9a45;
-	--lcd-dim: rgba(160, 125, 100, 0.2);
-	--lcd-glow: 0 0 1px #fff0d4, 0 0 3px #ffb35a, 0 0 8px rgba(255, 106, 0, 0.8), 0 0 18px rgba(255, 70, 0, 0.4);
-	--lcd-shadow: inset 0 4px 12px -3px rgba(0, 0, 0, 0.95), inset 0 0 0 1px rgba(255, 200, 150, 0.06);
-	--lcd-texture: radial-gradient(120% 55% at 50% 0%, rgba(255, 235, 210, 0.08), transparent 60%), linear-gradient(90deg, rgba(255, 220, 190, 0.07), transparent 9%, transparent 91%, rgba(255, 220, 190, 0.07)), repeating-linear-gradient(60deg, rgba(255, 150, 80, 0.06) 0 1px, transparent 1px 6px), repeating-linear-gradient(-60deg, rgba(255, 150, 80, 0.06) 0 1px, transparent 1px 6px), repeating-linear-gradient(0deg, rgba(255, 150, 80, 0.04) 0 1px, transparent 1px 6px), radial-gradient(65% 75% at 50% 55%, rgba(255, 90, 20, 0.16), transparent 70%);
-	--font-display: 'Big Shoulders Display', var(--font-ui);
+	--lcd-bg: #030101;
+	--lcd-ink: #ffb071;
+	--lcd-dim: rgba(150, 115, 95, 0.24);
+	--lcd-glow: 0 0 1px #fff3dc, 0 0 3px #ff9a3a, 0 0 8px #ff5a0a, 0 0 18px rgba(255, 60, 0, 0.7), 0 0 34px rgba(255, 40, 0, 0.35);
+	--lcd-shadow: inset 0 4px 12px -3px rgba(0, 0, 0, 0.95);
+	--lcd-texture: radial-gradient(110% 120% at 50% 50%, transparent 45%, rgba(0, 0, 0, 0.75) 100%),
+		linear-gradient(90deg, rgba(150, 95, 70, 0.09) 0.8px, transparent 0.8px) 0 0 / 4px 4px, linear-gradient(0deg, rgba(150, 95, 70, 0.09) 0.8px, transparent 0.8px) 0 0 / 4px 4px,
+		radial-gradient(45% 60% at 50% 55%, rgba(255, 70, 10, 0.13), rgba(200, 40, 0, 0.04) 70%, transparent 100%);
+	--lcd-value-mask: linear-gradient(90deg, #000 3.2px, rgba(0, 0, 0, 0.55) 3.2px) 0 0 / 4px 4px, linear-gradient(0deg, #000 3.2px, rgba(0, 0, 0, 0.55) 3.2px) 0 0 / 4px 4px;
+	--lcd-mask-composite: intersect;
+	--lcd-value-scale: 1.3;
+	--font-display: 'Barlow Condensed Thin', var(--font-ui);
 }
 
 /* Gas plasma: an 80s portable's orange panel, a fine horizontal raster, Space Mono. */

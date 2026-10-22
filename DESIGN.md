@@ -82,12 +82,13 @@ One `:root[data-display='<id>']` block in tier 3 of tokens.css setting the five
 `--lcd-*` tokens, one entry in `DISPLAYS` (ts/ui/theme.ts) and the id in the
 head script's `displays` map. The Settings select fills itself. A display may
 also set `--lcd-texture` (background layers over the glass: Green phosphor's
-scan lines, Dot matrix's pixel grid, Nixie's anode mesh and tube reflections,
+scan lines, Dot matrix's pixel grid, Nixie's anode mesh and red haze,
 Thermal paper's grain; `none` by default, and `--lcd-bg` stays flat since it
 goes into `color-mix()`) and `--font-display`, the face it was drawn for, shown
 while Settings → Display font is Auto. It may also draw the large values
 through a mask, `--lcd-value-mask` with `--lcd-mask-composite` (panel.css):
-LED matrix's dots, Pixel LCD's square pixels, Television's scan lines.
+LED matrix's dots, Pixel LCD's square pixels, Television's scan lines, Nixie's
+mesh; and `--lcd-value-scale` sizes the Metronome's tempo figure (Nixie 1.3).
 
 ## Materials (tier 2 tokens)
 

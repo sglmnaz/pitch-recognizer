@@ -61,7 +61,7 @@ input.metro-bpm__value {
 	display: block;
 	width: 3ch;
 	font-family: var(--font-display);
-	font-size: 0.9em;
+	font-size: calc(0.9em * var(--lcd-value-scale));
 	font-weight: 600;
 	font-variant-numeric: tabular-nums;
 	line-height: 1.1;
