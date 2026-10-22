@@ -355,3 +355,28 @@
 		width: 100%;
 	}
 }
+
+/* Appearance: a select between ◀ ▶ (Theme, Display, the fonts). A fixed width,
+   so a long name (Bitcount Prop Double) ends in … instead of pushing the
+   row's title onto more lines, and slim ◀ ▶ keys as tall as the select. */
+.settings-card .stepper {
+	flex: none;
+	gap: var(--space-4);
+
+	& > .select {
+		flex: none;
+		width: 128px;
+		min-width: 0;
+		text-overflow: ellipsis;
+	}
+
+	& > .key {
+		width: 26px;
+		height: calc(40px + 2 * var(--key-ring, 0px));
+		font-size: 9px;
+
+		@media (max-width: 600px) {
+			height: calc(var(--tap) + 2 * var(--key-ring, 0px));
+		}
+	}
+}

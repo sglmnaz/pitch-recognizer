@@ -89,8 +89,9 @@
 /* Settings → Appearance → Display font on small text (data-lcd-text on
    <html>, ts/ui/theme.ts): every small value on a screen in the display face
    too, not only the large ones. Each rule that writes on a glass reads
-   --font-ui, so redefining it on the glass is enough. */
-:root[data-lcd-text='display'] :is(.lcd, .readout, .select, .input, .mic-hint, .metro-beat__display) {
+   --font-ui, so redefining it on the glass is enough. Not the Tuner's split
+   readout (a plate, not a glass) nor a readout's dial (printed paper). */
+:root[data-lcd-text='display'] :is(.lcd, .readout:not(.readout--split) > :not(.meter), .select, .input, .mic-hint, .metro-beat__display) {
 	--font-ui: var(--font-display);
 }
 
