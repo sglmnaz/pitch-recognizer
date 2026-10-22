@@ -7,8 +7,9 @@ import { readString, remove, writeString } from '../core/storage'
  * subtree force light or dark (the fretboard, the trainer staff), the display
  * recolours only the LCD windows (absent = the theme's own LCD). The inline
  * script in index.html sets the same attributes before first paint from the
- * same keys, so a reload never flashes: keep THEMES, the keys and the theme
- * colours in step with it. A new theme is one block per mode in
+ * same keys, so a reload never flashes: keep THEMES, DISPLAYS, the fonts, the
+ * keys and the theme colours in step with it. The fonts (data-font-ui,
+ * data-font-display; absent = the theme's own) are in ts/styles/typefaces.css. A new theme is one block per mode in
  * ts/styles/tokens.css plus one entry here (DESIGN.md, "How to add a theme").
  */
 
@@ -67,6 +68,35 @@ export const DISPLAYS = [
 ] as const
 export type Display = (typeof DISPLAYS)[number]['id']
 
+/** Labels and keys (--font-ui); 'auto' = the theme's own. Labels are the font names. */
+export const UI_FONTS = [
+	{ id: 'auto', label: 'Theme' },
+	{ id: 'archivo', label: 'Archivo Narrow' },
+	{ id: 'saira', label: 'Saira Condensed' },
+	{ id: 'plex', label: 'IBM Plex Sans Condensed' },
+	{ id: 'inter', label: 'Inter Tight' },
+	{ id: 'oxanium', label: 'Oxanium' },
+	{ id: 'mono', label: 'IBM Plex Mono' },
+] as const
+
+/** The large values on the screens (--font-display); 'auto' = the theme's own. */
+export const DISPLAY_FONTS = [
+	{ id: 'auto', label: 'Theme' },
+	{ id: 'chakra', label: 'Chakra Petch' },
+	{ id: 'thin', label: 'Barlow Condensed Thin' },
+	{ id: 'orbitron', label: 'Orbitron' },
+	{ id: 'sharetech', label: 'Share Tech Mono' },
+	{ id: 'oxanium', label: 'Oxanium' },
+	{ id: 'shoulders', label: 'Big Shoulders' },
+	{ id: 'vt323', label: 'VT323' },
+	{ id: 'doto', label: 'Doto' },
+	{ id: 'spacemono', label: 'Space Mono' },
+	{ id: 'courier', label: 'Courier Prime' },
+] as const
+export type FontSlot = 'ui' | 'display'
+const FONTS = { ui: UI_FONTS, display: DISPLAY_FONTS }
+const FONT_KEYS = { ui: 'pitch-recognizer:font-ui', display: 'pitch-recognizer:font-display' }
+
 const THEME_KEY = 'pitch-recognizer:mode'
 const DISPLAY_KEY = 'pitch-recognizer:display'
 /** Older keys: the mode as 'theme' (pre-palette), the Geist palette id. */
@@ -87,11 +117,18 @@ function loadDisplay(): Display {
 	return DISPLAYS.find((d) => d.id === saved)?.id ?? 'auto'
 }
 
+function loadFont(slot: FontSlot): string {
+	const saved = readString(FONT_KEYS[slot])
+	return FONTS[slot].find((f) => f.id === saved)?.id ?? 'auto'
+}
+
 let theme = loadTheme()
 let display = loadDisplay()
+const fonts: Record<FontSlot, string> = { ui: loadFont('ui'), display: loadFont('display') }
 
 export const getTheme = () => theme.id
 export const getDisplay = () => display
+export const getFont = (slot: FontSlot) => fonts[slot]
 
 /** Applies theme, mode and display to the document and the browser chrome. */
 export function applyTheme() {
@@ -101,6 +138,10 @@ export function applyTheme() {
 	root.dataset.mode = mode
 	if (display === 'auto') delete root.dataset.display
 	else root.dataset.display = display
+	for (const [slot, attr] of [['ui', 'fontUi'], ['display', 'fontDisplay']] as const) {
+		if (fonts[slot] === 'auto') delete root.dataset[attr]
+		else root.dataset[attr] = fonts[slot]
+	}
 	const color = theme.themeColor[mode] ?? CLASSIC[mode]
 	document.querySelector('meta[name="theme-color"]')?.setAttribute('content', color)
 }
@@ -120,6 +161,15 @@ export function setDisplay(id: string) {
 	display = next.id
 	if (display === 'auto') remove(DISPLAY_KEY)
 	else writeString(DISPLAY_KEY, display)
+	applyTheme()
+}
+
+export function setFont(slot: FontSlot, id: string) {
+	const next = FONTS[slot].find((f) => f.id === id)
+	if (!next) return
+	fonts[slot] = next.id
+	if (next.id === 'auto') remove(FONT_KEYS[slot])
+	else writeString(FONT_KEYS[slot], next.id)
 	applyTheme()
 }
 

@@ -20,12 +20,18 @@
 		(function () {
 			var themes = { light: ['classic', 'light'], dark: ['classic', 'dark'], night: ['night', 'dark'], sand: ['sand', 'light'], studio: ['studio', 'light'], mint: ['mint', 'light'], graphite: ['graphite', 'dark'], petrol: ['petrol', 'dark'], walnut: ['walnut', 'dark'], olive: ['olive', 'dark'], stage: ['stage', 'dark'], brit: ['brit', 'dark'], copper: ['copper', 'dark'], citrus: ['citrus', 'light'], blackstar: ['blackstar', 'dark'], 'regia-light': ['regia', 'light'], 'regia-dark': ['regia', 'dark'] }
 			var colors = { classic: { light: '#e7e1d3', dark: '#2a2825' }, night: { dark: '#1c222c' }, sand: { light: '#d8ccb2' }, studio: { light: '#efeeea' }, mint: { light: '#cfe2d9' }, graphite: { dark: '#383b40' }, petrol: { dark: '#1e3638' }, walnut: { dark: '#2e2219' }, olive: { dark: '#4b5039' }, stage: { dark: '#9e2b25' }, brit: { dark: '#1b1a19' }, copper: { dark: '#1f1b18' }, citrus: { light: '#e2671f' }, blackstar: { dark: '#151517' }, regia: { light: '#b8bdb4', dark: '#27313a' } }
+			var fontsUi = { archivo: 1, saira: 1, plex: 1, inter: 1, oxanium: 1, mono: 1 }
+			var fontsDisplay = { chakra: 1, thin: 1, orbitron: 1, sharetech: 1, oxanium: 1, shoulders: 1, vt323: 1, doto: 1, spacemono: 1, courier: 1 }
 			var displays = { green: 1, amber: 1, blue: 1, casio: 1, red: 1, phosphor: 1, vfd: 1, oled: 1, ice: 1, violet: 1, eink: 1, backlit: 1 }
 			var saved = null
 			var display = null
+			var fontUi = null
+			var fontDisplay = null
 			try {
 				saved = localStorage.getItem('pitch-recognizer:mode') || localStorage.getItem('theme')
 				display = localStorage.getItem('pitch-recognizer:display')
+				fontUi = localStorage.getItem('pitch-recognizer:font-ui')
+				fontDisplay = localStorage.getItem('pitch-recognizer:font-display')
 			} catch (error) {}
 			var root = document.documentElement
 			// Hidden until ts/main.ts has built and opened the tab (base.css): the
@@ -35,6 +41,8 @@
 			root.dataset.theme = theme[0]
 			root.dataset.mode = theme[1]
 			if (displays.hasOwnProperty(display)) root.dataset.display = display
+			if (fontsUi.hasOwnProperty(fontUi)) root.dataset.fontUi = fontUi
+			if (fontsDisplay.hasOwnProperty(fontDisplay)) root.dataset.fontDisplay = fontDisplay
 			// The language, as ts/core/locale.ts picks it: the stored choice, else the
 			// device's if it is Italian. Not English: the page stays hidden until
 			// ts/language.ts has translated it, so English never flashes first.
@@ -876,6 +884,22 @@
 								<span class="switch__desc">Colour of the LCD windows</span>
 							</span>
 							<select class="select select--small" data-display-choice></select>
+						</label>
+					</div>
+					<div class="settings__section">
+						<label class="switch">
+							<span class="switch__text">
+								<span class="switch__title">UI font</span>
+								<span class="switch__desc">Labels, keys and small values</span>
+							</span>
+							<select class="select select--small" data-font-choice="ui"></select>
+						</label>
+						<label class="switch">
+							<span class="switch__text">
+								<span class="switch__title">Display font</span>
+								<span class="switch__desc">Large values on the screens</span>
+							</span>
+							<select class="select select--small" data-font-choice="display"></select>
 						</label>
 					</div>
 					<div class="settings__section">

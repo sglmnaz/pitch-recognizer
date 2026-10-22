@@ -91,11 +91,32 @@ the materials, so plain text and rules need nothing theme-specific.
 - **Barlow Semi Condensed** (500/600/700) for labels, keys and values:
   uppercase, tracked out like silk-screen print (`--font-ui`).
 - **Geist** for running text: hints, descriptions, the guide (`--font-text`).
-- **DSEG14** (fourteen-segment, italic) for large display values, roughly 28 px and up,
-  and **DSEG7** (seven-segment) for numbers only (the tempo, LED counters):
-  the note and chord name, the tempo, LED counters (`--font-display`,
-  `.lcd__big`). Small values on an LCD stay in Barlow.
+- **Chakra Petch** (600) for the large display values, roughly 28 px and up:
+  the note and chord name, the tempo (`--font-display`, `.lcd__big`); Broadcast
+  sets thin **Barlow Condensed** instead. **DSEG7** (seven-segment) for the
+  LED counters only (`--font-segment`). Small values on an LCD stay in Barlow.
 - All self-hosted in `ts/styles/fonts/` with their OFL licences.
+
+### Fonts the user picks
+
+Settings → Appearance → UI font / Display font, independent of the theme and
+the LCD colour: `<html data-font-ui data-font-display>` (absent = the theme's
+own), set by the head script and `ts/ui/theme.ts` (`UI_FONTS`,
+`DISPLAY_FONTS`, keys `pitch-recognizer:font-ui` / `:font-display`). The faces
+and the overrides of `--font-ui` / `--font-display` are in
+`ts/styles/typefaces.css`, a tokens-layer file after tokens.css; no component
+CSS names a face. UI faces carry their own family name (`'Inter Tight UI'`)
+and a `size-adjust` so their uppercase labels fit where Barlow's do (the
+Italian tab bar is the tightest); display faces are scaled to Chakra Petch's
+cap height and declared for weights 100–900, since views ask for 600 (or
+200–300 in Broadcast) and one file must answer without a faux bold.
+
+To add a font: the latin woff2 and its OFL text in `ts/styles/fonts/`, the
+`@font-face` and the `:root[data-font-…='<id>']` block in typefaces.css (measure
+cap height and uppercase width against Barlow or Chakra Petch for the
+`size-adjust`), the entry in `UI_FONTS` / `DISPLAY_FONTS`, the id in the head
+script's `fontsUi` / `fontsDisplay`, the name in `ts/i18n/it.ts` (kept as is),
+the id in the visual tests' font list. Check the Italian tab bar at 375 px.
 
 ## Components
 

@@ -24,6 +24,14 @@ export function createSettingsView(root: HTMLElement, from: () => string | null)
 	const displaySelect = root.querySelector<HTMLSelectElement>('[data-display-choice]')!
 	displaySelect.replaceChildren(...Theme.DISPLAYS.map((d) => new Option(t(d.label), d.id, false, d.id === Theme.getDisplay())))
 	displaySelect.addEventListener('change', () => Theme.setDisplay(displaySelect.value))
+	// UI and display font (ts/styles/typefaces.css).
+	const fontSelects = (['ui', 'display'] as const).map((slot) => {
+		const select = root.querySelector<HTMLSelectElement>(`[data-font-choice="${slot}"]`)!
+		const fonts = slot === 'ui' ? Theme.UI_FONTS : Theme.DISPLAY_FONTS
+		select.replaceChildren(...fonts.map((f) => new Option(t(f.label), f.id, false, f.id === Theme.getFont(slot))))
+		select.addEventListener('change', () => Theme.setFont(slot, select.value))
+		return { slot, select }
+	})
 
 	// A long page scrolled with the thumb: brushing a control must not change it.
 	guardTouches(root)
@@ -77,6 +85,10 @@ export function createSettingsView(root: HTMLElement, from: () => string | null)
 				Theme.setDisplay('auto')
 				themeSelect.value = Theme.getTheme()
 				displaySelect.value = Theme.getDisplay()
+				for (const { slot, select } of fontSelects) {
+					Theme.setFont(slot, 'auto')
+					select.value = 'auto'
+				}
 			}
 			Settings.reset([...keys])
 		})

@@ -25,6 +25,7 @@
 @layer tokens, base, components;
 
 @import './tokens.css' layer(tokens);
+@import './typefaces.css' layer(tokens);
 @import './base.css' layer(base);
 @import './layout.css' layer(components);
 @import './components/panel.css' layer(components);

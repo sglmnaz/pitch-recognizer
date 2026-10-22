@@ -302,9 +302,9 @@ test.describe('behaviour', () => {
 		const color = (selector: string) => page.evaluate((s) => getComputedStyle(document.querySelector(s)!).backgroundColor, selector)
 		const keyBefore = await page.evaluate(() => getComputedStyle(document.querySelector('.btn')!, '::before').backgroundColor)
 		// Through the dropdown itself: open it, pick Amber.
-		await page.getByRole('combobox', { name: 'Display' }).click()
+		await page.getByRole('combobox', { name: 'Display', exact: true }).click()
 		await page.getByRole('option', { name: 'Amber', exact: true }).click()
-		await expect(page.getByRole('combobox', { name: 'Display' })).toHaveText('Amber')
+		await expect(page.getByRole('combobox', { name: 'Display', exact: true })).toHaveText('Amber')
 		expect(await color('.dropdown')).toBe('rgb(20, 16, 11)')
 		expect(await page.evaluate(() => getComputedStyle(document.querySelector('.btn')!, '::before').backgroundColor)).toBe(keyBefore)
 		await page.reload()
@@ -347,6 +347,23 @@ test.describe('themes', () => {
 			await open('#metronome')
 			await remember(page, 'pitch-recognizer:display', id)
 			await expect(page.locator('#view-metronome .plate')).toHaveScreenshot(`lcd-${id}.png`)
+		})
+	}
+
+	// The fonts (ts/styles/typefaces.css): the UI ones on a full screen, the display ones on the tempo plate.
+	for (const id of ['archivo', 'saira', 'plex', 'inter', 'oxanium', 'mono']) {
+		test(`ui font ${id}`, async ({ page, open }) => {
+			await open('#metronome')
+			await remember(page, 'pitch-recognizer:font-ui', id)
+			await shot(page, `font-ui-${id}`)
+		})
+	}
+
+	for (const id of ['chakra', 'thin', 'orbitron', 'sharetech', 'oxanium', 'shoulders', 'vt323', 'doto', 'spacemono', 'courier']) {
+		test(`display font ${id}`, async ({ page, open }) => {
+			await open('#metronome')
+			await remember(page, 'pitch-recognizer:font-display', id)
+			await expect(page.locator('#view-metronome .plate')).toHaveScreenshot(`font-display-${id}.png`)
 		})
 	}
 })
