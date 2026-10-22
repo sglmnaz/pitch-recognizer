@@ -333,6 +333,9 @@ test.describe('themes', () => {
 		'citrus',
 		'blackstar',
 		'lettera',
+		'anodised',
+		'enamel',
+		'urushi',
 		'regia-light',
 		'regia-dark',
 	]) {
@@ -343,7 +346,34 @@ test.describe('themes', () => {
 		})
 	}
 
-	for (const id of ['casio', 'red', 'phosphor', 'vfd', 'oled', 'ice', 'violet', 'eink', 'backlit', 'green', 'matrix', 'nixie', 'plasma', 'receipt', 'el']) {
+	for (const id of [
+		'casio',
+		'red',
+		'phosphor',
+		'vfd',
+		'oled',
+		'ice',
+		'violet',
+		'eink',
+		'backlit',
+		'green',
+		'matrix',
+		'nixie',
+		'plasma',
+		'receipt',
+		'el',
+		'solari',
+		'scope',
+		'radar',
+		'blueprint',
+		'graph',
+		'dial',
+		'bubble',
+		'ledback',
+		'ruby',
+		'teletext',
+		'bulbs',
+	]) {
 		test(`lcd ${id}`, async ({ page, open }) => {
 			await open('#metronome')
 			await remember(page, 'pitch-recognizer:display', id)
@@ -367,7 +397,34 @@ test.describe('themes', () => {
 		await shot(page, 'lcd-text-display')
 	})
 
-	for (const id of ['chakra', 'thin', 'orbitron', 'shoulders', 'vt323', 'doto', 'spacemono', 'pressstart', 'plexserif', 'baskervville', 'redhatmono', 'agu', 'danfo', 'matemasie', 'fascinate', 'bitcount', 'bitcountdouble', 'astloch', 'jersey', 'rumraisin', 'codystar', 'berkshire', 'righteous', 'cherrybomb', 'kablammo', 'plaster']) {
+	for (const id of [
+		'chakra',
+		'thin',
+		'orbitron',
+		'shoulders',
+		'vt323',
+		'doto',
+		'spacemono',
+		'pressstart',
+		'plexserif',
+		'baskervville',
+		'redhatmono',
+		'agu',
+		'danfo',
+		'matemasie',
+		'fascinate',
+		'bitcount',
+		'bitcountdouble',
+		'astloch',
+		'jersey',
+		'rumraisin',
+		'codystar',
+		'berkshire',
+		'righteous',
+		'cherrybomb',
+		'kablammo',
+		'plaster',
+	]) {
 		test(`display font ${id}`, async ({ page, open }) => {
 			await open('#metronome')
 			await remember(page, 'pitch-recognizer:font-display', id)

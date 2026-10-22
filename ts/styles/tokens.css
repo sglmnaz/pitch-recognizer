@@ -1274,6 +1274,171 @@
 	--key-radius: 4px;
 }
 
+/* Anodised: cobalt aluminium, brushed across; a silver plate, black anodised
+   keys, an anodised red Start, knurled silver knobs with a red pointer, a
+   white OLED in Orbitron. Dark only. */
+[data-theme='anodised'],
+[data-theme='anodised'] [data-mode='dark'] {
+	color-scheme: dark;
+	--panel: #24509c;
+	--panel-grain: repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.035) 0 1px, rgba(0, 0, 0, 0.03) 1px 2px, transparent 2px 3px);
+	--panel-sunk: #1f478c;
+	--panel-raised: #2a58a8;
+	--ink: #eef3fb;
+	--ink-2: #d4def0;
+	--ink-3: #a9bbdc;
+	--ink-4: #92a7cf;
+	--rule: rgba(5, 15, 40, 0.4);
+	--rule-strong: rgba(5, 15, 40, 0.8);
+	--outline: #0a1630;
+	--plate: repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.16) 0 1px, rgba(0, 0, 0, 0.04) 1px 2px), linear-gradient(180deg, #d8dbe0, #bfc3ca);
+	--plate-edge: #0a1630;
+	--plate-ink: #182544;
+	--plate-ink-2: #4a587a;
+	--key-face: #26282c;
+	--key-hi: #44474d;
+	--key-side: #1e2023;
+	--key-front: #08090a;
+	--key-ink: #dfe4ec;
+	--key2-face: #c3c7ce;
+	--key2-hi: #dde0e5;
+	--key2-side: #aeb2ba;
+	--key2-front: #6a6f78;
+	--key2-ink: #182544;
+	--key3-face: #c23a2e;
+	--key3-hi: #dc5e52;
+	--key3-side: #a32e24;
+	--key3-front: #55120c;
+	--key3-ink: #fff0ec;
+	--window: #060a14;
+	--lcd-bg: #040506;
+	--lcd-ink: #f4f6fa;
+	--lcd-dim: rgba(244, 246, 250, 0.08);
+	--lcd-glow: 0 0 4px rgba(255, 255, 255, 0.3);
+	--lcd-shadow: inset 0 4px 10px -3px rgba(0, 0, 0, 0.9);
+	--font-display: 'Orbitron', var(--font-ui);
+	--knob-rim: repeating-conic-gradient(#8e939b 0 3deg, #d8dbe0 3deg 6deg);
+	--knob-cap: radial-gradient(circle at 35% 30%, #ffffff, #c3c7ce 55%, #8e939b);
+	--knob-pointer: linear-gradient(#c23a2e, #c23a2e) 50% 9px / 3px 28% no-repeat;
+	--track: #0a1630;
+}
+
+[data-theme='anodised'] {
+	--key-radius: 2px;
+}
+
+/* Enamel: enamelled steel, like a kitchen scale. Ivory enamel with a faint
+   granite speckle, a cobalt plate, ivory keys with cobalt legends, a red
+   enamel Start, cobalt knobs with ivory caps, Space Mono. Light only. */
+[data-theme='enamel'],
+[data-theme='enamel'] [data-mode='light'] {
+	--panel: #f0ebde;
+	--panel-grain: radial-gradient(circle, rgba(30, 60, 140, 0.1) 0 0.8px, transparent 1.2px) 0 0 / 9px 11px, radial-gradient(circle, rgba(0, 0, 0, 0.07) 0 0.7px, transparent 1px) 4px 5px / 13px 7px, linear-gradient(180deg, rgba(255, 255, 255, 0.25), transparent 40%);
+	--panel-sunk: #e6e0d2;
+	--panel-raised: #f6f2e8;
+	--ink: #1c2f5e;
+	--ink-2: #2a3f72;
+	--ink-3: #52618a;
+	--ink-4: #66749a;
+	--rule: rgba(28, 47, 94, 0.24);
+	--rule-strong: rgba(28, 47, 94, 0.75);
+	--outline: #1c2f5e;
+	--plate: linear-gradient(175deg, rgba(255, 255, 255, 0.18), transparent 40%), linear-gradient(180deg, #2b56a8, #21468e);
+	--plate-edge: #10203f;
+	--plate-ink: #f6f2e8;
+	--plate-ink-2: #c7d4ef;
+	--plate-shine: rgba(255, 255, 255, 0.25);
+	--key-face: #f7f3ea;
+	--key-hi: #ffffff;
+	--key-side: #e4ddcd;
+	--key-front: #2b4f99;
+	--key-ink: #1c2f5e;
+	--key2-face: #2b56a8;
+	--key2-hi: #4a75c4;
+	--key2-side: #234890;
+	--key2-front: #10203f;
+	--key2-ink: #f6f2e8;
+	--key3-face: #c8392b;
+	--key3-hi: #e25e50;
+	--key3-side: #ab2d21;
+	--key3-front: #5a120b;
+	--key3-ink: #fff2ec;
+	--window: #1c2f5e;
+	--lcd-bg: #dfe7ee;
+	--lcd-ink: #18315f;
+	--lcd-dim: rgba(24, 49, 95, 0.12);
+	--lcd-glow: none;
+	--lcd-shadow: inset 0 4px 6px -3px rgba(0, 0, 0, 0.4);
+	--lcd-texture: linear-gradient(165deg, rgba(255, 255, 255, 0.35), transparent 40%);
+	--font-display: 'Space Mono', var(--font-ui);
+	--knob-rim: radial-gradient(circle at 40% 30%, #4a75c4, #21468e 60%, #10203f);
+	--knob-cap: radial-gradient(circle at 35% 30%, #ffffff, #ece6d8);
+	--knob-cap-inset: 9px;
+	--knob-pointer: linear-gradient(#c8392b, #c8392b) 50% 10px / 3px 26% no-repeat;
+	--track: #1c2f5e;
+}
+
+[data-theme='enamel'] {
+	--key-radius: 3px;
+}
+
+/* Urushi: Japanese lacquer. Black lacquer with a deep sheen, a vermilion
+   plate with gold legends, black keys with gold legends, a gold-leaf Start,
+   gold-capped knobs, washi paper glass, IBM Plex Serif. Dark only. */
+[data-theme='urushi'],
+[data-theme='urushi'] [data-mode='dark'] {
+	color-scheme: dark;
+	--panel: #151211;
+	--panel-grain: radial-gradient(120% 50% at 30% 0%, rgba(255, 240, 220, 0.05), transparent 60%);
+	--panel-sunk: #100e0d;
+	--panel-raised: #1c1817;
+	--ink: #e9cf8e;
+	--ink-2: #d6bb7a;
+	--ink-3: #a8925e;
+	--ink-4: #8c784c;
+	--rule: rgba(233, 207, 142, 0.16);
+	--rule-strong: rgba(233, 207, 142, 0.5);
+	--outline: #050404;
+	--plate: linear-gradient(175deg, rgba(255, 220, 200, 0.14), transparent 35%), linear-gradient(180deg, #ad3420, #8f2817);
+	--plate-edge: #050404;
+	--plate-ink: #f2d690;
+	--plate-ink-2: #e2b870;
+	--plate-shine: rgba(255, 220, 190, 0.2);
+	--key-face: #231e1c;
+	--key-hi: #3e3532;
+	--key-side: #1b1715;
+	--key-front: #050404;
+	--key-ink: #e9cf8e;
+	--key2-face: #9a2d1b;
+	--key2-hi: #bb4a36;
+	--key2-side: #842515;
+	--key2-front: #3a0f08;
+	--key2-ink: #f2d690;
+	--key3-face: #c9a14a;
+	--key3-hi: #e8c878;
+	--key3-side: #ad8634;
+	--key3-front: #5c4410;
+	--key3-ink: #1b1410;
+	--window: #050404;
+	--lcd-bg: #eee5d0;
+	--lcd-ink: #1f1b16;
+	--lcd-dim: rgba(31, 27, 22, 0.1);
+	--lcd-glow: none;
+	--lcd-shadow: inset 0 4px 7px -3px rgba(0, 0, 0, 0.45);
+	--lcd-texture: repeating-linear-gradient(17deg, rgba(120, 95, 60, 0.035) 0 1px, transparent 1px 9px), repeating-linear-gradient(-71deg, rgba(120, 95, 60, 0.03) 0 1px, transparent 1px 13px);
+	--font-display: 'IBM Plex Serif', var(--font-ui);
+	--knob-rim: radial-gradient(circle at 40% 30%, #3e3532, #0a0807 65%);
+	--knob-cap: radial-gradient(circle at 35% 30%, #f0d68e, #c9a14a 50%, #7a5c1c);
+	--knob-cap-inset: 12px;
+	--knob-cap-ring: 0 0 0 1px #3a2a08;
+	--knob-pointer: linear-gradient(#e9cf8e, #e9cf8e) 50% 2px / 3px 9px no-repeat;
+	--track: #050404;
+}
+
+[data-theme='urushi'] {
+	--key-radius: 2px;
+}
+
 /* Tier 3: display ------------------------------------------------------------ */
 /* data-display on <html> recolours the LCD windows only, whatever the theme.
    A display may also lay a texture on the glass (--lcd-texture) and bring the
@@ -1448,6 +1613,132 @@
 	--lcd-shadow: inset 0 6px 10px -4px rgba(0, 0, 0, 0.55);
 	--lcd-texture: radial-gradient(70% 90% at 50% 50%, rgba(230, 255, 250, 0.45), transparent 75%);
 	--font-display: 'Jersey 15', var(--font-ui);
+}
+
+/* Split-flap: a split-flap departures board. Dark flaps lit from above, the
+   split across the middle, a seam between each flap, white type. */
+:root[data-display='solari'] {
+	--lcd-bg: #1e1f21;
+	--lcd-ink: #f3f1ea;
+	--lcd-dim: rgba(243, 241, 234, 0.07);
+	--lcd-glow: 0 1px 0 rgba(0, 0, 0, 0.6);
+	--lcd-shadow: inset 0 4px 8px -3px rgba(0, 0, 0, 0.9);
+	--lcd-texture: linear-gradient(180deg, transparent calc(50% - 1px), rgba(0, 0, 0, 0.75) calc(50% - 1px) calc(50% + 1px), transparent calc(50% + 1px)), repeating-linear-gradient(90deg, transparent 0 34px, rgba(0, 0, 0, 0.55) 34px 36px), linear-gradient(180deg, rgba(255, 255, 255, 0.06), transparent 50%, rgba(0, 0, 0, 0.18) 50%, transparent);
+	--font-display: 'Red Hat Mono', var(--font-ui);
+}
+
+/* Oscilloscope: P31 phosphor behind a graticule, centimetre divisions
+   and fine ticks, thin vector-like numerals. */
+:root[data-display='scope'] {
+	--lcd-bg: #061317;
+	--lcd-ink: #9ff7ff;
+	--lcd-dim: rgba(159, 247, 255, 0.08);
+	--lcd-glow: 0 0 2px #d8fdff, 0 0 9px rgba(90, 230, 255, 0.55);
+	--lcd-shadow: inset 0 0 16px 3px rgba(0, 0, 0, 0.8);
+	--lcd-texture: linear-gradient(90deg, rgba(160, 240, 255, 0.09) 1px, transparent 1px) -1px 0 / 32px 32px, linear-gradient(0deg, rgba(160, 240, 255, 0.09) 1px, transparent 1px) 0 -1px / 32px 32px, linear-gradient(90deg, transparent calc(50% - 0.5px), rgba(160, 240, 255, 0.12) calc(50% - 0.5px) calc(50% + 0.5px), transparent calc(50% + 0.5px));
+	--font-display: 'Barlow Condensed Thin', var(--font-ui);
+}
+
+/* Radar: a PPI scope, range rings from the bottom edge and a faint sweep. */
+:root[data-display='radar'] {
+	--lcd-bg: #03130a;
+	--lcd-ink: #74ff9f;
+	--lcd-dim: rgba(116, 255, 159, 0.08);
+	--lcd-glow: 0 0 7px rgba(90, 255, 140, 0.5);
+	--lcd-shadow: inset 0 0 18px 4px rgba(0, 0, 0, 0.85);
+	--lcd-texture: conic-gradient(from -60deg at 50% 100%, transparent 0deg, rgba(116, 255, 159, 0.1) 40deg, transparent 42deg), repeating-radial-gradient(circle at 50% 100%, transparent 0 39px, rgba(116, 255, 159, 0.09) 39px 40px);
+	--font-display: 'Orbitron', var(--font-ui);
+}
+
+/* Blueprint: a blueprint, white lines on cyanotype paper, a fine grid. */
+:root[data-display='blueprint'] {
+	--lcd-bg: #1f4e8a;
+	--lcd-ink: #f1f5ff;
+	--lcd-dim: rgba(241, 245, 255, 0.1);
+	--lcd-glow: none;
+	--lcd-shadow: inset 0 4px 7px -3px rgba(0, 0, 0, 0.55);
+	--lcd-texture: linear-gradient(90deg, rgba(255, 255, 255, 0.07) 1px, transparent 1px) 0 0 / 12px 12px, linear-gradient(0deg, rgba(255, 255, 255, 0.07) 1px, transparent 1px) 0 0 / 12px 12px, radial-gradient(90% 90% at 50% 40%, transparent 60%, rgba(0, 20, 60, 0.3));
+	--font-display: 'Space Mono', var(--font-ui);
+}
+
+/* Graph paper: plotter graph paper, green millimetre rules, blue-black pen. */
+:root[data-display='graph'] {
+	--lcd-bg: #f0f1e4;
+	--lcd-ink: #1d2858;
+	--lcd-dim: rgba(29, 40, 88, 0.08);
+	--lcd-glow: none;
+	--lcd-shadow: inset 0 3px 5px -3px rgba(0, 0, 0, 0.3);
+	--lcd-texture: linear-gradient(90deg, rgba(40, 140, 90, 0.2) 1px, transparent 1px) -1px 0 / 20px 20px, linear-gradient(0deg, rgba(40, 140, 90, 0.2) 1px, transparent 1px) 0 -1px / 20px 20px, linear-gradient(90deg, rgba(40, 140, 90, 0.08) 1px, transparent 1px) 0 0 / 4px 4px, linear-gradient(0deg, rgba(40, 140, 90, 0.08) 1px, transparent 1px) 0 0 / 4px 4px;
+	--font-display: 'Red Hat Mono', var(--font-ui);
+}
+
+/* Watch dial: a watch dial in silvered sunburst, black serif numerals. */
+:root[data-display='dial'] {
+	--lcd-bg: #d5d4ce;
+	--lcd-ink: #17171a;
+	--lcd-dim: rgba(23, 23, 26, 0.08);
+	--lcd-glow: none;
+	--lcd-shadow: inset 0 3px 6px -3px rgba(0, 0, 0, 0.45);
+	--lcd-texture: repeating-conic-gradient(from 0deg at 50% 50%, rgba(255, 255, 255, 0.07) 0 1.5deg, rgba(0, 0, 0, 0.025) 1.5deg 3deg), linear-gradient(135deg, rgba(255, 255, 255, 0.3), transparent 40%, transparent 60%, rgba(0, 0, 0, 0.08));
+	--font-display: 'IBM Plex Serif', var(--font-ui);
+}
+
+/* Bubble LED: an early calculator's bubble display, red digits under a row
+   of tiny magnifying lenses, dark red glass. */
+:root[data-display='bubble'] {
+	--lcd-bg: #2a0709;
+	--lcd-ink: #ff3a2c;
+	--lcd-dim: rgba(255, 58, 44, 0.1);
+	--lcd-glow: 0 0 6px rgba(255, 40, 30, 0.65);
+	--lcd-shadow: inset 0 4px 8px -3px rgba(0, 0, 0, 0.9);
+	--lcd-texture: radial-gradient(14px 26px at 50% 50%, rgba(255, 200, 190, 0.07), rgba(255, 200, 190, 0.02) 80%, transparent 100%) 0 50% / 34px 100% repeat-x, linear-gradient(180deg, rgba(255, 255, 255, 0.07), transparent 30%);
+	--font-display: 'DSEG7', var(--font-ui);
+}
+
+/* Edge-lit: a cheap yellow-green panel lit by four LEDs along the
+   bottom edge, brighter where they sit. */
+:root[data-display='ledback'] {
+	--lcd-bg: #b0c83a;
+	--lcd-ink: #1b2406;
+	--lcd-dim: rgba(27, 36, 6, 0.13);
+	--lcd-glow: 1px 1px 0 rgba(27, 36, 6, 0.15);
+	--lcd-shadow: inset 0 4px 6px -3px rgba(0, 0, 0, 0.45);
+	--lcd-texture: radial-gradient(18% 45% at 12% 100%, rgba(255, 255, 200, 0.45), transparent), radial-gradient(18% 45% at 38% 100%, rgba(255, 255, 200, 0.45), transparent), radial-gradient(18% 45% at 62% 100%, rgba(255, 255, 200, 0.45), transparent), radial-gradient(18% 45% at 88% 100%, rgba(255, 255, 200, 0.45), transparent), linear-gradient(0deg, transparent 60%, rgba(0, 0, 0, 0.08));
+	--font-display: 'Bitcount Prop Double', var(--font-ui);
+}
+
+/* Ruby filter: an LCD under a red filter, dark segments on ruby glass. */
+:root[data-display='ruby'] {
+	--lcd-bg: #c43a30;
+	--lcd-ink: #2a0604;
+	--lcd-dim: rgba(42, 6, 4, 0.13);
+	--lcd-glow: 1px 1px 0 rgba(42, 6, 4, 0.18);
+	--lcd-shadow: inset 0 5px 8px -3px rgba(0, 0, 0, 0.6);
+	--lcd-texture: linear-gradient(165deg, rgba(255, 220, 210, 0.22), transparent 40%);
+	--font-display: 'Righteous', var(--font-ui);
+}
+
+/* Teletext: teletext, yellow on black, the faint mosaic of its cells. */
+:root[data-display='teletext'] {
+	--lcd-bg: #050505;
+	--lcd-ink: #ffe63a;
+	--lcd-dim: rgba(255, 230, 58, 0.08);
+	--lcd-glow: 0 0 3px rgba(255, 230, 58, 0.35);
+	--lcd-shadow: inset 0 4px 8px -3px rgba(0, 0, 0, 0.9);
+	--lcd-texture: linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px) 0 0 / 8px 10px, linear-gradient(0deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px) 0 0 / 8px 10px;
+	--font-display: 'Press Start 2P', var(--font-ui);
+}
+
+/* Light bulbs: a stadium scoreboard of light bulbs, the unlit ones a faint
+   grid, warm incandescent light. */
+:root[data-display='bulbs'] {
+	--lcd-bg: #120c05;
+	--lcd-ink: #ffd27a;
+	--lcd-dim: rgba(255, 210, 122, 0.1);
+	--lcd-glow: 0 0 4px #ffe6b0, 0 0 12px rgba(255, 180, 60, 0.6);
+	--lcd-shadow: inset 0 4px 10px -3px rgba(0, 0, 0, 0.95);
+	--lcd-texture: radial-gradient(circle, rgba(255, 220, 160, 0.09) 0 1.6px, transparent 2.2px) 0 0 / 7px 7px;
+	--font-display: 'Codystar', var(--font-ui);
 }
 
 /* Roles every component reads, derived from the materials above. Declared

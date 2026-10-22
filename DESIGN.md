@@ -12,7 +12,10 @@ windows behind black bezels, paper strips for charts. Approved mockups live in
 
 Settings > Appearance offers a **Theme** dropdown (System, Light, Dark, Night blue
 and the themes below) and a **Display** colour (Theme, grey-green, amber, blue, Casio
-yellow-green, red LED, green phosphor, VFD turquoise, white OLED, ice, violet, e-ink).
+yellow-green, red LED, green phosphor, VFD turquoise, white OLED, ice, violet, e-ink,
+amber backlight, dot matrix, Nixie, gas plasma, thermal paper, EL backlight,
+split-flap, oscilloscope, radar, blueprint, graph paper, watch dial, bubble LED,
+edge-lit, ruby filter, teletext, light bulbs).
 System follows the device between Light and Dark.
 
 | Theme | Plate | Panel | Keys | LCD (default) |
@@ -33,6 +36,9 @@ System follows the device between Light and Dark.
 | Citrus (`citrus`, light) | beige, grille weave | orange `#e2671f` | white; black Start | black, white figures; glossy black knobs |
 | Black star (`blackstar`, dark) | graphite, perforated mesh | black `#151517` | graphite, 1 px corners; silver Start | ice white; knurled knobs, red pointer |
 | Lettera (`lettera`, light) | cream enamel, faint ripple | sage `#9fb6ab` | slate, cream legends, 4 px corners; red Start | grey-green; typewriter labels (IBM Plex Mono) |
+| Anodised blue (`anodised`, dark) | brushed silver | cobalt `#24509c`, brushed across | black anodised, 2 px corners; red Start | white OLED (Orbitron); knurled silver knobs, red pointer |
+| Enamel (`enamel`, light) | cobalt enamel | ivory `#f0ebde`, granite speckle | ivory, cobalt legends and front, 3 px corners; red Start | pale blue (Space Mono); cobalt knobs, ivory caps |
+| Urushi (`urushi`, dark) | vermilion lacquer, gold legends | black lacquer `#151211` | black, gold legends, 2 px corners; gold-leaf Start | washi paper (IBM Plex Serif); gold-capped knobs |
 | Broadcast light / dark (`regia`, both modes) | grey-green / blue-grey | grey-green `#b8bdb4` / blue-grey `#27313a` | low flat caps in the screens' bezel (grey-green / near-black frame); backlit ON AIR Start | vector oscilloscope: green phosphor, thin Barlow Condensed digits, graticule, glass reflection; console knobs with blue / red caps, fader caps, bat-handle toggle, reverse-printed section legends |
 
 The amp themes also set the knob through `--knob-rim`, `--knob-cap`,

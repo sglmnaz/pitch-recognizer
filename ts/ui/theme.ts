@@ -47,6 +47,9 @@ export const THEMES: readonly Theme[] = [
 	{ id: 'citrus', label: 'Citrus', palette: 'citrus', mode: 'light', themeColor: { light: '#e2671f' } },
 	{ id: 'blackstar', label: 'Black star', palette: 'blackstar', mode: 'dark', themeColor: { dark: '#151517' } },
 	{ id: 'lettera', label: 'Lettera', palette: 'lettera', mode: 'light', themeColor: { light: '#9fb6ab' } },
+	{ id: 'anodised', label: 'Anodised blue', palette: 'anodised', mode: 'dark', themeColor: { dark: '#24509c' } },
+	{ id: 'enamel', label: 'Enamel', palette: 'enamel', mode: 'light', themeColor: { light: '#f0ebde' } },
+	{ id: 'urushi', label: 'Urushi', palette: 'urushi', mode: 'dark', themeColor: { dark: '#151211' } },
 	{ id: 'regia-light', label: 'Broadcast light', palette: 'regia', mode: 'light', themeColor: { light: '#b8bdb4' } },
 	{ id: 'regia-dark', label: 'Broadcast dark', palette: 'regia', mode: 'dark', themeColor: { dark: '#27313a' } },
 ]
@@ -71,6 +74,17 @@ export const DISPLAYS = [
 	{ id: 'plasma', label: 'Gas plasma' },
 	{ id: 'receipt', label: 'Thermal paper' },
 	{ id: 'el', label: 'EL backlight' },
+	{ id: 'solari', label: 'Split-flap' },
+	{ id: 'scope', label: 'Oscilloscope' },
+	{ id: 'radar', label: 'Radar' },
+	{ id: 'blueprint', label: 'Blueprint' },
+	{ id: 'graph', label: 'Graph paper' },
+	{ id: 'dial', label: 'Watch dial' },
+	{ id: 'bubble', label: 'Bubble LED' },
+	{ id: 'ledback', label: 'Edge-lit' },
+	{ id: 'ruby', label: 'Ruby filter' },
+	{ id: 'teletext', label: 'Teletext' },
+	{ id: 'bulbs', label: 'Light bulbs' },
 ] as const
 export type Display = (typeof DISPLAYS)[number]['id']
 
