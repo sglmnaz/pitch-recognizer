@@ -380,6 +380,11 @@ test.describe('themes', () => {
 		'ruby',
 		'teletext',
 		'bulbs',
+		'ledmatrix',
+		'tv',
+		'pixel',
+		'newsreel',
+		'hud',
 	]) {
 		test(`lcd ${id}`, async ({ page, open }) => {
 			await open('#metronome')

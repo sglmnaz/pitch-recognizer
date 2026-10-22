@@ -196,6 +196,13 @@ input.lcd-number {
 	margin-left: 0.4em;
 }
 
+/* The large values on every screen: a display may draw them through a mask
+   (--lcd-value-mask, tokens.css tier 3). */
+:is(.lcd__big, .readout__note, input.metro-bpm__value, .changes-result__big, .cb-count) {
+	mask: var(--lcd-value-mask);
+	mask-composite: var(--lcd-mask-composite);
+}
+
 /* Unlit segments / dim LCD text. */
 .lcd__dim {
 	color: var(--lcd-dim);

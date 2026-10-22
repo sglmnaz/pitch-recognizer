@@ -92,6 +92,11 @@ export const DISPLAYS = [
 	{ id: 'ruby', label: 'Ruby filter' },
 	{ id: 'teletext', label: 'Teletext' },
 	{ id: 'bulbs', label: 'Light bulbs' },
+	{ id: 'ledmatrix', label: 'LED matrix' },
+	{ id: 'tv', label: 'Television' },
+	{ id: 'pixel', label: 'Pixel LCD' },
+	{ id: 'newsreel', label: 'Newsreel' },
+	{ id: 'hud', label: 'HUD' },
 ] as const
 export type Display = (typeof DISPLAYS)[number]['id']
 

@@ -228,6 +228,11 @@ export const it: Dictionary = {
 	'Ruby filter': 'Filtro rubino',
 	Teletext: 'Televideo',
 	'Light bulbs': 'Lampadine',
+	'LED matrix': 'Matrice LED',
+	Television: 'Televisore',
+	'Pixel LCD': 'Pixel LCD',
+	Newsreel: 'Cinegiornale',
+	HUD: 'HUD',
 	// Font names stay as they are.
 	'Agu Display': 'Agu Display',
 	'Archivo Narrow': 'Archivo Narrow',

@@ -15,7 +15,8 @@ and the themes below) and a **Display** colour (Theme, grey-green, amber, blue, 
 yellow-green, red LED, green phosphor, VFD turquoise, white OLED, ice, violet, e-ink,
 amber backlight, dot matrix, Nixie, gas plasma, thermal paper, EL backlight,
 split-flap, oscilloscope, radar, blueprint, graph paper, watch dial, bubble LED,
-edge-lit, ruby filter, teletext, light bulbs).
+edge-lit, ruby filter, teletext, light bulbs, LED matrix, television, pixel LCD,
+newsreel, HUD).
 System follows the device between Light and Dark.
 
 | Theme | Plate | Panel | Keys | LCD (default) |
@@ -84,7 +85,9 @@ also set `--lcd-texture` (background layers over the glass: Green phosphor's
 scan lines, Dot matrix's pixel grid, Nixie's anode mesh and tube reflections,
 Thermal paper's grain; `none` by default, and `--lcd-bg` stays flat since it
 goes into `color-mix()`) and `--font-display`, the face it was drawn for, shown
-while Settings → Display font is Auto.
+while Settings → Display font is Auto. It may also draw the large values
+through a mask, `--lcd-value-mask` with `--lcd-mask-composite` (panel.css):
+LED matrix's dots, Pixel LCD's square pixels, Television's scan lines.
 
 ## Materials (tier 2 tokens)
 
