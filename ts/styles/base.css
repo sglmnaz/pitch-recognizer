@@ -46,6 +46,22 @@ button {
 	visibility: hidden;
 }
 
+/* Nothing shows until ts/main.ts has built the views and opened the tab (the
+   head script sets it): before that the markup is a half-built Tuner, its
+   selects empty and its strings missing, that the page then jumps away from.
+   The app's script is the slow part (1.2 MB to fetch and run on a phone).
+   Shown anyway after 6 s, so a script that fails still leaves a page. */
+:root[data-boot='pending'] body {
+	visibility: hidden;
+	animation: boot-reveal 0s 6s forwards;
+}
+
+@keyframes boot-reveal {
+	to {
+		visibility: visible;
+	}
+}
+
 /* The hidden attribute always hides, whatever display a class sets. */
 [hidden] {
 	/* biome-ignore lint/complexity/noImportantStyles: it must beat every class. */

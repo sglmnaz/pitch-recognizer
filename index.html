@@ -28,6 +28,9 @@
 				display = localStorage.getItem('pitch-recognizer:display')
 			} catch (error) {}
 			var root = document.documentElement
+			// Hidden until ts/main.ts has built and opened the tab (base.css): the
+			// markup alone is a half-built Tuner the page then jumps away from.
+			root.dataset.boot = 'pending'
 			var theme = themes.hasOwnProperty(saved) ? themes[saved] : ['classic', matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light']
 			root.dataset.theme = theme[0]
 			root.dataset.mode = theme[1]

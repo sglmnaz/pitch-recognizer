@@ -108,5 +108,7 @@ initMic(() => views[currentName])
 applyTheme()
 initHelp()
 activate(location.hash.replace('#', ''))
+// Built and on the right tab: the page may show (the head script hid it).
+document.documentElement.removeAttribute('data-boot')
 bootMic()
 watchForUpdates(document.querySelector<HTMLElement>('.update-bar')!)
