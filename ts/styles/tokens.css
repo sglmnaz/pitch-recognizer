@@ -1439,6 +1439,376 @@
 	--key-radius: 2px;
 }
 
+/* Bordeaux: wine body and plate, rose-cream keys, a brass Start, an amber
+   backlit glass. Flat: no grain. Dark only. */
+[data-theme='bordeaux'],
+[data-theme='bordeaux'] [data-mode='dark'] {
+	color-scheme: dark;
+	--panel-grain: none;
+	--panel: #2c0e15;
+	--panel-sunk: #250b11;
+	--panel-raised: #34121a;
+	--ink: #f1dccd;
+	--ink-2: #dcc0ae;
+	--ink-3: #b0918a;
+	--ink-4: #957670;
+	--rule: rgba(0, 0, 0, 0.45);
+	--outline: #12050a;
+	--plate: linear-gradient(180deg, #4d1722, #3e111b);
+	--plate-edge: #12050a;
+	--plate-ink: #f3dccb;
+	--plate-ink-2: #c99a8c;
+	--plate-shine: rgba(255, 220, 210, 0.06);
+	--key-face: #ead7c8;
+	--key-hi: #f8ece2;
+	--key-side: #d6bfae;
+	--key-front: #8e6d62;
+	--key-ink: #4a1520;
+	--key2-face: #8f4c58;
+	--key2-hi: #ab6773;
+	--key2-side: #7c3f4a;
+	--key2-front: #3a141c;
+	--key2-ink: #fbe9e0;
+	--key3-face: #c9a24a;
+	--key3-hi: #e4c271;
+	--key3-side: #ad8733;
+	--key3-front: #5a430f;
+	--key3-ink: #2a1408;
+	--key4-face: #1e080d;
+	--key4-hi: #3a1820;
+	--key4-side: #17060a;
+	--key4-front: #050102;
+	--key4-ink: #f1dccd;
+	--window: #12050a;
+	--lcd-bg: #f0b45a;
+	--lcd-ink: #3a1405;
+	--lcd-dim: rgba(58, 20, 5, 0.13);
+	--lcd-glow: none;
+	--lcd-shadow: inset 0 6px 8px -4px rgba(0, 0, 0, 0.6);
+	--knob-rim: repeating-conic-gradient(#3e111b 0 3deg, #6a2a36 3deg 6deg);
+	--knob-cap: radial-gradient(circle at 35% 30%, #f8ece2, #d6bfae 70%);
+	--knob-pointer: linear-gradient(#4a1520, #4a1520) 50% 9px / 3px 28% no-repeat;
+	--track: #12050a;
+}
+
+/* Racing green: green body, ivory keys, a vermilion Start, cream figures on
+   black. Flat: no grain. Dark only. */
+[data-theme='racing'],
+[data-theme='racing'] [data-mode='dark'] {
+	color-scheme: dark;
+	--panel-grain: none;
+	--panel: #10291f;
+	--panel-sunk: #0d231a;
+	--panel-raised: #143126;
+	--ink: #eee6cf;
+	--ink-2: #d6ccb2;
+	--ink-3: #a5a28b;
+	--ink-4: #878770;
+	--rule: rgba(0, 0, 0, 0.45);
+	--outline: #04100b;
+	--plate: linear-gradient(180deg, #1b4433, #153829);
+	--plate-edge: #04100b;
+	--plate-ink: #f1e8cf;
+	--plate-ink-2: #a9b89a;
+	--plate-shine: rgba(255, 255, 255, 0.05);
+	--key-face: #ece4cf;
+	--key-hi: #faf5e8;
+	--key-side: #d6ccb3;
+	--key-front: #8a8268;
+	--key-ink: #143126;
+	--key2-face: #4c6c5c;
+	--key2-hi: #648676;
+	--key2-side: #415e4f;
+	--key2-front: #1a2c23;
+	--key2-ink: #f1e8cf;
+	--key3-face: #d24a26;
+	--key3-hi: #ea7350;
+	--key3-side: #b63c1c;
+	--key3-front: #5e1c08;
+	--key3-ink: #fff2ea;
+	--key4-face: #0a1c15;
+	--key4-hi: #1e3a2e;
+	--key4-side: #081610;
+	--key4-front: #020605;
+	--key4-ink: #eee6cf;
+	--window: #04100b;
+	--lcd-bg: #070a08;
+	--lcd-ink: #f2e6c6;
+	--lcd-dim: rgba(242, 230, 198, 0.08);
+	--lcd-glow: 0 0 4px rgba(255, 240, 200, 0.3);
+	--lcd-shadow: inset 0 4px 8px -3px rgba(0, 0, 0, 0.9);
+	--knob-rim: repeating-conic-gradient(#0a1c15 0 3deg, #2a4a3c 3deg 6deg);
+	--knob-cap: radial-gradient(circle at 35% 30%, #faf5e8, #d6ccb3 70%);
+	--knob-pointer: linear-gradient(#d24a26, #d24a26) 50% 9px / 3px 28% no-repeat;
+	--track: #04100b;
+}
+
+/* Navy and brass: navy body, a polished brass plate, navy keys with brass
+   legends, an ivory Start, brass-capped knobs, ice-blue backlit glass. Flat:
+   no grain. Dark only. */
+[data-theme='marina'],
+[data-theme='marina'] [data-mode='dark'] {
+	color-scheme: dark;
+	--panel-grain: none;
+	--panel: #0f1b2e;
+	--panel-sunk: #0c1626;
+	--panel-raised: #132136;
+	--ink: #e9d6a6;
+	--ink-2: #d2bf8e;
+	--ink-3: #a59a7c;
+	--ink-4: #887f68;
+	--rule: rgba(0, 0, 0, 0.45);
+	--outline: #050a12;
+	--plate: linear-gradient(180deg, #c9a75c, #b08e45);
+	--plate-edge: #050a12;
+	--plate-ink: #1a1408;
+	--plate-ink-2: #4e3e18;
+	--plate-shine: rgba(255, 245, 210, 0.35);
+	--key-face: #24344f;
+	--key-hi: #3a4d6e;
+	--key-side: #1d2b42;
+	--key-front: #070c16;
+	--key-ink: #ecc977;
+	--key2-face: #3a4e72;
+	--key2-hi: #52688f;
+	--key2-side: #31435f;
+	--key2-front: #111a2a;
+	--key2-ink: #f3e3b8;
+	--key3-face: #ece5d4;
+	--key3-hi: #faf6ec;
+	--key3-side: #d6cdb8;
+	--key3-front: #7f7660;
+	--key3-ink: #0f1b2e;
+	--key4-face: #0a1220;
+	--key4-hi: #1f2c42;
+	--key4-side: #080e19;
+	--key4-front: #020408;
+	--key4-ink: #ecc977;
+	--window: #050a12;
+	--lcd-bg: #bcd6ec;
+	--lcd-ink: #0f1f38;
+	--lcd-dim: rgba(15, 31, 56, 0.12);
+	--lcd-glow: none;
+	--lcd-shadow: inset 0 5px 8px -4px rgba(0, 0, 0, 0.55);
+	--knob-rim: radial-gradient(circle at 40% 30%, #3a4d6e, #0a1220 65%);
+	--knob-cap: radial-gradient(circle at 35% 30%, #f6e2a8, #c9a75c 50%, #7a5e22);
+	--knob-cap-inset: 12px;
+	--knob-cap-ring: 0 0 0 1px #3a2a08;
+	--knob-pointer: linear-gradient(#ecc977, #ecc977) 50% 2px / 3px 9px no-repeat;
+	--track: #050a12;
+}
+
+/* Aubergine: aubergine body, lilac-grey keys, an acid-lime Start, lime
+   figures on black. Flat: no grain. Dark only. */
+[data-theme='aubergine'],
+[data-theme='aubergine'] [data-mode='dark'] {
+	color-scheme: dark;
+	--panel-grain: none;
+	--panel: #24152e;
+	--panel-sunk: #1e1127;
+	--panel-raised: #2b1a36;
+	--ink: #e6dcef;
+	--ink-2: #cfc2dc;
+	--ink-3: #a495b3;
+	--ink-4: #8a7b9a;
+	--rule: rgba(0, 0, 0, 0.45);
+	--outline: #0b0510;
+	--plate: linear-gradient(180deg, #3a2448, #2f1c3b);
+	--plate-edge: #0b0510;
+	--plate-ink: #ece2f4;
+	--plate-ink-2: #b6a4c6;
+	--plate-shine: rgba(255, 255, 255, 0.05);
+	--key-face: #bfb3cc;
+	--key-hi: #d9cfe3;
+	--key-side: #a99cb8;
+	--key-front: #5c4f6b;
+	--key-ink: #24152e;
+	--key2-face: #5c4570;
+	--key2-hi: #775d8c;
+	--key2-side: #4f3b61;
+	--key2-front: #22162d;
+	--key2-ink: #ece2f4;
+	--key3-face: #b9d43c;
+	--key3-hi: #d2ea66;
+	--key3-side: #9eb92a;
+	--key3-front: #4c5a0c;
+	--key3-ink: #1a1f04;
+	--key4-face: #140a1a;
+	--key4-hi: #2e1f38;
+	--key4-side: #100815;
+	--key4-front: #040206;
+	--key4-ink: #e6dcef;
+	--window: #0b0510;
+	--lcd-bg: #0c0910;
+	--lcd-ink: #c8ef4c;
+	--lcd-dim: rgba(200, 239, 76, 0.09);
+	--lcd-glow: 0 0 6px rgba(190, 235, 60, 0.45);
+	--lcd-shadow: inset 0 4px 8px -3px rgba(0, 0, 0, 0.9);
+	--knob-rim: repeating-conic-gradient(#140a1a 0 3deg, #3a2448 3deg 6deg);
+	--knob-cap: radial-gradient(circle at 35% 30%, #d9cfe3, #a99cb8 70%);
+	--knob-pointer: linear-gradient(#24152e, #24152e) 50% 9px / 3px 28% no-repeat;
+	--track: #0b0510;
+}
+
+/* Ink: black body, white keys and knobs, one red Start, thin white figures
+   (Barlow Condensed Thin). Flat: no grain. Dark only. */
+[data-theme='ink'],
+[data-theme='ink'] [data-mode='dark'] {
+	color-scheme: dark;
+	--panel-grain: none;
+	--panel: #0c0c0c;
+	--panel-sunk: #080808;
+	--panel-raised: #131313;
+	--ink: #f4f4f0;
+	--ink-2: #d9d9d4;
+	--ink-3: #9a9a95;
+	--ink-4: #7c7c78;
+	--rule: rgba(255, 255, 255, 0.14);
+	--rule-strong: rgba(255, 255, 255, 0.5);
+	--outline: #000;
+	--plate: linear-gradient(180deg, #181818, #121212);
+	--plate-edge: #000;
+	--plate-ink: #f4f4f0;
+	--plate-ink-2: #8c8c88;
+	--plate-shine: rgba(255, 255, 255, 0.04);
+	--key-face: #f2f2ee;
+	--key-hi: #ffffff;
+	--key-side: #dcdcd7;
+	--key-front: #8a8a85;
+	--key-ink: #0c0c0c;
+	--key2-face: #3a3a3a;
+	--key2-hi: #555;
+	--key2-side: #313131;
+	--key2-front: #0f0f0f;
+	--key2-ink: #f4f4f0;
+	--key3-face: #e0301e;
+	--key3-hi: #f45a48;
+	--key3-side: #c22414;
+	--key3-front: #5e0d05;
+	--key3-ink: #fff;
+	--key4-face: #1c1c1c;
+	--key4-hi: #383838;
+	--key4-side: #161616;
+	--key4-front: #000;
+	--key4-ink: #f4f4f0;
+	--window: #000;
+	--lcd-bg: #050505;
+	--lcd-ink: #f6f6f2;
+	--lcd-dim: rgba(246, 246, 242, 0.08);
+	--lcd-glow: none;
+	--lcd-shadow: inset 0 4px 8px -3px rgba(0, 0, 0, 0.9);
+	--font-display: 'Barlow Condensed Thin', var(--font-ui);
+	--knob-rim: #f2f2ee;
+	--knob-cap: #f2f2ee;
+	--knob-cap-ring: 0 0 0 1px #8a8a85;
+	--knob-pointer: linear-gradient(#e0301e, #e0301e) 50% 6px / 4px 32% no-repeat;
+	--track: #000;
+}
+
+/* Chocolate: 70s hi-fi. Chocolate body, a mustard plate, cream keys, an
+   orange Start, an orange backlit glass. Flat: no grain. Dark only. */
+[data-theme='chocolate'],
+[data-theme='chocolate'] [data-mode='dark'] {
+	color-scheme: dark;
+	--panel-grain: none;
+	--panel: #2a1810;
+	--panel-sunk: #23140d;
+	--panel-raised: #321d14;
+	--ink: #f0dfc2;
+	--ink-2: #dac6a6;
+	--ink-3: #ad9878;
+	--ink-4: #917c5f;
+	--rule: rgba(0, 0, 0, 0.45);
+	--outline: #0e0704;
+	--plate: linear-gradient(180deg, #c9972e, #b58424);
+	--plate-edge: #0e0704;
+	--plate-ink: #2a1408;
+	--plate-ink-2: #5e3a10;
+	--plate-shine: rgba(255, 240, 200, 0.3);
+	--key-face: #efe0c4;
+	--key-hi: #fbf2e0;
+	--key-side: #dac8a8;
+	--key-front: #8e7a58;
+	--key-ink: #2a1810;
+	--key2-face: #5e3c28;
+	--key2-hi: #7a5238;
+	--key2-side: #513322;
+	--key2-front: #22140b;
+	--key2-ink: #f0dfc2;
+	--key3-face: #db5a24;
+	--key3-hi: #f07e4a;
+	--key3-side: #bf4a19;
+	--key3-front: #5e2208;
+	--key3-ink: #fff1e6;
+	--key4-face: #170c07;
+	--key4-hi: #33221a;
+	--key4-side: #120905;
+	--key4-front: #040201;
+	--key4-ink: #f0dfc2;
+	--window: #0e0704;
+	--lcd-bg: #f2913a;
+	--lcd-ink: #3a1504;
+	--lcd-dim: rgba(58, 21, 4, 0.14);
+	--lcd-glow: none;
+	--lcd-shadow: inset 0 6px 8px -4px rgba(0, 0, 0, 0.6);
+	--knob-rim: repeating-conic-gradient(#170c07 0 3deg, #4a2e1e 3deg 6deg);
+	--knob-cap: radial-gradient(circle at 35% 30%, #fbf2e0, #dac8a8 70%);
+	--knob-pointer: linear-gradient(#db5a24, #db5a24) 50% 9px / 3px 28% no-repeat;
+	--track: #0e0704;
+}
+
+/* Pastel night: charcoal body, mint and lilac keys, a coral Start and
+   knobs, a mint backlit glass. Flat: no grain. Dark only. */
+[data-theme='pastelnight'],
+[data-theme='pastelnight'] [data-mode='dark'] {
+	color-scheme: dark;
+	--panel-grain: none;
+	--panel: #1d2021;
+	--panel-sunk: #181a1b;
+	--panel-raised: #232627;
+	--ink: #e8efec;
+	--ink-2: #cdd6d2;
+	--ink-3: #9da7a3;
+	--ink-4: #828c88;
+	--rule: rgba(0, 0, 0, 0.45);
+	--outline: #070808;
+	--plate: linear-gradient(180deg, #2a2e30, #232628);
+	--plate-edge: #070808;
+	--plate-ink: #e8efec;
+	--plate-ink-2: #f29a8a;
+	--plate-shine: rgba(255, 255, 255, 0.05);
+	--key-face: #a3d6c3;
+	--key-hi: #c3e8da;
+	--key-side: #8cc2ae;
+	--key-front: #3f6b5c;
+	--key-ink: #13211c;
+	--key2-face: #c9c0e2;
+	--key2-hi: #ddd6ef;
+	--key2-side: #b3a9cf;
+	--key2-front: #5a527a;
+	--key2-ink: #1d1a2a;
+	--key3-face: #f08070;
+	--key3-hi: #f9a497;
+	--key3-side: #d9675a;
+	--key3-front: #6e2a22;
+	--key3-ink: #2a0f0a;
+	--key4-face: #101213;
+	--key4-hi: #2a2e30;
+	--key4-side: #0c0e0e;
+	--key4-front: #020303;
+	--key4-ink: #e8efec;
+	--window: #070808;
+	--lcd-bg: #a8dcc8;
+	--lcd-ink: #10261e;
+	--lcd-dim: rgba(16, 38, 30, 0.12);
+	--lcd-glow: none;
+	--lcd-shadow: inset 0 5px 8px -4px rgba(0, 0, 0, 0.55);
+	--knob-rim: repeating-conic-gradient(#101213 0 3deg, #34393b 3deg 6deg);
+	--knob-cap: radial-gradient(circle at 35% 30%, #fbd0c8, #f08070 60%, #b65446);
+	--knob-pointer: linear-gradient(#2a0f0a, #2a0f0a) 50% 9px / 3px 28% no-repeat;
+	--track: #070808;
+}
+
 /* Tier 3: display ------------------------------------------------------------ */
 /* data-display on <html> recolours the LCD windows only, whatever the theme.
    A display may also lay a texture on the glass (--lcd-texture) and bring the

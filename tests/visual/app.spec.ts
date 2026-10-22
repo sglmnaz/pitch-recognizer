@@ -336,6 +336,13 @@ test.describe('themes', () => {
 		'anodised',
 		'enamel',
 		'urushi',
+		'bordeaux',
+		'racing',
+		'marina',
+		'aubergine',
+		'ink',
+		'chocolate',
+		'pastelnight',
 		'regia-light',
 		'regia-dark',
 	]) {

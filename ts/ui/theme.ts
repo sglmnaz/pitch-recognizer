@@ -50,6 +50,13 @@ export const THEMES: readonly Theme[] = [
 	{ id: 'anodised', label: 'Anodised blue', palette: 'anodised', mode: 'dark', themeColor: { dark: '#24509c' } },
 	{ id: 'enamel', label: 'Enamel', palette: 'enamel', mode: 'light', themeColor: { light: '#f0ebde' } },
 	{ id: 'urushi', label: 'Urushi', palette: 'urushi', mode: 'dark', themeColor: { dark: '#151211' } },
+	{ id: 'bordeaux', label: 'Bordeaux', palette: 'bordeaux', mode: 'dark', themeColor: { dark: '#2c0e15' } },
+	{ id: 'racing', label: 'Racing green', palette: 'racing', mode: 'dark', themeColor: { dark: '#10291f' } },
+	{ id: 'marina', label: 'Navy and brass', palette: 'marina', mode: 'dark', themeColor: { dark: '#0f1b2e' } },
+	{ id: 'aubergine', label: 'Aubergine', palette: 'aubergine', mode: 'dark', themeColor: { dark: '#24152e' } },
+	{ id: 'ink', label: 'Ink', palette: 'ink', mode: 'dark', themeColor: { dark: '#0c0c0c' } },
+	{ id: 'chocolate', label: 'Chocolate', palette: 'chocolate', mode: 'dark', themeColor: { dark: '#2a1810' } },
+	{ id: 'pastelnight', label: 'Pastel night', palette: 'pastelnight', mode: 'dark', themeColor: { dark: '#1d2021' } },
 	{ id: 'regia-light', label: 'Broadcast light', palette: 'regia', mode: 'light', themeColor: { light: '#b8bdb4' } },
 	{ id: 'regia-dark', label: 'Broadcast dark', palette: 'regia', mode: 'dark', themeColor: { dark: '#27313a' } },
 ]

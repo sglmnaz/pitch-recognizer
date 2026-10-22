@@ -39,6 +39,13 @@ System follows the device between Light and Dark.
 | Anodised blue (`anodised`, dark) | brushed silver | cobalt `#24509c`, brushed across | black anodised, 2 px corners; red Start | white OLED (Orbitron); knurled silver knobs, red pointer |
 | Enamel (`enamel`, light) | cobalt enamel | ivory `#f0ebde`, granite speckle | ivory, cobalt legends and front, 3 px corners; red Start | pale blue (Space Mono); cobalt knobs, ivory caps |
 | Urushi (`urushi`, dark) | vermilion lacquer, gold legends | black lacquer `#151211` | black, gold legends, 2 px corners; gold-leaf Start | washi paper (IBM Plex Serif); gold-capped knobs |
+| Bordeaux (`bordeaux`, dark) | wine | wine `#2c0e15`, flat | rose cream; brass Start | amber backlight |
+| Racing green (`racing`, dark) | green | racing green `#10291f`, flat | ivory; vermilion Start | cream figures on black |
+| Navy and brass (`marina`, dark) | polished brass | navy `#0f1b2e`, flat | navy, brass legends; ivory Start | ice blue; brass-capped knobs |
+| Aubergine (`aubergine`, dark) | aubergine | aubergine `#24152e`, flat | lilac grey; acid-lime Start | lime figures on black |
+| Ink (`ink`, dark) | black | black `#0c0c0c`, flat | white; red Start; white knobs | white figures on black (Barlow Condensed Thin) |
+| Chocolate (`chocolate`, dark) | mustard | chocolate `#2a1810`, flat | cream; orange Start | orange backlight |
+| Pastel night (`pastelnight`, dark) | charcoal | charcoal `#1d2021`, flat | mint, lilac steppers; coral Start and knobs | mint backlight |
 | Broadcast light / dark (`regia`, both modes) | grey-green / blue-grey | grey-green `#b8bdb4` / blue-grey `#27313a` | low flat caps in the screens' bezel (grey-green / near-black frame); backlit ON AIR Start | vector oscilloscope: green phosphor, thin Barlow Condensed digits, graticule, glass reflection; console knobs with blue / red caps, fader caps, bat-handle toggle, reverse-printed section legends |
 
 The amp themes also set the knob through `--knob-rim`, `--knob-cap`,
