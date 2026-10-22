@@ -43,7 +43,9 @@
 @font-face {
 	font-family: 'Chakra Petch';
 	src: url('./fonts/ChakraPetch-600.woff2') format('woff2');
-	font-weight: 600;
+	/* One file for every weight: small LCD text asks for 700 too, and gets
+	   this file as drawn, not a synthesised bold. */
+	font-weight: 100 900;
 	font-display: swap;
 }
 
@@ -68,7 +70,8 @@
 @font-face {
 	font-family: 'Barlow Condensed';
 	src: url('./fonts/BarlowCondensed-300.woff2') format('woff2');
-	font-weight: 300;
+	/* And every heavier weight: small LCD text asks for 600-700. */
+	font-weight: 300 900;
 	font-display: swap;
 }
 

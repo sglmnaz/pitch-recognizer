@@ -86,6 +86,14 @@
 	box-shadow: var(--window-shadow);
 }
 
+/* Experiment (2026-10-22): the small text on every screen in the display
+   face too, not only the large values. Each rule below that writes on a
+   glass reads --font-ui, so redefining it on the glass is enough. To go back
+   to the small text in the UI face, delete this rule (nothing else changed). */
+:is(.lcd, .readout, .select, .input, .mic-hint, .metro-beat__display) {
+	--font-ui: var(--font-display);
+}
+
 .lcd {
 	display: block;
 	padding: var(--space-6) var(--space-10);
