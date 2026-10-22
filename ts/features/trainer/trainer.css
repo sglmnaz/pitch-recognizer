@@ -961,13 +961,9 @@
 /* Technique exercises on a strip of tab paper (ts/features/trainer/tab.view.ts). The
    strings, the clef and the red playhead stand still; the strip of notes slides under
    them. Geometry shared with the view: strings from y 24, 16 px apart, playhead at x 96,
-   the track from x 40. Phones: stage, mic, setup, like Changes. */
+   the track from x 40. Stage, mic, setup in one column, desktops too. */
 .trainer--tab > .mic {
 	order: 1;
-
-	@media (min-width: 960px) {
-		align-self: start;
-	}
 }
 
 .trainer--tab > .tab-setup {
@@ -1482,27 +1478,10 @@
 		grid-area: setup;
 	}
 
+	/* Tab: one column, as on a phone and as Scales: the strip, its keys and
+	   the exercise list want the width (two columns left each too narrow). */
 	#view-trainer.trainer--tab:not([hidden]) {
-		grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
-		grid-template-areas:
-			'mode mode'
-			'stage setup'
-			'stage mic';
-		grid-template-rows: auto auto 1fr;
-	}
-
-	#view-trainer.trainer--tab.trainer--running:not([hidden]) {
-		grid-template-areas:
-			'mode mode'
-			'stage mic';
-		grid-template-rows: auto 1fr;
-	}
-
-	.view > .tab-stage {
-		grid-area: stage;
-	}
-
-	.view > .tab-setup {
-		grid-area: setup;
+		display: flex;
+		align-items: stretch;
 	}
 }
