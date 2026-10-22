@@ -1327,13 +1327,13 @@
 	--key-radius: 2px;
 }
 
-/* Enamel: enamelled steel, like a kitchen scale. Ivory enamel with a faint
-   granite speckle, a cobalt plate, ivory keys with cobalt legends, a red
+/* Enamel: enamelled steel, like a kitchen scale. Plain ivory enamel, a
+   cobalt plate, ivory keys with cobalt legends, a red
    enamel Start, cobalt knobs with ivory caps, Space Mono. Light only. */
 [data-theme='enamel'],
 [data-theme='enamel'] [data-mode='light'] {
 	--panel: #f0ebde;
-	--panel-grain: radial-gradient(circle, rgba(30, 60, 140, 0.1) 0 0.8px, transparent 1.2px) 0 0 / 9px 11px, radial-gradient(circle, rgba(0, 0, 0, 0.07) 0 0.7px, transparent 1px) 4px 5px / 13px 7px, linear-gradient(180deg, rgba(255, 255, 255, 0.25), transparent 40%);
+	--panel-grain: none;
 	--panel-sunk: #e6e0d2;
 	--panel-raised: #f6f2e8;
 	--ink: #1c2f5e;

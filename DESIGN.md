@@ -37,7 +37,7 @@ System follows the device between Light and Dark.
 | Black star (`blackstar`, dark) | graphite, perforated mesh | black `#151517` | graphite, 1 px corners; silver Start | ice white; knurled knobs, red pointer |
 | Lettera (`lettera`, light) | cream enamel, faint ripple | sage `#9fb6ab` | slate, cream legends, 4 px corners; red Start | grey-green; typewriter labels (IBM Plex Mono) |
 | Anodised blue (`anodised`, dark) | brushed silver | cobalt `#24509c`, brushed across | black anodised, 2 px corners; red Start | white OLED (Orbitron); knurled silver knobs, red pointer |
-| Enamel (`enamel`, light) | cobalt enamel | ivory `#f0ebde`, granite speckle | ivory, cobalt legends and front, 3 px corners; red Start | pale blue (Space Mono); cobalt knobs, ivory caps |
+| Enamel (`enamel`, light) | cobalt enamel | ivory `#f0ebde`, flat | ivory, cobalt legends and front, 3 px corners; red Start | pale blue (Space Mono); cobalt knobs, ivory caps |
 | Urushi (`urushi`, dark) | vermilion lacquer, gold legends | black lacquer `#151211` | black, gold legends, 2 px corners; gold-leaf Start | washi paper (IBM Plex Serif); gold-capped knobs |
 | Bordeaux (`bordeaux`, dark) | wine | wine `#2c0e15`, flat | rose cream; brass Start | amber backlight |
 | Racing green (`racing`, dark) | green | racing green `#10291f`, flat | ivory; vermilion Start | cream figures on black |
