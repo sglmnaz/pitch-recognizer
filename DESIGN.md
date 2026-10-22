@@ -123,7 +123,10 @@ cap height and uppercase width against Barlow or Chakra Petch for the
 `size-adjust`), the entry in `UI_FONTS` / `DISPLAY_FONTS`, the id in the head
 script's `fontsUi` / `fontsDisplay`, the name in `ts/i18n/it.ts` (kept as is),
 the id in the visual tests' font list. Check the Italian tab bar at 375 px.
-Keep those lists in the same order. Each select in Settings → Appearance has ◀ ▶ keys (`withStepper`).
+Display font on small text (a switch under them, `data-lcd-text="display"`,
+key `pitch-recognizer:lcd-text`, off by default) puts every small value on a
+screen in the display face too: one rule in panel.css redefines `--font-ui`
+on the glass. Keep those lists in the same order. Each select in Settings → Appearance has ◀ ▶ keys (`withStepper`).
 
 ## Components
 

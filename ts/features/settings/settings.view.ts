@@ -37,6 +37,9 @@ export function createSettingsView(root: HTMLElement, from: () => string | null)
 		withStepper(select, slot === 'ui' ? t('UI font') : t('Display font'))
 		return { slot, select }
 	})
+	const lcdTextInput = root.querySelector<HTMLInputElement>('[data-lcd-text-choice]')!
+	lcdTextInput.checked = Theme.getLcdText()
+	lcdTextInput.addEventListener('change', () => Theme.setLcdText(lcdTextInput.checked))
 
 	// A long page scrolled with the thumb: brushing a control must not change it.
 	guardTouches(root)
@@ -94,6 +97,8 @@ export function createSettingsView(root: HTMLElement, from: () => string | null)
 					Theme.setFont(slot, 'auto')
 					select.value = 'auto'
 				}
+				Theme.setLcdText(false)
+				lcdTextInput.checked = false
 			}
 			Settings.reset([...keys])
 		})

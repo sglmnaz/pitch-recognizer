@@ -198,6 +198,8 @@ export const it: Dictionary = {
 	'UI font': 'Font interfaccia',
 	"Labels, keys and small values. Auto: the theme's": 'Scritte, tasti e valori piccoli. Auto: quello del tema',
 	'Display font': 'Font dei display',
+	'Display font on small text': 'Font dei display sul testo piccolo',
+	'Every value on the screens, not only the large ones': 'Tutti i valori sugli schermi, non solo quelli grandi',
 	"Large values on the screens. Auto: the display's, else the theme's": 'Valori grandi sugli schermi. Auto: quello del display, se no del tema',
 	'Dot matrix': 'Matrice a punti',
 	Nixie: 'Nixie',

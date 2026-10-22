@@ -115,6 +115,8 @@ export const DISPLAY_FONTS = [
 export type FontSlot = 'ui' | 'display'
 const FONTS = { ui: UI_FONTS, display: DISPLAY_FONTS }
 const FONT_KEYS = { ui: 'pitch-recognizer:font-ui', display: 'pitch-recognizer:font-display' }
+/** Small text on the screens in the display face too ('display'); absent = the UI face. */
+const LCD_TEXT_KEY = 'pitch-recognizer:lcd-text'
 
 const THEME_KEY = 'pitch-recognizer:mode'
 const DISPLAY_KEY = 'pitch-recognizer:display'
@@ -144,10 +146,12 @@ function loadFont(slot: FontSlot): string {
 let theme = loadTheme()
 let display = loadDisplay()
 const fonts: Record<FontSlot, string> = { ui: loadFont('ui'), display: loadFont('display') }
+let lcdText = readString(LCD_TEXT_KEY) === 'display'
 
 export const getTheme = () => theme.id
 export const getDisplay = () => display
 export const getFont = (slot: FontSlot) => fonts[slot]
+export const getLcdText = () => lcdText
 
 /** Applies theme, mode and display to the document and the browser chrome. */
 export function applyTheme() {
@@ -161,6 +165,8 @@ export function applyTheme() {
 		if (fonts[slot] === 'auto') delete root.dataset[attr]
 		else root.dataset[attr] = fonts[slot]
 	}
+	if (lcdText) root.dataset.lcdText = 'display'
+	else delete root.dataset.lcdText
 	const color = theme.themeColor[mode] ?? CLASSIC[mode]
 	document.querySelector('meta[name="theme-color"]')?.setAttribute('content', color)
 }
@@ -189,6 +195,13 @@ export function setFont(slot: FontSlot, id: string) {
 	fonts[slot] = next.id
 	if (next.id === 'auto') remove(FONT_KEYS[slot])
 	else writeString(FONT_KEYS[slot], next.id)
+	applyTheme()
+}
+
+export function setLcdText(on: boolean) {
+	lcdText = on
+	if (on) writeString(LCD_TEXT_KEY, 'display')
+	else remove(LCD_TEXT_KEY)
 	applyTheme()
 }
 

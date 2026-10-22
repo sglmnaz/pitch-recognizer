@@ -360,6 +360,13 @@ test.describe('themes', () => {
 		})
 	}
 
+	test('display font on small text', async ({ page, open }) => {
+		await open('#tuner')
+		await page.evaluate(() => localStorage.setItem('pitch-recognizer:font-display', 'vt323'))
+		await remember(page, 'pitch-recognizer:lcd-text', 'display')
+		await shot(page, 'lcd-text-display')
+	})
+
 	for (const id of ['chakra', 'thin', 'orbitron', 'shoulders', 'vt323', 'doto', 'spacemono', 'pressstart', 'plexserif', 'baskervville', 'redhatmono', 'agu', 'danfo', 'matemasie', 'fascinate', 'bitcount', 'bitcountdouble', 'astloch', 'jersey', 'rumraisin', 'codystar', 'berkshire', 'righteous', 'cherrybomb', 'kablammo', 'plaster']) {
 		test(`display font ${id}`, async ({ page, open }) => {
 			await open('#metronome')

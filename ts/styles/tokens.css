@@ -70,8 +70,7 @@
 @font-face {
 	font-family: 'Barlow Condensed';
 	src: url('./fonts/BarlowCondensed-300.woff2') format('woff2');
-	/* And every heavier weight: small LCD text asks for 600-700. */
-	font-weight: 300 900;
+	font-weight: 300;
 	font-display: swap;
 }
 

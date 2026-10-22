@@ -86,11 +86,11 @@
 	box-shadow: var(--window-shadow);
 }
 
-/* Experiment (2026-10-22): the small text on every screen in the display
-   face too, not only the large values. Each rule below that writes on a
-   glass reads --font-ui, so redefining it on the glass is enough. To go back
-   to the small text in the UI face, delete this rule (nothing else changed). */
-:is(.lcd, .readout, .select, .input, .mic-hint, .metro-beat__display) {
+/* Settings → Appearance → Display font on small text (data-lcd-text on
+   <html>, ts/ui/theme.ts): every small value on a screen in the display face
+   too, not only the large ones. Each rule that writes on a glass reads
+   --font-ui, so redefining it on the glass is enough. */
+:root[data-lcd-text='display'] :is(.lcd, .readout, .select, .input, .mic-hint, .metro-beat__display) {
 	--font-ui: var(--font-display);
 }
 

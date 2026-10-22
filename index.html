@@ -32,6 +32,7 @@
 				display = localStorage.getItem('pitch-recognizer:display')
 				fontUi = localStorage.getItem('pitch-recognizer:font-ui')
 				fontDisplay = localStorage.getItem('pitch-recognizer:font-display')
+				if (localStorage.getItem('pitch-recognizer:lcd-text') === 'display') root.dataset.lcdText = 'display'
 			} catch (error) {}
 			var root = document.documentElement
 			// Hidden until ts/main.ts has built and opened the tab (base.css): the
@@ -901,6 +902,14 @@
 							</span>
 							<select class="select select--small" aria-label="Display font" data-font-choice="display"></select>
 						</div>
+						<label class="switch">
+							<span class="switch__text">
+								<span class="switch__title">Display font on small text</span>
+								<span class="switch__desc">Every value on the screens, not only the large ones</span>
+							</span>
+							<input type="checkbox" class="switch__input" data-lcd-text-choice />
+							<span class="switch__track"></span>
+						</label>
 					</div>
 					<div class="settings__section">
 						<!-- Changing either reloads the app (ts/language.ts): every view speaks and names notes as it draws. -->
