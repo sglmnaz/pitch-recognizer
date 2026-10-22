@@ -233,10 +233,10 @@
 	}
 
 	&[data-state='wrong']::after {
-		background: var(--lamp-on);
+		background: var(--lamp-bad-on);
 		box-shadow:
 			var(--lamp-ring),
-			0 0 8px var(--lamp-glow);
+			0 0 8px var(--lamp-bad-glow);
 	}
 
 	@media (min-width: 960px) {
@@ -356,8 +356,8 @@
 	}
 
 	& > i:nth-child(-n + 6) {
-		--seg: var(--lamp-on);
-		--seg-glow: var(--lamp-glow);
+		--seg: var(--lamp-bad-on);
+		--seg-glow: var(--lamp-bad-glow);
 	}
 
 	& > i:nth-child(n + 7):nth-child(-n + 11) {
@@ -759,6 +759,13 @@
 	align-items: center;
 	gap: var(--space-12);
 	padding-inline: var(--space-4);
+}
+
+/* A missed change: red, whatever colour the lamps are. */
+.changes-miss .lamp {
+	--lamp-on: var(--lamp-bad-on);
+	--lamp-off: var(--lamp-bad-off);
+	--lamp-glow: var(--lamp-bad-glow);
 }
 
 .changes-miss {
@@ -1385,7 +1392,7 @@
 	font-size: var(--text-sm);
 
 	&[aria-pressed='true'] {
-		color: var(--lamp-on);
+		color: color-mix(in oklab, var(--lamp-on) 60%, var(--k-ink, var(--key-ink)));
 		text-shadow: 0 0 6px var(--lamp-glow);
 	}
 }

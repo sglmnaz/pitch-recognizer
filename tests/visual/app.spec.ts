@@ -393,6 +393,15 @@ test.describe('themes', () => {
 		})
 	}
 
+	// The lamp colours (Settings → Appearance → Lamps): the tab bar's lamps.
+	for (const id of ['red', 'orange', 'amber', 'green', 'blue']) {
+		test(`lamp ${id}`, async ({ page, open }) => {
+			await open('#metronome')
+			await remember(page, 'pitch-recognizer:lamp', id)
+			await expect(page.locator('nav.tabs')).toHaveScreenshot(`lamp-${id}.png`)
+		})
+	}
+
 	// The fonts (ts/styles/typefaces.css): the UI ones on a full screen, the display ones on the tempo plate.
 	for (const id of ['archivo', 'plex', 'inter']) {
 		test(`ui font ${id}`, async ({ page, open }) => {

@@ -5,7 +5,7 @@
  * amber LCD windows, paper strips for charts.
  *
  * Theming (docs/adr/0007): <html data-theme="classic|night" data-mode="light|dark"
- * [data-display="green|amber|blue"]>; the fonts the user picks are in
+ * [data-display="green|amber|blue"] [data-lamp="red|amber|…"]>; the fonts the user picks are in
  * typefaces.css (docs/adr/0011).
  *   1. shape     sizes, fonts, key geometry: the same everywhere (:root)
  *   2. theme     every colour and material, one block per theme x mode
@@ -180,6 +180,12 @@
 	--guard-glass: linear-gradient(180deg, rgba(20, 24, 22, 0.9), rgba(8, 10, 9, 0.95));
 	--guard-legend: #ff6a5c;
 	--guard-legend-glow: rgba(255, 59, 47, 0.6);
+
+	/* A red that means something (a wrong answer, a missed change, a weak
+	   score, an armed Reset): never recoloured with the lamps. */
+	--lamp-bad-on: #ff3e22;
+	--lamp-bad-off: #5a1f17;
+	--lamp-bad-glow: rgba(255, 62, 34, 0.6);
 }
 
 @media (max-width: 600px) {
@@ -1818,6 +1824,139 @@
 	--track: #070808;
 }
 
+/* Lamp colours: the lamps over keys and tabs, a lit legend (Listening), the
+   beat ring. Each theme's own, where it is not the red of the theme blocks
+   above; Settings → Appearance → Lamps overrides it (tier 4). A red that
+   means something (wrong, miss, weak, Reset armed) is --lamp-bad-*, never
+   recoloured. */
+/* Dark: amber, as its backlit LCD. */
+[data-theme='classic'][data-mode='dark'],
+[data-theme='classic'] [data-mode='dark'] {
+	--lamp-on: #ffb02e;
+	--lamp-off: #51380e;
+	--lamp-glow: rgba(255, 176, 46, 0.6);
+}
+
+/* Night blue: cyan. */
+[data-theme='night'],
+[data-theme='night'] [data-mode] {
+	--lamp-on: #4fc8ff;
+	--lamp-off: #194051;
+	--lamp-glow: rgba(79, 200, 255, 0.6);
+}
+
+/* Mint: green. */
+[data-theme='mint'],
+[data-theme='mint'] [data-mode] {
+	--lamp-on: #22b85a;
+	--lamp-off: #0a3a1c;
+	--lamp-glow: rgba(34, 184, 90, 0.6);
+}
+
+/* Studio grey: orange, as its LCD. */
+[data-theme='graphite'],
+[data-theme='graphite'] [data-mode] {
+	--lamp-on: #ff8a2e;
+	--lamp-off: #512c0e;
+	--lamp-glow: rgba(255, 138, 46, 0.6);
+}
+
+/* Petrol: turquoise, as its LCD. */
+[data-theme='petrol'],
+[data-theme='petrol'] [data-mode] {
+	--lamp-on: #4ff0d4;
+	--lamp-off: #194c43;
+	--lamp-glow: rgba(79, 240, 212, 0.6);
+}
+
+/* Copper top: amber. */
+[data-theme='copper'],
+[data-theme='copper'] [data-mode] {
+	--lamp-on: #ffb347;
+	--lamp-off: #513916;
+	--lamp-glow: rgba(255, 179, 71, 0.6);
+}
+
+/* Citrus: yellow. */
+[data-theme='citrus'],
+[data-theme='citrus'] [data-mode] {
+	--lamp-on: #ffd23a;
+	--lamp-off: #514312;
+	--lamp-glow: rgba(255, 210, 58, 0.6);
+}
+
+/* Black star: ice blue. */
+[data-theme='blackstar'],
+[data-theme='blackstar'] [data-mode] {
+	--lamp-on: #9fd8ff;
+	--lamp-off: #324551;
+	--lamp-glow: rgba(159, 216, 255, 0.6);
+}
+
+/* Anodised blue: ice white. */
+[data-theme='anodised'],
+[data-theme='anodised'] [data-mode] {
+	--lamp-on: #bfe6ff;
+	--lamp-off: #3d4951;
+	--lamp-glow: rgba(191, 230, 255, 0.6);
+}
+
+/* Urushi: gold. */
+[data-theme='urushi'],
+[data-theme='urushi'] [data-mode] {
+	--lamp-on: #ffc94a;
+	--lamp-off: #514017;
+	--lamp-glow: rgba(255, 201, 74, 0.6);
+}
+
+/* Bordeaux: gold. */
+[data-theme='bordeaux'],
+[data-theme='bordeaux'] [data-mode] {
+	--lamp-on: #ffc04a;
+	--lamp-off: #513d17;
+	--lamp-glow: rgba(255, 192, 74, 0.6);
+}
+
+/* Racing green: vermilion, as its Start. */
+[data-theme='racing'],
+[data-theme='racing'] [data-mode] {
+	--lamp-on: #ff6a2a;
+	--lamp-off: #51210d;
+	--lamp-glow: rgba(255, 106, 42, 0.6);
+}
+
+/* Navy and brass: brass yellow. */
+[data-theme='marina'],
+[data-theme='marina'] [data-mode] {
+	--lamp-on: #ffcf5a;
+	--lamp-off: #51421c;
+	--lamp-glow: rgba(255, 207, 90, 0.6);
+}
+
+/* Aubergine: pink. */
+[data-theme='aubergine'],
+[data-theme='aubergine'] [data-mode] {
+	--lamp-on: #ff5fae;
+	--lamp-off: #511e37;
+	--lamp-glow: rgba(255, 95, 174, 0.6);
+}
+
+/* Chocolate: orange. */
+[data-theme='chocolate'],
+[data-theme='chocolate'] [data-mode] {
+	--lamp-on: #ff8a2a;
+	--lamp-off: #512c0d;
+	--lamp-glow: rgba(255, 138, 42, 0.6);
+}
+
+/* Pastel night: coral, as its Start. */
+[data-theme='pastelnight'],
+[data-theme='pastelnight'] [data-mode] {
+	--lamp-on: #ff7a68;
+	--lamp-off: #512721;
+	--lamp-glow: rgba(255, 122, 104, 0.6);
+}
+
 /* Tier 3: display ------------------------------------------------------------ */
 /* data-display on <html> recolours the LCD windows only, whatever the theme.
    A display may also lay a texture on the glass (--lcd-texture) and bring the
@@ -2118,11 +2257,11 @@
    grid, warm incandescent light. */
 :root[data-display='bulbs'] {
 	--lcd-bg: #120c05;
-	--lcd-ink: #ffd27a;
+	--lcd-ink: #ffe6ad;
 	--lcd-dim: rgba(255, 210, 122, 0.1);
-	--lcd-glow: 0 0 4px #ffe6b0, 0 0 12px rgba(255, 180, 60, 0.6);
+	--lcd-glow: 0 0 2px #fff4dc, 0 0 6px #ffd27a, 0 0 14px rgba(255, 180, 60, 0.7);
 	--lcd-shadow: inset 0 4px 10px -3px rgba(0, 0, 0, 0.95);
-	--lcd-texture: radial-gradient(circle, rgba(255, 220, 160, 0.09) 0 1.6px, transparent 2.2px) 0 0 / 7px 7px;
+	--lcd-texture: radial-gradient(circle, rgba(255, 220, 160, 0.09) 0 1.3px, transparent 1.8px) 0 0 / 6px 6px;
 	--font-display: 'Codystar', var(--font-ui);
 }
 
@@ -2134,8 +2273,8 @@
 	--lcd-dim: rgba(255, 179, 71, 0.14);
 	--lcd-glow: 0 0 7px rgba(255, 170, 60, 0.6);
 	--lcd-shadow: inset 0 4px 8px -3px rgba(0, 0, 0, 0.9);
-	--lcd-texture: radial-gradient(circle, rgba(255, 179, 71, 0.13) 1px, transparent 1.4px) 0 0 / 4px 4px;
-	--lcd-value-mask: radial-gradient(circle, #000 1.35px, transparent 1.7px) 0 0 / 4px 4px;
+	--lcd-texture: radial-gradient(circle, rgba(255, 179, 71, 0.12) 0.8px, transparent 1.1px) 0 0 / 3px 3px;
+	--lcd-value-mask: radial-gradient(circle, #000 1.15px, transparent 1.45px) 0 0 / 3px 3px;
 }
 
 /* Television: a curved CRT. An RGB shadow mask and scan lines, the figure
@@ -2158,10 +2297,10 @@
 	--lcd-bg: #9aad3e;
 	--lcd-ink: #1f330f;
 	--lcd-dim: rgba(31, 51, 15, 0.12);
-	--lcd-glow: 3px 3px 0 rgba(31, 51, 15, 0.22);
+	--lcd-glow: 1.5px 1.5px 0 rgba(31, 51, 15, 0.14);
 	--lcd-shadow: inset 0 4px 6px -3px rgba(0, 0, 0, 0.45);
-	--lcd-texture: linear-gradient(90deg, rgba(31, 51, 15, 0.07) 0.6px, transparent 0.6px) 0 0 / 4px 4px, linear-gradient(0deg, rgba(31, 51, 15, 0.07) 0.6px, transparent 0.6px) 0 0 / 4px 4px;
-	--lcd-value-mask: linear-gradient(90deg, #000 3.3px, transparent 3.3px) 0 0 / 4px 4px, linear-gradient(0deg, #000 3.3px, transparent 3.3px) 0 0 / 4px 4px;
+	--lcd-texture: linear-gradient(90deg, rgba(31, 51, 15, 0.05) 0.4px, transparent 0.4px) 0 0 / 3px 3px, linear-gradient(0deg, rgba(31, 51, 15, 0.05) 0.4px, transparent 0.4px) 0 0 / 3px 3px;
+	--lcd-value-mask: linear-gradient(90deg, #000 2.6px, rgba(0, 0, 0, 0.4) 2.6px) 0 0 / 3px 3px, linear-gradient(0deg, #000 2.6px, rgba(0, 0, 0, 0.4) 2.6px) 0 0 / 3px 3px;
 	--lcd-mask-composite: intersect;
 }
 
@@ -2200,6 +2339,39 @@
 	--font-display: 'Barlow Condensed Thin', var(--font-ui);
 }
 
+/* Tier 4: lamps ------------------------------------------------------------- */
+/* data-lamp on <html> (Settings → Appearance → Lamps, ts/ui/theme.ts) recolours
+   the lamps, whatever the theme. */
+:root[data-lamp='red'] {
+	--lamp-on: #ff3e22;
+	--lamp-off: #51130a;
+	--lamp-glow: rgba(255, 62, 34, 0.6);
+}
+
+:root[data-lamp='orange'] {
+	--lamp-on: #ff7a1e;
+	--lamp-off: #512709;
+	--lamp-glow: rgba(255, 122, 30, 0.6);
+}
+
+:root[data-lamp='amber'] {
+	--lamp-on: #ffb02e;
+	--lamp-off: #51380e;
+	--lamp-glow: rgba(255, 176, 46, 0.6);
+}
+
+:root[data-lamp='green'] {
+	--lamp-on: #3ad46a;
+	--lamp-off: #124321;
+	--lamp-glow: rgba(58, 212, 106, 0.6);
+}
+
+:root[data-lamp='blue'] {
+	--lamp-on: #4fb8ff;
+	--lamp-off: #193a51;
+	--lamp-glow: rgba(79, 184, 255, 0.6);
+}
+
 /* Roles every component reads, derived from the materials above. Declared
    wherever a mode is, so a subtree with its own data-mode resolves them
    against its own materials. */
@@ -2224,7 +2396,7 @@
 	   contrast on any LCD (dark or light, any data-display) in any theme. */
 	--lcd-ok: color-mix(in oklab, var(--lamp-ok-on) 50%, var(--lcd-ink));
 	--lcd-warn: color-mix(in oklab, var(--lamp-warn-on) 50%, var(--lcd-ink));
-	--lcd-bad: color-mix(in oklab, var(--lamp-on) 50%, var(--lcd-ink));
+	--lcd-bad: color-mix(in oklab, var(--lamp-bad-on) 50%, var(--lcd-ink));
 
 	/* Every neck is printed on paper like the chord diagrams ("N2"): black
 	   lines, the root in red ink, 3rd and 5th solid black, other scale notes

@@ -100,6 +100,17 @@ export const DISPLAYS = [
 ] as const
 export type Display = (typeof DISPLAYS)[number]['id']
 
+/** Lamp colours (tokens.css tier 4); 'auto' = the theme's own. */
+export const LAMPS = [
+	{ id: 'auto', label: 'Theme' },
+	{ id: 'red', label: 'Red' },
+	{ id: 'orange', label: 'Orange' },
+	{ id: 'amber', label: 'Amber' },
+	{ id: 'green', label: 'Green' },
+	{ id: 'blue', label: 'Blue' },
+] as const
+export type Lamp = (typeof LAMPS)[number]['id']
+
 /** Labels and keys (--font-ui); 'auto' = the theme's own. Labels are the font names. */
 export const UI_FONTS = [
 	{ id: 'auto', label: 'Auto' },
@@ -146,6 +157,7 @@ const LCD_TEXT_KEY = 'pitch-recognizer:lcd-text'
 
 const THEME_KEY = 'pitch-recognizer:mode'
 const DISPLAY_KEY = 'pitch-recognizer:display'
+const LAMP_KEY = 'pitch-recognizer:lamp'
 /** Older keys: the mode as 'theme' (pre-palette), the Geist palette id. */
 const LEGACY_KEYS = ['theme', 'pitch-recognizer:palette']
 
@@ -164,6 +176,11 @@ function loadDisplay(): Display {
 	return DISPLAYS.find((d) => d.id === saved)?.id ?? 'auto'
 }
 
+function loadLamp(): Lamp {
+	const saved = readString(LAMP_KEY)
+	return LAMPS.find((l) => l.id === saved)?.id ?? 'auto'
+}
+
 function loadFont(slot: FontSlot): string {
 	const saved = readString(FONT_KEYS[slot])
 	return FONTS[slot].find((f) => f.id === saved)?.id ?? 'auto'
@@ -171,11 +188,13 @@ function loadFont(slot: FontSlot): string {
 
 let theme = loadTheme()
 let display = loadDisplay()
+let lamp = loadLamp()
 const fonts: Record<FontSlot, string> = { ui: loadFont('ui'), display: loadFont('display') }
 let lcdText = readString(LCD_TEXT_KEY) === 'display'
 
 export const getTheme = () => theme.id
 export const getDisplay = () => display
+export const getLamp = () => lamp
 export const getFont = (slot: FontSlot) => fonts[slot]
 export const getLcdText = () => lcdText
 
@@ -187,6 +206,8 @@ export function applyTheme() {
 	root.dataset.mode = mode
 	if (display === 'auto') delete root.dataset.display
 	else root.dataset.display = display
+	if (lamp === 'auto') delete root.dataset.lamp
+	else root.dataset.lamp = lamp
 	for (const [slot, attr] of [['ui', 'fontUi'], ['display', 'fontDisplay']] as const) {
 		if (fonts[slot] === 'auto') delete root.dataset[attr]
 		else root.dataset[attr] = fonts[slot]
@@ -212,6 +233,15 @@ export function setDisplay(id: string) {
 	display = next.id
 	if (display === 'auto') remove(DISPLAY_KEY)
 	else writeString(DISPLAY_KEY, display)
+	applyTheme()
+}
+
+export function setLamp(id: string) {
+	const next = LAMPS.find((l) => l.id === id)
+	if (!next) return
+	lamp = next.id
+	if (lamp === 'auto') remove(LAMP_KEY)
+	else writeString(LAMP_KEY, lamp)
 	applyTheme()
 }
 

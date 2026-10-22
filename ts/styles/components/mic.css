@@ -71,7 +71,8 @@
 
 /* Listening: the legend and icon light up (both controls). */
 :is(.mic-button, .mic-toggle)[aria-pressed='true'] {
-	color: var(--lamp-on);
+	/* The lamp's colour pulled toward the key's ink, so it reads on a light cap too. */
+	color: color-mix(in oklab, var(--lamp-on) 60%, var(--k-ink, var(--key-ink)));
 	text-shadow: 0 0 6px var(--lamp-glow);
 }
 

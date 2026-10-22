@@ -25,9 +25,13 @@ export function createSettingsView(root: HTMLElement, from: () => string | null)
 	const displaySelect = root.querySelector<HTMLSelectElement>('[data-display-choice]')!
 	displaySelect.replaceChildren(...Theme.DISPLAYS.map((d) => new Option(t(d.label), d.id, false, d.id === Theme.getDisplay())))
 	displaySelect.addEventListener('change', () => Theme.setDisplay(displaySelect.value))
+	const lampSelect = root.querySelector<HTMLSelectElement>('[data-lamp-choice]')!
+	lampSelect.replaceChildren(...Theme.LAMPS.map((l) => new Option(t(l.label), l.id, false, l.id === Theme.getLamp())))
+	lampSelect.addEventListener('change', () => Theme.setLamp(lampSelect.value))
 	// ◀ ▶ beside each: run through the themes, displays and fonts without opening the list.
 	withStepper(themeSelect, t('Theme'))
 	withStepper(displaySelect, t('Display'))
+	withStepper(lampSelect, t('Lamps'))
 	// UI and display font (ts/styles/typefaces.css).
 	const fontSelects = (['ui', 'display'] as const).map((slot) => {
 		const select = root.querySelector<HTMLSelectElement>(`[data-font-choice="${slot}"]`)!
@@ -93,6 +97,8 @@ export function createSettingsView(root: HTMLElement, from: () => string | null)
 				Theme.setDisplay('auto')
 				themeSelect.value = Theme.getTheme()
 				displaySelect.value = Theme.getDisplay()
+				Theme.setLamp('auto')
+				lampSelect.value = Theme.getLamp()
 				for (const { slot, select } of fontSelects) {
 					Theme.setFont(slot, 'auto')
 					select.value = 'auto'

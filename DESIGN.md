@@ -90,6 +90,19 @@ through a mask, `--lcd-value-mask` with `--lcd-mask-composite` (panel.css):
 LED matrix's dots, Pixel LCD's square pixels, Television's scan lines, Nixie's
 mesh; and `--lcd-value-scale` sizes the Metronome's tempo figure (Nixie 1.3).
 
+### Lamps
+
+The lamps over keys and tabs, a lit legend (Listening, a latched `.key--lit`)
+and the Metronome's beat ring read `--lamp-on` / `--lamp-off` / `--lamp-glow`.
+A theme may give its own (the "Lamp colours" blocks before tier 3 of tokens.css:
+amber on Dark, cyan on Night blue, gold on Urushi…); Settings → Appearance →
+Lamps overrides it with `:root[data-lamp]` (tier 4: red, orange, amber, green,
+blue; `LAMPS` in ts/ui/theme.ts, the head script's `lamps` map). A lit legend
+on a key is the lamp's colour pulled 40 % toward the key's ink, so it reads on
+light caps too. A red that means something — a wrong answer, a missed change,
+the weak end of a score, an armed Reset, `--lcd-bad` — uses `--lamp-bad-*`
+and never follows the lamps.
+
 ## Materials (tier 2 tokens)
 
 | Group | Tokens | Used by |
