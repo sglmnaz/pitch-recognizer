@@ -3,6 +3,7 @@ import { clamp } from '../../core/math'
 import * as Ear from '../../music/ear'
 import type { View } from '../../ui/view'
 import { subscribeVisible, svgEl } from '../../ui/dom'
+import { withStepper } from '../../ui/stepper'
 import * as Theme from '../../ui/theme'
 import { guardKey } from '../../ui/guard-key'
 import { guardTouches } from '../../ui/touch-guard'
@@ -24,12 +25,16 @@ export function createSettingsView(root: HTMLElement, from: () => string | null)
 	const displaySelect = root.querySelector<HTMLSelectElement>('[data-display-choice]')!
 	displaySelect.replaceChildren(...Theme.DISPLAYS.map((d) => new Option(t(d.label), d.id, false, d.id === Theme.getDisplay())))
 	displaySelect.addEventListener('change', () => Theme.setDisplay(displaySelect.value))
+	// ◀ ▶ beside each: run through the themes, displays and fonts without opening the list.
+	withStepper(themeSelect, t('Theme'))
+	withStepper(displaySelect, t('Display'))
 	// UI and display font (ts/styles/typefaces.css).
 	const fontSelects = (['ui', 'display'] as const).map((slot) => {
 		const select = root.querySelector<HTMLSelectElement>(`[data-font-choice="${slot}"]`)!
 		const fonts = slot === 'ui' ? Theme.UI_FONTS : Theme.DISPLAY_FONTS
 		select.replaceChildren(...fonts.map((f) => new Option(t(f.label), f.id, false, f.id === Theme.getFont(slot))))
 		select.addEventListener('change', () => Theme.setFont(slot, select.value))
+		withStepper(select, slot === 'ui' ? t('UI font') : t('Display font'))
 		return { slot, select }
 	})
 

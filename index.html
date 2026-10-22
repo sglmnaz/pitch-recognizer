@@ -20,8 +20,8 @@
 		(function () {
 			var themes = { light: ['classic', 'light'], dark: ['classic', 'dark'], night: ['night', 'dark'], sand: ['sand', 'light'], studio: ['studio', 'light'], mint: ['mint', 'light'], graphite: ['graphite', 'dark'], petrol: ['petrol', 'dark'], walnut: ['walnut', 'dark'], olive: ['olive', 'dark'], stage: ['stage', 'dark'], brit: ['brit', 'dark'], copper: ['copper', 'dark'], citrus: ['citrus', 'light'], blackstar: ['blackstar', 'dark'], lettera: ['lettera', 'light'], 'regia-light': ['regia', 'light'], 'regia-dark': ['regia', 'dark'] }
 			var colors = { classic: { light: '#e7e1d3', dark: '#2a2825' }, night: { dark: '#1c222c' }, sand: { light: '#d8ccb2' }, studio: { light: '#efeeea' }, mint: { light: '#cfe2d9' }, graphite: { dark: '#383b40' }, petrol: { dark: '#1e3638' }, walnut: { dark: '#2e2219' }, olive: { dark: '#4b5039' }, stage: { dark: '#9e2b25' }, brit: { dark: '#1b1a19' }, copper: { dark: '#1f1b18' }, citrus: { light: '#e2671f' }, blackstar: { dark: '#151517' }, lettera: { light: '#9fb6ab' }, regia: { light: '#b8bdb4', dark: '#27313a' } }
-			var fontsUi = { archivo: 1, saira: 1, plex: 1, inter: 1, oxanium: 1, mono: 1 }
-			var fontsDisplay = { chakra: 1, thin: 1, orbitron: 1, sharetech: 1, oxanium: 1, shoulders: 1, vt323: 1, doto: 1, spacemono: 1, courier: 1 }
+			var fontsUi = { archivo: 1, plex: 1, inter: 1 }
+			var fontsDisplay = { chakra: 1, thin: 1, orbitron: 1, shoulders: 1, vt323: 1, doto: 1, spacemono: 1, pressstart: 1, plexserif: 1, baskervville: 1, redhatmono: 1, agu: 1, danfo: 1, matemasie: 1, fascinate: 1, bitcount: 1, bitcountdouble: 1, astloch: 1, jersey: 1, rumraisin: 1, codystar: 1, berkshire: 1, righteous: 1, cherrybomb: 1, kablammo: 1, plaster: 1 }
 			var displays = { green: 1, amber: 1, blue: 1, casio: 1, red: 1, phosphor: 1, vfd: 1, oled: 1, ice: 1, violet: 1, eink: 1, backlit: 1, matrix: 1, nixie: 1, plasma: 1, receipt: 1, el: 1 }
 			var saved = null
 			var display = null
@@ -869,38 +869,38 @@
 				<h2 class="settings-group__title">Appearance</h2>
 				<div class="panel settings-card">
 					<div class="settings__section">
-						<label class="switch">
+						<div class="switch">
 							<span class="switch__text">
 								<span class="switch__title">Theme</span>
 								<span class="switch__desc">System follows the device, light or dark</span>
 							</span>
-							<select class="select select--small" data-theme-choice></select>
-						</label>
+							<select class="select select--small" aria-label="Theme" data-theme-choice></select>
+						</div>
 					</div>
 					<div class="settings__section">
-						<label class="switch">
+						<div class="switch">
 							<span class="switch__text">
 								<span class="switch__title">Display</span>
 								<span class="switch__desc">Colour of the LCD windows</span>
 							</span>
-							<select class="select select--small" data-display-choice></select>
-						</label>
+							<select class="select select--small" aria-label="Display" data-display-choice></select>
+						</div>
 					</div>
 					<div class="settings__section">
-						<label class="switch">
+						<div class="switch">
 							<span class="switch__text">
 								<span class="switch__title">UI font</span>
 								<span class="switch__desc">Labels, keys and small values. Auto: the theme's</span>
 							</span>
-							<select class="select select--small" data-font-choice="ui"></select>
-						</label>
-						<label class="switch">
+							<select class="select select--small" aria-label="UI font" data-font-choice="ui"></select>
+						</div>
+						<div class="switch">
 							<span class="switch__text">
 								<span class="switch__title">Display font</span>
 								<span class="switch__desc">Large values on the screens. Auto: the display's, else the theme's</span>
 							</span>
-							<select class="select select--small" data-font-choice="display"></select>
-						</label>
+							<select class="select select--small" aria-label="Display font" data-font-choice="display"></select>
+						</div>
 					</div>
 					<div class="settings__section">
 						<!-- Changing either reloads the app (ts/language.ts): every view speaks and names notes as it draws. -->

@@ -78,11 +78,8 @@ export type Display = (typeof DISPLAYS)[number]['id']
 export const UI_FONTS = [
 	{ id: 'auto', label: 'Auto' },
 	{ id: 'archivo', label: 'Archivo Narrow' },
-	{ id: 'saira', label: 'Saira Condensed' },
 	{ id: 'plex', label: 'IBM Plex Sans Condensed' },
 	{ id: 'inter', label: 'Inter Tight' },
-	{ id: 'oxanium', label: 'Oxanium' },
-	{ id: 'mono', label: 'IBM Plex Mono' },
 ] as const
 
 /** The large values on the screens (--font-display); 'auto' = the display's own, else the theme's. */
@@ -91,13 +88,29 @@ export const DISPLAY_FONTS = [
 	{ id: 'chakra', label: 'Chakra Petch' },
 	{ id: 'thin', label: 'Barlow Condensed Thin' },
 	{ id: 'orbitron', label: 'Orbitron' },
-	{ id: 'sharetech', label: 'Share Tech Mono' },
-	{ id: 'oxanium', label: 'Oxanium' },
 	{ id: 'shoulders', label: 'Big Shoulders' },
 	{ id: 'vt323', label: 'VT323' },
 	{ id: 'doto', label: 'Doto' },
 	{ id: 'spacemono', label: 'Space Mono' },
-	{ id: 'courier', label: 'Courier Prime' },
+	{ id: 'pressstart', label: 'Press Start 2P' },
+	{ id: 'plexserif', label: 'IBM Plex Serif' },
+	{ id: 'baskervville', label: 'Baskervville' },
+	{ id: 'redhatmono', label: 'Red Hat Mono' },
+	{ id: 'agu', label: 'Agu Display' },
+	{ id: 'danfo', label: 'Danfo' },
+	{ id: 'matemasie', label: 'Matemasie' },
+	{ id: 'fascinate', label: 'Fascinate' },
+	{ id: 'bitcount', label: 'Bitcount Single' },
+	{ id: 'bitcountdouble', label: 'Bitcount Prop Double' },
+	{ id: 'astloch', label: 'Astloch' },
+	{ id: 'jersey', label: 'Jersey 15' },
+	{ id: 'rumraisin', label: 'Rum Raisin' },
+	{ id: 'codystar', label: 'Codystar' },
+	{ id: 'berkshire', label: 'Berkshire Swash' },
+	{ id: 'righteous', label: 'Righteous' },
+	{ id: 'cherrybomb', label: 'Cherry Bomb One' },
+	{ id: 'kablammo', label: 'Kablammo' },
+	{ id: 'plaster', label: 'Plaster' },
 ] as const
 export type FontSlot = 'ui' | 'display'
 const FONTS = { ui: UI_FONTS, display: DISPLAY_FONTS }

@@ -1278,7 +1278,7 @@
    face it was drawn for (--font-display), used while Settings → Display font
    is Auto (typefaces.css overrides it otherwise). */
 /* Grey-green: a reflective watch LCD, a polariser sheen, each segment
-   casting its shadow on the mirror behind, Share Tech Mono. */
+   casting its shadow on the mirror behind, Red Hat Mono. */
 :root[data-display='green'] {
 	--lcd-bg: #c0c3b1;
 	--lcd-ink: #1f2219;
@@ -1286,7 +1286,7 @@
 	--lcd-glow: 2px 2px 0 rgba(31, 34, 25, 0.16);
 	--lcd-shadow: inset 0 4px 6px -3px rgba(0, 0, 0, 0.45);
 	--lcd-texture: linear-gradient(165deg, rgba(255, 255, 255, 0.3), transparent 38%, transparent 70%, rgba(0, 0, 0, 0.05));
-	--font-display: 'Share Tech Mono', var(--font-ui);
+	--font-display: 'Red Hat Mono', var(--font-ui);
 }
 
 :root[data-display='amber'] {
@@ -1407,9 +1407,9 @@
 	--lcd-bg: #0b0503;
 	--lcd-ink: #ff9a45;
 	--lcd-dim: rgba(160, 125, 100, 0.2);
-	--lcd-glow: 0 0 1px #fff0d4, 0 0 4px #ffb35a, 0 0 10px #ff6a00, 0 0 24px rgba(255, 70, 0, 0.55);
+	--lcd-glow: 0 0 1px #fff0d4, 0 0 3px #ffb35a, 0 0 8px rgba(255, 106, 0, 0.8), 0 0 18px rgba(255, 70, 0, 0.4);
 	--lcd-shadow: inset 0 4px 12px -3px rgba(0, 0, 0, 0.95), inset 0 0 0 1px rgba(255, 200, 150, 0.06);
-	--lcd-texture: radial-gradient(120% 55% at 50% 0%, rgba(255, 235, 210, 0.08), transparent 60%), linear-gradient(90deg, rgba(255, 220, 190, 0.07), transparent 9%, transparent 91%, rgba(255, 220, 190, 0.07)), repeating-linear-gradient(60deg, rgba(255, 150, 80, 0.09) 0 1px, transparent 1px 6px), repeating-linear-gradient(-60deg, rgba(255, 150, 80, 0.09) 0 1px, transparent 1px 6px), repeating-linear-gradient(0deg, rgba(255, 150, 80, 0.06) 0 1px, transparent 1px 6px), radial-gradient(65% 75% at 50% 55%, rgba(255, 90, 20, 0.16), transparent 70%);
+	--lcd-texture: radial-gradient(120% 55% at 50% 0%, rgba(255, 235, 210, 0.08), transparent 60%), linear-gradient(90deg, rgba(255, 220, 190, 0.07), transparent 9%, transparent 91%, rgba(255, 220, 190, 0.07)), repeating-linear-gradient(60deg, rgba(255, 150, 80, 0.06) 0 1px, transparent 1px 6px), repeating-linear-gradient(-60deg, rgba(255, 150, 80, 0.06) 0 1px, transparent 1px 6px), repeating-linear-gradient(0deg, rgba(255, 150, 80, 0.04) 0 1px, transparent 1px 6px), radial-gradient(65% 75% at 50% 55%, rgba(255, 90, 20, 0.16), transparent 70%);
 	--font-display: 'Big Shoulders Display', var(--font-ui);
 }
 
@@ -1424,7 +1424,8 @@
 	--font-display: 'Space Mono', var(--font-ui);
 }
 
-/* Thermal paper: a printing calculator's roll, grain and faint banding, Courier Prime. */
+/* Thermal paper: a printing calculator's roll, grain and faint banding,
+   Bitcount Single (a dot-matrix print head). */
 :root[data-display='receipt'] {
 	--lcd-bg: #efebe1;
 	--lcd-ink: #2a2930;
@@ -1432,11 +1433,11 @@
 	--lcd-glow: none;
 	--lcd-shadow: inset 0 3px 5px -3px rgba(0, 0, 0, 0.35);
 	--lcd-texture: repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.025) 0 1px, transparent 1px 4px), repeating-linear-gradient(90deg, rgba(120, 100, 70, 0.03) 0 2px, transparent 2px 5px), linear-gradient(180deg, rgba(0, 0, 0, 0.04), transparent 25%, transparent 75%, rgba(0, 0, 0, 0.05));
-	--font-display: 'Courier Prime', var(--font-ui);
+	--font-display: 'Bitcount Single', var(--font-ui);
 }
 
 /* EL backlight: a digital watch's night light, a turquoise panel brighter in
-   the middle, Oxanium. */
+   the middle, Jersey 15. */
 :root[data-display='el'] {
 	--lcd-bg: #3ccfbd;
 	--lcd-ink: #062a27;
@@ -1444,7 +1445,7 @@
 	--lcd-glow: 1px 1px 0 rgba(6, 42, 39, 0.2);
 	--lcd-shadow: inset 0 6px 10px -4px rgba(0, 0, 0, 0.55);
 	--lcd-texture: radial-gradient(70% 90% at 50% 50%, rgba(230, 255, 250, 0.45), transparent 75%);
-	--font-display: 'Oxanium', var(--font-ui);
+	--font-display: 'Jersey 15', var(--font-ui);
 }
 
 /* Roles every component reads, derived from the materials above. Declared

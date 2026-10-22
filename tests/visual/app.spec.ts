@@ -352,7 +352,7 @@ test.describe('themes', () => {
 	}
 
 	// The fonts (ts/styles/typefaces.css): the UI ones on a full screen, the display ones on the tempo plate.
-	for (const id of ['archivo', 'saira', 'plex', 'inter', 'oxanium', 'mono']) {
+	for (const id of ['archivo', 'plex', 'inter']) {
 		test(`ui font ${id}`, async ({ page, open }) => {
 			await open('#metronome')
 			await remember(page, 'pitch-recognizer:font-ui', id)
@@ -360,7 +360,7 @@ test.describe('themes', () => {
 		})
 	}
 
-	for (const id of ['chakra', 'thin', 'orbitron', 'sharetech', 'oxanium', 'shoulders', 'vt323', 'doto', 'spacemono', 'courier']) {
+	for (const id of ['chakra', 'thin', 'orbitron', 'shoulders', 'vt323', 'doto', 'spacemono', 'pressstart', 'plexserif', 'baskervville', 'redhatmono', 'agu', 'danfo', 'matemasie', 'fascinate', 'bitcount', 'bitcountdouble', 'astloch', 'jersey', 'rumraisin', 'codystar', 'berkshire', 'righteous', 'cherrybomb', 'kablammo', 'plaster']) {
 		test(`display font ${id}`, async ({ page, open }) => {
 			await open('#metronome')
 			await remember(page, 'pitch-recognizer:font-display', id)

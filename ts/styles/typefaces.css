@@ -4,16 +4,19 @@
  * data-font-display="…">, set before first paint by the head script and by
  * ts/ui/theme.ts (absent = Auto: the theme's own UI face, Barlow Semi Condensed
  * but IBM Plex Mono in Lettera; the display's own face, else the theme's:
- * Chakra Petch, Barlow Condensed in Broadcast). Every face is OFL (licences beside the
- * files), latin subset only (English, Italian, French, German).
+ * Chakra Petch, Barlow Condensed in Broadcast). Every face is OFL (licences
+ * beside the files), latin subset only (English, Italian, French, German).
+ * Generated lists: keep UI_FONTS / DISPLAY_FONTS, the head script and the
+ * visual tests in step (DESIGN.md, "Fonts the user picks").
  *
  * The UI faces stand in for Barlow Semi Condensed in labels and keys laid out
  * for it: the wider ones are scaled down (size-adjust, from their uppercase
  * width and cap height against Barlow) so an Italian label still fits, under
  * their own family names so nothing else gets the scale. The display faces
- * are scaled to Chakra Petch's cap height and declared for every weight (one
- * file each): the views ask for 600, or 200-300 in Broadcast, and the browser
- * must use the file as drawn, never a synthesised bold.
+ * are scaled to Chakra Petch's cap height, wide ones further so no line is
+ * more than 1.2x as wide as Chakra Petch's, and declared for every weight
+ * (one file each): the views ask for 600, or 200-300 in Broadcast, and the
+ * browser must use the file as drawn, never a synthesised bold.
  */
 
 @font-face {
@@ -33,27 +36,6 @@
 @font-face {
 	font-family: 'Archivo Narrow UI';
 	src: url('./fonts/ArchivoNarrow-700.woff2') format('woff2');
-	font-weight: 700;
-	font-display: swap;
-}
-
-@font-face {
-	font-family: 'Saira Condensed UI';
-	src: url('./fonts/SairaCondensed-500.woff2') format('woff2');
-	font-weight: 500;
-	font-display: swap;
-}
-
-@font-face {
-	font-family: 'Saira Condensed UI';
-	src: url('./fonts/SairaCondensed-600.woff2') format('woff2');
-	font-weight: 600;
-	font-display: swap;
-}
-
-@font-face {
-	font-family: 'Saira Condensed UI';
-	src: url('./fonts/SairaCondensed-700.woff2') format('woff2');
 	font-weight: 700;
 	font-display: swap;
 }
@@ -107,30 +89,6 @@
 }
 
 @font-face {
-	font-family: 'Oxanium UI';
-	src: url('./fonts/Oxanium-500.woff2') format('woff2');
-	font-weight: 500;
-	font-display: swap;
-	size-adjust: 84%;
-}
-
-@font-face {
-	font-family: 'Oxanium UI';
-	src: url('./fonts/Oxanium-600.woff2') format('woff2');
-	font-weight: 600;
-	font-display: swap;
-	size-adjust: 84%;
-}
-
-@font-face {
-	font-family: 'Oxanium UI';
-	src: url('./fonts/Oxanium-700.woff2') format('woff2');
-	font-weight: 700;
-	font-display: swap;
-	size-adjust: 84%;
-}
-
-@font-face {
 	font-family: 'IBM Plex Mono UI';
 	src: url('./fonts/IBMPlexMono-500.woff2') format('woff2');
 	font-weight: 500;
@@ -169,13 +127,6 @@
 }
 
 @font-face {
-	font-family: 'Share Tech Mono';
-	src: url('./fonts/ShareTechMono-400.woff2') format('woff2');
-	font-weight: 100 900;
-	font-display: swap;
-}
-
-@font-face {
 	font-family: 'Big Shoulders Display';
 	src: url('./fonts/BigShouldersDisplay-300.woff2') format('woff2');
 	font-weight: 100 900;
@@ -206,32 +157,148 @@
 }
 
 @font-face {
-	font-family: 'Courier Prime';
-	src: url('./fonts/CourierPrime-700.woff2') format('woff2');
+	font-family: 'Press Start 2P';
+	src: url('./fonts/PressStart2P-400.woff2') format('woff2');
 	font-weight: 100 900;
 	font-display: swap;
-	size-adjust: 121%;
+	size-adjust: 64%;
 }
 
 @font-face {
-	font-family: 'Oxanium';
-	src: url('./fonts/Oxanium-500.woff2') format('woff2');
-	font-weight: 500;
+	font-family: 'IBM Plex Serif';
+	src: url('./fonts/IBMPlexSerif-600.woff2') format('woff2');
+	font-weight: 100 900;
 	font-display: swap;
 }
 
 @font-face {
-	font-family: 'Oxanium';
-	src: url('./fonts/Oxanium-600.woff2') format('woff2');
-	font-weight: 600;
+	font-family: 'Baskervville';
+	src: url('./fonts/Baskervville-600.woff2') format('woff2');
+	font-weight: 100 900;
+	font-display: swap;
+	size-adjust: 97%;
+}
+
+@font-face {
+	font-family: 'Red Hat Mono';
+	src: url('./fonts/RedHatMono-600.woff2') format('woff2');
+	font-weight: 100 900;
 	font-display: swap;
 }
 
 @font-face {
-	font-family: 'Oxanium';
-	src: url('./fonts/Oxanium-700.woff2') format('woff2');
-	font-weight: 700;
+	font-family: 'Agu Display';
+	src: url('./fonts/AguDisplay-400.woff2') format('woff2');
+	font-weight: 100 900;
 	font-display: swap;
+}
+
+@font-face {
+	font-family: 'Danfo';
+	src: url('./fonts/Danfo-400.woff2') format('woff2');
+	font-weight: 100 900;
+	font-display: swap;
+	size-adjust: 97%;
+}
+
+@font-face {
+	font-family: 'Matemasie';
+	src: url('./fonts/Matemasie-400.woff2') format('woff2');
+	font-weight: 100 900;
+	font-display: swap;
+	size-adjust: 85%;
+}
+
+@font-face {
+	font-family: 'Fascinate';
+	src: url('./fonts/Fascinate-400.woff2') format('woff2');
+	font-weight: 100 900;
+	font-display: swap;
+}
+
+@font-face {
+	font-family: 'Bitcount Single';
+	src: url('./fonts/BitcountSingle-500.woff2') format('woff2');
+	font-weight: 100 900;
+	font-display: swap;
+	size-adjust: 107%;
+}
+
+@font-face {
+	font-family: 'Bitcount Prop Double';
+	src: url('./fonts/BitcountPropDouble-500.woff2') format('woff2');
+	font-weight: 100 900;
+	font-display: swap;
+	size-adjust: 115%;
+}
+
+@font-face {
+	font-family: 'Astloch';
+	src: url('./fonts/Astloch-700.woff2') format('woff2');
+	font-weight: 100 900;
+	font-display: swap;
+	size-adjust: 88%;
+}
+
+@font-face {
+	font-family: 'Jersey 15';
+	src: url('./fonts/Jersey15-400.woff2') format('woff2');
+	font-weight: 100 900;
+	font-display: swap;
+	size-adjust: 125%;
+}
+
+@font-face {
+	font-family: 'Rum Raisin';
+	src: url('./fonts/RumRaisin-400.woff2') format('woff2');
+	font-weight: 100 900;
+	font-display: swap;
+}
+
+@font-face {
+	font-family: 'Codystar';
+	src: url('./fonts/Codystar-400.woff2') format('woff2');
+	font-weight: 100 900;
+	font-display: swap;
+	size-adjust: 93%;
+}
+
+@font-face {
+	font-family: 'Berkshire Swash';
+	src: url('./fonts/BerkshireSwash-400.woff2') format('woff2');
+	font-weight: 100 900;
+	font-display: swap;
+	size-adjust: 77%;
+}
+
+@font-face {
+	font-family: 'Righteous';
+	src: url('./fonts/Righteous-400.woff2') format('woff2');
+	font-weight: 100 900;
+	font-display: swap;
+}
+
+@font-face {
+	font-family: 'Cherry Bomb One';
+	src: url('./fonts/CherryBombOne-400.woff2') format('woff2');
+	font-weight: 100 900;
+	font-display: swap;
+}
+
+@font-face {
+	font-family: 'Kablammo';
+	src: url('./fonts/Kablammo-400.woff2') format('woff2');
+	font-weight: 100 900;
+	font-display: swap;
+	size-adjust: 96%;
+}
+
+@font-face {
+	font-family: 'Plaster';
+	src: url('./fonts/Plaster-400.woff2') format('woff2');
+	font-weight: 100 900;
+	font-display: swap;
+	size-adjust: 90%;
 }
 
 /* UI font: labels, keys, small LCD values (--font-ui). Also on data-mode
@@ -239,11 +306,6 @@
 :root[data-font-ui='archivo'],
 :root[data-font-ui='archivo'] [data-mode] {
 	--font-ui: 'Archivo Narrow UI', 'Arial Narrow', system-ui, sans-serif;
-}
-
-:root[data-font-ui='saira'],
-:root[data-font-ui='saira'] [data-mode] {
-	--font-ui: 'Saira Condensed UI', 'Arial Narrow', system-ui, sans-serif;
 }
 
 :root[data-font-ui='plex'],
@@ -254,16 +316,6 @@
 :root[data-font-ui='inter'],
 :root[data-font-ui='inter'] [data-mode] {
 	--font-ui: 'Inter Tight UI', 'Arial Narrow', system-ui, sans-serif;
-}
-
-:root[data-font-ui='oxanium'],
-:root[data-font-ui='oxanium'] [data-mode] {
-	--font-ui: 'Oxanium UI', 'Arial Narrow', system-ui, sans-serif;
-}
-
-:root[data-font-ui='mono'],
-:root[data-font-ui='mono'] [data-mode] {
-	--font-ui: 'IBM Plex Mono UI', 'Arial Narrow', system-ui, sans-serif;
 }
 
 /* Display font: the large values on the screens (--font-display). Also
@@ -282,16 +334,6 @@
 :root[data-font-display='orbitron'],
 :root[data-font-display='orbitron'] [data-mode] {
 	--font-display: 'Orbitron', var(--font-ui);
-}
-
-:root[data-font-display='sharetech'],
-:root[data-font-display='sharetech'] [data-mode] {
-	--font-display: 'Share Tech Mono', var(--font-ui);
-}
-
-:root[data-font-display='oxanium'],
-:root[data-font-display='oxanium'] [data-mode] {
-	--font-display: 'Oxanium', var(--font-ui);
 }
 
 :root[data-font-display='shoulders'],
@@ -314,7 +356,97 @@
 	--font-display: 'Space Mono', var(--font-ui);
 }
 
-:root[data-font-display='courier'],
-:root[data-font-display='courier'] [data-mode] {
-	--font-display: 'Courier Prime', var(--font-ui);
+:root[data-font-display='pressstart'],
+:root[data-font-display='pressstart'] [data-mode] {
+	--font-display: 'Press Start 2P', var(--font-ui);
+}
+
+:root[data-font-display='plexserif'],
+:root[data-font-display='plexserif'] [data-mode] {
+	--font-display: 'IBM Plex Serif', var(--font-ui);
+}
+
+:root[data-font-display='baskervville'],
+:root[data-font-display='baskervville'] [data-mode] {
+	--font-display: 'Baskervville', var(--font-ui);
+}
+
+:root[data-font-display='redhatmono'],
+:root[data-font-display='redhatmono'] [data-mode] {
+	--font-display: 'Red Hat Mono', var(--font-ui);
+}
+
+:root[data-font-display='agu'],
+:root[data-font-display='agu'] [data-mode] {
+	--font-display: 'Agu Display', var(--font-ui);
+}
+
+:root[data-font-display='danfo'],
+:root[data-font-display='danfo'] [data-mode] {
+	--font-display: 'Danfo', var(--font-ui);
+}
+
+:root[data-font-display='matemasie'],
+:root[data-font-display='matemasie'] [data-mode] {
+	--font-display: 'Matemasie', var(--font-ui);
+}
+
+:root[data-font-display='fascinate'],
+:root[data-font-display='fascinate'] [data-mode] {
+	--font-display: 'Fascinate', var(--font-ui);
+}
+
+:root[data-font-display='bitcount'],
+:root[data-font-display='bitcount'] [data-mode] {
+	--font-display: 'Bitcount Single', var(--font-ui);
+}
+
+:root[data-font-display='bitcountdouble'],
+:root[data-font-display='bitcountdouble'] [data-mode] {
+	--font-display: 'Bitcount Prop Double', var(--font-ui);
+}
+
+:root[data-font-display='astloch'],
+:root[data-font-display='astloch'] [data-mode] {
+	--font-display: 'Astloch', var(--font-ui);
+}
+
+:root[data-font-display='jersey'],
+:root[data-font-display='jersey'] [data-mode] {
+	--font-display: 'Jersey 15', var(--font-ui);
+}
+
+:root[data-font-display='rumraisin'],
+:root[data-font-display='rumraisin'] [data-mode] {
+	--font-display: 'Rum Raisin', var(--font-ui);
+}
+
+:root[data-font-display='codystar'],
+:root[data-font-display='codystar'] [data-mode] {
+	--font-display: 'Codystar', var(--font-ui);
+}
+
+:root[data-font-display='berkshire'],
+:root[data-font-display='berkshire'] [data-mode] {
+	--font-display: 'Berkshire Swash', var(--font-ui);
+}
+
+:root[data-font-display='righteous'],
+:root[data-font-display='righteous'] [data-mode] {
+	--font-display: 'Righteous', var(--font-ui);
+}
+
+:root[data-font-display='cherrybomb'],
+:root[data-font-display='cherrybomb'] [data-mode] {
+	--font-display: 'Cherry Bomb One', var(--font-ui);
+}
+
+:root[data-font-display='kablammo'],
+:root[data-font-display='kablammo'] [data-mode] {
+	--font-display: 'Kablammo', var(--font-ui);
+}
+
+:root[data-font-display='plaster'],
+:root[data-font-display='plaster'] [data-mode] {
+	--font-display: 'Plaster', var(--font-ui);
 }
