@@ -965,9 +965,9 @@
 
 /* Tab ------------------------------------------------------------------------------- */
 /* Technique exercises on a strip of tab paper (ts/features/trainer/tab.view.ts). The
-   strings, the clef and the red playhead stand still; the strip of notes slides under
-   them. Geometry shared with the view: strings from y 24, 16 px apart, playhead at x 96,
-   the track from x 40. Stage, mic, setup in one column, desktops too. */
+   strings and the red playhead stand still; the strip of notes slides under
+   them. Geometry shared with the view: strings from y 24, 16 px apart, playhead at x 56,
+   the track from x 0. Stage, mic, setup in one column, desktops too. */
 .trainer--tab > .mic {
 	order: 1;
 }
@@ -1028,65 +1028,10 @@
 	background: repeating-linear-gradient(180deg, color-mix(in srgb, var(--paper-ink) 70%, transparent) 0 1px, transparent 1px 16px);
 }
 
-/* The clef: the strings start at its double bar, T A B on paper patches. */
-.tab-clef {
-	position: absolute;
-	inset: 0 auto 0 0;
-	z-index: 3;
-	width: 40px;
-	background:
-		repeating-linear-gradient(180deg, color-mix(in srgb, var(--paper-ink) 70%, transparent) 0 1px, transparent 1px 16px) 10px 24px / calc(100% - 10px) 81px
-		no-repeat,
-		var(--paper);
-
-	&::before,
-	&::after {
-		content: '';
-		position: absolute;
-		top: 24px;
-		height: 81px;
-		background: var(--paper-ink);
-	}
-
-	&::before {
-		left: 10px;
-		width: 3px;
-	}
-
-	&::after {
-		left: 16px;
-		width: 1px;
-	}
-
-	& b {
-		position: absolute;
-		left: 22px;
-		width: 14px;
-		font-family: var(--font-ui);
-		font-size: var(--text-md);
-		font-weight: 700;
-		line-height: 1;
-		text-align: center;
-		background: var(--paper);
-	}
-
-	& b:nth-child(1) {
-		top: 34px;
-	}
-
-	& b:nth-child(2) {
-		top: 52px;
-	}
-
-	& b:nth-child(3) {
-		top: 70px;
-	}
-}
-
-/* Notes fade in at the right edge and out under the clef. */
+/* Notes fade in at the right edge and out at the left one. */
 .tab-track {
 	position: absolute;
-	inset: 0 0 0 40px;
+	inset: 0;
 	overflow: hidden;
 	mask: linear-gradient(90deg, transparent, #000 14px, #000 calc(100% - 18px), transparent);
 }
@@ -1167,10 +1112,47 @@
 	color: color-mix(in srgb, var(--paper-ink) 75%, transparent);
 }
 
+/* Legato, slide and bend between two notes (tab-strip.ts), as on the full-screen score in
+   print size: under the figures, which wear paper. */
+.tab-mark {
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 1px;
+	height: 1px;
+	overflow: visible;
+	pointer-events: none;
+
+	& .ink {
+		fill: none;
+		stroke: var(--paper-ink);
+		stroke-width: 1.5;
+		stroke-linecap: round;
+	}
+
+	& .head {
+		fill: var(--paper-ink);
+	}
+
+	& text {
+		fill: var(--paper-ink);
+		font: 700 10px / 1 var(--font-ui);
+		letter-spacing: 0.04em;
+		text-transform: uppercase;
+		text-anchor: middle;
+		dominant-baseline: central;
+	}
+
+	& .to {
+		font-size: 12px;
+		text-anchor: start;
+	}
+}
+
 /* The playhead: what sits in the red band is to be played now. */
 .tab-now {
 	position: absolute;
-	inset: 14px auto 14px 82px;
+	inset: 14px auto 14px 42px;
 	z-index: 2;
 	width: 28px;
 	border-radius: var(--radius);

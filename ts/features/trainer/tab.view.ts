@@ -1,5 +1,5 @@
-// Trainer → Tab: technique exercises on a strip of tab paper. The strings,
-// the TAB clef and the red playhead stay still and only the notes move, so
+// Trainer → Tab: technique exercises on a strip of tab paper. The strings and
+// the red playhead stay still and only the notes move, so
 // nobody has to scroll while playing: in Tempo the strip slides with the
 // metronome, in Wait it steps to each note once the mic has heard the one
 // before. Exercises and judging live in ts/music/tab.ts, the session in
@@ -92,7 +92,7 @@ export function createTabView(root: HTMLElement): View {
 		drawnKey = key
 		const sp = stepPx(ex)
 		const loopPx = ex.steps * sp
-		const { parts, el } = stripParts()
+		const { parts, el, mark } = stripParts()
 		noteEls = []
 		for (let c = 0; c < copies; c++) {
 			const x0 = c * loopPx
@@ -101,14 +101,18 @@ export function createTabView(root: HTMLElement): View {
 				if (step % bar === 0 && (step || c)) el('tab-bar', x0 + step * sp - sp / 2)
 				el('tab-beat', x0 + step * sp, String(((step / ex.perBeat) % Tab.BEATS_PER_BAR) + 1))
 			}
+			// The note before on each string: h / p are drawn from it; a tap's T over its own note.
+			const before = new Map<number, number>()
 			noteEls.push(
 				ex.notes.map((note) => {
 					const x = x0 + note.step * sp
 					const y = stringY(note.string)
-					// h / p sit between the two notes they join; a tap's T over its own note.
+					const from = before.get(note.string)
 					if (note.tech === 't') el('tab-tech', x, 'T', y - 15)
-					else if (note.tech) el('tab-tech', x - sp / 2, note.tech, y - 15)
-					return el('tab-n', x, note.bend ? `${note.fret}b${note.fret + note.bend}` : String(note.fret), y)
+					else if (note.tech && from !== undefined) mark(note.tech, from, x, y)
+					if (note.bend) mark('b', x, x, y, note.fret + note.bend)
+					before.set(note.string, x)
+					return el('tab-n', x, String(note.fret), y)
 				})
 			)
 		}

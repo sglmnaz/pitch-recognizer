@@ -5,6 +5,7 @@
 // `createScoreScreen` puts one or more of these full screen (Trainer → Tab and
 // Songs): a row on top, the scores in a carousel, a row of keys at the bottom.
 import { t } from '../core/i18n'
+import { readString, writeString } from '../core/storage'
 import { onPress } from './tempo'
 import { noteName } from '../music/note-names'
 
@@ -41,6 +42,8 @@ const THICK = 3.4
 const THIN = 1
 // A bar line sits this far before its first beat, as on the horizontal strip.
 const BAR_LEAD = 0.25
+// Where the full-screen page remembers the way it was last turned.
+const TURN_KEY = 'pitch-recognizer:score-turn'
 // The tempo keys of the full-screen page step this much (BPM in Tab, % of speed in Songs).
 const TEMPO_STEP = 5
 // Marks between two notes of a string (approved mock-up Segni 2, "game"): legato, slide.
@@ -49,25 +52,30 @@ const SLIDE = ['/', '\\']
 const joins = (tech?: string) => !!tech && (LEGATO.includes(tech) || SLIDE.includes(tech))
 // A token's radius, and the room two notes of a string need: apart, and with a mark between them.
 const R = 17
-const APART_PX = 40
-const JOINED_PX = 64
+const APART_PX = 36
+const JOINED_PX = 48
+// The pairs the spacing must serve: all but the closest tenth (grace notes, a strum written as
+// notes a hair apart once made the score run kilometres per bar).
+const SERVED = 0.9
 const SVG = 'http://www.w3.org/2000/svg'
 
 /**
- * Paper per unit so no two tokens of a string overlap (40 px apart) and a mark fits between
- * the notes it joins (64 px): from the closest such pair, at least `least`. No ceiling: where
- * the notes are thick the score runs faster.
+ * Paper per unit so the tokens of a string stay apart (36 px) and a mark fits beside the
+ * notes it joins (48 px), for nine pairs in ten, within `least` and `most`: past `most` the
+ * notes would fly by too fast to read at 100%.
  */
-export function unitPxFor(notes: ScoreNote[], least: number) {
-	let px = least
+export function unitPxFor(notes: ScoreNote[], least: number, most = Number.POSITIVE_INFINITY) {
+	const needs: number[] = []
 	const last = new Map<number, number>()
 	for (const note of [...notes].sort((a, b) => a.at - b.at)) {
 		const before = last.get(note.string)
 		const gap = before === undefined ? 0 : note.at - before
-		if (gap > 1e-6) px = Math.max(px, (joins(note.tech) ? JOINED_PX : APART_PX) / gap)
+		if (gap > 1e-6) needs.push((joins(note.tech) ? JOINED_PX : APART_PX) / gap)
 		last.set(note.string, note.at)
 	}
-	return px
+	needs.sort((a, b) => a - b)
+	const need = needs.length ? needs[Math.floor(SERVED * (needs.length - 1))] : least
+	return Math.min(most, Math.max(least, need))
 }
 
 /** One score in `root` (an empty element): draw(spec), then place(at) every frame; setSide(on) turns it on its side. */
@@ -318,7 +326,7 @@ export function createScoreScreen(
 	root.setAttribute('aria-modal', 'true')
 	root.innerHTML =
 		'<div class="score-screen__top"><button class="key key--step score-screen__close" type="button">✕</button>' +
-		'<button class="key key--step score-screen__turn" type="button">↻</button>' +
+		'<button class="key key--step score-screen__turn" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19.5 12a7.5 7.5 0 1 1-2.2-5.3"/><path d="M19.6 3.6v4.6H15"/></svg></button>' +
 		'<div class="score-screen__track"><span class="score-screen__name"><button class="score-screen__prev" type="button">◂</button><b></b><button class="score-screen__next" type="button">▸</button></span><span class="score-screen__pager"></span></div>' +
 		'<span class="window"><span class="lcd score-screen__lcd"><span></span><small></small></span></span></div>' +
 		'<div class="score-screen__rail"></div>' +
@@ -376,7 +384,8 @@ export function createScoreScreen(
 	// quarter in CSS. The installed app is held upright by its manifest, and unlocking it
 	// needs the browser's own full screen, which shows a banner: the player turns it by hand.
 	const landscape = matchMedia('(orientation: landscape)')
-	let quarter: 0 | 90 = 0
+	// On its side unless the player last chose upright (most of the strip fits across the phone).
+	let quarter: 0 | 90 = readString(TURN_KEY) === 'upright' ? 0 : 90
 	function turn() {
 		const turned = quarter !== 0 && !landscape.matches
 		const side = landscape.matches || turned
@@ -397,6 +406,7 @@ export function createScoreScreen(
 	})
 	turnKey.addEventListener('click', () => {
 		quarter = quarter ? 0 : 90
+		writeString(TURN_KEY, quarter ? 'side' : 'upright')
 		turn()
 	})
 	/** One score shown, the track `shown`: its name and lamp. */
@@ -459,8 +469,6 @@ export function createScoreScreen(
 		if (root.hidden) return
 		root.hidden = true
 		document.documentElement.classList.remove('has-score-screen')
-		quarter = 0
-		turn()
 		if (pushed && !fromHistory) history.back()
 		pushed = false
 		onClose()

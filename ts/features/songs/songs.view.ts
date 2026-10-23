@@ -30,8 +30,10 @@ const BAR_LINE_LEAD = 0.25
 const TICK_MS = 25
 // The position fader's resolution (0 = the top, SEEK_STEPS = the end).
 const SEEK_STEPS = 1000
-// The full-screen score: paper per quarter at least this (unitPxFor gives more where notes are close).
+// The full-screen score: paper per quarter between these (unitPxFor: more where notes are close);
+// 150 is a 16th's room for a token, and a quarter at 120 BPM crosses a phone in about 2 s.
 const MIN_SCORE_PX = 56
+const MAX_SCORE_PX = 150
 // A second tap on × within this removes an imported song.
 const ARM_MS = 3000
 
@@ -140,13 +142,13 @@ export function createSongsView(root: HTMLElement): View {
 	let strips: Strip[] = []
 	let drawnStrips = ''
 
-	/** A window of tab paper (still clef and playhead, a moving strip), named when several are shown. */
+	/** A window of tab paper (still playhead, a moving strip), named when several are shown. */
 	function newPaper(name: string) {
 		const box = document.createElement('div')
 		box.className = 'songs-strip-box'
 		box.innerHTML =
 			'<span class="silk songs-strip-name"></span><div class="window"><div class="tab-paper" role="img"><span class="tab-strings" aria-hidden="true"></span>' +
-			'<div class="tab-track" aria-hidden="true"><div class="tab-strip"></div></div><div class="tab-clef" aria-hidden="true"><b>T</b><b>A</b><b>B</b></div>' +
+			'<div class="tab-track" aria-hidden="true"><div class="tab-strip"></div></div>' +
 			'<span class="tab-now" aria-hidden="true"></span></div></div>'
 		const label = box.querySelector<HTMLElement>('.songs-strip-name')!
 		label.textContent = name
@@ -181,9 +183,11 @@ export function createSongsView(root: HTMLElement): View {
 		const tl = player!.timeline
 		const bars = song.tracks[track].bars
 		const q = quarterPx
-		const { parts, el } = stripParts()
+		const { parts, el, mark } = stripParts()
 		const sounding: Strip['sounding'] = []
 		const barNumbers: HTMLElement[] = []
+		// The note before on each string: a legato or slide is drawn from it.
+		const before = new Map<number, number>()
 		tl.slots.forEach((slot, i) => {
 			const x = slot.quarter * q
 			const bar = song.bars[slot.bar]
@@ -200,8 +204,11 @@ export function createSongsView(root: HTMLElement): View {
 					sounding.push({ q: slot.quarter + note.at, length: note.length, el: el('tab-n', nx, 'x', y) })
 					continue
 				}
-				if (note.tech) el('tab-tech', nx + (note.length * q) / 2, note.tech, y - 15)
-				const label = note.bend ? `${note.fret}b${note.fret + note.bend}` : note.tied ? `(${note.fret})` : String(note.fret)
+				const from = before.get(note.string)
+				if (note.tech && from !== undefined) mark(note.tech, from, nx, y)
+				if (note.bend) mark('b', nx, nx, y, note.fret + note.bend)
+				before.set(note.string, nx)
+				const label = note.tied ? `(${note.fret})` : String(note.fret)
 				sounding.push({ q: slot.quarter + note.at, length: note.length, el: el('tab-n', nx, label, y) })
 			}
 		})
@@ -628,7 +635,7 @@ export function createSongsView(root: HTMLElement): View {
 		const tracks = activeTracks()
 		const specs = tracks.map((track) => scoreSpec(entry.song, track, player!.timeline, 0))
 		// One scale for every track, so they run together: room for the closest notes of any.
-		const unitPx = Math.max(...specs.map((spec) => unitPxFor(spec.notes, MIN_SCORE_PX)))
+		const unitPx = Math.max(...specs.map((spec) => unitPxFor(spec.notes, MIN_SCORE_PX, MAX_SCORE_PX)))
 		scores = screen.setScores(tracks.map((track) => trackName(entry, track)))
 		specs.forEach((spec, i) => scores[i].draw({ ...spec, unitPx }))
 		showLoop()

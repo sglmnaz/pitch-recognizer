@@ -54,6 +54,12 @@ Claude Design; the user approved variant D (Verticale 3).
   ceiling (the 160 px/quarter cap let 32nds and triplets overlap). The position reads
   `currentTime` smoothed by `performance.now()` between audio blocks: Android advances
   it 10–40 ms at a time, and at slow speeds the notes moved in visible steps.
+- **Round four**: the spacing from the closest pair ran away (a grace note or a strum
+  written as notes a hair apart gave thousands of px per quarter): now 36 / 48 px for
+  nine pairs in ten, Songs within 56–150 px per quarter. The page opens on its side
+  (`pitch-recognizer:score-turn` keeps the last choice); ↻ is drawn in SVG. The page's
+  strip shows the same signs in print size (`stripParts().mark`: slur with H / P,
+  slanted line with SL, bend arrow up to the fret reached).
   The player turns it with ↻: the page is rotated a quarter in CSS
   (`.score-screen--turned`). The manifest holds the app upright and unlocking it
   needs the browser's full screen, which shows Chrome's "swipe to exit" banner
