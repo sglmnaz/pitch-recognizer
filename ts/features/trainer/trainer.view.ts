@@ -11,16 +11,18 @@ import { micNeedChanged } from '../../ui/mic-block'
 import { createEarView } from './ear.view'
 import { createChangesView } from './changes.view'
 import { createTabView } from './tab.view'
+import { createSongsView } from '../songs/songs.view'
 import { noteName, noteSystem } from '../../music/note-names'
 import { createScoreboard } from './led'
 import { t } from '../../core/i18n'
 
 /**
- * Five exercises behind one segmented control: Notes (match the note on the
+ * Six exercises behind one segmented control: Notes (match the note on the
  * staff with the mic), the ear drills Intervals / Chords (ts/features/trainer/ear.view.ts),
  * Changes, chord-change drills played into the mic (ts/features/trainer/changes.view.ts),
- * and Tab, technique exercises on a moving tab strip (ts/features/trainer/tab.view.ts).
- * Switching exercises calls micNeedChanged(): Chords has no use for the mic.
+ * Tab, technique exercises on a moving tab strip (ts/features/trainer/tab.view.ts),
+ * and Songs, whole songs on that strip played by Pluck (ts/features/songs/songs.view.ts).
+ * Switching exercises calls micNeedChanged(): Chords and Songs have no use for the mic.
  */
 export function createTrainerView(root: HTMLElement): View {
 	const staff = root.querySelector<HTMLElement>('#staff')!
@@ -157,9 +159,10 @@ export function createTrainerView(root: HTMLElement): View {
 	const ear = createEarView(root)
 	const changes = createChangesView(root)
 	const tab = createTabView(root)
+	const songs = createSongsView(root)
 	const exercise = () => Settings.get().trainerExercise
-	const kindOf = (ex: string) => (ex === 'notes' || ex === 'changes' || ex === 'tab' ? ex : 'ear')
-	const active = () => ({ notes, ear, changes, tab })[kindOf(exercise())]
+	const kindOf = (ex: string) => (ex === 'notes' || ex === 'changes' || ex === 'tab' || ex === 'songs' ? ex : 'ear')
+	const active = () => ({ notes, ear, changes, tab, songs })[kindOf(exercise())]
 
 	function applyExercise() {
 		const ex = exercise()
@@ -168,6 +171,7 @@ export function createTrainerView(root: HTMLElement): View {
 		root.classList.toggle('trainer--ear', kind === 'ear')
 		root.classList.toggle('trainer--changes', kind === 'changes')
 		root.classList.toggle('trainer--tab', kind === 'tab')
+		root.classList.toggle('trainer--songs', kind === 'songs')
 		for (const element of root.querySelectorAll<HTMLElement>('[data-only]')) element.hidden = !element.dataset.only!.split(' ').includes(kind)
 	}
 

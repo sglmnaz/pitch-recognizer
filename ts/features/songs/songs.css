@@ -1,0 +1,297 @@
+/* Trainer → Songs (ts/features/songs/songs.view.ts): a song on the Tab strip
+   (trainer.css .tab-paper and friends, geometry in ts/ui/tab-strip.ts), a map of
+   the whole song, the transport (jumps by bars and seconds, A–B loop) and the
+   setup. No mic: its block stays hidden here. */
+.trainer--songs > .songs-setup {
+	order: 2;
+}
+
+.songs-stage {
+	display: flex;
+	flex-direction: column;
+	gap: var(--space-12);
+}
+
+.songs-setup {
+	display: flex;
+	flex-direction: column;
+	gap: 14px;
+	padding-top: var(--space-12);
+	border-top: 1.5px solid var(--rule-strong);
+}
+
+/* On the strip: bar numbers just right of the bar lines, a section's name after
+   its bar's number, the A–B loop as a band over the top. */
+.songs-barno {
+	position: absolute;
+	top: 8px;
+	font: 700 var(--text-2xs) / 1 var(--font-ui);
+	color: color-mix(in srgb, var(--paper-ink) 60%, transparent);
+	/* Centred over its bar line, as engravers print bar numbers. */
+	transform: translateX(-50%);
+
+	/* The bar being heard. */
+	&.is-now {
+		color: var(--paper-red);
+	}
+}
+
+/* The position in the song, dragged like a video's. */
+.songs-seek {
+	width: 100%;
+}
+
+.songs-section {
+	position: absolute;
+	top: 8px;
+	margin-left: 10px;
+	font: italic 600 var(--text-2xs) / 1 var(--font-ui);
+	letter-spacing: 0.1em;
+	text-transform: uppercase;
+	white-space: nowrap;
+	color: var(--paper-ink);
+}
+
+.songs-ab {
+	position: absolute;
+	top: 4px;
+	height: 15px;
+	border-inline: 2px solid var(--paper-red);
+	background: color-mix(in srgb, var(--paper-red) 10%, transparent);
+
+	/* Only A (or only B) set: the bar it marks, dashed. */
+	&.is-open {
+		border-style: dashed;
+	}
+}
+
+/* The song map: one cell per written bar, the section names over them. Tapped,
+   it sets the loop: a bar for A, then one for B. */
+.songs-map {
+	cursor: pointer;
+	touch-action: manipulation;
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+	padding-block: var(--space-6) var(--space-8);
+}
+
+.songs-map__labels {
+	display: flex;
+	font-size: var(--text-2xs);
+	letter-spacing: 0.08em;
+
+	& > span {
+		min-width: 0;
+		overflow: hidden;
+		white-space: nowrap;
+		text-overflow: clip;
+	}
+}
+
+.songs-map__bars {
+	display: flex;
+	gap: 1px;
+	height: 12px;
+}
+
+.songs-map__bar {
+	flex: 1;
+	min-width: 0;
+	background: var(--lcd-dim);
+
+	&.is-start {
+		margin-left: 3px;
+	}
+
+	&.is-loop {
+		background: color-mix(in srgb, var(--lcd-ink) 45%, var(--lcd-dim));
+	}
+
+	&.is-now {
+		background: var(--lcd-ink);
+		box-shadow: 0 0 0 1px var(--lcd-ink);
+	}
+}
+
+/* Transport: two printed rows of keys, Play in the middle of the bars row. */
+.songs-jump {
+	display: flex;
+	flex-direction: column;
+	gap: var(--space-6);
+}
+
+.songs-keys {
+	display: grid;
+	gap: var(--space-8);
+
+	& > :is(.key, .btn) {
+		height: var(--tap);
+		padding-inline: 0;
+		font-size: var(--text-md);
+	}
+}
+
+.songs-keys--bars {
+	grid-template-columns: 1fr 1fr 2fr 1fr 1fr;
+}
+
+.songs-keys--seconds {
+	grid-template-columns: repeat(6, minmax(0, 1fr));
+}
+
+/* A and B keep their bar number beside the letter; Loop needs both. */
+.songs-loop {
+	display: grid;
+	grid-template-columns: 1fr 1fr 1.3fr;
+	gap: var(--space-8);
+
+	& > .key {
+		height: var(--tap);
+	}
+
+	& small {
+		min-width: 2ch;
+		font-size: var(--text-2xs);
+		opacity: 0.7;
+	}
+}
+
+/* Setup ------------------------------------------------------------------------- */
+/* Speed: the reset key (back to 100 %) beside the LCD; the tempo it gives printed under the fader. */
+.songs-speed {
+	display: flex;
+	align-items: center;
+	gap: var(--space-10);
+}
+
+.songs-reset svg {
+	width: 16px;
+	height: 16px;
+}
+
+.songs-bpm {
+	margin: calc(var(--space-8) * -1) 0 0;
+	font: 600 var(--text-xs) / 1 var(--font-ui);
+	letter-spacing: 0.08em;
+	text-align: center;
+	text-transform: uppercase;
+	color: var(--fg-muted);
+}
+
+/* 25–200 %: a tick every 25. */
+.songs-fader {
+	--ticks: 7;
+}
+
+.songs-volume .range {
+	width: min(220px, 60%);
+}
+
+.songs-track {
+	min-width: 180px;
+}
+
+.songs-list-head {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	gap: var(--space-12);
+
+	& .key {
+		height: 36px;
+	}
+}
+
+.songs-filter {
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.songs-note,
+.songs-empty {
+	margin: 0;
+	font: var(--text-xs) / 1.4 var(--font-text);
+	color: var(--fg-muted);
+}
+
+.songs-empty {
+	padding-block: var(--space-12);
+}
+
+.songs-row-keys {
+	display: flex;
+	gap: var(--space-8);
+}
+
+/* Remove an imported song: × lights its legend red, a second tap removes. */
+.songs-remove {
+	min-width: var(--tap);
+	height: 36px;
+	padding-inline: var(--space-8);
+	font-size: var(--text-sm);
+
+	&.is-armed {
+		color: color-mix(in oklab, var(--lamp-bad-on) 70%, var(--k-ink, var(--key-ink)));
+		text-shadow: 0 0 6px var(--lamp-bad-glow);
+	}
+}
+
+/* Desktop: the song and its strip across the width, then playing on the left and
+   the setup on the right, as Tab does. */
+@media (min-width: 960px) {
+	#view-trainer.trainer--songs:not([hidden]) {
+		grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+		grid-template-areas:
+			'mode mode'
+			'head head'
+			'paper paper'
+			'map setup'
+			'seek setup'
+			'status setup'
+			'bars setup'
+			'seconds setup'
+			'loop setup'
+			'. setup';
+		grid-template-rows: repeat(9, auto) 1fr;
+	}
+
+	.view > .songs-stage {
+		display: contents;
+
+		& > .tab-head {
+			grid-area: head;
+		}
+
+		& > .window:has(.tab-paper) {
+			grid-area: paper;
+		}
+
+		& > .window:has(.songs-map) {
+			grid-area: map;
+		}
+
+		& > .songs-seek {
+			grid-area: seek;
+		}
+
+		& > .window:has(.tab-status) {
+			grid-area: status;
+		}
+
+		& > .songs-jump:has(.songs-keys--bars) {
+			grid-area: bars;
+		}
+
+		& > .songs-jump:has(.songs-keys--seconds) {
+			grid-area: seconds;
+		}
+
+		& > .songs-loop {
+			grid-area: loop;
+		}
+	}
+
+	.view > .songs-setup {
+		grid-area: setup;
+	}
+}

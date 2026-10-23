@@ -8,9 +8,11 @@
 
 /* Plate: brand and the exercise switch ----------------------------------------- */
 .trainer-mode {
-	/* Five exercises in a 288 px track at 320 px: trim the side padding and the tracking. */
+	/* Six exercises in a 288 px track at 320 px: trim the side padding and the tracking,
+	   and size the keys by their labels (Italian INTERVALLI is twice TAB). */
 	@media (max-width: 600px) {
 		& > button {
+			flex: 1 1 auto;
 			min-height: var(--tap);
 			padding-inline: var(--space-4);
 			font-size: var(--text-xs);

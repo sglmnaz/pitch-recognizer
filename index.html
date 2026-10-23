@@ -140,6 +140,7 @@
 					<button type="button" data-exercise="chords" aria-pressed="false">Chords</button>
 					<button type="button" data-exercise="changes" aria-pressed="false">Changes</button>
 					<button type="button" data-exercise="tab" aria-pressed="false">Tab</button>
+					<button type="button" data-exercise="songs" aria-pressed="false">Songs</button>
 				</div>
 			</div>
 
@@ -375,6 +376,132 @@
 					<span class="silk" id="tabLevelsLabel">Level</span>
 					<div class="chips tab-levels" role="group" aria-labelledby="tabLevelsLabel"></div>
 					<ul class="tab-list" aria-label="Exercises"></ul>
+				</div>
+			</div>
+			<!-- Songs (ts/features/songs/songs.view.ts): a song on the same strip as Tab, played by
+			     Pluck at the speed set, with jumps by bars and seconds and an A–B loop. No mic. -->
+			<div class="songs-stage" data-only="songs" hidden>
+				<div class="tab-head">
+					<span class="silk songs-source"></span>
+					<h2 class="tab-title songs-title"></h2>
+					<p class="silk tab-by songs-artist"></p>
+				</div>
+				<div class="window">
+					<div class="tab-paper songs-paper" role="img">
+						<span class="tab-strings" aria-hidden="true"></span>
+						<div class="tab-track" aria-hidden="true"><div class="tab-strip songs-strip"></div></div>
+						<div class="tab-clef" aria-hidden="true"><b>T</b><b>A</b><b>B</b></div>
+						<span class="tab-now" aria-hidden="true"></span>
+					</div>
+				</div>
+				<div class="window">
+					<div class="lcd songs-map" role="group" aria-label="Song map: tap a bar for A, another for B" data-feedback="key">
+						<div class="songs-map__labels" aria-hidden="true"></div>
+						<div class="songs-map__bars" aria-hidden="true"></div>
+					</div>
+				</div>
+				<input class="range songs-seek" type="range" min="0" max="1000" step="1" value="0" aria-label="Position in the song" />
+				<div class="window">
+					<div class="lcd tab-status"><span class="songs-where"></span><span class="songs-time"></span></div>
+				</div>
+				<div class="songs-jump">
+					<span class="silk" id="songsBarsLabel">Bars</span>
+					<div class="songs-keys songs-keys--bars" role="group" aria-labelledby="songsBarsLabel">
+						<button class="key key--step" type="button" data-bars="-4" aria-label="Back 4 bars">&minus;4</button>
+						<button class="key key--step" type="button" data-bars="-1" aria-label="Back 1 bar">&minus;1</button>
+						<button class="btn btn--large key--hot songs-play" type="button" data-action="songs-play" aria-keyshortcuts="Space">Play</button>
+						<button class="key key--step" type="button" data-bars="1" aria-label="Forward 1 bar">+1</button>
+						<button class="key key--step" type="button" data-bars="4" aria-label="Forward 4 bars">+4</button>
+					</div>
+				</div>
+				<div class="songs-jump">
+					<span class="silk" id="songsSecondsLabel">Seconds</span>
+					<div class="songs-keys songs-keys--seconds" role="group" aria-labelledby="songsSecondsLabel">
+						<button class="key key--dark" type="button" data-seconds="-10" aria-label="Back 10 seconds">&minus;10</button>
+						<button class="key key--dark" type="button" data-seconds="-5" aria-label="Back 5 seconds">&minus;5</button>
+						<button class="key key--dark" type="button" data-seconds="-1" aria-label="Back 1 second">&minus;1</button>
+						<button class="key key--dark" type="button" data-seconds="1" aria-label="Forward 1 second">+1</button>
+						<button class="key key--dark" type="button" data-seconds="5" aria-label="Forward 5 seconds">+5</button>
+						<button class="key key--dark" type="button" data-seconds="10" aria-label="Forward 10 seconds">+10</button>
+					</div>
+				</div>
+				<div class="songs-loop">
+					<button class="key songs-mark" type="button" data-mark="a" aria-pressed="false"><span class="lamp"></span>A<small></small></button>
+					<button class="key songs-mark" type="button" data-mark="b" aria-pressed="false"><span class="lamp"></span>B<small></small></button>
+					<button class="key key--lit songs-loop__key" type="button" aria-pressed="false">Loop</button>
+				</div>
+				<span class="sr-only songs-live" aria-live="polite"></span>
+			</div>
+
+			<div class="songs-setup" data-only="songs" hidden>
+				<!-- The speed, set as the Tab tempo is (the same keys and fader), in % of the song's tempo. -->
+				<div class="tab-row">
+					<span class="silk" id="songsSpeedLabel">Speed</span>
+					<span class="songs-speed">
+						<button class="key key--step metro-step songs-reset" type="button" aria-label="Back to the song's own speed, 100 percent">
+							<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3.2 8.5a4.8 4.8 0 1 0 1.5-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" /><path d="M3 1.8v3.4h3.4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" /></svg>
+						</button>
+						<span class="window"><span class="lcd tab-tempo"><input class="lcd-number" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="3" aria-label="Speed in percent, tap to type" /><span class="lcd__unit">%</span></span></span>
+					</span>
+				</div>
+				<div class="metro-tempo" role="group" aria-labelledby="songsSpeedLabel">
+					<button class="key key--step metro-step metro-step--ten" type="button" data-tempo="-10" aria-label="10 percent slower">&minus;10</button>
+					<button class="key key--dark metro-step" type="button" data-tempo="-1" aria-label="1 percent slower">&minus;</button>
+					<div class="metro-fader songs-fader">
+						<!-- A tick every 25 %, numbers at 25, 100 (the song's own speed) and 200. -->
+						<span class="metro-fader__scale" aria-hidden="true"><span>25</span><span></span><span></span><span>100</span><span></span><span></span><span></span><span>200</span></span>
+						<input class="range metro-slider songs-slider" type="range" min="25" max="200" step="1" aria-label="Speed in percent" />
+					</div>
+					<button class="key key--dark metro-step" type="button" data-tempo="1" aria-label="1 percent faster">+</button>
+					<button class="key key--step metro-step metro-step--ten" type="button" data-tempo="10" aria-label="10 percent faster">+10</button>
+				</div>
+				<p class="songs-bpm"></p>
+				<label class="switch switch--slide">
+					<span class="switch__text">
+						<span class="switch__title">Listen</span>
+						<span class="switch__desc">Pluck plays the notes with its own string sound</span>
+					</span>
+					<input type="checkbox" class="switch__input" data-song-option="songListen" />
+					<span class="silk">Off</span><span class="switch__track"></span><span class="silk">On</span>
+				</label>
+				<label class="tab-row songs-volume">
+					<span class="silk">Volume</span>
+					<input class="range songs-volume__slider" type="range" min="0" max="1" step="0.05" aria-label="Volume of the notes Pluck plays" />
+				</label>
+				<label class="switch switch--slide">
+					<span class="switch__text">
+						<span class="switch__title">Click</span>
+						<span class="switch__desc">The metronome on every beat</span>
+					</span>
+					<input type="checkbox" class="switch__input" data-song-option="songClick" />
+					<span class="silk">Off</span><span class="switch__track"></span><span class="silk">On</span>
+				</label>
+				<label class="switch switch--slide">
+					<span class="switch__text">
+						<span class="switch__title">Count-in</span>
+						<span class="switch__desc">One bar of clicks before it starts</span>
+					</span>
+					<input type="checkbox" class="switch__input" data-song-option="songCountIn" />
+					<span class="silk">Off</span><span class="switch__track"></span><span class="silk">On</span>
+				</label>
+				<div class="tab-row">
+					<span class="silk" id="songsTrackLabel">Track</span>
+					<select class="select select--small songs-track" aria-labelledby="songsTrackLabel"></select>
+				</div>
+				<div class="tab-group">
+					<div class="songs-list-head">
+						<span class="silk" id="songsListLabel">Songs</span>
+						<button class="key key--step songs-import" type="button">Import file…</button>
+						<input class="songs-file" type="file" accept=".gp,.gp3,.gp4,.gp5,.gpx,.xml,.musicxml,.mxl" multiple hidden />
+					</div>
+					<div class="chips songs-filter" role="group" aria-labelledby="songsListLabel">
+						<button type="button" class="chip" data-song-filter="all" data-i18n="filter" aria-pressed="true">All</button>
+						<button type="button" class="chip" data-song-filter="builtin" aria-pressed="false">Built in</button>
+						<button type="button" class="chip" data-song-filter="imported" aria-pressed="false">Imported</button>
+					</div>
+					<ul class="tab-list songs-list" aria-labelledby="songsListLabel"></ul>
+					<p class="songs-note">Guitar Pro (.gp, .gp5, .gpx) and MusicXML. Imported files stay on this device.</p>
+					<p class="changes-status songs-message" aria-live="polite"></p>
 				</div>
 			</div>
 			<!-- The end of the tab: the way to the calibration page from the exercises that judge timing, then the guide. -->
@@ -1624,6 +1751,14 @@
 			<li><b>Loop</b> repeats the exercise; <b>Speed up</b> adds 5 BPM after two clean loops. Your fastest clean loop is kept per exercise.</li>
 			<li>Through a speaker the mic can hear the clicks: headphones work best.</li>
 		</ul>
+		<h3>Songs</h3>
+		<ul>
+			<li>A whole song on the same moving tab, played by Pluck at the <b>Speed</b> you set (25–200%; ↺ goes back to the song's own 100%). The mic stays off: this is for reading and playing along.</li>
+			<li><b>Bars</b> −4 −1 +1 +4 and <b>Seconds</b> −10 … +10 jump through the song, playing or not, and the fader under the map moves anywhere in it, as on a video; <kbd>Space</kbd> plays and pauses.</li>
+			<li>The map under the tab shows the whole song, the loop and where you are. Tap a bar on it for the loop's start (A), another for its end (B): the loop starts; a third tap starts a new one. <b>A</b> and <b>B</b> also mark the bar you hear (again clears it); <b>Loop</b> turns the loop on and off.</li>
+			<li><b>Listen</b> plays the notes (<b>Volume</b> under it sets how loud), <b>Click</b> the beat, <b>Count-in</b> a bar before playing.</li>
+			<li><b>Import file…</b> reads Guitar Pro (.gp, .gp5, .gpx) and MusicXML files, for example ones you wrote in MuseScore or bought; they stay on this device. A score without tab gets a string and fret for each note from its fingering. The built-in songs are in the public domain.</li>
+		</ul>
 	</template>
 
 	<template id="help-metronome" data-title="Metronome">
@@ -1755,6 +1890,14 @@
 			<li><b>Attendi</b>: niente click; la tablatura si ferma su ogni nota finché il microfono non la sente, e ti dice quando una nota è un tasto o due fuori.</li>
 			<li><b>Loop</b> ripete l'esercizio; <b>Accelera</b> aggiunge 5 BPM dopo due giri puliti. Il tuo giro pulito più veloce resta salvato per ogni esercizio.</li>
 			<li>Con l'altoparlante il microfono può sentire i click: meglio con le cuffie.</li>
+		</ul>
+		<h3>Brani</h3>
+		<ul>
+			<li>Un brano intero sulla stessa tablatura che scorre, suonato da Pluck alla <b>Velocità</b> che scegli (25–200%; ↺ torna al 100% del brano). Il microfono resta spento: serve per leggere e suonare insieme.</li>
+			<li><b>Misure</b> −4 −1 +1 +4 e <b>Secondi</b> −10 … +10 saltano nel brano, che stia suonando o no, e il cursore sotto la mappa porta ovunque, come in un video; <kbd>Spazio</kbd> avvia e mette in pausa.</li>
+			<li>La mappa sotto la tablatura mostra tutto il brano, il loop e dove sei. Tocca una misura per l'inizio del loop (A), un'altra per la fine (B): il loop parte; un terzo tocco ne comincia uno nuovo. <b>A</b> e <b>B</b> segnano anche la misura che senti (di nuovo la cancella); <b>Loop</b> accende e spegne il loop.</li>
+			<li><b>Ascolta</b> suona le note (il <b>Volume</b> sotto dice quanto forte), <b>Click</b> il tempo, <b>Conteggio iniziale</b> una misura prima di partire.</li>
+			<li><b>Importa file…</b> legge file Guitar Pro (.gp, .gp5, .gpx) e MusicXML, per esempio scritti da te in MuseScore o acquistati; restano su questo dispositivo. Una partitura senza tablatura riceve corda e tasto per ogni nota dalla sua diteggiatura. I brani inclusi sono di pubblico dominio.</li>
 		</ul>
 	</template>
 

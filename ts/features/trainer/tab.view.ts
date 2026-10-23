@@ -20,17 +20,11 @@ import { noteName } from '../../music/note-names'
 import * as FieldReport from '../calibration/field-report'
 import { plural, t } from '../../core/i18n'
 import { bindTempoKeys, numberField } from '../../ui/tempo'
+import { placeStrip as place, stringY, stripParts } from '../../ui/tab-strip'
 
 // One beat takes this much paper whatever the subdivision, so 16ths sit
 // closer than 8ths and a bar always reads as a bar.
 const BEAT_PX = 112
-// Where the playhead stands on the paper (trainer.css .tab-now) and where the
-// moving track starts (after the clef).
-const PLAYHEAD_X = 96
-const TRACK_X = 40
-// The top string and the gap between strings (trainer.css .tab-strings).
-const STRING_TOP = 24
-const STRING_GAP = 16
 const TAPE_MARKS = 16
 
 const MARK_GLYPH: Record<Tab.Mark, string> = { hit: '✓', early: '←', late: '→', miss: '×' }
@@ -94,17 +88,8 @@ export function createTabView(root: HTMLElement): View {
 		drawnKey = key
 		const sp = stepPx(ex)
 		const loopPx = ex.steps * sp
-		const parts: HTMLElement[] = []
+		const { parts, el } = stripParts()
 		noteEls = []
-		const el = (cls: string, left: number, text = '', top?: number) => {
-			const span = document.createElement('span')
-			span.className = cls
-			span.style.left = `${left}px`
-			if (top !== undefined) span.style.top = `${top}px`
-			span.textContent = text
-			parts.push(span)
-			return span
-		}
 		for (let c = 0; c < copies; c++) {
 			const x0 = c * loopPx
 			const bar = ex.perBeat * Tab.BEATS_PER_BAR
@@ -115,7 +100,7 @@ export function createTabView(root: HTMLElement): View {
 			noteEls.push(
 				ex.notes.map((note) => {
 					const x = x0 + note.step * sp
-					const y = STRING_TOP + (note.string - 1) * STRING_GAP
+					const y = stringY(note.string)
 					// h / p sit between the two notes they join; a tap's T over its own note.
 					if (note.tech === 't') el('tab-tech', x, 'T', y - 15)
 					else if (note.tech) el('tab-tech', x - sp / 2, note.tech, y - 15)
@@ -130,8 +115,7 @@ export function createTabView(root: HTMLElement): View {
 	/** Puts step `pos` of the loop under the playhead (negative: still to come). */
 	function placeStrip(pos: number, ex: Tab.TabExercise, smooth: boolean) {
 		const wrapped = pos < 0 ? pos : pos % ex.steps
-		strip.classList.toggle('tab-strip--step', smooth && !reducedMotion.matches)
-		strip.style.transform = `translateX(${(PLAYHEAD_X - TRACK_X - wrapped * stepPx(ex)).toFixed(1)}px)`
+		place(strip, wrapped * stepPx(ex), smooth)
 	}
 
 	function clearMarks(copy?: number) {

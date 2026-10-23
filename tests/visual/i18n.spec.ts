@@ -21,6 +21,7 @@ const SCREENS: [string, Record<string, unknown>][] = [
 	['#trainer', { trainerExercise: 'changes' }],
 	['#trainer', { trainerExercise: 'changes', changesMode: 'time' }],
 	['#trainer', { trainerExercise: 'tab' }],
+	['#trainer', { trainerExercise: 'songs' }],
 	['#metronome', {}],
 	['#metronome', { metroTrainerOn: true }],
 	['#settings', {}],
@@ -34,6 +35,8 @@ const SAME = new Set([
 	'Scale',
 	'Pos',
 	'Power chord (5)',
+	// A composer's name (Trainer → Songs).
+	'L. van Beethoven',
 ])
 // Plate model names ("TUNER · TU-100", "SET-UP") and the brand.
 const NAME = /^(PLUCK|Pluck|SET-UP|.*· [A-Z]{2,3}-\d+)$/

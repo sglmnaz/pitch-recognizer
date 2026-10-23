@@ -124,7 +124,7 @@ test.describe('scales', () => {
 })
 
 test.describe('trainer', () => {
-	for (const exercise of ['notes', 'intervals', 'chords', 'changes', 'tab']) {
+	for (const exercise of ['notes', 'intervals', 'chords', 'changes', 'tab', 'songs']) {
 		test(exercise, async ({ page, open }) => {
 			await open('#trainer', { trainerExercise: exercise })
 			await shot(page, `trainer-${exercise}`)

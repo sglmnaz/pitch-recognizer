@@ -13,6 +13,7 @@ import { SCALE_TYPES } from '../ts/music/scales.ts'
 import { PROGRESSIONS } from '../ts/music/harmony.ts'
 import { INTERVALS, QUALITIES } from '../ts/music/ear.ts'
 import { TUNINGS } from '../ts/music/tuning.ts'
+import { BUILTIN } from '../ts/music/songs-catalog.ts'
 import { check, finish } from './check.ts'
 
 /* Helpers ------------------------------------------------------------------ */
@@ -61,6 +62,7 @@ const tables: [string, string[]][] = [
 	['INTERVALS', INTERVALS.map((interval) => `interval|${interval.name}`)],
 	['QUALITIES', QUALITIES.map((quality) => quality.name)],
 	['TUNINGS', TUNINGS.map((tuning) => tuning.name)],
+	['BUILTIN songs', BUILTIN.flatMap((song) => [song.title, ...song.tracks.map((track) => track.name)])],
 ]
 for (const [table, names] of tables) for (const name of names) used.set(name, table)
 

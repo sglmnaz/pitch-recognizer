@@ -10,7 +10,7 @@
 		"lint": "biome lint",
 		"format": "biome format --write",
 		"typecheck": "tsc -p tsconfig.json && tsc -p tsconfig.scripts.json",
-		"check": "npm run check:pitch && npm run check:chords && npm run check:scales && npm run check:tunings && npm run check:metronome && npm run check:chord-theory && npm run check:ear && npm run check:chord-library && npm run check:harmony && npm run check:changes && npm run check:tab && npm run check:settings && npm run check:note-names && npm run check:i18n",
+		"check": "npm run check:pitch && npm run check:chords && npm run check:scales && npm run check:tunings && npm run check:metronome && npm run check:chord-theory && npm run check:ear && npm run check:chord-library && npm run check:harmony && npm run check:changes && npm run check:tab && npm run check:songs && npm run check:settings && npm run check:note-names && npm run check:i18n",
 		"check:pitch": "node scripts/pitch-check.ts",
 		"check:chords": "node scripts/chord-check.ts",
 		"check:scales": "node scripts/scale-check.ts",
@@ -22,6 +22,7 @@
 		"check:harmony": "node scripts/harmony-check.ts",
 		"check:changes": "node scripts/changes-check.ts",
 		"check:tab": "node scripts/tab-check.ts",
+		"check:songs": "node scripts/songs-check.ts",
 		"check:settings": "node scripts/settings-check.ts",
 		"check:note-names": "node scripts/note-names-check.ts",
 		"check:i18n": "node scripts/i18n-check.ts",
@@ -50,6 +51,7 @@
 		"last 2 and_ff versions"
 	],
 	"dependencies": {
+		"@coderline/alphatab": "1.8.4",
 		"vexflow": "^4.2.5"
 	},
 	"devDependencies": {

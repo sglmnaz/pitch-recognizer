@@ -21,7 +21,7 @@ let ctx: AudioContext | null = null
 const buffers = new Map<number, AudioBuffer>()
 let ringingUntil = 0
 // Notes still sounding, so stopAll() can cut them (a replay must not stack copies).
-const voices = new Set<{ source: AudioBufferSourceNode; gain: GainNode }>()
+const voices = new Set<{ source: AudioScheduledSourceNode; gain: GainNode }>()
 // The buffers are tuned to this A4; a calibration change drops them.
 let bufferA4 = 440
 
@@ -51,8 +51,10 @@ function pluck(context: AudioContext, midi: number): AudioBuffer {
  * Plays a MIDI note `delay` seconds from now; `volume` < 1 for notes that ring
  * together (a chord). `ringMs`: how long after its onset the mic should ignore
  * what it hears; the default covers the loud part, NOTE_MS the whole note.
+ * `length` (s): damp the string that long after the onset, as a player lifts
+ * the finger (a song's written note length); unset, it rings out.
  */
-export function play(midi: number, delay = 0, volume = 1, ringMs = RING_MS) {
+export function play(midi: number, delay = 0, volume = 1, ringMs = RING_MS, length?: number) {
 	ctx ??= new AudioContext()
 	if (ctx.state === 'suspended') ctx.resume()
 	const { a4 } = Settings.get()
@@ -70,8 +72,38 @@ export function play(midi: number, delay = 0, volume = 1, ringMs = RING_MS) {
 	const voice = { source, gain }
 	voices.add(voice)
 	source.onended = () => voices.delete(voice)
-	source.start(ctx.currentTime + delay)
+	const at = ctx.currentTime + delay
+	source.start(at)
+	if (length !== undefined && length < DURATION_S) {
+		// 40 ms down to silence: a damped string, not a click.
+		gain.gain.setValueAtTime(volume, at + length)
+		gain.gain.linearRampToValueAtTime(0, at + length + 0.04)
+		source.stop(at + length + 0.05)
+	}
 	ringingUntil = Math.max(ringingUntil, performance.now() + delay * 1000 + ringMs)
+}
+
+/**
+ * A metronome click `delay` s from now, on this context so it keeps time with
+ * the notes played here (Trainer → Songs). The Metronome's own "click" voice:
+ * a square wave, 25 ms, higher on the bar's first beat; `volume` 0–1.
+ */
+export function click(delay: number, accented: boolean, volume: number) {
+	const context = audio()
+	const at = context.currentTime + delay
+	const gain = context.createGain()
+	gain.gain.setValueAtTime(0.0001, at)
+	gain.gain.linearRampToValueAtTime(volume ** 2 * (accented ? 0.5 : 0.3), at + 0.001)
+	gain.gain.exponentialRampToValueAtTime(0.0001, at + 0.026)
+	const source = context.createOscillator()
+	source.type = 'square'
+	source.frequency.value = accented ? 1800 : 1200
+	source.connect(gain).connect(context.destination)
+	const voice = { source, gain }
+	voices.add(voice)
+	source.onended = () => voices.delete(voice)
+	source.start(at)
+	source.stop(at + 0.05)
 }
 
 /**

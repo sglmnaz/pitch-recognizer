@@ -108,7 +108,7 @@ export interface Settings {
 
 	/* Trainer: ear training (ts/music/ear.ts) */
 	/** Which exercise the Trainer shows. */
-	trainerExercise: 'notes' | 'intervals' | 'chords' | 'changes' | 'tab'
+	trainerExercise: 'notes' | 'intervals' | 'chords' | 'changes' | 'tab' | 'songs'
 	/** Interval ids (ts/music/ear.ts INTERVALS) and chord quality ids (QUALITIES) asked. */
 	earIntervals: string[]
 	earChords: string[]
@@ -151,9 +151,29 @@ export interface Settings {
 	tabGoal: 'all' | Tab.Goal
 	/** And this level only ('all' = every level). */
 	tabLevel: 'all' | Tab.Level
+
+	/* Trainer: songs (ts/features/songs/) */
+	/** The song loaded: a built-in id (ts/music/songs-catalog.ts) or an imported one ('file:…'). */
+	songId: string
+	/** Playback speed, 25–200 % of the song's tempo. */
+	songSpeed: number
+	/** Loudness of the notes Pluck plays, 0–1 (the clicks follow the Metronome's volume). */
+	songVolume: number
+	/** Pluck plays the notes; a click on every beat; a bar of clicks before playing. */
+	songListen: boolean
+	songClick: boolean
+	songCountIn: boolean
+	/** The track played and drawn (index into the song's tracks; 0 when the song changes). */
+	songTrack: number
+	/** The song list shows these. */
+	songFilter: 'all' | 'builtin' | 'imported'
 }
 
 const STORAGE_KEY = 'pitch-recognizer:settings'
+
+/** Trainer → Songs: the speed range, % of the song's tempo. */
+export const MIN_SONG_SPEED = 25
+export const MAX_SONG_SPEED = 200
 
 const defaults: Settings = {
 	includeAccidentals: false,
@@ -229,6 +249,16 @@ const defaults: Settings = {
 	tabBpm: 60,
 	tabGoal: 'all',
 	tabLevel: 'all',
+
+	/* Trainer: songs */
+	songId: 'builtin:ode-to-joy',
+	songSpeed: 100,
+	songVolume: 0.8,
+	songListen: true,
+	songClick: false,
+	songCountIn: true,
+	songTrack: 0,
+	songFilter: 'all',
 }
 
 const listeners = new Set<() => void>()
@@ -320,7 +350,7 @@ export function load(): Settings {
 
 		leftHanded: bool(s.leftHanded, d.leftHanded),
 
-		trainerExercise: oneOf(s.trainerExercise, ['notes', 'intervals', 'chords', 'changes', 'tab']),
+		trainerExercise: oneOf(s.trainerExercise, ['notes', 'intervals', 'chords', 'changes', 'tab', 'songs']),
 		// Unknown ids dropped, nothing left = defaults.
 		earIntervals: pool('intervals', strings(s.earIntervals)),
 		earChords: pool('chords', strings(s.earChords)),
@@ -345,6 +375,16 @@ export function load(): Settings {
 		tabBpm: clamp(s.tabBpm, Tab.MIN_BPM, Tab.MAX_BPM, d.tabBpm, true),
 		tabGoal: oneOf(s.tabGoal, ['all', ...Tab.GOALS.map((g) => g.id)]),
 		tabLevel: oneOf(s.tabLevel, ['all', ...Tab.LEVELS.map((l) => l.id)]),
+
+		// Any id: an imported song is only known once storage is read (the view falls back to the first song).
+		songId: typeof s.songId === 'string' && s.songId ? s.songId : d.songId,
+		songSpeed: clamp(s.songSpeed, MIN_SONG_SPEED, MAX_SONG_SPEED, d.songSpeed, true),
+		songVolume: clamp(s.songVolume, 0, 1, d.songVolume),
+		songListen: bool(s.songListen, d.songListen),
+		songClick: bool(s.songClick, d.songClick),
+		songCountIn: bool(s.songCountIn, d.songCountIn),
+		songTrack: clamp(s.songTrack, 0, 63, d.songTrack, true),
+		songFilter: oneOf(s.songFilter, ['all', 'builtin', 'imported']),
 	}
 }
 

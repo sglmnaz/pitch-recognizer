@@ -68,6 +68,9 @@ export default defineConfig({
 				// VexFlow is large; raise the precache limit so it is cached for offline use.
 				maximumFileSizeToCacheInBytes: 4 * 1024 * 1024,
 				globPatterns: ['**/*.{js,css,html,woff2,png,svg,webmanifest}'],
+				// alphaTab (~300 kB gzipped) only reads files imported in Trainer → Songs; songs are
+				// stored already read, so it is fetched on the first import instead of at install.
+				globIgnores: ['**/alphaTab-*.js'],
 			},
 		}),
 	],
