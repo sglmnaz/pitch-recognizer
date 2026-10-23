@@ -14,7 +14,7 @@ import { reducedMotion } from '../../ui/media'
 import { screenLock } from '../../ui/screen-lock'
 import { bindTempoKeys, numberField, onPress } from '../../ui/tempo'
 import { placeStrip, stringY, stripParts } from '../../ui/tab-strip'
-import { createScoreScreen, type ScoreSpec, unitPxFor, type VerticalScore } from '../../ui/vertical-score'
+import { createScoreScreen, joinsFrom, type ScoreSpec, unitPxFor, type VerticalScore } from '../../ui/vertical-score'
 import { secondsAtQuarter, type Song, type Timeline } from '../../music/song'
 import { BUILTIN } from '../../music/songs-catalog'
 import { createPlayer, type Player, type PlayerAudio } from './songs.player'
@@ -186,8 +186,8 @@ export function createSongsView(root: HTMLElement): View {
 		const { parts, el, mark } = stripParts()
 		const sounding: Strip['sounding'] = []
 		const barNumbers: HTMLElement[] = []
-		// The note before on each string: a legato or slide is drawn from it.
-		const before = new Map<number, number>()
+		// The note before on each string: a legato or slide is drawn from it if it rings into it.
+		const before = new Map<number, { x: number; at: number; length: number }>()
 		tl.slots.forEach((slot, i) => {
 			const x = slot.quarter * q
 			const bar = song.bars[slot.bar]
@@ -205,9 +205,11 @@ export function createSongsView(root: HTMLElement): View {
 					continue
 				}
 				const from = before.get(note.string)
-				if (note.tech && from !== undefined) mark(note.tech, from, nx, y)
+				const at = slot.quarter + note.at
+				if (note.tech && from && joinsFrom(from, { at })) mark(note.tech, from.x, nx, y)
+				else if (note.tech === '/' || note.tech === '\\') mark(note.tech, nx - 30, nx, y, 0, false)
 				if (note.bend) mark('b', nx, nx, y, note.fret + note.bend)
-				before.set(note.string, nx)
+				before.set(note.string, { x: nx, at, length: note.length })
 				const label = note.tied ? `(${note.fret})` : String(note.fret)
 				sounding.push({ q: slot.quarter + note.at, length: note.length, el: el('tab-n', nx, label, y) })
 			}

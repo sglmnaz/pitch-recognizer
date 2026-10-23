@@ -58,6 +58,13 @@ const JOINED_PX = 48
 // notes a hair apart once made the score run kilometres per bar).
 const SERVED = 0.9
 const SVG = 'http://www.w3.org/2000/svg'
+// Two notes are joined only if the first rings into the second (up to this times its length):
+// a slide into a note from nowhere (Guitar Pro's slide-in) had no note to start from, and was
+// drawn from one bars before.
+const RINGS_INTO = 1.5
+/** Whether `note` (a legato or slide) starts from `before`, the note before it on its string. */
+export const joinsFrom = (before: { at: number; length: number }, note: { at: number }) =>
+	before.at < note.at && note.at - before.at <= Math.max(before.length, 0.01) * RINGS_INTO + 1e-6
 
 /**
  * Paper per unit so the tokens of a string stay apart (36 px) and a mark fits beside the
@@ -142,7 +149,7 @@ export function createVerticalScore(root: HTMLElement) {
 		const last = new Map<number, ScoreNote>()
 		for (const note of [...spec.notes].sort((a, b) => a.at - b.at)) {
 			const before = last.get(note.string)
-			if (before && before.at < note.at && joins(note.tech)) from.set(note, before)
+			if (before && joins(note.tech) && joinsFrom(before, note)) from.set(note, before)
 			last.set(note.string, note)
 		}
 		const leadsOn = new Set(from.values())
@@ -197,6 +204,11 @@ export function createVerticalScore(root: HTMLElement) {
 					path('ink slide', `M${p(R + 2, -d)} L${p(run - R - 2, d)}`)
 					text(run / 2, 26, 'sl')
 				}
+			} else if (note.tech && SLIDE.includes(note.tech)) {
+				// Slid into from nowhere: a short slanting line into the token.
+				const { p, path } = mark(note)
+				const d = note.tech === '/' ? 7 : -7
+				path('ink slide', `M${p(-R - 26, -d)} L${p(-R - 3, d)}`)
 			}
 			if (note.bentTo !== undefined) {
 				// A curved arrow toward the high strings, to the fret reached (a hollow token).

@@ -34,7 +34,7 @@ export function stripParts() {
 	 * (h, p) a slur over the two notes with its letter, a slide (/ \\) a slanting line
 	 * with SL, a bend (b, `to` the fret reached) an arrow up from the note at `x0`.
 	 */
-	const mark = (sign: string, x0: number, x1: number, y: number, to = 0) => {
+	const mark = (sign: string, x0: number, x1: number, y: number, to = 0, label = true) => {
 		const svg = document.createElementNS(SVG, 'svg')
 		svg.setAttribute('class', 'tab-mark')
 		const add = (tag: string, attrs: Record<string, string | number>, text = '') => {
@@ -50,7 +50,7 @@ export function stripParts() {
 		} else if (sign === '/' || sign === '\\') {
 			const d = sign === '/' ? 4 : -4
 			add('path', { class: 'ink', d: `M${x0 + 9} ${y + d} L${x1 - 9} ${y - d}` })
-			add('text', { x: mid, y: y - 11 }, 'sl')
+			if (label) add('text', { x: mid, y: y - 11 }, 'sl')
 		} else {
 			add('path', { class: 'ink', d: `M${x0 + 8} ${y - 2} Q${x0 + 20} ${y - 3} ${x0 + 22} ${y - 13}` })
 			add('path', { class: 'head', d: `M${x0 + 22} ${y - 20} L${x0 + 18} ${y - 12} L${x0 + 26} ${y - 12}Z` })
