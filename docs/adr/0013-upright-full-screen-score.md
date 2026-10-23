@@ -60,6 +60,14 @@ Claude Design; the user approved variant D (Verticale 3).
   (`pitch-recognizer:score-turn` keeps the last choice); ↻ is drawn in SVG. The page's
   strip shows the same signs in print size (`stripParts().mark`: slur with H / P,
   slanted line with SL, bend arrow up to the fret reached).
+- **Round five**: one token size, 26 px (34 px read large, and shrinking crowded ones to
+  20 px looked uneven). Each bar gets its own scale (`barStops`): the score's pace
+  (`unitPxFor`, 9 pairs in 10, Songs 56–150 px a quarter) or more where the bar's notes
+  are closer (30 px apart, 42 across a mark, up to 300 px a quarter), as Guitar Pro and
+  Songsterr size bars by their content; a fast run no longer sets the pace of the whole
+  song, and the score runs faster through it. Joins need the first note to ring into
+  the second (a slide-in from nowhere is a short lead-in); the drag speeds up with
+  distance and reads the bars' scales (`units(from, dx)`).
   The player turns it with ↻: the page is rotated a quarter in CSS
   (`.score-screen--turned`). The manifest holds the app upright and unlocking it
   needs the browser's full screen, which shows Chrome's "swipe to exit" banner

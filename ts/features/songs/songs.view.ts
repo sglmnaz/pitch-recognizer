@@ -31,7 +31,8 @@ const TICK_MS = 25
 // The position fader's resolution (0 = the top, SEEK_STEPS = the end).
 const SEEK_STEPS = 1000
 // The full-screen score: paper per quarter between these (unitPxFor: more where notes are close);
-// 150 is a 16th's room for a token, and a quarter at 120 BPM crosses a phone in about 2 s.
+// 150 is a 16th's room for a token, and a quarter at 120 BPM crosses a phone in about 2 s;
+// a bar with closer notes gets more room of its own (vertical-score.ts barStops).
 const MIN_SCORE_PX = 56
 const MAX_SCORE_PX = 150
 // A second tap on × within this removes an imported song.

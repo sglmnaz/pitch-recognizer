@@ -52,18 +52,18 @@ const TEMPO_STEP = 5
 const LEGATO = ['h', 'p']
 const SLIDE = ['/', '\\']
 const joins = (tech?: string) => !!tech && (LEGATO.includes(tech) || SLIDE.includes(tech))
-// A token's radius, and the room two notes of a string need: apart, and with a mark between them.
-const R = 17
-const TOKEN_PX = 34
-// The smallest a token gets between close notes; a fret number still reads at 11 px.
-const SMALLEST_PX = 20
-const APART_PX = 36
-const JOINED_PX = 48
+// A token (one size for every note: 34 px read large, a mix with 20 px ones looked uneven),
+// its radius, and the room two notes of a string need: apart, and with a mark between them.
+const TOKEN_PX = 26
+const R = TOKEN_PX / 2
+const APART_PX = 30
+const JOINED_PX = 42
 // The pairs the spacing must serve: all but the closest tenth (grace notes, a strum written as
 // notes a hair apart once made the score run kilometres per bar).
 const SERVED = 0.9
-// Every pair of a string, though, gets room for two small tokens; only notes closer than this
-// (units: a 16th of a quarter, grace notes) are left to overlap, or they would set the pace.
+// A bar with closer notes gets its own room (up to this per unit), the others keep the
+// pace; only notes closer than GRACE (units: a 16th of a quarter, grace notes) may overlap.
+const BAR_MOST_PX = 300
 const GRACE = 1 / 16
 const SVG = 'http://www.w3.org/2000/svg'
 // Two notes are joined only if the first rings into the second (up to this times its length):
@@ -81,18 +81,55 @@ export const joinsFrom = (before: { at: number; length: number }, note: { at: nu
  */
 export function unitPxFor(notes: ScoreNote[], least: number, most = Number.POSITIVE_INFINITY) {
 	const needs: number[] = []
-	let floor = 0
 	const last = new Map<number, number>()
 	for (const note of [...notes].sort((a, b) => a.at - b.at)) {
 		const before = last.get(note.string)
 		const gap = before === undefined ? 0 : note.at - before
 		if (gap > 1e-6) needs.push((joins(note.tech) ? JOINED_PX : APART_PX) / gap)
-		if (gap >= GRACE) floor = Math.max(floor, (SMALLEST_PX + 3) / gap)
 		last.set(note.string, note.at)
 	}
 	needs.sort((a, b) => a - b)
 	const need = needs.length ? needs[Math.floor(SERVED * (needs.length - 1))] : least
-	return Math.min(most, Math.max(least, need, floor))
+	return Math.min(most, Math.max(least, need))
+}
+
+interface Stop {
+	/** Where a bar starts, in units and in px along; its px per unit. */
+	at: number
+	x: number
+	px: number
+}
+
+/**
+ * Each bar's scale: the score's own (spec.unitPx) or more where the bar's notes are closer,
+ * so a fast run gets room without stretching the whole song (as Guitar Pro and Songsterr
+ * size bars by what is in them); the score runs a little faster through such a bar.
+ */
+function barStops(spec: ScoreSpec): Stop[] {
+	const starts = [...new Set(spec.bars.map((bar) => bar.at))].sort((a, b) => a - b)
+	if (!starts.length || starts[0] > 0) starts.unshift(Math.min(0, starts[0] ?? 0))
+	const need = starts.map(() => spec.unitPx)
+	const barOf = (at: number) => {
+		let i = 0
+		while (i + 1 < starts.length && starts[i + 1] <= at + 1e-9) i++
+		return i
+	}
+	const last = new Map<number, number>()
+	for (const note of [...spec.notes].sort((a, b) => a.at - b.at)) {
+		const before = last.get(note.string)
+		const gap = before === undefined ? 0 : note.at - before
+		if (gap >= GRACE) {
+			const i = barOf(note.at)
+			need[i] = Math.max(need[i], (joins(note.tech) ? JOINED_PX : APART_PX) / gap)
+		}
+		last.set(note.string, note.at)
+	}
+	const most = Math.max(spec.unitPx, BAR_MOST_PX)
+	let x = 0
+	return starts.map((at, i) => {
+		if (i) x += (at - starts[i - 1]) * Math.min(most, need[i - 1])
+		return { at, x, px: Math.min(most, need[i]) }
+	})
 }
 
 /** One score in `root` (an empty element): draw(spec), then place(at) every frame; setSide(on) turns it on its side. */
@@ -103,6 +140,7 @@ export function createVerticalScore(root: HTMLElement) {
 	const layer = root.querySelector<HTMLElement>('.vscore__layer')!
 	const names = root.querySelector<HTMLElement>('.vscore__names')!
 	let unitPx = 64
+	let stops: Stop[] = []
 	let side = false
 	let drawn: ScoreSpec | null = null
 	let placed: [number, boolean] = [0, false]
@@ -111,6 +149,29 @@ export function createVerticalScore(root: HTMLElement) {
 	let barEls: { at: number; el: HTMLElement }[] = []
 	let litBar: HTMLElement | null = null
 	let band: { from: number; to: number; open: boolean } | null = null
+
+	// Px along for a unit and back, on the bars' own scales.
+	const stopAt = (key: 'at' | 'x', value: number) => {
+		let lo = 0
+		let hi = stops.length - 1
+		let found = 0
+		while (lo <= hi) {
+			const mid = (lo + hi) >> 1
+			if (stops[mid][key] <= value) {
+				found = mid
+				lo = mid + 1
+			} else hi = mid - 1
+		}
+		return stops[found] ?? { at: 0, x: 0, px: unitPx }
+	}
+	const px = (units: number) => {
+		const stop = stopAt('at', units)
+		return stop.x + (units - stop.at) * stop.px
+	}
+	const unitsAt = (x: number) => {
+		const stop = stopAt('x', x)
+		return stop.at + (x - stop.x) / stop.px
+	}
 
 	const span = (parent: HTMLElement, cls: string, style: string, text = '') => {
 		const el = document.createElement('span')
@@ -124,6 +185,7 @@ export function createVerticalScore(root: HTMLElement) {
 	function draw(spec: ScoreSpec) {
 		drawn = spec
 		unitPx = spec.unitPx
+		stops = barStops(spec)
 		const strings = spec.tuning.length
 		// Upright: low E on the left; on its side: high E on top, as in a tab.
 		const across = (string: number) => {
@@ -131,9 +193,8 @@ export function createVerticalScore(root: HTMLElement) {
 			return side ? 100 - x : x
 		}
 		// A string's place across, `at` units along (later = higher, or further right), and their sizes.
-		const at = (string: number, units: number) =>
-			side ? `top:${across(string)}%;left:${units * unitPx}px` : `left:${across(string)}%;top:${-units * unitPx}px`
-		const along = (units: number) => (side ? `left:${units * unitPx}px` : `top:${-units * unitPx}px`)
+		const at = (string: number, units: number) => (side ? `top:${across(string)}%;left:${px(units)}px` : `left:${across(string)}%;top:${-px(units)}px`)
+		const along = (units: number) => (side ? `left:${px(units)}px` : `top:${-px(units)}px`)
 		const acrossOnly = (string: number) => `${side ? 'top' : 'left'}:${across(string)}%`
 		const thick = side ? 'height' : 'width'
 		fixed.replaceChildren()
@@ -163,19 +224,6 @@ export function createVerticalScore(root: HTMLElement) {
 			last.set(note.string, note)
 		}
 		const leadsOn = new Set(from.values())
-		// Room for each token: the spacing serves most notes, so the closest few (a fast run,
-		// a 32nd) get a smaller token that still clears its neighbours on the string.
-		const room = new Map<ScoreNote, number>()
-		const byString = new Map<number, ScoreNote[]>()
-		for (const note of spec.notes) byString.set(note.string, [...(byString.get(note.string) ?? []), note])
-		for (const notes of byString.values()) {
-			notes.sort((a, b) => a.at - b.at)
-			notes.forEach((note, i) => {
-				const gaps = [notes[i - 1], notes[i + 1]].filter((n) => n && Math.abs(n.at - note.at) > 1e-6).map((n) => Math.abs(n.at - note.at) * unitPx)
-				const px = Math.min(TOKEN_PX, ...gaps.map((gap) => gap - 3))
-				if (px < TOKEN_PX) room.set(note, Math.max(SMALLEST_PX, Math.floor(px)))
-			})
-		}
 		// A mark drawn in px from a token: u along (later), v across toward the high strings,
 		// turned back near the edge where the high strings leave no room.
 		const mark = (note: ScoreNote) => {
@@ -206,17 +254,17 @@ export function createVerticalScore(root: HTMLElement) {
 		sounding = spec.notes.map((note) => {
 			// A tail behind notes longer than an eighth's room: how long they ring (a note
 			// that goes on into a legato or slide has the mark's band instead).
-			const long = note.length * unitPx > 40 && !leadsOn.has(note)
+			const rings = px(note.at + note.length) - px(note.at)
+			const long = rings > 40 && !leadsOn.has(note)
 			const tail = long
-				? span(layer, 'vscore__tail', `${at(note.string, side ? note.at : note.at + note.length)};${side ? 'width' : 'height'}:${note.length * unitPx}px`)
+				? span(layer, 'vscore__tail', `${at(note.string, side ? note.at : note.at + note.length)};${side ? 'width' : 'height'}:${rings}px`)
 				: undefined
 			const before = from.get(note)
 			// Not picked (hammered, pulled, slid into): the token hollow.
-			const size = room.get(note)
-			const el = span(layer, before ? 'vscore__n vscore__n--soft' : 'vscore__n', `${at(note.string, note.at)}${size ? `;--n:${size}px` : ''}`, note.label)
+			const el = span(layer, before ? 'vscore__n vscore__n--soft' : 'vscore__n', at(note.string, note.at), note.label)
 			if (before) {
 				const { p, path, text } = mark(before)
-				const run = (note.at - before.at) * unitPx
+				const run = px(note.at) - px(before.at)
 				path('band', `M${p(R, 0)} L${p(run - R, 0)}`)
 				if (LEGATO.includes(note.tech!)) {
 					// A slur beside the two tokens, H or P at its top.
@@ -244,8 +292,8 @@ export function createVerticalScore(root: HTMLElement) {
 					layer,
 					'vscore__n vscore__n--soft vscore__n--reached',
 					side
-						? `top:calc(${across(note.string)}% - ${off}px);left:${note.at * unitPx + 58}px`
-						: `left:calc(${across(note.string)}% + ${off}px);top:${-(note.at * unitPx + 58)}px`,
+						? `top:calc(${across(note.string)}% - ${off}px);left:${px(note.at) + 58}px`
+						: `left:calc(${across(note.string)}% + ${off}px);top:${-(px(note.at) + 58)}px`,
 					String(note.bentTo)
 				)
 			}
@@ -265,11 +313,11 @@ export function createVerticalScore(root: HTMLElement) {
 	function showBand() {
 		layer.querySelector('.vscore__band')?.remove()
 		if (!band) return
-		const size = (band.to - band.from) * unitPx
+		const size = px(band.to) - px(band.from)
 		const el = span(
 			layer,
 			band.open ? 'vscore__band is-open' : 'vscore__band',
-			side ? `left:${band.from * unitPx}px;width:${size}px` : `top:${-band.to * unitPx}px;height:${size}px`
+			side ? `left:${px(band.from)}px;width:${size}px` : `top:${-px(band.to)}px;height:${size}px`
 		)
 		layer.prepend(el)
 	}
@@ -277,7 +325,7 @@ export function createVerticalScore(root: HTMLElement) {
 	/** Puts unit `at` on the line, lights what sounds there (`playing`) and the bar's number. */
 	function place(at: number, playing: boolean) {
 		placed = [at, playing]
-		layer.style.transform = side ? `translateX(${(-at * unitPx).toFixed(1)}px)` : `translateY(${(at * unitPx).toFixed(1)}px)`
+		layer.style.transform = side ? `translateX(${(-px(at)).toFixed(1)}px)` : `translateY(${px(at).toFixed(1)}px)`
 		// The notes struck last at or before `at`, all of a chord, while they ring.
 		let lo = 0
 		let hi = sounding.length - 1
@@ -326,7 +374,16 @@ export function createVerticalScore(root: HTMLElement) {
 		}
 	}
 
-	return { draw, place, setSide, setBand, unit: () => unitPx }
+	return {
+		draw,
+		place,
+		setSide,
+		setBand,
+		/** Where the line stands, in units. */
+		position: () => placed[0],
+		/** The units `dx` px of paper move from unit `from` (on the bars' own scales). */
+		units: (from: number, dx: number) => unitsAt(px(from) + dx) - from,
+	}
 }
 
 export type VerticalScore = ReturnType<typeof createVerticalScore>
@@ -458,7 +515,7 @@ export function createScoreScreen(
 	}
 	// Dragging the score moves through the song, as on paper: the finger takes the notes
 	// along the strings (down upright, left on its side, where the song goes on).
-	let drag: { x: number; y: number; id: number; moved: boolean } | null = null
+	let drag: { x: number; y: number; id: number; moved: boolean; from: number } | null = null
 	const dragged = (event: PointerEvent) => {
 		const dx = event.clientX - drag!.x
 		const dy = event.clientY - drag!.y
@@ -466,13 +523,13 @@ export function createScoreScreen(
 		const px = root.classList.contains('score-screen--side') ? -(root.classList.contains('score-screen--turned') ? dy : dx) : dy
 		// Faster the further the finger goes: a short drag places a note, a long one skips bars
 		// (300 px ≈ 4 bars, 600 px ≈ 13 at 96 px a quarter).
-		return (px * (1 + Math.abs(px) / SCRUB_PX)) / (scores[0]?.unit() ?? 1)
+		return scores[0]?.units(drag!.from, px * (1 + Math.abs(px) / SCRUB_PX)) ?? 0
 	}
 	if (onScrub) {
 		rail.classList.add('is-scrub')
 		rail.addEventListener('pointerdown', (event) => {
 			if (event.button !== 0 || drag) return
-			drag = { x: event.clientX, y: event.clientY, id: event.pointerId, moved: false }
+			drag = { x: event.clientX, y: event.clientY, id: event.pointerId, moved: false, from: scores[0]?.position() ?? 0 }
 			// The moves keep coming when the finger leaves the score.
 			try {
 				rail.setPointerCapture(event.pointerId)
