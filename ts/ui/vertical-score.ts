@@ -41,7 +41,7 @@ const THIN = 1
 // A bar line sits this far before its first beat, as on the horizontal strip.
 const BAR_LEAD = 0.25
 
-/** One upright score in `root` (an empty element): draw(spec), then place(at) every frame. */
+/** One score in `root` (an empty element): draw(spec), then place(at) every frame; setSide(on) turns it on its side. */
 export function createVerticalScore(root: HTMLElement) {
 	root.classList.add('vscore')
 	root.innerHTML = '<div class="vscore__fixed"></div><div class="vscore__layer"></div><span class="vscore__fade"></span><div class="vscore__names"></div>'
@@ -49,6 +49,9 @@ export function createVerticalScore(root: HTMLElement) {
 	const layer = root.querySelector<HTMLElement>('.vscore__layer')!
 	const names = root.querySelector<HTMLElement>('.vscore__names')!
 	let unitPx = 64
+	let side = false
+	let drawn: ScoreSpec | null = null
+	let placed: [number, boolean] = [0, false]
 	let sounding: { at: number; length: number; el: HTMLElement; tail?: HTMLElement }[] = []
 	let lit: { el: HTMLElement; tail?: HTMLElement }[] = []
 	let barEls: { at: number; el: HTMLElement }[] = []
@@ -64,38 +67,47 @@ export function createVerticalScore(root: HTMLElement) {
 	}
 
 	function draw(spec: ScoreSpec) {
+		drawn = spec
 		unitPx = spec.unitPx
 		const strings = spec.tuning.length
-		const x = (string: number) => (strings < 2 ? 50 : LEFT + ((strings - string) * (RIGHT - LEFT)) / (strings - 1))
+		// Upright: low E on the left; on its side: high E on top, as in a tab.
+		const across = (string: number) => {
+			const x = strings < 2 ? 50 : LEFT + ((strings - string) * (RIGHT - LEFT)) / (strings - 1)
+			return side ? 100 - x : x
+		}
+		// A string's place across, `at` units along (later = higher, or further right), and their sizes.
+		const at = (string: number, units: number) =>
+			side ? `top:${across(string)}%;left:${units * unitPx}px` : `left:${across(string)}%;top:${-units * unitPx}px`
+		const along = (units: number) => (side ? `left:${units * unitPx}px` : `top:${-units * unitPx}px`)
+		const acrossOnly = (string: number) => `${side ? 'top' : 'left'}:${across(string)}%`
+		const thick = side ? 'height' : 'width'
 		fixed.replaceChildren()
 		names.replaceChildren()
 		layer.replaceChildren()
 		const lane = (RIGHT - LEFT) / Math.max(1, strings - 1)
-		for (let s = strings; s >= 1; s--) span(fixed, 'vscore__lane', `left:${x(s)}%;width:${lane}%`)
+		for (let s = strings; s >= 1; s--) span(fixed, 'vscore__lane', `${acrossOnly(s)};${thick}:${lane}%`)
 		for (let s = strings; s >= 1; s--) {
 			const width = THIN + ((THICK - THIN) * (s - 1)) / Math.max(1, strings - 1)
-			span(fixed, 'vscore__string', `left:${x(s)}%;width:${width.toFixed(1)}px`)
-			span(fixed, 'vscore__target', `left:${x(s)}%`)
-			span(names, '', `left:${x(s)}%`, noteName(LETTERS[spec.tuning[s - 1] % 12]))
+			span(fixed, 'vscore__string', `${acrossOnly(s)};${thick}:${width.toFixed(1)}px`)
+			span(fixed, 'vscore__target', acrossOnly(s))
+			span(names, '', acrossOnly(s), noteName(LETTERS[spec.tuning[s - 1] % 12]))
 		}
 		span(fixed, 'vscore__line', '')
-		// The layer: y grows downward, so a unit later in time sits higher.
 		barEls = spec.bars.map((bar) => {
-			const top = -(bar.at - BAR_LEAD) * unitPx
-			span(layer, 'vscore__bar', `top:${top}px`)
-			return { at: bar.at, el: span(layer, 'vscore__barno', `top:${top}px`, bar.label) }
+			span(layer, 'vscore__bar', along(bar.at - BAR_LEAD))
+			return { at: bar.at, el: span(layer, 'vscore__barno', along(bar.at - BAR_LEAD), bar.label) }
 		})
 		litBar = null
-		for (const section of spec.sections ?? []) span(layer, 'vscore__section', `top:${-(section.at - BAR_LEAD) * unitPx}px`, section.text)
+		for (const section of spec.sections ?? []) span(layer, 'vscore__section', along(section.at - BAR_LEAD), section.text)
 		sounding = spec.notes.map((note) => {
 			// A tail behind notes longer than an eighth's room: how long they ring.
 			const long = note.length * unitPx > 40
 			const tail = long
-				? span(layer, 'vscore__tail', `left:${x(note.string)}%;top:${-(note.at + note.length) * unitPx}px;height:${note.length * unitPx}px`)
+				? span(layer, 'vscore__tail', `${at(note.string, side ? note.at : note.at + note.length)};${side ? 'width' : 'height'}:${note.length * unitPx}px`)
 				: undefined
-			const el = span(layer, 'vscore__n', `left:${x(note.string)}%;top:${-note.at * unitPx}px`, note.label)
+			const el = span(layer, 'vscore__n', at(note.string, note.at), note.label)
 			if (note.bentTo !== undefined) span(el, 'vscore__bend', '', `b${note.bentTo}`)
-			if (note.tech) span(layer, 'vscore__tech', `left:${x(note.string)}%;top:${-(note.at + 0.12) * unitPx}px`, note.tech)
+			if (note.tech) span(layer, 'vscore__tech', at(note.string, side ? note.at : note.at + 0.12), note.tech)
 			return { at: note.at, length: note.length, el, tail }
 		})
 		sounding.sort((a, b) => a.at - b.at)
@@ -104,7 +116,8 @@ export function createVerticalScore(root: HTMLElement) {
 
 	/** Puts unit `at` on the line, lights what sounds there (`playing`) and the bar's number. */
 	function place(at: number, playing: boolean) {
-		layer.style.transform = `translateY(${(at * unitPx).toFixed(1)}px)`
+		placed = [at, playing]
+		layer.style.transform = side ? `translateX(${(-at * unitPx).toFixed(1)}px)` : `translateY(${(at * unitPx).toFixed(1)}px)`
 		// The notes struck last at or before `at`, all of a chord, while they ring.
 		let lo = 0
 		let hi = sounding.length - 1
@@ -142,7 +155,18 @@ export function createVerticalScore(root: HTMLElement) {
 		}
 	}
 
-	return { draw, place }
+	/** On its side (the phone turned): strings across, notes coming from the right. */
+	function setSide(on: boolean) {
+		if (on === side) return
+		side = on
+		root.classList.toggle('vscore--side', on)
+		if (drawn) {
+			draw(drawn)
+			place(...placed)
+		}
+	}
+
+	return { draw, place, setSide }
 }
 
 export type VerticalScore = ReturnType<typeof createVerticalScore>
@@ -190,6 +214,40 @@ export function createScoreScreen(keys: ScoreScreenKey[], onClose: () => void) {
 	let lamps: HTMLElement[] = []
 	let shown = 0
 	let pushed = false
+	// The phone turned: the scores on their side, every control in one row at the bottom.
+	const landscape = matchMedia('(orientation: landscape)')
+	const turn = () => {
+		root.classList.toggle('score-screen--side', landscape.matches)
+		for (const score of scores) score.setSide(landscape.matches)
+		showTrack()
+	}
+	landscape.addEventListener('change', () => {
+		if (!root.hidden) turn()
+	})
+	// The app is held upright (manifest); full screen lets this page turn with the phone.
+	// Android Chrome only: iPhones have no orientation lock, the page stays upright there.
+	let fullScreen = false
+	async function unlockTurning() {
+		try {
+			await document.documentElement.requestFullscreen({ navigationUI: 'hide' })
+			fullScreen = true
+			await (screen.orientation as ScreenOrientation & { lock(type: string): Promise<void> }).lock('any')
+		} catch {
+			// No full screen or no lock here: upright only.
+		}
+	}
+	function relock() {
+		if (!fullScreen) return
+		fullScreen = false
+		try {
+			screen.orientation.unlock()
+		} catch {}
+		if (document.fullscreenElement) document.exitFullscreen().catch(() => {})
+	}
+	// Leaving the browser's full screen (Back, a swipe) leaves this page too.
+	document.addEventListener('fullscreenchange', () => {
+		if (fullScreen && !document.fullscreenElement) hide()
+	})
 
 	/** The score in view: the one whose panel covers the rail's middle. */
 	function showTrack() {
@@ -215,6 +273,7 @@ export function createScoreScreen(keys: ScoreScreenKey[], onClose: () => void) {
 		if (root.hidden) return
 		root.hidden = true
 		document.documentElement.classList.remove('has-score-screen')
+		relock()
 		if (pushed && !fromHistory) history.back()
 		pushed = false
 		onClose()
@@ -248,6 +307,7 @@ export function createScoreScreen(keys: ScoreScreenKey[], onClose: () => void) {
 				}))
 			)
 			rail.scrollLeft = 0
+			for (const score of scores) score.setSide(root.classList.contains('score-screen--side'))
 			showTrack()
 			return scores
 		},
@@ -260,7 +320,8 @@ export function createScoreScreen(keys: ScoreScreenKey[], onClose: () => void) {
 			document.documentElement.classList.add('has-score-screen')
 			history.pushState({ scoreScreen: true }, '')
 			pushed = true
-			showTrack()
+			turn()
+			unlockTurning()
 		},
 		close: () => hide(),
 		isOpen: () => !root.hidden,

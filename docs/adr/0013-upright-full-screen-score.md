@@ -31,6 +31,14 @@ Claude Design; the user approved variant D (Verticale 3).
   Android's Back leaves it.
 - **Way in**: a ⛶ Full screen key under each strip; any width, no automatic
   switch on rotation or size.
+- **Turned sideways** (approved mock-up Orizzontale 2): the same score on its side,
+  high E on top, the red line near the left edge, the notes coming from the right
+  (`setSide`, `.vscore--side`: the draw swaps the axes); the top row and the keys
+  share one row at the bottom (✕, track, display, the view's keys, Loop last). The
+  manifest holds the app upright, so opening the page asks for the browser's full
+  screen and `screen.orientation.lock('any')`; closing it unlocks and leaves full
+  screen, and leaving full screen (Back, a swipe) closes the page. Android Chrome
+  only: iPhones have neither, the page stays upright there.
 - Units are the view's own: quarters for Songs, steps for Tab (`unitPx` per view).
 
 ## Consequences

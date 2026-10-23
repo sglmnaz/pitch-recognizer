@@ -177,6 +177,98 @@
 	}
 }
 
+/* On its side (the phone turned, ADR 0013): strings across with high E on top, the red line near the
+   left edge, the notes coming from the right. The same parts; the draw sets the other axis inline. */
+.vscore--side {
+	--vscore-hit-x: 92px;
+
+	& .vscore__lane,
+	& .vscore__string {
+		top: auto;
+		bottom: auto;
+		left: 0;
+		right: 0;
+		transform: translateY(-50%);
+	}
+
+	& .vscore__line {
+		top: 4%;
+		bottom: 4%;
+		left: calc(var(--vscore-hit-x) - 1px);
+		right: auto;
+		width: 2px;
+		height: auto;
+	}
+
+	& .vscore__target {
+		left: var(--vscore-hit-x);
+	}
+
+	& .vscore__layer {
+		top: 0;
+		bottom: 0;
+		left: var(--vscore-hit-x);
+		right: auto;
+		width: 0;
+		height: auto;
+	}
+
+	& .vscore__bar {
+		top: 6%;
+		bottom: 6%;
+		right: auto;
+		width: 1.5px;
+		height: auto;
+	}
+
+	& .vscore__barno {
+		top: 4px;
+		right: auto;
+		transform: translateX(-50%);
+	}
+
+	& .vscore__section {
+		top: 4px;
+		transform: translateX(12px);
+	}
+
+	& .vscore__tail {
+		width: auto;
+		height: 7px;
+		transform: translateY(-50%);
+	}
+
+	& .vscore__tech {
+		transform: translate(-50%, -32px);
+	}
+
+	& .vscore__fade {
+		left: auto;
+		right: 0;
+		bottom: 0;
+		width: 36px;
+		height: auto;
+		background: linear-gradient(to left, var(--paper), transparent);
+	}
+
+	& .vscore__names {
+		top: 0;
+		right: auto;
+		width: var(--vscore-names);
+		height: auto;
+		border-top: 0;
+		border-right: 1px solid color-mix(in srgb, var(--paper-ink) 25%, transparent);
+
+		& span {
+			top: auto;
+			left: 0;
+			right: 0;
+			text-align: center;
+			transform: translateY(-50%);
+		}
+	}
+}
+
 /* The full-screen page: over everything, the tab bar included. */
 .score-screen {
 	position: fixed;
@@ -290,6 +382,57 @@ html.has-score-screen body {
 		height: 52px;
 		padding: 0;
 		font-size: var(--text-lg);
+	}
+}
+
+/* Turned: the scores take the height, and the top row and the keys share one row at the bottom
+   (✕, track, display, then the view's keys). */
+.score-screen--side {
+	grid-template-columns: var(--tap) minmax(0, 1fr) auto auto;
+	grid-template-rows: minmax(0, 1fr) 48px;
+	padding: 8px calc(12px + env(safe-area-inset-right)) calc(8px + env(safe-area-inset-bottom)) calc(12px + env(safe-area-inset-left));
+
+	& .score-screen__top {
+		display: contents;
+
+		& > * {
+			grid-row: 2;
+		}
+
+		& .key {
+			height: 48px;
+		}
+
+		& .window {
+			align-self: stretch;
+		}
+
+		& .score-screen__track {
+			align-self: center;
+		}
+
+		& .lcd {
+			display: flex;
+			align-items: center;
+		}
+	}
+
+	& .score-screen__rail {
+		grid-column: 1 / -1;
+		grid-row: 1;
+	}
+
+	& .score-screen__panel {
+		flex-basis: 100%;
+	}
+
+	& .score-screen__keys {
+		grid-row: 2;
+		width: min(380px, 46vw);
+
+		& > :is(.key, .btn) {
+			height: 48px;
+		}
 	}
 }
 
