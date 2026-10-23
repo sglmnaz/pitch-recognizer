@@ -42,6 +42,8 @@ const THICK = 3.4
 const THIN = 1
 // A bar line sits this far before its first beat, as on the horizontal strip.
 const BAR_LEAD = 0.25
+// A drag along the score goes twice as far once the finger has moved this many px, three times at twice that.
+const SCRUB_PX = 80
 // Where the full-screen page remembers the way it was last turned.
 const TURN_KEY = 'pitch-recognizer:score-turn'
 // The tempo keys of the full-screen page step this much (BPM in Tab, % of speed in Songs).
@@ -440,7 +442,9 @@ export function createScoreScreen(
 		const dy = event.clientY - drag!.y
 		// Turned a quarter in CSS, the page's x runs down the screen.
 		const px = root.classList.contains('score-screen--side') ? -(root.classList.contains('score-screen--turned') ? dy : dx) : dy
-		return px / (scores[0]?.unit() ?? 1)
+		// Faster the further the finger goes: a short drag places a note, a long one skips bars
+		// (300 px ≈ 4 bars, 600 px ≈ 13 at 96 px a quarter).
+		return (px * (1 + Math.abs(px) / SCRUB_PX)) / (scores[0]?.unit() ?? 1)
 	}
 	if (onScrub) {
 		rail.classList.add('is-scrub')
