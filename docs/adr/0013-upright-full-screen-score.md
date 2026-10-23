@@ -34,11 +34,12 @@ Claude Design; the user approved variant D (Verticale 3).
 - **Turned sideways** (approved mock-up Orizzontale 2): the same score on its side,
   high E on top, the red line near the left edge, the notes coming from the right
   (`setSide`, `.vscore--side`: the draw swaps the axes); the top row and the keys
-  share one row at the bottom (✕, track, display, the view's keys, Loop last). The
-  manifest holds the app upright, so opening the page asks for the browser's full
-  screen and `screen.orientation.lock('any')`; closing it unlocks and leaves full
-  screen, and leaving full screen (Back, a swipe) closes the page. Android Chrome
-  only: iPhones have neither, the page stays upright there.
+  share one row at the bottom (✕, ↻, track, display, the view's keys, Loop last).
+  The player turns it with ↻: the page is rotated a quarter in CSS
+  (`.score-screen--turned`). The manifest holds the app upright and unlocking it
+  needs the browser's full screen, which shows Chrome's "swipe to exit" banner
+  the user rejected; following the phone by its gravity sensor was rejected too
+  (the player chooses). A landscape viewport (a browser tab) lays it down by itself.
 - Units are the view's own: quarters for Songs, steps for Tab (`unitPx` per view).
 
 ## Consequences

@@ -288,7 +288,7 @@ html.has-score-screen body {
 
 .score-screen__top {
 	display: grid;
-	grid-template-columns: var(--tap) minmax(0, 1fr) auto;
+	grid-template-columns: var(--tap) var(--tap) minmax(0, 1fr) auto;
 	align-items: center;
 	gap: var(--space-8);
 	min-height: 48px;
@@ -388,7 +388,7 @@ html.has-score-screen body {
 /* Turned: the scores take the height, and the top row and the keys share one row at the bottom
    (✕, track, display, then the view's keys). */
 .score-screen--side {
-	grid-template-columns: var(--tap) minmax(0, 1fr) auto auto;
+	grid-template-columns: var(--tap) var(--tap) minmax(0, 1fr) auto minmax(0, 380px);
 	grid-template-rows: minmax(0, 1fr) 48px;
 	padding: 8px calc(12px + env(safe-area-inset-right)) calc(8px + env(safe-area-inset-bottom)) calc(12px + env(safe-area-inset-left));
 
@@ -397,6 +397,23 @@ html.has-score-screen body {
 
 		& > * {
 			grid-row: 2;
+		}
+
+		/* Placed, not flowed: ↻ is hidden when the screen itself is landscape. */
+		& .score-screen__close {
+			grid-column: 1;
+		}
+
+		& .score-screen__turn {
+			grid-column: 2;
+		}
+
+		& .score-screen__track {
+			grid-column: 3;
+		}
+
+		& .window {
+			grid-column: 4;
 		}
 
 		& .key {
@@ -428,12 +445,21 @@ html.has-score-screen body {
 
 	& .score-screen__keys {
 		grid-row: 2;
-		width: min(380px, 46vw);
+		grid-column: 5;
 
 		& > :is(.key, .btn) {
 			height: 48px;
 		}
 	}
+}
+
+/* Turned by ↻: the page a quarter round about its top left corner (the size and the
+   transform are set inline from the window), with plain paddings: the safe areas turn too. */
+.score-screen--turned {
+	right: auto;
+	bottom: auto;
+	padding: 8px 12px;
+	transform-origin: 0 0;
 }
 
 /* The way in, under each strip. */

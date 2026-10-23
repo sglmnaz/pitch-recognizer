@@ -181,7 +181,8 @@ export interface ScoreScreenKey {
 /**
  * The full-screen page: ✕ to leave, the track's name with a lamp per score (the
  * carousel scrolls natively, by swipe or ◂ ▸), a small display, the scores, the
- * keys. Android's Back leaves it too (a history entry while open).
+ * keys. Android's Back leaves it too (a history entry while open). ↻ lays the
+ * page on its side.
  */
 export function createScoreScreen(keys: ScoreScreenKey[], onClose: () => void) {
 	const root = document.createElement('div')
@@ -191,11 +192,13 @@ export function createScoreScreen(keys: ScoreScreenKey[], onClose: () => void) {
 	root.setAttribute('aria-modal', 'true')
 	root.innerHTML =
 		'<div class="score-screen__top"><button class="key key--step score-screen__close" type="button">✕</button>' +
+		'<button class="key key--step score-screen__turn" type="button">↻</button>' +
 		'<div class="score-screen__track"><span class="score-screen__name"><button class="score-screen__prev" type="button">◂</button><b></b><button class="score-screen__next" type="button">▸</button></span><span class="score-screen__pager"></span></div>' +
 		'<span class="window"><span class="lcd score-screen__lcd"></span></span></div>' +
 		'<div class="score-screen__rail"></div><div class="score-screen__keys"></div>'
 	document.body.append(root)
 	const close = root.querySelector<HTMLButtonElement>('.score-screen__close')!
+	const turnKey = root.querySelector<HTMLButtonElement>('.score-screen__turn')!
 	const prev = root.querySelector<HTMLButtonElement>('.score-screen__prev')!
 	const next = root.querySelector<HTMLButtonElement>('.score-screen__next')!
 	const name = root.querySelector<HTMLElement>('.score-screen__name b')!
@@ -204,6 +207,7 @@ export function createScoreScreen(keys: ScoreScreenKey[], onClose: () => void) {
 	const rail = root.querySelector<HTMLElement>('.score-screen__rail')!
 	const keyRow = root.querySelector<HTMLElement>('.score-screen__keys')!
 	close.setAttribute('aria-label', t('Leave full screen'))
+	turnKey.setAttribute('aria-label', t('Turn the score'))
 	prev.setAttribute('aria-label', t('Track before'))
 	next.setAttribute('aria-label', t('Next track'))
 	keyRow.style.gridTemplateColumns = keys.map((k) => `${k.grow ?? 1}fr`).join(' ')
@@ -214,41 +218,32 @@ export function createScoreScreen(keys: ScoreScreenKey[], onClose: () => void) {
 	let lamps: HTMLElement[] = []
 	let shown = 0
 	let pushed = false
-	// The phone turned: the scores on their side, every control in one row at the bottom.
+	// On its side: the viewport is landscape (a browser tab), or ↻ turns the page a
+	// quarter in CSS. The installed app is held upright by its manifest, and unlocking it
+	// needs the browser's own full screen, which shows a banner: the player turns it by hand.
 	const landscape = matchMedia('(orientation: landscape)')
-	const turn = () => {
-		root.classList.toggle('score-screen--side', landscape.matches)
-		for (const score of scores) score.setSide(landscape.matches)
+	let quarter: 0 | 90 = 0
+	function turn() {
+		const turned = quarter !== 0 && !landscape.matches
+		const side = landscape.matches || turned
+		root.classList.toggle('score-screen--side', side)
+		root.classList.toggle('score-screen--turned', turned)
+		// The page a quarter round, as tall as the screen is wide.
+		root.style.cssText = turned ? `width:${innerHeight}px;height:${innerWidth}px;transform:translateX(${innerWidth}px) rotate(90deg)` : ''
+		turnKey.hidden = landscape.matches
+		for (const score of scores) score.setSide(side)
 		showTrack()
 	}
 	landscape.addEventListener('change', () => {
 		if (!root.hidden) turn()
 	})
-	// The app is held upright (manifest); full screen lets this page turn with the phone.
-	// Android Chrome only: iPhones have no orientation lock, the page stays upright there.
-	let fullScreen = false
-	async function unlockTurning() {
-		try {
-			await document.documentElement.requestFullscreen({ navigationUI: 'hide' })
-			fullScreen = true
-			await (screen.orientation as ScreenOrientation & { lock(type: string): Promise<void> }).lock('any')
-		} catch {
-			// No full screen or no lock here: upright only.
-		}
-	}
-	function relock() {
-		if (!fullScreen) return
-		fullScreen = false
-		try {
-			screen.orientation.unlock()
-		} catch {}
-		if (document.fullscreenElement) document.exitFullscreen().catch(() => {})
-	}
-	// Leaving the browser's full screen (Back, a swipe) leaves this page too.
-	document.addEventListener('fullscreenchange', () => {
-		if (fullScreen && !document.fullscreenElement) hide()
+	addEventListener('resize', () => {
+		if (!root.hidden && quarter) turn()
 	})
-
+	turnKey.addEventListener('click', () => {
+		quarter = quarter ? 0 : 90
+		turn()
+	})
 	/** The score in view: the one whose panel covers the rail's middle. */
 	function showTrack() {
 		const panel = rail.firstElementChild as HTMLElement | null
@@ -273,7 +268,8 @@ export function createScoreScreen(keys: ScoreScreenKey[], onClose: () => void) {
 		if (root.hidden) return
 		root.hidden = true
 		document.documentElement.classList.remove('has-score-screen')
-		relock()
+		quarter = 0
+		turn()
 		if (pushed && !fromHistory) history.back()
 		pushed = false
 		onClose()
@@ -321,7 +317,6 @@ export function createScoreScreen(keys: ScoreScreenKey[], onClose: () => void) {
 			history.pushState({ scoreScreen: true }, '')
 			pushed = true
 			turn()
-			unlockTurning()
 		},
 		close: () => hide(),
 		isOpen: () => !root.hidden,

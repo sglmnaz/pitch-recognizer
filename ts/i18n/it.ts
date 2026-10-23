@@ -964,6 +964,7 @@ export const it: Dictionary = {
 	'Position in the song': 'Posizione nel brano',
 	'⛶ Full screen': '⛶ Schermo intero',
 	'Leave full screen': 'Esci dallo schermo intero',
+	'Turn the score': 'Ruota la partitura',
 	'Track before': 'Traccia precedente',
 	'Next track': 'Traccia successiva',
 	'Song map: tap a bar for A, another for B': "Mappa del brano: tocca una misura per A, un'altra per B",
