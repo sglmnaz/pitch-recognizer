@@ -33,8 +33,8 @@ export interface PlayerOptions {
 	click: boolean
 	/** One bar of clicks before playing from a stop. */
 	countIn: boolean
-	/** Index into song.tracks. */
-	track: number
+	/** The tracks played together (indices into song.tracks). */
+	tracks: number[]
 }
 
 interface NoteEvent {
@@ -52,10 +52,24 @@ interface ClickEvent {
 	accented: boolean
 }
 
-/** Every note (not tied over) and every beat of the song, in time order, at 100%. */
-function events(song: Song, tl: Timeline, track: number) {
+/** Every note (not tied over) of the tracks played and every beat of the song, in time order, at 100%. */
+function events(song: Song, tl: Timeline, tracks: number[]) {
 	const notes: NoteEvent[] = []
 	const clicks: ClickEvent[] = []
+	// Several tracks together stay about as loud as one.
+	const mix = 1 / Math.sqrt(Math.max(1, tracks.length))
+	for (const track of tracks) notes.push(...trackNotes(song, tl, track, mix))
+	for (const slot of tl.slots) {
+		const bar = song.bars[slot.bar]
+		const beat = 4 / bar.unit
+		for (let k = 0; k * beat < slot.quarters - 1e-6; k++) clicks.push({ t: slot.start + k * beat * slot.secPerQuarter, accented: k === 0 })
+	}
+	notes.sort((a, b) => a.t - b.t)
+	return { notes, clicks }
+}
+
+function trackNotes(song: Song, tl: Timeline, track: number, gain: number): NoteEvent[] {
+	const notes: NoteEvent[] = []
 	const bars = song.tracks[track]?.bars ?? []
 	// Per string, the note sounding last: a tie lengthens it, a hammer-on or slide from it makes the next one legato.
 	const last = new Map<number, { event: NoteEvent; tech?: string }>()
@@ -77,18 +91,14 @@ function events(song: Song, tl: Timeline, track: number) {
 				t: slot.start + note.at * spq,
 				midi: note.midi,
 				length: note.length * spq,
-				volume: (legato ? LEGATO_VOLUME : 1) / Math.sqrt(together.get(note.at)!),
+				volume: ((legato ? LEGATO_VOLUME : 1) * gain) / Math.sqrt(together.get(note.at)!),
 				bend: note.bend ?? 0,
 			}
 			notes.push(event)
 			last.set(note.string, { event, tech: note.tech })
 		}
-		const bar = song.bars[slot.bar]
-		const beat = 4 / bar.unit
-		for (let k = 0; k * beat < slot.quarters - 1e-6; k++) clicks.push({ t: slot.start + k * beat * spq, accented: k === 0 })
 	}
-	notes.sort((a, b) => a.t - b.t)
-	return { notes, clicks }
+	return notes
 }
 
 /** First index whose t is at or after `t`. */
@@ -106,7 +116,7 @@ function from<T extends { t: number }>(list: T[], t: number): number {
 export function createPlayer(song: Song, audio: PlayerAudio, initial: PlayerOptions, onEnd: () => void = () => {}) {
 	const tl = timeline(song)
 	let options = { ...initial }
-	let list = events(song, tl, options.track)
+	let list = events(song, tl, options.tracks)
 	let playing = false
 	// Song time `song` sounds (is scheduled) at audio time `at`. A loop going round
 	// sets the next anchor ahead of time: until it is heard, the one before still says
@@ -241,10 +251,10 @@ export function createPlayer(song: Song, audio: PlayerAudio, initial: PlayerOpti
 			seek(position() + n * rate())
 		},
 		setOptions(next: PlayerOptions) {
-			const restart =
-				playing && (next.speed !== options.speed || next.track !== options.track || next.listen !== options.listen || next.click !== options.click)
+			const tracksChanged = next.tracks.join() !== options.tracks.join()
+			const restart = playing && (next.speed !== options.speed || tracksChanged || next.listen !== options.listen || next.click !== options.click)
 			const at = position()
-			if (next.track !== options.track) list = events(song, tl, next.track)
+			if (tracksChanged) list = events(song, tl, next.tracks)
 			// The speed changes the clock: re-anchor where the song is now.
 			if (restart) {
 				options = next

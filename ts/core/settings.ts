@@ -163,8 +163,8 @@ export interface Settings {
 	songListen: boolean
 	songClick: boolean
 	songCountIn: boolean
-	/** The track played and drawn (index into the song's tracks; 0 when the song changes). */
-	songTrack: number
+	/** The tracks played and drawn, each on its own strip (indices into the song's tracks; [0] when the song changes). */
+	songTracks: number[]
 	/** The song list shows these. */
 	songFilter: 'all' | 'builtin' | 'imported'
 }
@@ -257,7 +257,7 @@ const defaults: Settings = {
 	songListen: true,
 	songClick: false,
 	songCountIn: true,
-	songTrack: 0,
+	songTracks: [0],
 	songFilter: 'all',
 }
 
@@ -383,7 +383,13 @@ export function load(): Settings {
 		songListen: bool(s.songListen, d.songListen),
 		songClick: bool(s.songClick, d.songClick),
 		songCountIn: bool(s.songCountIn, d.songCountIn),
-		songTrack: clamp(s.songTrack, 0, 63, d.songTrack, true),
+		// Whole indices 0–63, once each, in order; none left = the first track.
+		songTracks: (() => {
+			const tracks = Array.isArray(s.songTracks)
+				? [...new Set(s.songTracks.filter((n): n is number => Number.isInteger(n) && n >= 0 && n < 64))].sort((a, b) => a - b)
+				: []
+			return tracks.length ? tracks : d.songTracks
+		})(),
 		songFilter: oneOf(s.songFilter, ['all', 'builtin', 'imported']),
 	}
 }

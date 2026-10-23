@@ -915,7 +915,7 @@ export const it: Dictionary = {
 	Songs: 'Brani',
 	Bars: 'Misure',
 	Seconds: 'Secondi',
-	Track: 'Traccia',
+	Tracks: 'Tracce',
 	Guitar: 'Chitarra',
 	Pause: 'Pausa',
 	Imported: 'Importato',

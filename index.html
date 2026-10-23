@@ -386,14 +386,8 @@
 					<h2 class="tab-title songs-title"></h2>
 					<p class="silk tab-by songs-artist"></p>
 				</div>
-				<div class="window">
-					<div class="tab-paper songs-paper" role="img">
-						<span class="tab-strings" aria-hidden="true"></span>
-						<div class="tab-track" aria-hidden="true"><div class="tab-strip songs-strip"></div></div>
-						<div class="tab-clef" aria-hidden="true"><b>T</b><b>A</b><b>B</b></div>
-						<span class="tab-now" aria-hidden="true"></span>
-					</div>
-				</div>
+				<!-- One strip of tab per track played (songs.view.ts draws them), each named when there are several. -->
+				<div class="songs-papers"></div>
 				<div class="window">
 					<div class="lcd songs-map" role="group" aria-label="Song map: tap a bar for A, another for B" data-feedback="key">
 						<div class="songs-map__labels" aria-hidden="true"></div>
@@ -484,9 +478,10 @@
 					<input type="checkbox" class="switch__input" data-song-option="songCountIn" />
 					<span class="silk">Off</span><span class="switch__track"></span><span class="silk">On</span>
 				</label>
-				<div class="tab-row">
-					<span class="silk" id="songsTrackLabel">Track</span>
-					<select class="select select--small songs-track" aria-labelledby="songsTrackLabel"></select>
+				<!-- The tracks played: one row each with a 0/1 switch; any number on, one at least. -->
+				<div class="tab-group songs-tracks-group">
+					<span class="silk" id="songsTrackLabel">Tracks</span>
+					<div class="songs-tracks" role="group" aria-labelledby="songsTrackLabel"></div>
 				</div>
 				<div class="tab-group">
 					<div class="songs-list-head">
@@ -1757,6 +1752,7 @@
 			<li><b>Bars</b> −4 −1 +1 +4 and <b>Seconds</b> −10 … +10 jump through the song, playing or not, and the fader under the map moves anywhere in it, as on a video; <kbd>Space</kbd> plays and pauses.</li>
 			<li>The map under the tab shows the whole song, the loop and where you are. Tap a bar on it for the loop's start (A), another for its end (B): the loop starts; a third tap starts a new one. <b>A</b> and <b>B</b> also mark the bar you hear (again clears it); <b>Loop</b> turns the loop on and off.</li>
 			<li><b>Listen</b> plays the notes (<b>Volume</b> under it sets how loud), <b>Click</b> the beat, <b>Count-in</b> a bar before playing.</li>
+			<li>A song with several parts lists them under <b>Tracks</b>, each with a 0/1 switch: every track turned on gets its own strip and plays along.</li>
 			<li><b>Import file…</b> reads Guitar Pro (.gp, .gp5, .gpx) and MusicXML files, for example ones you wrote in MuseScore or bought; they stay on this device. A score without tab gets a string and fret for each note from its fingering. The built-in songs are in the public domain.</li>
 		</ul>
 	</template>
@@ -1897,6 +1893,7 @@
 			<li><b>Misure</b> −4 −1 +1 +4 e <b>Secondi</b> −10 … +10 saltano nel brano, che stia suonando o no, e il cursore sotto la mappa porta ovunque, come in un video; <kbd>Spazio</kbd> avvia e mette in pausa.</li>
 			<li>La mappa sotto la tablatura mostra tutto il brano, il loop e dove sei. Tocca una misura per l'inizio del loop (A), un'altra per la fine (B): il loop parte; un terzo tocco ne comincia uno nuovo. <b>A</b> e <b>B</b> segnano anche la misura che senti (di nuovo la cancella); <b>Loop</b> accende e spegne il loop.</li>
 			<li><b>Ascolta</b> suona le note (il <b>Volume</b> sotto dice quanto forte), <b>Click</b> il tempo, <b>Conteggio iniziale</b> una misura prima di partire.</li>
+			<li>Un brano con più parti le elenca sotto <b>Tracce</b>, ognuna con un interruttore 0/1: ogni traccia accesa ha la sua striscia e suona insieme alle altre.</li>
 			<li><b>Importa file…</b> legge file Guitar Pro (.gp, .gp5, .gpx) e MusicXML, per esempio scritti da te in MuseScore o acquistati; restano su questo dispositivo. Una partitura senza tablatura riceve corda e tasto per ogni nota dalla sua diteggiatura. I brani inclusi sono di pubblico dominio.</li>
 		</ul>
 	</template>

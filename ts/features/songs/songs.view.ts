@@ -11,7 +11,6 @@ import { plural, t } from '../../core/i18n'
 import type { View } from '../../ui/view'
 import { liveRegion, onBareKey, scoped, setPressed } from '../../ui/dom'
 import { reducedMotion } from '../../ui/media'
-import { detent } from '../../ui/feedback'
 import { screenLock } from '../../ui/screen-lock'
 import { bindTempoKeys, numberField, onPress } from '../../ui/tempo'
 import { placeStrip, stringY, stripParts } from '../../ui/tab-strip'
@@ -54,8 +53,7 @@ export function createSongsView(root: HTMLElement): View {
 	const source = $<HTMLElement>('.songs-source')
 	const title = $<HTMLElement>('.songs-title')
 	const artist = $<HTMLElement>('.songs-artist')
-	const paper = $<HTMLElement>('.songs-paper')
-	const strip = $<HTMLElement>('.songs-strip')
+	const papers = $<HTMLElement>('.songs-papers')
 	const map = $<HTMLElement>('.songs-map')
 	const mapLabels = $<HTMLElement>('.songs-map__labels')
 	const mapBars = $<HTMLElement>('.songs-map__bars')
@@ -70,7 +68,7 @@ export function createSongsView(root: HTMLElement): View {
 	const slider = $<HTMLInputElement>('.songs-slider')
 	const bpm = $<HTMLElement>('.songs-bpm')
 	const volume = $<HTMLInputElement>('.songs-volume__slider')
-	const trackSelect = $<HTMLSelectElement>('.songs-track')
+	const tracksBox = $<HTMLElement>('.songs-tracks')
 	const list = $<HTMLElement>('.songs-list')
 	const filterChips = $$<HTMLButtonElement>('[data-song-filter]')
 	const fileInput = $<HTMLInputElement>('.songs-file')
@@ -94,9 +92,15 @@ export function createSongsView(root: HTMLElement): View {
 	}
 	const options = () => {
 		const s = Settings.get()
-		return { speed: s.songSpeed, listen: s.songListen, click: s.songClick, countIn: s.songCountIn, track: trackIndex() }
+		return { speed: s.songSpeed, listen: s.songListen, click: s.songClick, countIn: s.songCountIn, tracks: activeTracks() }
 	}
-	const trackIndex = () => Math.min(Settings.get().songTrack, current().song.tracks.length - 1)
+	/** The tracks played, those of the song only; none of them = the first. */
+	const activeTracks = () => {
+		const count = current().song.tracks.length
+		const on = Settings.get().songTracks.filter((i) => i < count)
+		return on.length ? on : [0]
+	}
+	const trackName = (entry: Entry, i: number) => (entry.imported ? entry.song.tracks[i].name : t(entry.song.tracks[i].name))
 
 	let player: Player | null = null
 	let loadedId = ''
@@ -104,33 +108,68 @@ export function createSongsView(root: HTMLElement): View {
 	let frame = 0
 	const wakeLock = screenLock(() => player?.playing() ?? false)
 
-	/* The strip ----------------------------------------------------------------- */
+	/* The strips: one per track played, all on one scale and one clock --------------- */
 	let quarterPx = MIN_QUARTER_PX
-	// Notes in time order, for lighting the one sounding: [quarter, length, element].
-	let sounding: { q: number; length: number; el: HTMLElement }[] = []
-	let lit: HTMLElement[] = []
-	let band: HTMLElement | null = null
-	// Each played bar's number on the paper; the one being heard is lit.
-	let barNumbers: HTMLElement[] = []
-	let litNumber: HTMLElement | null = null
 
-	function drawStrip() {
+	interface Strip {
+		track: number
+		paper: HTMLElement
+		strip: HTMLElement
+		// Notes in time order, for lighting those sounding: [quarter, length, element].
+		sounding: { q: number; length: number; el: HTMLElement }[]
+		lit: HTMLElement[]
+		band: HTMLElement
+		// Each played bar's number on the paper; the one being heard is lit.
+		barNumbers: HTMLElement[]
+		litNumber: HTMLElement | null
+	}
+	let strips: Strip[] = []
+	let drawnStrips = ''
+
+	/** A window of tab paper (still clef and playhead, a moving strip), named when several are shown. */
+	function newPaper(name: string) {
+		const box = document.createElement('div')
+		box.className = 'songs-strip-box'
+		box.innerHTML =
+			'<span class="silk songs-strip-name"></span><div class="window"><div class="tab-paper" role="img"><span class="tab-strings" aria-hidden="true"></span>' +
+			'<div class="tab-track" aria-hidden="true"><div class="tab-strip"></div></div><div class="tab-clef" aria-hidden="true"><b>T</b><b>A</b><b>B</b></div>' +
+			'<span class="tab-now" aria-hidden="true"></span></div></div>'
+		const label = box.querySelector<HTMLElement>('.songs-strip-name')!
+		label.textContent = name
+		label.hidden = !name
+		return { box, paper: box.querySelector<HTMLElement>('.tab-paper')!, strip: box.querySelector<HTMLElement>('.tab-strip')! }
+	}
+
+	function drawStrips() {
+		const entry = current()
+		const tracks = activeTracks()
+		drawnStrips = `${entry.song.id}:${tracks.join()}`
+		// The closest two note starts of the tracks shown set the paper's scale, the same for all.
+		let closest = 4
+		for (const track of tracks)
+			for (const notes of entry.song.tracks[track].bars)
+				for (let i = 1; i < notes.length; i++) {
+					const gap = notes[i].at - notes[i - 1].at
+					if (gap > 1e-6) closest = Math.min(closest, gap)
+				}
+		quarterPx = clamp(NOTE_PX / closest, MIN_QUARTER_PX, MAX_QUARTER_PX)
+		const boxes: HTMLElement[] = []
+		strips = tracks.map((track) => {
+			const { box, paper, strip } = newPaper(tracks.length > 1 ? trackName(entry, track) : '')
+			boxes.push(box)
+			return drawStrip(track, paper, strip)
+		})
+		papers.replaceChildren(...boxes)
+	}
+
+	function drawStrip(track: number, paper: HTMLElement, strip: HTMLElement): Strip {
 		const { song } = current()
 		const tl = player!.timeline
-		const bars = song.tracks[trackIndex()].bars
-		// The closest two note starts in the song set the paper's scale.
-		let closest = 4
-		for (const notes of bars)
-			for (let i = 1; i < notes.length; i++) {
-				const gap = notes[i].at - notes[i - 1].at
-				if (gap > 1e-6) closest = Math.min(closest, gap)
-			}
-		quarterPx = clamp(NOTE_PX / closest, MIN_QUARTER_PX, MAX_QUARTER_PX)
+		const bars = song.tracks[track].bars
 		const q = quarterPx
 		const { parts, el } = stripParts()
-		sounding = []
-		barNumbers = []
-		litNumber = null
+		const sounding: Strip['sounding'] = []
+		const barNumbers: HTMLElement[] = []
 		tl.slots.forEach((slot, i) => {
 			const x = slot.quarter * q
 			const bar = song.bars[slot.bar]
@@ -152,16 +191,16 @@ export function createSongsView(root: HTMLElement): View {
 				sounding.push({ q: slot.quarter + note.at, length: note.length, el: el('tab-n', nx, label, y) })
 			}
 		})
-		band = el('songs-ab', 0)
+		const band = el('songs-ab', 0)
 		band.hidden = true
 		strip.style.width = `${(tl.quarters + 4) * q}px`
 		strip.replaceChildren(...parts)
 		sounding.sort((a, b) => a.q - b.q)
-		lit = []
+		return { track, paper, strip, sounding, lit: [], band, barNumbers, litNumber: null }
 	}
 
 	/** The notes sounding at quarter `at`: those struck last (a chord, a double stop: all of them), while they last. */
-	function notesAt(at: number): HTMLElement[] {
+	function notesAt({ sounding }: Strip, at: number): HTMLElement[] {
 		let lo = 0
 		let hi = sounding.length - 1
 		let found = -1
@@ -179,11 +218,12 @@ export function createSongsView(root: HTMLElement): View {
 		return out
 	}
 
-	function light(els: HTMLElement[]) {
+	function light(strip: Strip, els: HTMLElement[]) {
+		const { lit } = strip
 		if (els.length === lit.length && els.every((el) => lit.includes(el))) return
 		for (const el of lit) el.classList.remove('tab-n--now')
 		for (const el of els) el.classList.add('tab-n--now')
-		lit = els
+		strip.lit = els
 	}
 
 	/* The map: the written bars by section, the loop and where the song is -------- */
@@ -214,16 +254,19 @@ export function createSongsView(root: HTMLElement): View {
 		const tl = player.timeline
 		const slot = tl.slots[player.slot()]
 		const at = player.quarter()
-		placeStrip(strip, at * quarterPx, smooth)
-		// The bar heard: its number in red, so the one under the playhead's arrow is not taken for the next.
-		const number = barNumbers[player.slot()] ?? null
-		if (number !== litNumber) {
-			litNumber?.classList.remove('is-now')
-			number?.classList.add('is-now')
-			litNumber = number
+		const sounding = player.playing() && !player.countingIn()
+		for (const strip of strips) {
+			placeStrip(strip.strip, at * quarterPx, smooth)
+			// The bar heard: its number in red, so the one under the playhead's arrow is not taken for the next.
+			const number = strip.barNumbers[player.slot()] ?? null
+			if (number !== strip.litNumber) {
+				strip.litNumber?.classList.remove('is-now')
+				number?.classList.add('is-now')
+				strip.litNumber = number
+			}
+			light(strip, sounding ? notesAt(strip, at) : [])
 		}
 		if (!seeking) seek.value = String(Math.round((player.position() / tl.duration) * SEEK_STEPS))
-		light(player.playing() && !player.countingIn() ? notesAt(at) : [])
 		const rate = Settings.get().songSpeed / 100
 		const bars = current().song.bars.length
 		const bar = slot ? slot.bar + 1 : 1
@@ -241,7 +284,10 @@ export function createSongsView(root: HTMLElement): View {
 			cells[shownBar - 1]?.classList.remove('is-now')
 			cells[bar - 1]?.classList.add('is-now')
 			shownBar = bar
-			paper.setAttribute('aria-label', t('Tab of {title}, bar {n}', { title: titleOf(current()), n: bar }))
+			for (const strip of strips) {
+				const title = strips.length > 1 ? `${titleOf(current())} · ${trackName(current(), strip.track)}` : titleOf(current())
+				strip.paper.setAttribute('aria-label', t('Tab of {title}, bar {n}', { title, n: bar }))
+			}
 			map.setAttribute('aria-label', t('Song map, bar {n} of {bars}: tap a bar for A, another for B', { n: bar, bars }))
 		}
 	}
@@ -258,8 +304,8 @@ export function createSongsView(root: HTMLElement): View {
 		})
 		setPressed([loopKey], () => on)
 		loopKey.disabled = a === null || b === null
-		// The band over the strip, and the bars it spans on the map.
-		if (band) {
+		// The band over each strip, and the bars it spans on the map.
+		for (const { band } of strips) {
 			band.hidden = a === null && b === null
 			const from = slots[a ?? b ?? 0]
 			const to = slots[b ?? a ?? 0]
@@ -277,41 +323,57 @@ export function createSongsView(root: HTMLElement): View {
 	/* Loading a song ------------------------------------------------------------- */
 	const titleOf = (entry: Entry) => (entry.imported ? entry.song.title : t(entry.song.title))
 
+	/** A new song: a new player. New tracks of the same song: new strips (the player keeps its place and loop). */
 	function load() {
 		const entry = current()
-		if (player && loadedId === `${entry.song.id}:${trackIndex()}`) return
-		stopRunning()
-		player?.stop()
-		showPlaying()
-		loadedId = `${entry.song.id}:${trackIndex()}`
-		player = createPlayer(entry.song, audio, options(), ended)
-		const { song } = entry
-		const track = song.tracks[trackIndex()]
-		title.textContent = titleOf(entry)
-		artist.textContent = song.artist
-		artist.hidden = !song.artist
-		const name = entry.imported ? track.name : t(track.name)
-		source.textContent = entry.imported ? `${t('Imported')} · ${entry.format} · ${name}` : `${t('Built in')} · ${t('public domain')}`
-		drawStrip()
-		drawMap()
-		shownBar = -1
-		showPosition()
-		showLoop()
+		if (!player || loadedId !== entry.song.id) {
+			stopRunning()
+			player?.stop()
+			showPlaying()
+			loadedId = entry.song.id
+			player = createPlayer(entry.song, audio, options(), ended)
+			const { song } = entry
+			title.textContent = titleOf(entry)
+			artist.textContent = song.artist
+			artist.hidden = !song.artist
+			source.textContent = entry.imported ? `${t('Imported')} · ${entry.format}` : `${t('Built in')} · ${t('public domain')}`
+			drawnStrips = ''
+			drawMap()
+			shownBar = -1
+		}
+		if (drawnStrips !== `${entry.song.id}:${activeTracks().join()}`) {
+			drawStrips()
+			shownBar = -1
+			showPosition()
+			showLoop()
+		}
 		renderTracks()
 	}
 
+	// One row per track with a 0/1 switch; the last one on stays on.
 	function renderTracks() {
-		const { song, imported: own } = current()
-		trackSelect.replaceChildren(
-			...song.tracks.map((track, i) => {
-				const option = document.createElement('option')
-				option.value = String(i)
-				option.textContent = own ? track.name : t(track.name)
-				return option
+		const entry = current()
+		const on = activeTracks()
+		tracksBox.replaceChildren(
+			...entry.song.tracks.map((_, i) => {
+				const row = document.createElement('label')
+				row.className = 'switch'
+				row.innerHTML =
+					'<span class="switch__text"><span class="switch__title"></span></span><input type="checkbox" class="switch__input" /><span class="switch__track"></span>'
+				row.querySelector('.switch__title')!.textContent = trackName(entry, i)
+				const input = row.querySelector<HTMLInputElement>('.switch__input')!
+				input.checked = on.includes(i)
+				input.addEventListener('change', () => {
+					const now = activeTracks()
+					const next = input.checked ? [...now, i].sort((a, b) => a - b) : now.filter((n) => n !== i)
+					if (next.length) Settings.update({ songTracks: next })
+					else input.checked = true
+				})
+				return row
 			})
 		)
-		trackSelect.value = String(trackIndex())
-		trackSelect.disabled = song.tracks.length < 2
+		// One track: nothing to choose.
+		tracksBox.closest<HTMLElement>('.songs-tracks-group')!.hidden = entry.song.tracks.length < 2
 	}
 
 	/* Transport ------------------------------------------------------------------ */
@@ -450,10 +512,6 @@ export function createSongsView(root: HTMLElement): View {
 	volume.addEventListener('input', () => Settings.update({ songVolume: Number(volume.value) }))
 	for (const input of $$<HTMLInputElement>('[data-song-option]'))
 		input.addEventListener('change', () => Settings.update({ [input.dataset.songOption!]: input.checked }))
-	trackSelect.addEventListener('change', () => {
-		detent()
-		Settings.update({ songTrack: Number(trackSelect.value) })
-	})
 	for (const chip of filterChips)
 		chip.addEventListener('click', () => Settings.update({ songFilter: chip.dataset.songFilter as Settings.Settings['songFilter'] }))
 
@@ -506,7 +564,7 @@ export function createSongsView(root: HTMLElement): View {
 				loadKey.setAttribute('aria-pressed', String(on))
 				loadKey.setAttribute('aria-label', t('Load {name}', { name }))
 				loadKey.addEventListener('click', () => {
-					Settings.update({ songId: entry.song.id, songTrack: 0 })
+					Settings.update({ songId: entry.song.id, songTracks: [0] })
 					window.scrollTo({ top: 0, behavior: reducedMotion.matches ? 'auto' : 'smooth' })
 				})
 				if (entry.imported) li.querySelector('.songs-row-keys')!.prepend(removeKey(entry, name))
@@ -538,7 +596,7 @@ export function createSongsView(root: HTMLElement): View {
 			await Store.remove(entry.song.id).catch(() => {})
 			imported = imported.filter((e) => e !== entry)
 			message.textContent = t('Removed {name}', { name })
-			if (Settings.get().songId === entry.song.id) Settings.update({ songId: builtins[0].song.id, songTrack: 0 })
+			if (Settings.get().songId === entry.song.id) Settings.update({ songId: builtins[0].song.id, songTracks: [0] })
 			else renderList()
 		})
 		return key
@@ -571,7 +629,7 @@ export function createSongsView(root: HTMLElement): View {
 		message.textContent = failed.length
 			? t('Could not read {names}: not a Guitar Pro or MusicXML file.', { names: failed.join(', ') })
 			: plural(files.length, 'Imported {n} song.', 'Imported {n} songs.')
-		if (last) Settings.update({ songId: last, songTrack: 0 })
+		if (last) Settings.update({ songId: last, songTracks: [0] })
 		else renderList()
 	})
 

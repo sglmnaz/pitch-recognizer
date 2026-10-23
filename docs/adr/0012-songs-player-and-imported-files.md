@@ -26,7 +26,8 @@ bought or downloaded under their own licence (Songsterr Plus exports Guitar Pro)
   Tab strip with bar numbers and the A–B band, a map of the whole song on an
   LCD and a position fader under it (as on a video), Bars −4 −1 [Play] +1 +4, Seconds −10 −5 −1 +1 +5 +10 (of listening, at
   the speed set), A / B / Loop, Speed 25–200 % with a key back to 100 %, Listen
-  with its own volume, Click, Count-in, Track,
+  with its own volume, Click, Count-in, Tracks (any number on: each its own
+  strip, all played together at 1/sqrt(n) each),
   the song list with Import file.
 - **Content**: built-in songs are public domain only, transcribed in Pluck's
   own compact notation (`ts/music/songs-catalog.ts`, `parseBars`); licensed songs

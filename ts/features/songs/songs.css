@@ -188,8 +188,31 @@
 	width: min(220px, 60%);
 }
 
-.songs-track {
-	min-width: 180px;
+.songs-tracks {
+	display: flex;
+	flex-direction: column;
+
+	& > .switch {
+		padding-block: var(--space-6);
+		border-top: 1.5px solid var(--rule);
+	}
+
+	& > .switch:last-child {
+		border-bottom: 1.5px solid var(--rule);
+	}
+}
+
+/* One strip per track played; the track's name over it when there are several. */
+.songs-papers {
+	display: flex;
+	flex-direction: column;
+	gap: var(--space-10);
+}
+
+.songs-strip-box {
+	display: flex;
+	flex-direction: column;
+	gap: var(--space-4);
 }
 
 .songs-list-head {
@@ -262,7 +285,7 @@
 			grid-area: head;
 		}
 
-		& > .window:has(.tab-paper) {
+		& > .songs-papers {
 			grid-area: paper;
 		}
 

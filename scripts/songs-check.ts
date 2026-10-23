@@ -204,7 +204,7 @@ ${note('F', 5, 4, 'half', 1, 1)}${note('E', 5, 4, 'half')}<barline location="rig
 				click: (at, accented) => clicks.push({ at, accented }),
 				stop: () => {},
 			},
-			{ speed: 100, listen: true, click: false, countIn: false, track: 0, ...options },
+			{ speed: 100, listen: true, click: false, countIn: false, tracks: [0], ...options },
 			() => ended++
 		)
 		const run = (seconds: number) => {
@@ -337,7 +337,7 @@ ${note('F', 5, 4, 'half', 1, 1)}${note('E', 5, 4, 'half')}<barline location="rig
 		const { player, plucks, run } = rig()
 		player.play()
 		run(1)
-		player.setOptions({ speed: 50, listen: true, click: false, countIn: false, track: 0 })
+		player.setOptions({ speed: 50, listen: true, click: false, countIn: false, tracks: [0] })
 		const before = plucks.length
 		run(2)
 		const later = plucks.slice(before)
@@ -386,7 +386,7 @@ ${note('F', 5, 4, 'half', 1, 1)}${note('E', 5, 4, 'half')}<barline location="rig
 			click: () => {},
 			stop: () => {},
 		},
-		{ speed: 100, listen: true, click: false, countIn: false, track: 0 }
+		{ speed: 100, listen: true, click: false, countIn: false, tracks: [0] }
 	)
 	player.play()
 	for (; clock < 5; clock += 0.025) player.tick()
@@ -397,6 +397,47 @@ ${note('F', 5, 4, 'half', 1, 1)}${note('E', 5, 4, 'half')}<barline location="rig
 		plucks.length === 5 && near(plucks[3].length, 0.5 + 1 + 0.05),
 		plucks.map((p) => `${p.midi}:${p.length.toFixed(2)}`).join()
 	)
+}
+
+/* Several tracks together -------------------------------------------------------- */
+{
+	// One bar at 120: a melody on one track, a chord on the other.
+	const song: Song = {
+		id: 'two',
+		title: 'two',
+		artist: '',
+		bars: [{ beats: 4, unit: 4, tempo: 120 }],
+		tracks: [
+			{ name: 'lead', tuning: STANDARD_TUNING, bars: parseBars('4:1/0 4:1/1 4:1/3 4:1/5') },
+			{ name: 'rhythm', tuning: STANDARD_TUNING, bars: parseBars('1:5/0+4/2+3/2') },
+		],
+	}
+	const play = (tracks: number[]) => {
+		let clock = 0
+		const plucks: { midi: number; volume: number }[] = []
+		const player = createPlayer(
+			song,
+			{ now: () => clock, heardAfter: () => 0, pluck: (midi, _at, _length, volume) => plucks.push({ midi, volume }), click: () => {}, stop: () => {} },
+			{ speed: 100, listen: true, click: false, countIn: false, tracks }
+		)
+		player.play()
+		for (; clock < 2.5; clock += 0.025) player.tick()
+		return { plucks, player }
+	}
+	const lead = play([0]).plucks
+	const both = play([0, 1])
+	check('one track: its notes only, full volume', lead.length === 4 && lead.every((p) => p.volume === 1))
+	check(
+		'two tracks: both play, each at 1/sqrt(2)',
+		both.plucks.length === 7 && near(both.plucks.find((p) => p.midi === 64)!.volume, Math.SQRT1_2) && both.plucks.some((p) => p.midi === 45)
+	)
+	const { player, plucks } = both
+	player.pause()
+	plucks.length = 0
+	player.seek(0)
+	player.setOptions({ speed: 100, listen: true, click: false, countIn: false, tracks: [1] })
+	player.play()
+	check('a track turned off is not played', plucks.length > 0 && plucks.every((p) => [45, 52, 57].includes(p.midi)))
 }
 
 finish('Songs: the model, built-in songs, MusicXML import and the player check out.')
