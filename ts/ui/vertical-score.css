@@ -1,0 +1,306 @@
+/* The upright score (ts/ui/vertical-score.ts) and the full-screen page that shows
+   it on phones: tab paper with a faint lane every other string, strings by
+   thickness, tokens falling onto a red line with a target per string. */
+.vscore {
+	--vscore-hit: calc(100% - 92px);
+	--vscore-names: 28px;
+
+	position: relative;
+	height: 100%;
+	overflow: hidden;
+	border-radius: var(--radius-sm);
+	background: var(--paper);
+	color: var(--paper-ink);
+}
+
+/* Full height, as the layer: --vscore-hit must mean the same line in both. The names cover the strings' ends. */
+.vscore__fixed {
+	position: absolute;
+	inset: 0;
+}
+
+.vscore__lane,
+.vscore__string {
+	position: absolute;
+	top: 0;
+	bottom: 0;
+	transform: translateX(-50%);
+}
+
+.vscore__lane:nth-child(odd) {
+	background: color-mix(in srgb, var(--paper-ink) 6%, transparent);
+}
+
+.vscore__string {
+	background: color-mix(in srgb, var(--paper-ink) 75%, transparent);
+}
+
+.vscore__line {
+	position: absolute;
+	z-index: 1;
+	top: calc(var(--vscore-hit) - 1px);
+	left: 4%;
+	right: 4%;
+	height: 2px;
+	background: var(--paper-red);
+}
+
+.vscore__target {
+	position: absolute;
+	z-index: 1;
+	top: var(--vscore-hit);
+	width: 38px;
+	height: 38px;
+	border-radius: 50%;
+	background: color-mix(in srgb, var(--paper) 70%, transparent);
+	box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--paper-red) 55%, transparent);
+	transform: translate(-50%, -50%);
+}
+
+/* The moving layer: its top is the line; what is due later sits higher. */
+.vscore__layer {
+	position: absolute;
+	z-index: 2;
+	top: var(--vscore-hit);
+	left: 0;
+	right: 0;
+	height: 0;
+	will-change: transform;
+}
+
+.vscore__bar {
+	position: absolute;
+	left: 6%;
+	right: 6%;
+	height: 1.5px;
+	background: color-mix(in srgb, var(--paper-ink) 55%, transparent);
+}
+
+.vscore__barno {
+	position: absolute;
+	right: 1.5%;
+	font: 700 var(--text-2xs) / 1 var(--font-ui);
+	color: color-mix(in srgb, var(--paper-ink) 55%, transparent);
+	transform: translateY(-50%);
+
+	&.is-now {
+		color: var(--paper-red);
+	}
+}
+
+.vscore__section {
+	position: absolute;
+	left: 1.5%;
+	font: italic 600 var(--text-2xs) / 1 var(--font-ui);
+	letter-spacing: 0.1em;
+	text-transform: uppercase;
+	transform: translateY(-140%);
+}
+
+.vscore__n {
+	position: absolute;
+	z-index: 2;
+	width: 34px;
+	height: 34px;
+	display: grid;
+	place-items: center;
+	font: 700 19px / 1 var(--font-ui);
+	white-space: nowrap;
+	border-radius: 50%;
+	background: var(--paper-ink);
+	color: var(--paper);
+	box-shadow: 0 1px 2px #0005;
+	transform: translate(-50%, -50%);
+
+	&.is-now {
+		background: var(--paper-red);
+		box-shadow: 0 0 0 3px color-mix(in srgb, var(--paper-red) 30%, transparent);
+	}
+}
+
+.vscore__bend {
+	position: absolute;
+	left: 100%;
+	margin-left: 3px;
+	font-size: var(--text-xs);
+	color: var(--paper-ink);
+}
+
+.vscore__tail {
+	position: absolute;
+	z-index: 1;
+	width: 7px;
+	border-radius: 4px;
+	background: color-mix(in srgb, var(--paper-ink) 30%, transparent);
+	transform: translateX(-50%);
+
+	&.is-now {
+		background: color-mix(in srgb, var(--paper-red) 45%, transparent);
+	}
+}
+
+.vscore__tech {
+	position: absolute;
+	z-index: 3;
+	font: 700 var(--text-sm) / 1 var(--font-ui);
+	color: color-mix(in srgb, var(--paper-ink) 80%, transparent);
+	transform: translate(20px, -50%);
+}
+
+/* The notes still to come fade in at the top. */
+.vscore__fade {
+	position: absolute;
+	z-index: 3;
+	top: 0;
+	left: 0;
+	right: 0;
+	height: 36px;
+	background: linear-gradient(var(--paper), transparent);
+}
+
+.vscore__names {
+	position: absolute;
+	z-index: 3;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	height: var(--vscore-names);
+	background: var(--paper);
+	border-top: 1px solid color-mix(in srgb, var(--paper-ink) 25%, transparent);
+
+	& span {
+		position: absolute;
+		top: 8px;
+		font: 700 var(--text-xs) / 1 var(--font-ui);
+		letter-spacing: 0.08em;
+		transform: translateX(-50%);
+	}
+}
+
+/* The full-screen page: over everything, the tab bar included. */
+.score-screen {
+	position: fixed;
+	z-index: 50;
+	inset: 0;
+	display: grid;
+	grid-template-rows: auto minmax(0, 1fr) auto;
+	gap: var(--space-8);
+	padding: calc(10px + env(safe-area-inset-top)) 10px calc(12px + env(safe-area-inset-bottom));
+	background: var(--panel-grain) var(--panel);
+	color: var(--fg);
+}
+
+html.has-score-screen body {
+	overflow: hidden;
+}
+
+.score-screen__top {
+	display: grid;
+	grid-template-columns: var(--tap) minmax(0, 1fr) auto;
+	align-items: center;
+	gap: var(--space-8);
+	min-height: 48px;
+
+	& .key {
+		height: 40px;
+		padding: 0;
+		font-size: var(--text-lg);
+	}
+
+	& .lcd {
+		padding: 4px 8px;
+		font-size: var(--text-xs);
+		white-space: nowrap;
+	}
+}
+
+.score-screen__track {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 5px;
+	min-width: 0;
+}
+
+.score-screen__name {
+	display: flex;
+	align-items: center;
+	gap: var(--space-6);
+	max-width: 100%;
+
+	& b {
+		overflow: hidden;
+		font: 700 var(--text-sm) / 1 var(--font-ui);
+		letter-spacing: 0.14em;
+		text-transform: uppercase;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+
+	& button {
+		min-width: 32px;
+		min-height: 32px;
+		padding: 0;
+		border: 0;
+		background: none;
+		color: var(--fg-secondary);
+		font-size: var(--text-lg);
+		cursor: pointer;
+	}
+}
+
+.score-screen__pager {
+	display: flex;
+	gap: 6px;
+}
+
+/* The carousel: one score a page, the next one's edge in view; the browser's own swipe. */
+.score-screen__rail {
+	display: flex;
+	gap: 10px;
+	overflow-x: auto;
+	scroll-snap-type: x mandatory;
+	scrollbar-width: none;
+	overscroll-behavior-x: contain;
+
+	&::-webkit-scrollbar {
+		display: none;
+	}
+}
+
+.score-screen__panel {
+	flex: 0 0 calc(100% - 18px);
+	height: 100%;
+	scroll-snap-align: start;
+
+	&:only-child {
+		flex-basis: 100%;
+	}
+
+	& > div {
+		height: 100%;
+	}
+}
+
+.score-screen__keys {
+	display: grid;
+	gap: var(--space-8);
+
+	& > :is(.key, .btn) {
+		height: 52px;
+		padding: 0;
+		font-size: var(--text-lg);
+	}
+}
+
+/* The way in, under each strip. */
+.score-open {
+	display: flex;
+	justify-content: flex-end;
+
+	& .key {
+		height: 36px;
+		padding-inline: var(--space-12);
+		font-size: var(--text-sm);
+	}
+}

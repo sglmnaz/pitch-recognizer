@@ -45,6 +45,7 @@
 @import './components/update.css' layer(components);
 @import './components/guard.css' layer(components);
 @import '../ui/fretboard.css' layer(components);
+@import '../ui/vertical-score.css' layer(components);
 @import '../features/tuner/tuner.css' layer(components);
 @import '../features/scales/scales.css' layer(components);
 @import '../features/chords/chords.css' layer(components);

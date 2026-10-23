@@ -21,11 +21,15 @@ import * as FieldReport from '../calibration/field-report'
 import { plural, t } from '../../core/i18n'
 import { bindTempoKeys, numberField } from '../../ui/tempo'
 import { placeStrip as place, stringY, stripParts } from '../../ui/tab-strip'
+import { createScoreScreen, type ScoreNote, type VerticalScore } from '../../ui/vertical-score'
+import { STANDARD_TUNING } from '../../music/song'
 
 // One beat takes this much paper whatever the subdivision, so 16ths sit
 // closer than 8ths and a bar always reads as a bar.
 const BEAT_PX = 112
 const TAPE_MARKS = 16
+// Full screen: paper per step, at least room for one token (34 px) and a gap.
+const SCORE_STEP_PX = 40
 
 const MARK_GLYPH: Record<Tab.Mark, string> = { hit: '✓', early: '←', late: '→', miss: '×' }
 const STRING_NOTE = ['', 'E', 'B', 'G', 'D', 'A', 'E']
@@ -110,12 +114,14 @@ export function createTabView(root: HTMLElement): View {
 		}
 		strip.style.width = `${copies * loopPx}px`
 		strip.replaceChildren(...parts)
+		if (screen.isOpen()) drawScore(ex, copies)
 	}
 
 	/** Puts step `pos` of the loop under the playhead (negative: still to come). */
 	function placeStrip(pos: number, ex: Tab.TabExercise, smooth: boolean) {
 		const wrapped = pos < 0 ? pos : pos % ex.steps
 		place(strip, wrapped * stepPx(ex), smooth)
+		score?.place(wrapped, isRunning())
 	}
 
 	function clearMarks(copy?: number) {
@@ -155,6 +161,54 @@ export function createTabView(root: HTMLElement): View {
 	// Tempo: the loop the strip is showing (floor of position / loop length).
 	// A new loop wipes the marks off copy 0 before its notes come round again.
 	let shownLoop = 0
+
+	/* Full screen: the exercise upright, Start and Loop under it ------------------- */
+	const screenStart = document.createElement('button')
+	screenStart.type = 'button'
+	screenStart.className = 'btn btn--large key--hot'
+	screenStart.textContent = t('Start')
+	screenStart.addEventListener('click', () => startButton.click())
+	const screenLoop = document.createElement('button')
+	screenLoop.type = 'button'
+	screenLoop.className = 'key key--lit'
+	screenLoop.textContent = t('Loop')
+	screenLoop.addEventListener('click', () => loopKey.click())
+	const screen = createScoreScreen([{ el: screenStart, grow: 2.4 }, { el: screenLoop }], () => {
+		score = null
+	})
+	let score: VerticalScore | null = null
+
+	/** The exercise on the upright score: two loops one after the other when looping (as on the strip). */
+	function drawScore(ex: Tab.TabExercise, copies: number) {
+		const bar = ex.perBeat * Tab.BEATS_PER_BAR
+		const notes: ScoreNote[] = []
+		const bars: { at: number; label: string }[] = []
+		for (let c = 0; c < copies; c++) {
+			const x0 = c * ex.steps
+			for (let step = 0; step < ex.steps; step += bar) bars.push({ at: x0 + step, label: String(step / bar + 1) })
+			for (const [i, note] of ex.notes.entries()) {
+				const next = ex.notes[i + 1]?.step ?? ex.steps + (ex.notes[0]?.step ?? 0)
+				notes.push({
+					at: x0 + note.step,
+					length: next - note.step,
+					string: note.string,
+					label: String(note.fret),
+					...(note.tech ? { tech: note.tech === 't' ? 'T' : note.tech } : {}),
+					...(note.bend ? { bentTo: note.fret + note.bend } : {}),
+				})
+			}
+		}
+		score = screen.setScores([ex.name])[0]
+		score.draw({ notes, bars, tuning: STANDARD_TUNING, unitPx: Math.max(SCORE_STEP_PX, 120 / ex.perBeat) })
+	}
+
+	$('.tab-full').addEventListener('click', () => {
+		const ex = session.config()?.exercise ?? exercise()
+		drawScore(ex, (session.config()?.loop ?? Settings.get().tabLoop) ? 2 : 1)
+		screen.open()
+		score?.place(isRunning() && session.config()?.follow === 'tempo' ? Math.max(0, session.position(performance.now())) % ex.steps : 0, isRunning())
+		screen.setText(statusMain.textContent ?? '')
+	})
 
 	/* Setup ---------------------------------------------------------------- */
 	// Two filters over one list: a goal and a level, each with All first.
@@ -224,7 +278,7 @@ export function createTabView(root: HTMLElement): View {
 	function renderSetup() {
 		const s = Settings.get()
 		showFollow(s.tabFollow)
-		setPressed([loopKey], () => s.tabLoop)
+		setPressed([loopKey, screenLoop], () => s.tabLoop)
 		speedUp.checked = s.tabSpeedUp
 		speedUp.disabled = s.tabFollow === 'wait'
 		tempoField.show(s.tabBpm)
@@ -239,6 +293,7 @@ export function createTabView(root: HTMLElement): View {
 	/* Stage ------------------------------------------------------------------ */
 	function showStatus(main: string, side = '') {
 		if (statusMain.textContent !== main) statusMain.textContent = main
+		screen.setText(main)
 		if (statusSide.textContent !== side) statusSide.textContent = side
 	}
 
@@ -292,8 +347,10 @@ export function createTabView(root: HTMLElement): View {
 		stage.dataset.phase = session.phase()
 		setup.hidden = running
 		root.classList.toggle('trainer--running', running)
-		startButton.textContent = running ? t('Stop') : session.phase() === 'done' ? t('Start again') : t('Start')
-		startButton.classList.toggle('key--hot', !running)
+		for (const key of [startButton, screenStart]) {
+			key.textContent = running ? t('Stop') : session.phase() === 'done' ? t('Start again') : t('Start')
+			key.classList.toggle('key--hot', !running)
+		}
 	}
 
 	// Marks arrive loop by loop, in order, a little after each note.
@@ -368,6 +425,8 @@ export function createTabView(root: HTMLElement): View {
 	function start() {
 		if (!micLive) {
 			message.textContent = t('The microphone is off. Press Listen, then Start.')
+			// Full screen hides the mic key and this message: leave it, so both show.
+			if (screen.isOpen()) screen.close()
 			focusMicButton()
 			return
 		}
@@ -463,6 +522,7 @@ export function createTabView(root: HTMLElement): View {
 
 		// The mic stopped, the exercise or the tab changed: a session cannot go on.
 		reset() {
+			screen.close()
 			micLive = false
 			session.resetHearing()
 			onsets.reset()

@@ -14,7 +14,8 @@ import { reducedMotion } from '../../ui/media'
 import { screenLock } from '../../ui/screen-lock'
 import { bindTempoKeys, numberField, onPress } from '../../ui/tempo'
 import { placeStrip, stringY, stripParts } from '../../ui/tab-strip'
-import type { Song } from '../../music/song'
+import { createScoreScreen, type ScoreSpec, type VerticalScore } from '../../ui/vertical-score'
+import type { Song, Timeline } from '../../music/song'
 import { BUILTIN } from '../../music/songs-catalog'
 import { createPlayer, type Player, type PlayerAudio } from './songs.player'
 import * as Store from './songs.store'
@@ -29,6 +30,10 @@ const BAR_LINE_LEAD = 0.25
 const TICK_MS = 25
 // The position fader's resolution (0 = the top, SEEK_STEPS = the end).
 const SEEK_STEPS = 1000
+// The full-screen score: paper per quarter so the closest notes' tokens (34 px) stay apart, within these.
+const SCORE_NOTE_PX = 38
+const MIN_SCORE_PX = 56
+const MAX_SCORE_PX = 160
 // A second tap on × within this removes an imported song.
 const ARM_MS = 3000
 
@@ -266,6 +271,7 @@ export function createSongsView(root: HTMLElement): View {
 			}
 			light(strip, sounding ? notesAt(strip, at) : [])
 		}
+		if (screen.isOpen()) for (const score of scores) score.place(at, sounding)
 		if (!seeking) seek.value = String(Math.round((player.position() / tl.duration) * SEEK_STEPS))
 		const rate = Settings.get().songSpeed / 100
 		const bars = current().song.bars.length
@@ -275,6 +281,7 @@ export function createSongsView(root: HTMLElement): View {
 				? `${t('Bar {n} / {bars}', { n: bar, bars })} · ${t('pass {n} / {passes}', { n: slot.pass, passes: slot.passes })}`
 				: t('Bar {n} / {bars}', { n: bar, bars })
 		if (where.textContent !== text) where.textContent = text
+		screen.setText(t('Bar {n} / {bars}', { n: bar, bars }))
 		const clocks = `${clock(player.position() / rate)} / ${clock(tl.duration / rate)}`
 		if (time.textContent !== clocks) {
 			time.textContent = clocks
@@ -302,8 +309,8 @@ export function createSongsView(root: HTMLElement): View {
 			key.querySelector('.lamp')!.classList.toggle('is-on', at !== null)
 			key.querySelector('small')!.textContent = at === null ? '' : String(slots[at].bar + 1)
 		})
-		setPressed([loopKey], () => on)
-		loopKey.disabled = a === null || b === null
+		setPressed([loopKey, screenLoop], () => on)
+		loopKey.disabled = screenLoop.disabled = a === null || b === null
 		// The band over each strip, and the bars it spans on the map.
 		for (const { band } of strips) {
 			band.hidden = a === null && b === null
@@ -343,6 +350,7 @@ export function createSongsView(root: HTMLElement): View {
 		}
 		if (drawnStrips !== `${entry.song.id}:${activeTracks().join()}`) {
 			drawStrips()
+			if (screen.isOpen()) drawScores()
 			shownBar = -1
 			showPosition()
 			showLoop()
@@ -400,8 +408,10 @@ export function createSongsView(root: HTMLElement): View {
 
 	function showPlaying() {
 		const playing = player?.playing() ?? false
-		playKey.textContent = playing ? t('Pause') : t('Play')
-		playKey.classList.toggle('key--hot', !playing)
+		for (const key of [playKey, screenPlay]) {
+			key.textContent = playing ? t('Pause') : t('Play')
+			key.classList.toggle('key--hot', !playing)
+		}
 	}
 
 	function ended() {
@@ -495,6 +505,73 @@ export function createSongsView(root: HTMLElement): View {
 		player.setLooping(!player.loop().on)
 		showLoop()
 		announce(player.loop().on ? t('Loop on') : t('Loop off'), true)
+	})
+
+	/* Full screen: the scores upright, one a page (a track each), the keys that matter while playing. */
+	const screenKey = (className: string, text: string, label?: string) => {
+		const key = document.createElement('button')
+		key.type = 'button'
+		key.className = className
+		key.textContent = text
+		if (label) key.setAttribute('aria-label', label)
+		return key
+	}
+	const screenBack = screenKey('key key--step', '−1', t('Back 1 bar'))
+	const screenPlay = screenKey('btn btn--large key--hot', t('Play'))
+	const screenNext = screenKey('key key--step', '+1', t('Forward 1 bar'))
+	const screenLoop = screenKey('key key--lit', t('Loop'))
+	for (const [key, by] of [
+		[screenBack, -1],
+		[screenNext, 1],
+	] as const)
+		onPress(key, () => {
+			player?.jumpBars(by)
+			showPosition(!player?.playing())
+		})
+	screenPlay.addEventListener('click', toggle)
+	screenLoop.addEventListener('click', () => loopKey.click())
+	const screen = createScoreScreen([{ el: screenBack }, { el: screenPlay, grow: 1.8 }, { el: screenNext }, { el: screenLoop, grow: 1.2 }], () => showPosition())
+	let scores: VerticalScore[] = []
+
+	function scoreSpec(song: Song, track: number, tl: Timeline, unitPx: number): ScoreSpec {
+		const spec: ScoreSpec = { notes: [], bars: [], sections: [], tuning: song.tracks[track].tuning, unitPx }
+		for (const slot of tl.slots) {
+			spec.bars.push({ at: slot.quarter, label: String(slot.bar + 1) })
+			const section = song.bars[slot.bar].section
+			if (section) spec.sections!.push({ at: slot.quarter, text: section })
+			for (const note of song.tracks[track].bars[slot.bar] ?? [])
+				spec.notes.push({
+					at: slot.quarter + note.at,
+					length: note.length,
+					string: note.string,
+					label: note.tech === 'x' ? 'x' : note.tied ? `(${note.fret})` : String(note.fret),
+					...(note.tech && note.tech !== 'x' ? { tech: note.tech } : {}),
+					...(note.bend ? { bentTo: note.fret + note.bend } : {}),
+				})
+		}
+		return spec
+	}
+
+	function drawScores() {
+		const entry = current()
+		const tracks = activeTracks()
+		let closest = 4
+		for (const track of tracks)
+			for (const notes of entry.song.tracks[track].bars)
+				for (let i = 1; i < notes.length; i++) {
+					const gap = notes[i].at - notes[i - 1].at
+					if (gap > 1e-6) closest = Math.min(closest, gap)
+				}
+		const unitPx = clamp(SCORE_NOTE_PX / closest, MIN_SCORE_PX, MAX_SCORE_PX)
+		scores = screen.setScores(tracks.map((track) => trackName(entry, track)))
+		tracks.forEach((track, i) => scores[i].draw(scoreSpec(entry.song, track, player!.timeline, unitPx)))
+	}
+
+	$('.songs-full').addEventListener('click', () => {
+		if (!player) return
+		drawScores()
+		screen.open()
+		showPosition()
 	})
 
 	// A hidden page stalls the timer: what it scheduled would run out mid-bar.
@@ -662,6 +739,7 @@ export function createSongsView(root: HTMLElement): View {
 		// Leaving the exercise or the tab: the song stops where it is.
 		reset() {
 			pause()
+			screen.close()
 		},
 		onReading() {},
 		wantsMic: () => false,
