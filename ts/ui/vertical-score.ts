@@ -54,11 +54,17 @@ const SLIDE = ['/', '\\']
 const joins = (tech?: string) => !!tech && (LEGATO.includes(tech) || SLIDE.includes(tech))
 // A token's radius, and the room two notes of a string need: apart, and with a mark between them.
 const R = 17
+const TOKEN_PX = 34
+// The smallest a token gets between close notes; a fret number still reads at 11 px.
+const SMALLEST_PX = 20
 const APART_PX = 36
 const JOINED_PX = 48
 // The pairs the spacing must serve: all but the closest tenth (grace notes, a strum written as
 // notes a hair apart once made the score run kilometres per bar).
 const SERVED = 0.9
+// Every pair of a string, though, gets room for two small tokens; only notes closer than this
+// (units: a 16th of a quarter, grace notes) are left to overlap, or they would set the pace.
+const GRACE = 1 / 16
 const SVG = 'http://www.w3.org/2000/svg'
 // Two notes are joined only if the first rings into the second (up to this times its length):
 // a slide into a note from nowhere (Guitar Pro's slide-in) had no note to start from, and was
@@ -75,16 +81,18 @@ export const joinsFrom = (before: { at: number; length: number }, note: { at: nu
  */
 export function unitPxFor(notes: ScoreNote[], least: number, most = Number.POSITIVE_INFINITY) {
 	const needs: number[] = []
+	let floor = 0
 	const last = new Map<number, number>()
 	for (const note of [...notes].sort((a, b) => a.at - b.at)) {
 		const before = last.get(note.string)
 		const gap = before === undefined ? 0 : note.at - before
 		if (gap > 1e-6) needs.push((joins(note.tech) ? JOINED_PX : APART_PX) / gap)
+		if (gap >= GRACE) floor = Math.max(floor, (SMALLEST_PX + 3) / gap)
 		last.set(note.string, note.at)
 	}
 	needs.sort((a, b) => a - b)
 	const need = needs.length ? needs[Math.floor(SERVED * (needs.length - 1))] : least
-	return Math.min(most, Math.max(least, need))
+	return Math.min(most, Math.max(least, need, floor))
 }
 
 /** One score in `root` (an empty element): draw(spec), then place(at) every frame; setSide(on) turns it on its side. */
@@ -155,6 +163,19 @@ export function createVerticalScore(root: HTMLElement) {
 			last.set(note.string, note)
 		}
 		const leadsOn = new Set(from.values())
+		// Room for each token: the spacing serves most notes, so the closest few (a fast run,
+		// a 32nd) get a smaller token that still clears its neighbours on the string.
+		const room = new Map<ScoreNote, number>()
+		const byString = new Map<number, ScoreNote[]>()
+		for (const note of spec.notes) byString.set(note.string, [...(byString.get(note.string) ?? []), note])
+		for (const notes of byString.values()) {
+			notes.sort((a, b) => a.at - b.at)
+			notes.forEach((note, i) => {
+				const gaps = [notes[i - 1], notes[i + 1]].filter((n) => n && Math.abs(n.at - note.at) > 1e-6).map((n) => Math.abs(n.at - note.at) * unitPx)
+				const px = Math.min(TOKEN_PX, ...gaps.map((gap) => gap - 3))
+				if (px < TOKEN_PX) room.set(note, Math.max(SMALLEST_PX, Math.floor(px)))
+			})
+		}
 		// A mark drawn in px from a token: u along (later), v across toward the high strings,
 		// turned back near the edge where the high strings leave no room.
 		const mark = (note: ScoreNote) => {
@@ -191,7 +212,8 @@ export function createVerticalScore(root: HTMLElement) {
 				: undefined
 			const before = from.get(note)
 			// Not picked (hammered, pulled, slid into): the token hollow.
-			const el = span(layer, before ? 'vscore__n vscore__n--soft' : 'vscore__n', at(note.string, note.at), note.label)
+			const size = room.get(note)
+			const el = span(layer, before ? 'vscore__n vscore__n--soft' : 'vscore__n', `${at(note.string, note.at)}${size ? `;--n:${size}px` : ''}`, note.label)
 			if (before) {
 				const { p, path, text } = mark(before)
 				const run = (note.at - before.at) * unitPx

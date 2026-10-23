@@ -97,14 +97,15 @@
 	transform: translateY(-140%);
 }
 
+/* --n: a smaller token where notes are close (vertical-score.ts); the figure scales with it. */
 .vscore__n {
 	position: absolute;
 	z-index: 2;
-	width: 34px;
-	height: 34px;
+	width: var(--n, 34px);
+	height: var(--n, 34px);
 	display: grid;
 	place-items: center;
-	font: 700 19px / 1 var(--font-ui);
+	font: 700 calc(var(--n, 34px) * 0.56) / 1 var(--font-ui);
 	white-space: nowrap;
 	border-radius: 50%;
 	background: var(--paper-ink);
