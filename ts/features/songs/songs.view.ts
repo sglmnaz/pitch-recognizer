@@ -88,7 +88,7 @@ export function createSongsView(root: HTMLElement): View {
 		now: () => Sound.audio().currentTime,
 		heardAfter: () => (Sound.audio().outputLatency || 0) + Settings.get().audioDelayMs / 1000,
 		// Squared, as the Metronome's volume: the fader's middle sounds like half as loud.
-		pluck: (midi, at, length, gain) => Sound.play(midi, at - Sound.audio().currentTime, gain * Settings.get().songVolume ** 2, 0, length),
+		pluck: (midi, at, length, gain, bend) => Sound.play(midi, at - Sound.audio().currentTime, gain * Settings.get().songVolume ** 2, 0, length, bend),
 		click: (at, accented) => Sound.click(at - Sound.audio().currentTime, accented, Settings.get().metroVolume),
 		stop: () => Sound.stopAll(),
 	}
@@ -108,7 +108,7 @@ export function createSongsView(root: HTMLElement): View {
 	let quarterPx = MIN_QUARTER_PX
 	// Notes in time order, for lighting the one sounding: [quarter, length, element].
 	let sounding: { q: number; length: number; el: HTMLElement }[] = []
-	let lit: HTMLElement | null = null
+	let lit: HTMLElement[] = []
 	let band: HTMLElement | null = null
 	// Each played bar's number on the paper; the one being heard is lit.
 	let barNumbers: HTMLElement[] = []
@@ -157,11 +157,11 @@ export function createSongsView(root: HTMLElement): View {
 		strip.style.width = `${(tl.quarters + 4) * q}px`
 		strip.replaceChildren(...parts)
 		sounding.sort((a, b) => a.q - b.q)
-		lit = null
+		lit = []
 	}
 
-	/** The note sounding at quarter `at` (the last one started, while it lasts). */
-	function noteAt(at: number): HTMLElement | null {
+	/** The notes sounding at quarter `at`: those struck last (a chord, a double stop: all of them), while they last. */
+	function notesAt(at: number): HTMLElement[] {
 		let lo = 0
 		let hi = sounding.length - 1
 		let found = -1
@@ -172,15 +172,18 @@ export function createSongsView(root: HTMLElement): View {
 				lo = mid + 1
 			} else hi = mid - 1
 		}
-		const note = sounding[found]
-		return note && at < note.q + Math.max(note.length, 0.25) ? note.el : null
+		const struck = sounding[found]?.q
+		const out: HTMLElement[] = []
+		for (let i = found; i >= 0 && Math.abs(sounding[i].q - struck) < 1e-6; i--)
+			if (at < sounding[i].q + Math.max(sounding[i].length, 0.25)) out.push(sounding[i].el)
+		return out
 	}
 
-	function light(el: HTMLElement | null) {
-		if (el === lit) return
-		lit?.classList.remove('tab-n--now')
-		el?.classList.add('tab-n--now')
-		lit = el
+	function light(els: HTMLElement[]) {
+		if (els.length === lit.length && els.every((el) => lit.includes(el))) return
+		for (const el of lit) el.classList.remove('tab-n--now')
+		for (const el of els) el.classList.add('tab-n--now')
+		lit = els
 	}
 
 	/* The map: the written bars by section, the loop and where the song is -------- */
@@ -220,7 +223,7 @@ export function createSongsView(root: HTMLElement): View {
 			litNumber = number
 		}
 		if (!seeking) seek.value = String(Math.round((player.position() / tl.duration) * SEEK_STEPS))
-		light(player.playing() && !player.countingIn() ? noteAt(at) : null)
+		light(player.playing() && !player.countingIn() ? notesAt(at) : [])
 		const rate = Settings.get().songSpeed / 100
 		const bars = current().song.bars.length
 		const bar = slot ? slot.bar + 1 : 1

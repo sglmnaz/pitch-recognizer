@@ -40,7 +40,8 @@ bought or downloaded under their own licence (Songsterr Plus exports Guitar Pro)
   playing never needs it, offline included; importing needs the network once.
 - **Fixes on what alphaTab reads**: MusicXML `<sound tempo>` marks outside a
   `<direction>` (Finale writes them so) are read by Pluck, alphaTab plays those
-  scores at 120; MusicXML fingering arrives one lower (alphaTab's thumb = 0);
+  scores at 120; hammer-ons, pull-offs and ties, which its MusicXML import drops,
+  are read by Pluck too (`musicXmlMarks`); MusicXML fingering arrives one lower (alphaTab's thumb = 0);
   no-break spaces and quotes are cleaned from titles; a score without tab gets a
   string and fret per note from the left-hand fingering (`assignPositions`:
   finger 0 = open string, finger f on fret n = the hand at n − f + 1, else stay

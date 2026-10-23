@@ -31,6 +31,54 @@ export function musicXmlTempos(text: string): Map<number, number> {
 	return tempos
 }
 
+const STEPS: Record<string, number> = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 }
+
+/** Where a note sits: part, measure, onset (48ths of a quarter, so triplets and 16ths are whole), string or pitch class. */
+const markKey = (part: number, measure: number, quarters: number, where: string) => `${part}:${measure}:${Math.round(quarters * 48)}:${where}`
+
+/**
+ * What alphaTab's MusicXML import leaves out: hammer-ons and pull-offs (the
+ * note they start from) and ties (the note tied over, not struck again). Keyed
+ * by markKey, with the string where the file has tab, else the pitch class.
+ */
+export function musicXmlMarks(text: string): Map<string, { tech?: 'h' | 'p'; tied?: true }> {
+	const marks = new Map<string, { tech?: 'h' | 'p'; tied?: true }>()
+	let part = 0
+	for (const [, partBody] of text.matchAll(/<part\b[^>]*>([\s\S]*?)<\/part>/g)) {
+		let divisions = 1
+		let measure = 0
+		for (const [, body] of partBody.matchAll(/<measure\b[^>]*>([\s\S]*?)<\/measure>/g)) {
+			divisions = Number(body.match(/<divisions>(\d+)/)?.[1] ?? divisions)
+			let cursor = 0
+			let onset = 0
+			for (const [element, tag] of body.matchAll(/<(note|backup|forward)\b[\s\S]*?<\/\1>/g)) {
+				const duration = Number(element.match(/<duration>(\d+)/)?.[1] ?? 0)
+				if (tag === 'backup') cursor -= duration
+				else if (tag === 'forward') cursor += duration
+				else {
+					if (/<grace\b/.test(element)) continue
+					if (!/<chord\s*\/>/.test(element)) {
+						onset = cursor
+						cursor += duration
+					}
+					if (/<rest\b/.test(element)) continue
+					const tech = /<hammer-on\b[^>]*type="start"/.test(element) ? 'h' : /<pull-off\b[^>]*type="start"/.test(element) ? 'p' : undefined
+					const tied = /<tied?\b[^>]*type="stop"/.test(element)
+					if (!tech && !tied) continue
+					const string = element.match(/<string>(\d+)<\/string>/)?.[1]
+					const step = element.match(/<step>([A-G])<\/step>/)?.[1]
+					const alter = Number(element.match(/<alter>(-?\d+)<\/alter>/)?.[1] ?? 0)
+					const where = string ? `s${string}` : step ? `pc${(((STEPS[step] + alter) % 12) + 12) % 12}` : ''
+					marks.set(markKey(part, measure, onset / divisions, where), { ...(tech ? { tech } : {}), ...(tied ? { tied: true } : {}) })
+				}
+			}
+			measure++
+		}
+		part++
+	}
+	return marks
+}
+
 /** Reads a Guitar Pro or MusicXML file; throws when it is neither (or broken). */
 export async function importSong(bytes: Uint8Array, fileName: string, id: string): Promise<Song> {
 	const at = await alphaTab()
@@ -40,9 +88,10 @@ export async function importSong(bytes: Uint8Array, fileName: string, id: string
 	const score = at.importer.ScoreLoader.loadScoreFromBytes(bytes, settings)
 	// Plain-text MusicXML: its own tempo marks win over alphaTab's.
 	const head = new TextDecoder().decode(bytes.subarray(0, 512))
-	const xmlTempos =
-		/<score-(partwise|timewise)/.test(head) || head.trimStart().startsWith('<?xml') ? musicXmlTempos(new TextDecoder().decode(bytes)) : new Map()
-	const isMusicXml = xmlTempos.size > 0 || /\.(xml|musicxml|mxl)$/i.test(fileName)
+	const xmlText = /<score-(partwise|timewise)/.test(head) || head.trimStart().startsWith('<?xml') ? new TextDecoder().decode(bytes) : ''
+	const xmlTempos = xmlText ? musicXmlTempos(xmlText) : new Map<number, number>()
+	const xmlMarks = xmlText ? musicXmlMarks(xmlText) : new Map<string, { tech?: 'h' | 'p'; tied?: true }>()
+	const isMusicXml = Boolean(xmlText) || /\.(xml|musicxml|mxl)$/i.test(fileName)
 
 	let tempo = score.tempo || 120
 	const bars: SongBar[] = score.masterBars.map((mb, i) => {
@@ -59,7 +108,7 @@ export async function importSong(bytes: Uint8Array, fileName: string, id: string
 	})
 
 	const tracks: SongTrack[] = []
-	for (const track of score.tracks) {
+	for (const [part, track] of score.tracks.entries()) {
 		const staff = track.staves[0]
 		if (!staff || staff.isPercussion) continue
 		const tuning = staff.stringTuning?.tunings?.length ? [...staff.stringTuning.tunings] : STANDARD_TUNING
@@ -85,6 +134,10 @@ export async function importSong(bytes: Uint8Array, fileName: string, id: string
 						else if (n.isHammerPullOrigin && next) tech = next.realValue > n.realValue ? 'h' : 'p'
 						else if (n.slideOutType && next) tech = next.realValue >= n.realValue ? '/' : '\\'
 						const bend = n.hasBend && n.maxBendPoint ? Math.round(n.maxBendPoint.value / 2) : 0
+						const mark =
+							xmlMarks.get(markKey(part, bar.index, at, `s${n.string >= 1 ? ours(n.string) : 0}`)) ??
+							xmlMarks.get(markKey(part, bar.index, at, `pc${n.realValue % 12}`))
+						if (!tech && mark?.tech) tech = mark.tech
 						if (n.string < 1) needsPositions = true
 						// MusicXML fingering comes in one lower (its 0, an open string, reads -1 = none).
 						const lhf = n.leftHandFinger
@@ -98,7 +151,7 @@ export async function importSong(bytes: Uint8Array, fileName: string, id: string
 								midi: n.realValue,
 								...(tech ? { tech } : {}),
 								...(bend ? { bend } : {}),
-								...(n.isTieDestination ? { tied: true } : {}),
+								...(n.isTieDestination || mark?.tied ? { tied: true } : {}),
 							},
 							finger,
 							beat: beatIndex * 16 + k,

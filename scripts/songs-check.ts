@@ -6,7 +6,7 @@
 import { check, finish } from './check.ts'
 import { assignPositions, barQuarters, parseBars, playOrder, quarterAt, STANDARD_TUNING, timeline, type Song, type SongBar } from '../ts/music/song.ts'
 import { BUILTIN } from '../ts/music/songs-catalog.ts'
-import { importSong, musicXmlTempos } from '../ts/music/song-import.ts'
+import { importSong, musicXmlMarks, musicXmlTempos } from '../ts/music/song-import.ts'
 import { createPlayer, type PlayerOptions } from '../ts/features/songs/songs.player.ts'
 
 const near = (a: number, b: number, eps = 1e-6) => Math.abs(a - b) <= eps
@@ -129,6 +129,24 @@ ${note('E', 5, 2, 'quarter', 0)}${note('A', 5, 2, 'quarter', 4)}${note('G', 5, 2
 ${note('F', 5, 4, 'half', 1, 1)}${note('E', 5, 4, 'half')}<barline location="right"><repeat direction="backward"/></barline></measure>
 </part></score-partwise>`
 	check('MusicXML tempo marks found per measure', musicXmlTempos(xml).get(0) === 100 && musicXmlTempos(xml).size === 1)
+	{
+		// alphaTab drops these from MusicXML: a hammer-on and a pull-off (on tab), a tie (no tab), after a <backup>.
+		const tab = (string: number, fret: number, more = '') => `<technical><string>${string}</string><fret>${fret}</fret>${more}</technical>`
+		const marks = musicXmlMarks(`<score-partwise><part id="P1"><measure number="1"><attributes><divisions>2</divisions></attributes>
+<note><pitch><step>C</step><octave>5</octave></pitch><duration>1</duration><notations>${tab(3, 5, '<hammer-on type="start">H</hammer-on>')}</notations></note>
+<note><pitch><step>D</step><octave>5</octave></pitch><duration>1</duration><notations>${tab(3, 7, '<hammer-on type="stop"/><pull-off type="start">P</pull-off>')}</notations></note>
+<backup><duration>2</duration></backup>
+<note><pitch><step>A</step><octave>3</octave></pitch><duration>2</duration><tie type="start"/></note>
+</measure><measure number="2"><note><pitch><step>A</step><octave>3</octave></pitch><duration>4</duration><tie type="stop"/><notations><tied type="stop"/></notations></note></measure></part></score-partwise>`)
+		check(
+			'MusicXML marks: hammer-on, pull-off by string and onset, a tie by pitch class',
+			marks.get('0:0:0:s3')?.tech === 'h' &&
+				marks.get('0:0:24:s3')?.tech === 'p' &&
+				marks.get('1:0:0:pc9') === undefined &&
+				marks.get('0:1:0:pc9')?.tied === true,
+			JSON.stringify([...marks])
+		)
+	}
 	const song = await importSong(new TextEncoder().encode(xml), 'test.musicxml', 'file:test')
 	const [bar1, bar2] = song.tracks[0].bars
 	check(
@@ -325,6 +343,60 @@ ${note('F', 5, 4, 'half', 1, 1)}${note('E', 5, 4, 'half')}<barline location="rig
 		const later = plucks.slice(before)
 		check('speed changed while playing: carries on from where it was, slower', later.length >= 2 && near(later[1].at - later[0].at, 1))
 	}
+}
+
+/* Bends, ties and legato in the player ----------------------------------------- */
+{
+	// 4/4 at 120: a bend, a hammer-on to the next note, a note tied over the bar line.
+	const song: Song = {
+		id: 'tech',
+		title: 'tech',
+		artist: '',
+		bars: [
+			{ beats: 4, unit: 4, tempo: 120 },
+			{ beats: 4, unit: 4, tempo: 120 },
+		],
+		tracks: [
+			{
+				name: 'g',
+				tuning: STANDARD_TUNING,
+				bars: [
+					[
+						{ at: 0, length: 1, string: 2, fret: 8, midi: 67, bend: 2 },
+						{ at: 1, length: 1, string: 3, fret: 5, midi: 60, tech: 'h' },
+						{ at: 2, length: 1, string: 3, fret: 7, midi: 62 },
+						{ at: 3, length: 1, string: 1, fret: 5, midi: 69 },
+					],
+					[
+						{ at: 0, length: 2, string: 1, fret: 5, midi: 69, tied: true },
+						{ at: 2, length: 1, string: 1, fret: 8, midi: 72 },
+					],
+				],
+			},
+		],
+	}
+	let clock = 0
+	const plucks: { midi: number; length: number; volume: number; bend: number }[] = []
+	const player = createPlayer(
+		song,
+		{
+			now: () => clock,
+			heardAfter: () => 0,
+			pluck: (midi, _at, length, volume, bend) => plucks.push({ midi, length, volume, bend }),
+			click: () => {},
+			stop: () => {},
+		},
+		{ speed: 100, listen: true, click: false, countIn: false, track: 0 }
+	)
+	player.play()
+	for (; clock < 5; clock += 0.025) player.tick()
+	check('a bend is plucked at the fretted note and pushed up', plucks[0].midi === 67 && plucks[0].bend === 2)
+	check('a hammer-on: the next note sounds without a pick, quieter', plucks[1].volume === 1 && plucks[2].volume < 1)
+	check(
+		'a tie: one pluck that lasts both notes',
+		plucks.length === 5 && near(plucks[3].length, 0.5 + 1 + 0.05),
+		plucks.map((p) => `${p.midi}:${p.length.toFixed(2)}`).join()
+	)
 }
 
 finish('Songs: the model, built-in songs, MusicXML import and the player check out.')

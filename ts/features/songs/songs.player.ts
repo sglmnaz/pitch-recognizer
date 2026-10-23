@@ -17,15 +17,15 @@ export interface PlayerAudio {
 	now(): number
 	/** From scheduled to heard: the output latency plus the user's Audio delay, s. */
 	heardAfter(): number
-	/** A note at audio time `at`, cut `length` s later. */
-	pluck(midi: number, at: number, length: number, volume: number): void
+	/** A note at audio time `at`, cut `length` s later; `bend` semitones pushed up just after the pick. */
+	pluck(midi: number, at: number, length: number, volume: number, bend: number): void
 	click(at: number, accented: boolean): void
 	/** Silences everything scheduled or ringing. */
 	stop(): void
 }
 
 export interface PlayerOptions {
-	/** 50–150 (%). */
+	/** 25–200 (%). */
 	speed: number
 	/** Pluck plays the notes. */
 	listen: boolean
@@ -42,7 +42,11 @@ interface NoteEvent {
 	midi: number
 	length: number
 	volume: number
+	bend: number
 }
+
+// A hammer-on, pull-off or slide sounds the next note without a pick: quieter.
+const LEGATO_VOLUME = 0.55
 interface ClickEvent {
 	t: number
 	accented: boolean
@@ -53,20 +57,32 @@ function events(song: Song, tl: Timeline, track: number) {
 	const notes: NoteEvent[] = []
 	const clicks: ClickEvent[] = []
 	const bars = song.tracks[track]?.bars ?? []
+	// Per string, the note sounding last: a tie lengthens it, a hammer-on or slide from it makes the next one legato.
+	const last = new Map<number, { event: NoteEvent; tech?: string }>()
 	for (const slot of tl.slots) {
 		const spq = slot.secPerQuarter
 		const written = bars[slot.bar] ?? []
 		// Notes struck together share the loudness of one (1/sqrt(n)).
 		const together = new Map<number, number>()
 		for (const note of written) if (!note.tied) together.set(note.at, (together.get(note.at) ?? 0) + 1)
-		for (const note of written)
-			if (!note.tied)
-				notes.push({
-					t: slot.start + note.at * spq,
-					midi: note.midi + (note.bend ?? 0),
-					length: note.length * spq,
-					volume: 1 / Math.sqrt(together.get(note.at)!),
-				})
+		for (const note of written) {
+			const before = last.get(note.string)
+			if (note.tied && before) {
+				before.event.length += note.length * spq
+				continue
+			}
+			if (note.tied) continue
+			const legato = before?.tech && before.tech !== 'x' && before.event.t + before.event.length > slot.start + note.at * spq - 0.05
+			const event: NoteEvent = {
+				t: slot.start + note.at * spq,
+				midi: note.midi,
+				length: note.length * spq,
+				volume: (legato ? LEGATO_VOLUME : 1) / Math.sqrt(together.get(note.at)!),
+				bend: note.bend ?? 0,
+			}
+			notes.push(event)
+			last.set(note.string, { event, tech: note.tech })
+		}
 		const bar = song.bars[slot.bar]
 		const beat = 4 / bar.unit
 		for (let k = 0; k * beat < slot.quarters - 1e-6; k++) clicks.push({ t: slot.start + k * beat * spq, accented: k === 0 })
@@ -175,7 +191,7 @@ export function createPlayer(song: Song, audio: PlayerAudio, initial: PlayerOpti
 		const { notes, clicks } = list
 		for (; nextNote < notes.length && notes[nextNote].t < to - 1e-9; nextNote++) {
 			const n = notes[nextNote]
-			if (options.listen) audio.pluck(n.midi, audioAt(n.t), n.length / rate() + RELEASE, n.volume)
+			if (options.listen) audio.pluck(n.midi, audioAt(n.t), n.length / rate() + RELEASE, n.volume, n.bend)
 		}
 		for (; nextClick < clicks.length && clicks[nextClick].t < to - 1e-9; nextClick++) {
 			const c = clicks[nextClick]

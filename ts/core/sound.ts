@@ -16,6 +16,8 @@ const VOLUME = 0.5
 const RATE = 96000
 // How long after a pluck the mic should ignore what it hears (the speaker).
 const RING_MS = 900
+// A bend: the pick, then the string pushed up to pitch by this time.
+const BEND_S = 0.16
 
 let ctx: AudioContext | null = null
 const buffers = new Map<number, AudioBuffer>()
@@ -52,9 +54,11 @@ function pluck(context: AudioContext, midi: number): AudioBuffer {
  * together (a chord). `ringMs`: how long after its onset the mic should ignore
  * what it hears; the default covers the loud part, NOTE_MS the whole note.
  * `length` (s): damp the string that long after the onset, as a player lifts
- * the finger (a song's written note length); unset, it rings out.
+ * the finger (a song's written note length); unset, it rings out. `bend`:
+ * push the string up this many semitones right after the pick, as a player
+ * bends it (the pitch rises over BEND_S).
  */
-export function play(midi: number, delay = 0, volume = 1, ringMs = RING_MS, length?: number) {
+export function play(midi: number, delay = 0, volume = 1, ringMs = RING_MS, length?: number, bend = 0) {
 	ctx ??= new AudioContext()
 	if (ctx.state === 'suspended') ctx.resume()
 	const { a4 } = Settings.get()
@@ -73,6 +77,10 @@ export function play(midi: number, delay = 0, volume = 1, ringMs = RING_MS, leng
 	voices.add(voice)
 	source.onended = () => voices.delete(voice)
 	const at = ctx.currentTime + delay
+	if (bend) {
+		source.detune.setValueAtTime(0, at + BEND_S / 3)
+		source.detune.linearRampToValueAtTime(bend * 100, at + BEND_S)
+	}
 	source.start(at)
 	if (length !== undefined && length < DURATION_S) {
 		// 40 ms down to silence: a damped string, not a click.
