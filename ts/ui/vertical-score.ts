@@ -15,9 +15,9 @@ export interface ScoreNote {
 	/** 1 = the highest string. */
 	string: number
 	label: string
-	/** h, p, /, T… shown beside the token. */
+	/** h p (legato), / \ (slide): joined to the note before on its string; T (tap) beside the token. */
 	tech?: string
-	/** The fret bent to, shown after the token. */
+	/** The fret bent to: an arrow from the token to it. */
 	bentTo?: number
 }
 
@@ -41,8 +41,34 @@ const THICK = 3.4
 const THIN = 1
 // A bar line sits this far before its first beat, as on the horizontal strip.
 const BAR_LEAD = 0.25
-// The tempo keys of the full-screen page step this many BPM.
+// The tempo keys of the full-screen page step this much (BPM in Tab, % of speed in Songs).
 const TEMPO_STEP = 5
+// Marks between two notes of a string (approved mock-up Segni 2, "game"): legato, slide.
+const LEGATO = ['h', 'p']
+const SLIDE = ['/', '\\']
+const joins = (tech?: string) => !!tech && (LEGATO.includes(tech) || SLIDE.includes(tech))
+// A token's radius, and the room two notes of a string need: apart, and with a mark between them.
+const R = 17
+const APART_PX = 40
+const JOINED_PX = 64
+const SVG = 'http://www.w3.org/2000/svg'
+
+/**
+ * Paper per unit so no two tokens of a string overlap (40 px apart) and a mark fits between
+ * the notes it joins (64 px): from the closest such pair, at least `least`. No ceiling: where
+ * the notes are thick the score runs faster.
+ */
+export function unitPxFor(notes: ScoreNote[], least: number) {
+	let px = least
+	const last = new Map<number, number>()
+	for (const note of [...notes].sort((a, b) => a.at - b.at)) {
+		const before = last.get(note.string)
+		const gap = before === undefined ? 0 : note.at - before
+		if (gap > 1e-6) px = Math.max(px, (joins(note.tech) ? JOINED_PX : APART_PX) / gap)
+		last.set(note.string, note.at)
+	}
+	return px
+}
 
 /** One score in `root` (an empty element): draw(spec), then place(at) every frame; setSide(on) turns it on its side. */
 export function createVerticalScore(root: HTMLElement) {
@@ -59,6 +85,7 @@ export function createVerticalScore(root: HTMLElement) {
 	let lit: { el: HTMLElement; tail?: HTMLElement }[] = []
 	let barEls: { at: number; el: HTMLElement }[] = []
 	let litBar: HTMLElement | null = null
+	let band: { from: number; to: number; open: boolean } | null = null
 
 	const span = (parent: HTMLElement, cls: string, style: string, text = '') => {
 		const el = document.createElement('span')
@@ -102,19 +129,105 @@ export function createVerticalScore(root: HTMLElement) {
 		})
 		litBar = null
 		for (const section of spec.sections ?? []) span(layer, 'vscore__section', along(section.at - BAR_LEAD), section.text)
+		// The note each legato or slide comes from: the one before on its string.
+		const from = new Map<ScoreNote, ScoreNote>()
+		const last = new Map<number, ScoreNote>()
+		for (const note of [...spec.notes].sort((a, b) => a.at - b.at)) {
+			const before = last.get(note.string)
+			if (before && before.at < note.at && joins(note.tech)) from.set(note, before)
+			last.set(note.string, note)
+		}
+		const leadsOn = new Set(from.values())
+		// A mark drawn in px from a token: u along (later), v across toward the high strings,
+		// turned back near the edge where the high strings leave no room.
+		const mark = (note: ScoreNote) => {
+			const el = document.createElementNS(SVG, 'svg')
+			el.setAttribute('class', 'vscore__mark')
+			el.setAttribute('style', at(note.string, note.at))
+			layer.append(el)
+			const toEdge = side ? across(note.string) < 30 : across(note.string) > 70
+			const dir = toEdge ? -1 : 1
+			const xy = (u: number, v: number): [number, number] => (side ? [u, -v * dir] : [v * dir, -u])
+			const p = (u: number, v: number) => xy(u, v).join(' ')
+			const path = (cls: string, d: string) => {
+				const shape = document.createElementNS(SVG, 'path')
+				shape.setAttribute('class', cls)
+				shape.setAttribute('d', d)
+				el.append(shape)
+			}
+			const text = (u: number, v: number, words: string) => {
+				const label = document.createElementNS(SVG, 'text')
+				const [x, y] = xy(u, v)
+				label.setAttribute('x', String(x))
+				label.setAttribute('y', String(y))
+				label.textContent = words
+				el.append(label)
+			}
+			return { p, path, text, dir }
+		}
 		sounding = spec.notes.map((note) => {
-			// A tail behind notes longer than an eighth's room: how long they ring.
-			const long = note.length * unitPx > 40
+			// A tail behind notes longer than an eighth's room: how long they ring (a note
+			// that goes on into a legato or slide has the mark's band instead).
+			const long = note.length * unitPx > 40 && !leadsOn.has(note)
 			const tail = long
 				? span(layer, 'vscore__tail', `${at(note.string, side ? note.at : note.at + note.length)};${side ? 'width' : 'height'}:${note.length * unitPx}px`)
 				: undefined
-			const el = span(layer, 'vscore__n', at(note.string, note.at), note.label)
-			if (note.bentTo !== undefined) span(el, 'vscore__bend', '', `b${note.bentTo}`)
-			if (note.tech) span(layer, 'vscore__tech', at(note.string, side ? note.at : note.at + 0.12), note.tech)
+			const before = from.get(note)
+			// Not picked (hammered, pulled, slid into): the token hollow.
+			const el = span(layer, before ? 'vscore__n vscore__n--soft' : 'vscore__n', at(note.string, note.at), note.label)
+			if (before) {
+				const { p, path, text } = mark(before)
+				const run = (note.at - before.at) * unitPx
+				path('band', `M${p(R, 0)} L${p(run - R, 0)}`)
+				if (LEGATO.includes(note.tech!)) {
+					// A slur beside the two tokens, H or P at its top.
+					path('ink', `M${p(4, 18)} Q${p(run / 2, 38)} ${p(run - 4, 18)}`)
+					text(run / 2, 44, note.tech!)
+				} else {
+					// A straight line slanting the way the hand goes, SL beside it.
+					const d = note.tech === '/' ? 7 : -7
+					path('ink slide', `M${p(R + 2, -d)} L${p(run - R - 2, d)}`)
+					text(run / 2, 26, 'sl')
+				}
+			}
+			if (note.bentTo !== undefined) {
+				// A curved arrow toward the high strings, to the fret reached (a hollow token).
+				const { p, path, dir } = mark(note)
+				path('ink', `M${p(6, R - 2)} Q${p(52, 22)} ${p(58, 52)}`)
+				path('head', `M${p(58, 60)} L${p(52, 46)} L${p(64, 46)}Z`)
+				const off = 80 * dir
+				span(
+					layer,
+					'vscore__n vscore__n--soft vscore__n--reached',
+					side
+						? `top:calc(${across(note.string)}% - ${off}px);left:${note.at * unitPx + 58}px`
+						: `left:calc(${across(note.string)}% + ${off}px);top:${-(note.at * unitPx + 58)}px`,
+					String(note.bentTo)
+				)
+			}
+			if (note.tech === 'T') span(layer, 'vscore__tech', at(note.string, side ? note.at : note.at + 0.12), note.tech)
 			return { at: note.at, length: note.length, el, tail }
 		})
 		sounding.sort((a, b) => a.at - b.at)
 		lit = []
+		showBand()
+	}
+
+	/** The A–B loop shaded, `from` to `to` in units; `open` while only one end is set; null: none. */
+	function setBand(next: { from: number; to: number; open: boolean } | null) {
+		band = next
+		showBand()
+	}
+	function showBand() {
+		layer.querySelector('.vscore__band')?.remove()
+		if (!band) return
+		const size = (band.to - band.from) * unitPx
+		const el = span(
+			layer,
+			band.open ? 'vscore__band is-open' : 'vscore__band',
+			side ? `left:${band.from * unitPx}px;width:${size}px` : `top:${-band.to * unitPx}px;height:${size}px`
+		)
+		layer.prepend(el)
 	}
 
 	/** Puts unit `at` on the line, lights what sounds there (`playing`) and the bar's number. */
@@ -169,7 +282,7 @@ export function createVerticalScore(root: HTMLElement) {
 		}
 	}
 
-	return { draw, place, setSide }
+	return { draw, place, setSide, setBand, unit: () => unitPx }
 }
 
 export type VerticalScore = ReturnType<typeof createVerticalScore>
@@ -179,19 +292,25 @@ export interface ScoreScreenKey {
 	el: HTMLButtonElement
 	/** Share of the bottom row's width. */
 	grow?: number
-	/** On its side: 'top' moves it to the top bar, 'side' shows it only then (there is room). */
-	place?: 'top' | 'side'
+	/** 'top': upright in the row over the keys (before the tempo), on its side in the top bar. */
+	place?: 'top'
 }
 
 /**
  * The full-screen page: ✕ to leave, the track's name with a lamp per score (the
  * carousel scrolls natively, by swipe or ◂ ▸), a small display, the scores, the
- * keys, and the tempo ▼ ▲ when `onTempo` is given (held, they repeat). Android's
+ * keys ('top' ones and the tempo ▼ ▲ in a row over the others when `onTempo` is given;
+ * held, ▼ ▲ repeat). With `onScrub`
+ * a drag along the strings moves through the song (units from where it began; `done`
+ * on release); tracks change only by ◂ ▸. Android's
  * Back leaves it too (a history entry while open). ↻ lays the page on its side:
  * then a bar on top (✕ ↻ track display, the 'top' keys) and one under the score
  * (the other keys, the tempo).
  */
-export function createScoreScreen(keys: ScoreScreenKey[], onClose: () => void, onTempo?: (by: number) => void) {
+export function createScoreScreen(
+	keys: ScoreScreenKey[],
+	{ onClose, onTempo, onScrub }: { onClose: () => void; onTempo?: (by: number) => void; onScrub?: (units: number, done: boolean) => void }
+) {
 	const root = document.createElement('div')
 	root.className = 'score-screen'
 	root.hidden = true
@@ -201,9 +320,9 @@ export function createScoreScreen(keys: ScoreScreenKey[], onClose: () => void, o
 		'<div class="score-screen__top"><button class="key key--step score-screen__close" type="button">✕</button>' +
 		'<button class="key key--step score-screen__turn" type="button">↻</button>' +
 		'<div class="score-screen__track"><span class="score-screen__name"><button class="score-screen__prev" type="button">◂</button><b></b><button class="score-screen__next" type="button">▸</button></span><span class="score-screen__pager"></span></div>' +
-		'<span class="window"><span class="lcd score-screen__lcd"></span></span></div>' +
+		'<span class="window"><span class="lcd score-screen__lcd"><span></span><small></small></span></span></div>' +
 		'<div class="score-screen__rail"></div>' +
-		'<div class="score-screen__tempo"><button class="key key--step" type="button">▼</button><span class="window"><span class="lcd"><b></b><small></small></span></span><button class="key key--step" type="button">▲</button></div>' +
+		'<div class="score-screen__mid"></div><div class="score-screen__tempo"><button class="key key--step" type="button">▼</button><span class="window"><span class="lcd"><b></b><small></small></span></span><button class="key key--step" type="button">▲</button></div>' +
 		'<div class="score-screen__keys"></div>'
 	document.body.append(root)
 	const close = root.querySelector<HTMLButtonElement>('.score-screen__close')!
@@ -212,11 +331,13 @@ export function createScoreScreen(keys: ScoreScreenKey[], onClose: () => void, o
 	const next = root.querySelector<HTMLButtonElement>('.score-screen__next')!
 	const name = root.querySelector<HTMLElement>('.score-screen__name b')!
 	const pager = root.querySelector<HTMLElement>('.score-screen__pager')!
-	const lcd = root.querySelector<HTMLElement>('.score-screen__lcd')!
+	const lcd = root.querySelector<HTMLElement>('.score-screen__lcd span')!
+	const lcdSub = root.querySelector<HTMLElement>('.score-screen__lcd small')!
 	const rail = root.querySelector<HTMLElement>('.score-screen__rail')!
 	const keyRow = root.querySelector<HTMLElement>('.score-screen__keys')!
 	const top = root.querySelector<HTMLElement>('.score-screen__top')!
 	const tempo = root.querySelector<HTMLElement>('.score-screen__tempo')!
+	const mid = root.querySelector<HTMLElement>('.score-screen__mid')!
 	const [slower, faster] = tempo.querySelectorAll<HTMLButtonElement>('button')
 	const tempoMain = tempo.querySelector('b')!
 	const tempoSub = tempo.querySelector('small')!
@@ -228,17 +349,21 @@ export function createScoreScreen(keys: ScoreScreenKey[], onClose: () => void, o
 	turnKey.setAttribute('aria-label', t('Turn the score'))
 	prev.setAttribute('aria-label', t('Track before'))
 	next.setAttribute('aria-label', t('Next track'))
-	/** The keys where they go upright or on its side; the tempo in its own row upright, at the end of the bottom bar on its side. */
+	/** Upright: the 'top' keys and the tempo in a row over the others; on its side: the 'top' keys in the top bar, the tempo after the others. */
 	function arrange(side: boolean) {
-		const bottom = keys.filter((k) => (side ? k.place !== 'top' : k.place !== 'side'))
+		const upper = keys.filter((k) => k.place === 'top').map((k) => k.el)
+		const bottom = keys.filter((k) => k.place !== 'top')
 		keyRow.replaceChildren(...bottom.map((k) => k.el))
 		keyRow.style.gridTemplateColumns = bottom.map((k) => `${k.grow ?? 1}fr`).join(' ')
-		for (const k of keys) if (side && k.place === 'top') top.append(k.el)
 		if (!onTempo) tempo.remove()
-		else if (side) {
-			keyRow.append(tempo)
-			keyRow.style.gridTemplateColumns += ' auto'
-		} else keyRow.before(tempo)
+		if (side) {
+			top.append(...upper)
+			if (onTempo) {
+				keyRow.append(tempo)
+				keyRow.style.gridTemplateColumns += ' auto'
+			}
+		} else mid.replaceChildren(...upper, ...(onTempo ? [tempo] : []))
+		mid.hidden = side || !mid.childElementCount
 	}
 	arrange(false)
 
@@ -274,22 +399,58 @@ export function createScoreScreen(keys: ScoreScreenKey[], onClose: () => void, o
 		quarter = quarter ? 0 : 90
 		turn()
 	})
-	/** The score in view: the one whose panel covers the rail's middle. */
+	/** One score shown, the track `shown`: its name and lamp. */
 	function showTrack() {
-		const panel = rail.firstElementChild as HTMLElement | null
-		const step = panel ? panel.offsetWidth + 10 : 1
-		const index = Math.max(0, Math.min(scores.length - 1, Math.round(rail.scrollLeft / step)))
-		shown = index
-		name.textContent = titles[index] ?? ''
-		lamps.forEach((lamp, i) => lamp.classList.toggle('is-on', i === index))
+		;[...rail.children].forEach((panel, i) => {
+			;(panel as HTMLElement).hidden = i !== shown
+		})
+		name.textContent = titles[shown] ?? ''
+		lamps.forEach((lamp, i) => lamp.classList.toggle('is-on', i === shown))
 		const several = scores.length > 1
 		prev.hidden = next.hidden = !several
 		pager.hidden = !several
 	}
-	rail.addEventListener('scroll', showTrack, { passive: true })
+	// Dragging the score moves through the song, as on paper: the finger takes the notes
+	// along the strings (down upright, left on its side, where the song goes on).
+	let drag: { x: number; y: number; id: number; moved: boolean } | null = null
+	const dragged = (event: PointerEvent) => {
+		const dx = event.clientX - drag!.x
+		const dy = event.clientY - drag!.y
+		// Turned a quarter in CSS, the page's x runs down the screen.
+		const px = root.classList.contains('score-screen--side') ? -(root.classList.contains('score-screen--turned') ? dy : dx) : dy
+		return px / (scores[0]?.unit() ?? 1)
+	}
+	if (onScrub) {
+		rail.classList.add('is-scrub')
+		rail.addEventListener('pointerdown', (event) => {
+			if (event.button !== 0 || drag) return
+			drag = { x: event.clientX, y: event.clientY, id: event.pointerId, moved: false }
+			// The moves keep coming when the finger leaves the score.
+			try {
+				rail.setPointerCapture(event.pointerId)
+			} catch {}
+		})
+		rail.addEventListener('pointermove', (event) => {
+			if (drag?.id !== event.pointerId) return
+			// A tap is not a drag: 6 px before anything moves.
+			if (!drag.moved && Math.hypot(event.clientX - drag.x, event.clientY - drag.y) < 6) return
+			drag.moved = true
+			onScrub(dragged(event), false)
+		})
+		const end = (event: PointerEvent) => {
+			if (drag?.id !== event.pointerId) return
+			const { moved } = drag
+			const units = dragged(event)
+			drag = null
+			if (moved) onScrub(units, true)
+		}
+		rail.addEventListener('pointerup', end)
+		rail.addEventListener('pointercancel', end)
+	}
+	// The next track round, the first after the last.
 	const go = (by: number) => {
-		const panel = rail.firstElementChild as HTMLElement | null
-		if (panel) rail.scrollTo({ left: (shown + by) * (panel.offsetWidth + 10), behavior: 'smooth' })
+		shown = (shown + by + scores.length) % Math.max(1, scores.length)
+		showTrack()
 	}
 	prev.addEventListener('click', () => go(-1))
 	next.addEventListener('click', () => go(1))
@@ -332,13 +493,15 @@ export function createScoreScreen(keys: ScoreScreenKey[], onClose: () => void, o
 					return lamp
 				}))
 			)
-			rail.scrollLeft = 0
+			shown = Math.min(shown, names.length - 1)
 			for (const score of scores) score.setSide(root.classList.contains('score-screen--side'))
 			showTrack()
 			return scores
 		},
-		setText(text: string) {
+		/** The display: a line, and a second one (the part of the song) under it upright, after it on its side. */
+		setText(text: string, sub = '') {
 			if (lcd.textContent !== text) lcd.textContent = text
+			if (lcdSub.textContent !== sub) lcdSub.textContent = sub
 		},
 		/** The tempo's display (♩ = 96) and the line beside it (80 %); `enabled` false greys ▼ ▲. */
 		setTempo(main: string, sub = '', enabled = true) {

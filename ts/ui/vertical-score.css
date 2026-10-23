@@ -118,12 +118,71 @@
 	}
 }
 
-.vscore__bend {
-	position: absolute;
-	left: 100%;
-	margin-left: 3px;
-	font-size: var(--text-xs);
+/* Not picked (hammered, pulled, slid or bent into): the same token, hollow; red when heard. */
+.vscore__n--soft:not(.is-now) {
+	background: var(--paper);
 	color: var(--paper-ink);
+	box-shadow: inset 0 0 0 2.5px var(--paper-ink);
+}
+
+/* The fret a bend reaches, at the arrow's head: a size smaller. */
+.vscore__n--reached {
+	width: 30px;
+	height: 30px;
+	font-size: 16px;
+}
+
+/* Legato, slide, bend: drawn from a token in px (vertical-score.ts), under the tokens. */
+.vscore__mark {
+	position: absolute;
+	z-index: 1;
+	width: 1px;
+	height: 1px;
+	overflow: visible;
+	pointer-events: none;
+
+	& .ink {
+		fill: none;
+		stroke: var(--paper-ink);
+		stroke-width: 2;
+		stroke-linecap: round;
+	}
+
+	& .slide {
+		stroke-width: 2.5;
+	}
+
+	& .head {
+		fill: var(--paper-ink);
+	}
+
+	& .band {
+		fill: none;
+		stroke: color-mix(in srgb, var(--paper-ink) 22%, transparent);
+		stroke-width: 12;
+		stroke-linecap: round;
+	}
+
+	& text {
+		fill: var(--paper-ink);
+		font: 700 13px / 1 var(--font-ui);
+		letter-spacing: 0.06em;
+		text-transform: uppercase;
+		text-anchor: middle;
+		dominant-baseline: central;
+	}
+}
+
+/* The A–B loop, shaded as the band on the strip; lighter while only one end is set. */
+.vscore__band {
+	position: absolute;
+	left: 0;
+	right: 0;
+	background: color-mix(in srgb, var(--paper-red) 10%, transparent);
+
+	&.is-open {
+		background: color-mix(in srgb, var(--paper-red) 5%, transparent);
+	}
 }
 
 .vscore__tail {
@@ -232,6 +291,13 @@
 		transform: translateX(12px);
 	}
 
+	& .vscore__band {
+		top: 0;
+		bottom: 0;
+		left: auto;
+		right: auto;
+	}
+
 	& .vscore__tail {
 		width: auto;
 		height: 7px;
@@ -276,6 +342,7 @@
 	z-index: 50;
 	inset: 0;
 	display: grid;
+	grid-template-columns: minmax(0, 1fr);
 	grid-template-rows: auto minmax(0, 1fr) auto auto;
 	gap: var(--space-8);
 	padding: calc(10px + env(safe-area-inset-top)) 10px calc(12px + env(safe-area-inset-bottom));
@@ -300,10 +367,30 @@ html.has-score-screen body {
 		font-size: var(--text-lg);
 	}
 
+	/* The display gives way to the track's name, and both cut long text short. */
+	& .window {
+		min-width: 0;
+		max-width: 46%;
+	}
+
 	& .lcd {
+		display: flex;
+		flex-direction: column;
+		justify-content: center;
+		min-width: 0;
 		padding: 4px 8px;
 		font-size: var(--text-xs);
-		white-space: nowrap;
+		line-height: 1.25;
+
+		& > * {
+			overflow: hidden;
+			text-overflow: ellipsis;
+			white-space: nowrap;
+		}
+
+		& small:empty {
+			display: none;
+		}
 	}
 }
 
@@ -322,17 +409,21 @@ html.has-score-screen body {
 	gap: var(--space-6);
 	max-width: 100%;
 
+	/* Up to two lines: a track's name is often two words (Chitarra ritmica). */
 	& b {
+		display: -webkit-box;
+		min-width: 0;
 		overflow: hidden;
-		font: 700 var(--text-sm) / 1 var(--font-ui);
-		letter-spacing: 0.14em;
+		font: 700 var(--text-sm) / 1.15 var(--font-ui);
+		letter-spacing: 0.08em;
+		text-align: center;
 		text-transform: uppercase;
-		text-overflow: ellipsis;
-		white-space: nowrap;
+		-webkit-box-orient: vertical;
+		-webkit-line-clamp: 2;
 	}
 
 	& button {
-		min-width: 32px;
+		min-width: 24px;
 		min-height: 32px;
 		padding: 0;
 		border: 0;
@@ -348,40 +439,70 @@ html.has-score-screen body {
 	gap: 6px;
 }
 
-/* The carousel: one score a page, the next one's edge in view; the browser's own swipe. */
+/* One score at a time (the others hidden; ◂ ▸ change it). A finger on the score moves
+   through the song instead (is-scrub: the page gets every move). */
 .score-screen__rail {
 	display: flex;
-	gap: 10px;
-	overflow-x: auto;
-	scroll-snap-type: x mandatory;
-	scrollbar-width: none;
-	overscroll-behavior-x: contain;
+	overflow: hidden;
 
-	&::-webkit-scrollbar {
-		display: none;
+	&.is-scrub {
+		touch-action: none;
+		cursor: grab;
 	}
 }
 
 .score-screen__panel {
-	flex: 0 0 calc(100% - 18px);
+	flex: 0 0 100%;
 	height: 100%;
-	scroll-snap-align: start;
-
-	&:only-child {
-		flex-basis: 100%;
-	}
 
 	& > div {
 		height: 100%;
 	}
 }
 
-/* The tempo: ▼ [♩ = 96 · 80 %] ▲, as Tab's tempo stepper. */
+/* Upright, over the keys: A, B, Loop and the tempo. */
+.score-screen__mid {
+	display: flex;
+	gap: 6px;
+	height: 50px;
+
+	& > .key {
+		flex: 0 0 50px;
+		padding: 0;
+		font-size: var(--text-md);
+	}
+
+	& > .key--lit {
+		flex-basis: 64px;
+	}
+
+	& > .score-screen__tempo {
+		flex: 1;
+		grid-template-columns: 36px minmax(0, 1fr) 36px;
+		gap: 4px;
+	}
+}
+
+/* A and B as on the page: the lamp in the cap, the bar marked under the letter. */
+.score-screen__mark {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 2px;
+
+	& small {
+		font-size: var(--text-2xs);
+		opacity: 0.8;
+	}
+}
+
+/* The tempo: ▼ [80 % over ♩ = 96] ▲, as Tab's tempo stepper. */
 .score-screen__tempo {
 	display: grid;
 	grid-template-columns: 52px minmax(0, 1fr) 52px;
 	gap: var(--space-8);
-	height: 46px;
+	height: 100%;
 
 	& .key {
 		height: 100%;
@@ -396,14 +517,16 @@ html.has-score-screen body {
 	& .lcd {
 		flex: 1;
 		display: flex;
+		flex-direction: column;
 		align-items: center;
 		justify-content: center;
-		gap: var(--space-8);
-		padding: 0 8px;
+		gap: 2px;
+		min-width: 0;
+		padding: 0 4px;
 		white-space: nowrap;
 
 		& b {
-			font: 400 22px / 1 var(--font-segment);
+			font: 400 18px / 1 var(--font-segment);
 		}
 
 		& small {
@@ -438,18 +561,33 @@ html.has-score-screen body {
 		}
 
 		& > .key:not(.score-screen__close, .score-screen__turn) {
-			flex: 0 0 96px;
+			flex: 0 0 56px;
+			padding: 0;
 			font-size: var(--text-md);
+		}
+
+		& > .key--lit {
+			flex-basis: 76px;
 		}
 
 		& .window {
 			display: flex;
 		}
 
+		& .window {
+			max-width: none;
+		}
+
+		/* One line: the part after the bar. */
 		& .lcd {
-			display: flex;
+			flex-direction: row;
 			align-items: center;
 			padding: 0 12px;
+
+			& small:not(:empty)::before {
+				content: '·';
+				margin-inline: 6px;
+			}
 		}
 
 		& .score-screen__track {
@@ -459,22 +597,14 @@ html.has-score-screen body {
 		}
 	}
 
-	& .score-screen__panel {
-		flex-basis: 100%;
-	}
-
 	& .score-screen__keys > :is(.key, .btn) {
 		height: 48px;
 	}
 
 	& .score-screen__tempo {
-		grid-template-columns: 44px 150px 44px;
+		grid-template-columns: 44px 110px 44px;
 		gap: 4px;
 		height: 48px;
-
-		& .lcd b {
-			font-size: 19px;
-		}
 	}
 }
 

@@ -166,6 +166,20 @@ export function quarterAt(tl: Timeline, seconds: number): number {
 	return slot.quarter + Math.min(slot.quarters, Math.max(0, (seconds - slot.start) / slot.secPerQuarter))
 }
 
+/** Quarters from the top → seconds (at 100%): the inverse of quarterAt, for a drag along the score. */
+export function secondsAtQuarter(tl: Timeline, quarter: number): number {
+	if (!tl.slots.length) return 0
+	let lo = 0
+	let hi = tl.slots.length - 1
+	while (lo < hi) {
+		const mid = (lo + hi + 1) >> 1
+		if (tl.slots[mid].quarter <= quarter) lo = mid
+		else hi = mid - 1
+	}
+	const slot = tl.slots[lo]
+	return slot.start + Math.min(slot.quarters, Math.max(0, quarter - slot.quarter)) * slot.secPerQuarter
+}
+
 /* Positions ---------------------------------------------------------------- */
 // A file with notes but no tab (MusicXML of a score) needs a string and fret
 // for each note. The left-hand fingering, where the score has it, says where

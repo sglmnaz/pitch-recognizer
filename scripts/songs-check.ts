@@ -4,7 +4,18 @@
 // with a fake audio clock (what is plucked and clicked when, speed, count-in,
 // jumps, the A–B loop, the end). Run with `npm run check:songs`. Silent.
 import { check, finish } from './check.ts'
-import { assignPositions, barQuarters, parseBars, playOrder, quarterAt, STANDARD_TUNING, timeline, type Song, type SongBar } from '../ts/music/song.ts'
+import {
+	assignPositions,
+	barQuarters,
+	parseBars,
+	playOrder,
+	quarterAt,
+	STANDARD_TUNING,
+	secondsAtQuarter,
+	timeline,
+	type Song,
+	type SongBar,
+} from '../ts/music/song.ts'
 import { BUILTIN } from '../ts/music/songs-catalog.ts'
 import { importSong, musicXmlMarks, musicXmlTempos } from '../ts/music/song-import.ts'
 import { createPlayer, type PlayerOptions } from '../ts/features/songs/songs.player.ts'
@@ -65,6 +76,10 @@ check('two passages repeat one after the other', playOrder(plain(4, { 1: { repea
 	check('timeline: bar lengths in quarters and seconds', tl.slots.length === 4 && near(tl.quarters, 4 + 3 + 4 + 3) && near(tl.duration, 2 + 3 + 2 + 3))
 	check('timeline: passes counted', tl.slots[2].bar === 0 && tl.slots[2].pass === 2 && tl.slots[2].passes === 2)
 	check('timeline: seconds → quarters through each tempo', near(quarterAt(tl, 1), 2) && near(quarterAt(tl, 3.5), 5.5) && near(quarterAt(tl, 99), tl.quarters))
+	check(
+		'timeline: quarters → seconds, back again',
+		[0, 2, 5.5, 7].every((q) => near(quarterAt(tl, secondsAtQuarter(tl, q)), q))
+	)
 }
 
 /* Positions for a score without tab ----------------------------------------------- */

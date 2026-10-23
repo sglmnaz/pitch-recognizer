@@ -21,7 +21,7 @@ import * as FieldReport from '../calibration/field-report'
 import { plural, t } from '../../core/i18n'
 import { bindTempoKeys, numberField } from '../../ui/tempo'
 import { placeStrip as place, stringY, stripParts } from '../../ui/tab-strip'
-import { createScoreScreen, type ScoreNote, type VerticalScore } from '../../ui/vertical-score'
+import { createScoreScreen, type ScoreNote, unitPxFor, type VerticalScore } from '../../ui/vertical-score'
 import { STANDARD_TUNING } from '../../music/song'
 
 // One beat takes this much paper whatever the subdivision, so 16ths sit
@@ -178,10 +178,12 @@ export function createTabView(root: HTMLElement): View {
 			{ el: screenStart, grow: 2.4 },
 			{ el: screenLoop, place: 'top' },
 		],
-		() => {
-			score = null
-		},
-		(by) => setBpm(Settings.get().tabBpm + by)
+		{
+			onClose: () => {
+				score = null
+			},
+			onTempo: (by) => setBpm(Settings.get().tabBpm + by),
+		}
 	)
 	let score: VerticalScore | null = null
 
@@ -206,7 +208,7 @@ export function createTabView(root: HTMLElement): View {
 			}
 		}
 		score = screen.setScores([ex.name])[0]
-		score.draw({ notes, bars, tuning: STANDARD_TUNING, unitPx: Math.max(SCORE_STEP_PX, 120 / ex.perBeat) })
+		score.draw({ notes, bars, tuning: STANDARD_TUNING, unitPx: unitPxFor(notes, Math.max(SCORE_STEP_PX, 120 / ex.perBeat)) })
 	}
 
 	$('.tab-full').addEventListener('click', () => {

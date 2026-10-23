@@ -41,6 +41,19 @@ Claude Design; the user approved variant D (Verticale 3).
   (Songs: the speed that makes the bar's tempo 5 BPM faster or slower; Tab: the
   exercise's tempo, before Start); upright it has a row over the keys. The bar
   display adds the part of the song (the last section named), on the page too.
+- **Round three** (field test, mock-ups Schermo intero loop and Segni 2, "game"): the tempo
+  keys step the speed by 5 % in Songs (BPM stay Tab's); A and B as on the page, with Loop,
+  in the row over the transport upright (−4 −1 Play +1 +4 under it) and in the top bar
+  on its side; the A–B loop shaded on the score (`setBand`). A drag along the strings
+  moves through the song (`onScrub`, `secondsAtQuarter`); tracks change only by ◂ ▸ (one
+  shown at a time). Marks drawn between the two notes they join, in SVG from the first
+  token: legato a slur with H / P, slide a slanted line with SL, both over a soft band,
+  the note not picked hollow; a bend a curved arrow toward the high strings to a hollow
+  token with the fret reached (turned back where the edge leaves no room). Spacing
+  (`unitPxFor`): notes of a string 40 px apart, 64 px when a mark joins them, no
+  ceiling (the 160 px/quarter cap let 32nds and triplets overlap). The position reads
+  `currentTime` smoothed by `performance.now()` between audio blocks: Android advances
+  it 10–40 ms at a time, and at slow speeds the notes moved in visible steps.
   The player turns it with ↻: the page is rotated a quarter in CSS
   (`.score-screen--turned`). The manifest holds the app upright and unlocking it
   needs the browser's full screen, which shows Chrome's "swipe to exit" banner

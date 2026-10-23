@@ -14,8 +14,8 @@ import { reducedMotion } from '../../ui/media'
 import { screenLock } from '../../ui/screen-lock'
 import { bindTempoKeys, numberField, onPress } from '../../ui/tempo'
 import { placeStrip, stringY, stripParts } from '../../ui/tab-strip'
-import { createScoreScreen, type ScoreSpec, type VerticalScore } from '../../ui/vertical-score'
-import type { Song, Timeline } from '../../music/song'
+import { createScoreScreen, type ScoreSpec, unitPxFor, type VerticalScore } from '../../ui/vertical-score'
+import { secondsAtQuarter, type Song, type Timeline } from '../../music/song'
 import { BUILTIN } from '../../music/songs-catalog'
 import { createPlayer, type Player, type PlayerAudio } from './songs.player'
 import * as Store from './songs.store'
@@ -30,10 +30,8 @@ const BAR_LINE_LEAD = 0.25
 const TICK_MS = 25
 // The position fader's resolution (0 = the top, SEEK_STEPS = the end).
 const SEEK_STEPS = 1000
-// The full-screen score: paper per quarter so the closest notes' tokens (34 px) stay apart, within these.
-const SCORE_NOTE_PX = 38
+// The full-screen score: paper per quarter at least this (unitPxFor gives more where notes are close).
 const MIN_SCORE_PX = 56
-const MAX_SCORE_PX = 160
 // A second tap on × within this removes an imported song.
 const ARM_MS = 3000
 
@@ -87,8 +85,19 @@ export function createSongsView(root: HTMLElement): View {
 	/* Clock and sound ----------------------------------------------------------- */
 	// Notes and clicks on the synth's own context: one clock, so the strip, the
 	// notes and the beat cannot drift apart.
+	// currentTime moves in whole audio blocks (10–40 ms on Android phones): read as is, the
+	// notes moved in steps, plain to see at slow speeds. Between two steps it runs on
+	// performance.now(), never back and never more than 50 ms past the last step.
+	let step = { at: -1, perf: 0, last: 0 }
+	const now = () => {
+		const at = Sound.audio().currentTime
+		const perf = performance.now()
+		if (at !== step.at) step = { at, perf, last: step.last }
+		step.last = Math.max(step.last > at + 0.05 ? at : step.last, at + Math.min(0.05, (perf - step.perf) / 1000))
+		return step.last
+	}
 	const audio: PlayerAudio = {
-		now: () => Sound.audio().currentTime,
+		now,
 		heardAfter: () => (Sound.audio().outputLatency || 0) + Settings.get().audioDelayMs / 1000,
 		// Squared, as the Metronome's volume: the fader's middle sounds like half as loud.
 		pluck: (midi, at, length, gain, bend) => Sound.play(midi, at - Sound.audio().currentTime, gain * Settings.get().songVolume ** 2, 0, length, bend),
@@ -271,7 +280,7 @@ export function createSongsView(root: HTMLElement): View {
 			}
 			light(strip, sounding ? notesAt(strip, at) : [])
 		}
-		if (screen.isOpen()) for (const score of scores) score.place(at, sounding)
+		if (screen.isOpen() && scrubAt === null) for (const score of scores) score.place(at, sounding)
 		if (!seeking) seek.value = String(Math.round((player.position() / tl.duration) * SEEK_STEPS))
 		const rate = Settings.get().songSpeed / 100
 		const bars = current().song.bars.length
@@ -282,7 +291,7 @@ export function createSongsView(root: HTMLElement): View {
 		const barText = section ? `${t('Bar {n} / {bars}', { n: bar, bars })} · ${section}` : t('Bar {n} / {bars}', { n: bar, bars })
 		const text = slot && slot.passes > 1 ? `${barText} · ${t('pass {n} / {passes}', { n: slot.pass, passes: slot.passes })}` : barText
 		if (where.textContent !== text) where.textContent = text
-		screen.setText(barText)
+		screen.setText(t('Bar {n} / {bars}', { n: bar, bars }), section)
 		showScreenTempo()
 		const clocks = `${clock(player.position() / rate)} / ${clock(tl.duration / rate)}`
 		if (time.textContent !== clocks) {
@@ -313,7 +322,15 @@ export function createSongsView(root: HTMLElement): View {
 		})
 		setPressed([loopKey, screenLoop], () => on)
 		loopKey.disabled = screenLoop.disabled = a === null || b === null
-		// The band over each strip, and the bars it spans on the map.
+		// The band over each strip and full-screen score, and the bars it spans on the map.
+		const from = slots[a ?? b ?? 0]
+		const to = slots[b ?? a ?? 0]
+		for (const score of scores)
+			score.setBand(
+				(a === null && b === null) || !from || !to
+					? null
+					: { from: from.quarter - BAR_LINE_LEAD, to: to.quarter + to.quarters - BAR_LINE_LEAD, open: a === null || b === null }
+			)
 		for (const { band } of strips) {
 			band.hidden = a === null && b === null
 			const from = slots[a ?? b ?? 0]
@@ -524,6 +541,19 @@ export function createSongsView(root: HTMLElement): View {
 	const screenNext = screenKey('key key--step', '+1', t('Forward 1 bar'))
 	const screenNext4 = screenKey('key key--step', '+4', t('Forward 4 bars'))
 	const screenLoop = screenKey('key key--lit', t('Loop'))
+	// A and B as on the page: they mark the bar heard (again clears it), the lamp lit and the bar under the letter.
+	const screenMarks = (['a', 'b'] as const).map((which) => {
+		const key = screenKey('key score-screen__mark', '')
+		key.dataset.mark = which
+		key.setAttribute('aria-pressed', 'false')
+		key.innerHTML = `<span class="lamp"></span>${which.toUpperCase()}<small></small>`
+		key.addEventListener('click', () => {
+			player?.mark(which)
+			showLoop()
+		})
+		markKeys.push(key)
+		return key
+	})
 	for (const [key, by] of [
 		[screenBack4, -4],
 		[screenBack, -1],
@@ -538,20 +568,40 @@ export function createSongsView(root: HTMLElement): View {
 	screenLoop.addEventListener('click', () => loopKey.click())
 	const screen = createScoreScreen(
 		[
-			{ el: screenBack4, place: 'side' },
+			{ el: screenBack4 },
 			{ el: screenBack },
-			{ el: screenPlay, grow: 1.8 },
+			{ el: screenPlay, grow: 1.9 },
 			{ el: screenNext },
-			{ el: screenNext4, place: 'side' },
-			{ el: screenLoop, grow: 1.2, place: 'top' },
+			{ el: screenNext4 },
+			{ el: screenMarks[0], place: 'top' },
+			{ el: screenMarks[1], place: 'top' },
+			{ el: screenLoop, place: 'top' },
 		],
-		() => showPosition(),
-		// The tempo heard (the bar's tempo × the speed) by 5 BPM: the speed it takes, as on the page.
-		(by) => {
-			const base = barTempo()
-			setSpeed(((Math.round((base * Settings.get().songSpeed) / 100) + by) / base) * 100)
+		{
+			onClose: () => showPosition(),
+			onTempo: (by) => setSpeed(Settings.get().songSpeed + by),
+			onScrub: (units, done) => {
+				if (!player) return
+				const tl = player.timeline
+				const last = tl.slots.at(-1)
+				const end = last ? last.quarter + last.quarters : 0
+				scrubFrom ??= player.quarter()
+				const at = clamp(scrubFrom + units, 0, end)
+				if (done) {
+					scrubFrom = null
+					scrubAt = null
+					player.seek(secondsAtQuarter(tl, at))
+					showPosition(!player.playing())
+				} else {
+					scrubAt = at
+					for (const score of scores) score.place(at, false)
+				}
+			},
 		}
 	)
+	// While a finger drags the score: where it began and where it stands (the scores stay there).
+	let scrubFrom: number | null = null
+	let scrubAt: number | null = null
 	let scores: VerticalScore[] = []
 
 	function scoreSpec(song: Song, track: number, tl: Timeline, unitPx: number): ScoreSpec {
@@ -576,16 +626,12 @@ export function createSongsView(root: HTMLElement): View {
 	function drawScores() {
 		const entry = current()
 		const tracks = activeTracks()
-		let closest = 4
-		for (const track of tracks)
-			for (const notes of entry.song.tracks[track].bars)
-				for (let i = 1; i < notes.length; i++) {
-					const gap = notes[i].at - notes[i - 1].at
-					if (gap > 1e-6) closest = Math.min(closest, gap)
-				}
-		const unitPx = clamp(SCORE_NOTE_PX / closest, MIN_SCORE_PX, MAX_SCORE_PX)
+		const specs = tracks.map((track) => scoreSpec(entry.song, track, player!.timeline, 0))
+		// One scale for every track, so they run together: room for the closest notes of any.
+		const unitPx = Math.max(...specs.map((spec) => unitPxFor(spec.notes, MIN_SCORE_PX)))
 		scores = screen.setScores(tracks.map((track) => trackName(entry, track)))
-		tracks.forEach((track, i) => scores[i].draw(scoreSpec(entry.song, track, player!.timeline, unitPx)))
+		specs.forEach((spec, i) => scores[i].draw({ ...spec, unitPx }))
+		showLoop()
 	}
 
 	$('.songs-full').addEventListener('click', () => {
@@ -621,7 +667,7 @@ export function createSongsView(root: HTMLElement): View {
 
 	function showScreenTempo() {
 		const speed = Settings.get().songSpeed
-		screen.setTempo(`♩ = ${Math.round((barTempo() * speed) / 100)}`, `${speed} %`)
+		screen.setTempo(`${speed} %`, `♩ = ${Math.round((barTempo() * speed) / 100)}`)
 	}
 
 	function renderSetup() {
