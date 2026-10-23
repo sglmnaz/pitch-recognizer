@@ -5,6 +5,7 @@
 // `createScoreScreen` puts one or more of these full screen (Trainer → Tab and
 // Songs): a row on top, the scores in a carousel, a row of keys at the bottom.
 import { t } from '../core/i18n'
+import { onPress } from './tempo'
 import { noteName } from '../music/note-names'
 
 export interface ScoreNote {
@@ -40,6 +41,8 @@ const THICK = 3.4
 const THIN = 1
 // A bar line sits this far before its first beat, as on the horizontal strip.
 const BAR_LEAD = 0.25
+// The tempo keys of the full-screen page step this many BPM.
+const TEMPO_STEP = 5
 
 /** One score in `root` (an empty element): draw(spec), then place(at) every frame; setSide(on) turns it on its side. */
 export function createVerticalScore(root: HTMLElement) {
@@ -176,15 +179,19 @@ export interface ScoreScreenKey {
 	el: HTMLButtonElement
 	/** Share of the bottom row's width. */
 	grow?: number
+	/** On its side: 'top' moves it to the top bar, 'side' shows it only then (there is room). */
+	place?: 'top' | 'side'
 }
 
 /**
  * The full-screen page: ✕ to leave, the track's name with a lamp per score (the
  * carousel scrolls natively, by swipe or ◂ ▸), a small display, the scores, the
- * keys. Android's Back leaves it too (a history entry while open). ↻ lays the
- * page on its side.
+ * keys, and the tempo ▼ ▲ when `onTempo` is given (held, they repeat). Android's
+ * Back leaves it too (a history entry while open). ↻ lays the page on its side:
+ * then a bar on top (✕ ↻ track display, the 'top' keys) and one under the score
+ * (the other keys, the tempo).
  */
-export function createScoreScreen(keys: ScoreScreenKey[], onClose: () => void) {
+export function createScoreScreen(keys: ScoreScreenKey[], onClose: () => void, onTempo?: (by: number) => void) {
 	const root = document.createElement('div')
 	root.className = 'score-screen'
 	root.hidden = true
@@ -195,7 +202,9 @@ export function createScoreScreen(keys: ScoreScreenKey[], onClose: () => void) {
 		'<button class="key key--step score-screen__turn" type="button">↻</button>' +
 		'<div class="score-screen__track"><span class="score-screen__name"><button class="score-screen__prev" type="button">◂</button><b></b><button class="score-screen__next" type="button">▸</button></span><span class="score-screen__pager"></span></div>' +
 		'<span class="window"><span class="lcd score-screen__lcd"></span></span></div>' +
-		'<div class="score-screen__rail"></div><div class="score-screen__keys"></div>'
+		'<div class="score-screen__rail"></div>' +
+		'<div class="score-screen__tempo"><button class="key key--step" type="button">▼</button><span class="window"><span class="lcd"><b></b><small></small></span></span><button class="key key--step" type="button">▲</button></div>' +
+		'<div class="score-screen__keys"></div>'
 	document.body.append(root)
 	const close = root.querySelector<HTMLButtonElement>('.score-screen__close')!
 	const turnKey = root.querySelector<HTMLButtonElement>('.score-screen__turn')!
@@ -206,12 +215,32 @@ export function createScoreScreen(keys: ScoreScreenKey[], onClose: () => void) {
 	const lcd = root.querySelector<HTMLElement>('.score-screen__lcd')!
 	const rail = root.querySelector<HTMLElement>('.score-screen__rail')!
 	const keyRow = root.querySelector<HTMLElement>('.score-screen__keys')!
+	const top = root.querySelector<HTMLElement>('.score-screen__top')!
+	const tempo = root.querySelector<HTMLElement>('.score-screen__tempo')!
+	const [slower, faster] = tempo.querySelectorAll<HTMLButtonElement>('button')
+	const tempoMain = tempo.querySelector('b')!
+	const tempoSub = tempo.querySelector('small')!
+	slower.setAttribute('aria-label', t('Slower'))
+	faster.setAttribute('aria-label', t('Faster'))
+	onPress(slower, () => onTempo?.(-TEMPO_STEP), true)
+	onPress(faster, () => onTempo?.(TEMPO_STEP), true)
 	close.setAttribute('aria-label', t('Leave full screen'))
 	turnKey.setAttribute('aria-label', t('Turn the score'))
 	prev.setAttribute('aria-label', t('Track before'))
 	next.setAttribute('aria-label', t('Next track'))
-	keyRow.style.gridTemplateColumns = keys.map((k) => `${k.grow ?? 1}fr`).join(' ')
-	keyRow.append(...keys.map((k) => k.el))
+	/** The keys where they go upright or on its side; the tempo in its own row upright, at the end of the bottom bar on its side. */
+	function arrange(side: boolean) {
+		const bottom = keys.filter((k) => (side ? k.place !== 'top' : k.place !== 'side'))
+		keyRow.replaceChildren(...bottom.map((k) => k.el))
+		keyRow.style.gridTemplateColumns = bottom.map((k) => `${k.grow ?? 1}fr`).join(' ')
+		for (const k of keys) if (side && k.place === 'top') top.append(k.el)
+		if (!onTempo) tempo.remove()
+		else if (side) {
+			keyRow.append(tempo)
+			keyRow.style.gridTemplateColumns += ' auto'
+		} else keyRow.before(tempo)
+	}
+	arrange(false)
 
 	let scores: VerticalScore[] = []
 	let titles: string[] = []
@@ -228,6 +257,7 @@ export function createScoreScreen(keys: ScoreScreenKey[], onClose: () => void) {
 		const side = landscape.matches || turned
 		root.classList.toggle('score-screen--side', side)
 		root.classList.toggle('score-screen--turned', turned)
+		arrange(side)
 		// The page a quarter round, as tall as the screen is wide.
 		root.style.cssText = turned ? `width:${innerHeight}px;height:${innerWidth}px;transform:translateX(${innerWidth}px) rotate(90deg)` : ''
 		turnKey.hidden = landscape.matches
@@ -309,6 +339,12 @@ export function createScoreScreen(keys: ScoreScreenKey[], onClose: () => void) {
 		},
 		setText(text: string) {
 			if (lcd.textContent !== text) lcd.textContent = text
+		},
+		/** The tempo's display (♩ = 96) and the line beside it (80 %); `enabled` false greys ▼ ▲. */
+		setTempo(main: string, sub = '', enabled = true) {
+			if (tempoMain.textContent !== main) tempoMain.textContent = main
+			if (tempoSub.textContent !== sub) tempoSub.textContent = sub
+			slower.disabled = faster.disabled = !enabled
 		},
 		open() {
 			if (!root.hidden) return

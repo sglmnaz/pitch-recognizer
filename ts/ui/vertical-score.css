@@ -269,13 +269,14 @@
 	}
 }
 
-/* The full-screen page: over everything, the tab bar included. */
+/* The full-screen page: over everything, the tab bar included. Upright: the top row,
+   the scores, the tempo row, the keys. */
 .score-screen {
 	position: fixed;
 	z-index: 50;
 	inset: 0;
 	display: grid;
-	grid-template-rows: auto minmax(0, 1fr) auto;
+	grid-template-rows: auto minmax(0, 1fr) auto auto;
 	gap: var(--space-8);
 	padding: calc(10px + env(safe-area-inset-top)) 10px calc(12px + env(safe-area-inset-bottom));
 	background: var(--panel-grain) var(--panel);
@@ -287,13 +288,13 @@ html.has-score-screen body {
 }
 
 .score-screen__top {
-	display: grid;
-	grid-template-columns: var(--tap) var(--tap) minmax(0, 1fr) auto;
+	display: flex;
 	align-items: center;
 	gap: var(--space-8);
 	min-height: 48px;
 
 	& .key {
+		flex: 0 0 var(--tap);
 		height: 40px;
 		padding: 0;
 		font-size: var(--text-lg);
@@ -307,6 +308,7 @@ html.has-score-screen body {
 }
 
 .score-screen__track {
+	flex: 1;
 	display: flex;
 	flex-direction: column;
 	align-items: center;
@@ -374,6 +376,42 @@ html.has-score-screen body {
 	}
 }
 
+/* The tempo: ▼ [♩ = 96 · 80 %] ▲, as Tab's tempo stepper. */
+.score-screen__tempo {
+	display: grid;
+	grid-template-columns: 52px minmax(0, 1fr) 52px;
+	gap: var(--space-8);
+	height: 46px;
+
+	& .key {
+		height: 100%;
+		padding: 0;
+		font-size: var(--text-md);
+	}
+
+	& .window {
+		display: flex;
+	}
+
+	& .lcd {
+		flex: 1;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		gap: var(--space-8);
+		padding: 0 8px;
+		white-space: nowrap;
+
+		& b {
+			font: 400 22px / 1 var(--font-segment);
+		}
+
+		& small {
+			font-size: var(--text-xs);
+		}
+	}
+}
+
 .score-screen__keys {
 	display: grid;
 	gap: var(--space-8);
@@ -385,70 +423,57 @@ html.has-score-screen body {
 	}
 }
 
-/* Turned: the scores take the height, and the top row and the keys share one row at the bottom
-   (✕, track, display, then the view's keys). */
+/* On its side: a bar on top (✕ ↻ track display, then the keys placed there: Loop) and one
+   under the scores (the keys, the tempo last); the scores take the height between. */
 .score-screen--side {
-	grid-template-columns: var(--tap) var(--tap) minmax(0, 1fr) auto minmax(0, 380px);
-	grid-template-rows: minmax(0, 1fr) 48px;
+	grid-template-rows: 44px minmax(0, 1fr) 48px;
 	padding: 8px calc(12px + env(safe-area-inset-right)) calc(8px + env(safe-area-inset-bottom)) calc(12px + env(safe-area-inset-left));
 
 	& .score-screen__top {
-		display: contents;
-
-		& > * {
-			grid-row: 2;
-		}
-
-		/* Placed, not flowed: ↻ is hidden when the screen itself is landscape. */
-		& .score-screen__close {
-			grid-column: 1;
-		}
-
-		& .score-screen__turn {
-			grid-column: 2;
-		}
-
-		& .score-screen__track {
-			grid-column: 3;
-		}
-
-		& .window {
-			grid-column: 4;
-		}
+		align-items: stretch;
+		min-height: 0;
 
 		& .key {
-			height: 48px;
+			height: auto;
+		}
+
+		& > .key:not(.score-screen__close, .score-screen__turn) {
+			flex: 0 0 96px;
+			font-size: var(--text-md);
 		}
 
 		& .window {
-			align-self: stretch;
-		}
-
-		& .score-screen__track {
-			align-self: center;
+			display: flex;
 		}
 
 		& .lcd {
 			display: flex;
 			align-items: center;
+			padding: 0 12px;
 		}
-	}
 
-	& .score-screen__rail {
-		grid-column: 1 / -1;
-		grid-row: 1;
+		& .score-screen__track {
+			flex-direction: row;
+			justify-content: center;
+			gap: 12px;
+		}
 	}
 
 	& .score-screen__panel {
 		flex-basis: 100%;
 	}
 
-	& .score-screen__keys {
-		grid-row: 2;
-		grid-column: 5;
+	& .score-screen__keys > :is(.key, .btn) {
+		height: 48px;
+	}
 
-		& > :is(.key, .btn) {
-			height: 48px;
+	& .score-screen__tempo {
+		grid-template-columns: 44px 150px 44px;
+		gap: 4px;
+		height: 48px;
+
+		& .lcd b {
+			font-size: 19px;
 		}
 	}
 }

@@ -965,6 +965,8 @@ export const it: Dictionary = {
 	'⛶ Full screen': '⛶ Schermo intero',
 	'Leave full screen': 'Esci dallo schermo intero',
 	'Turn the score': 'Ruota la partitura',
+	'Slower': 'Più lento',
+	'Faster': 'Più veloce',
 	'Track before': 'Traccia precedente',
 	'Next track': 'Traccia successiva',
 	'Song map: tap a bar for A, another for B': "Mappa del brano: tocca una misura per A, un'altra per B",

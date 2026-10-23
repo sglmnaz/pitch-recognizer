@@ -173,9 +173,16 @@ export function createTabView(root: HTMLElement): View {
 	screenLoop.className = 'key key--lit'
 	screenLoop.textContent = t('Loop')
 	screenLoop.addEventListener('click', () => loopKey.click())
-	const screen = createScoreScreen([{ el: screenStart, grow: 2.4 }, { el: screenLoop }], () => {
-		score = null
-	})
+	const screen = createScoreScreen(
+		[
+			{ el: screenStart, grow: 2.4 },
+			{ el: screenLoop, place: 'top' },
+		],
+		() => {
+			score = null
+		},
+		(by) => setBpm(Settings.get().tabBpm + by)
+	)
 	let score: VerticalScore | null = null
 
 	/** The exercise on the upright score: two loops one after the other when looping (as on the strip). */
@@ -283,6 +290,7 @@ export function createTabView(root: HTMLElement): View {
 		speedUp.disabled = s.tabFollow === 'wait'
 		tempoField.show(s.tabBpm)
 		slider.value = String(s.tabBpm)
+		screen.setTempo(`♩ = ${s.tabBpm}`, '', !isRunning())
 		for (const chip of goalsBox.querySelectorAll<HTMLButtonElement>('[data-filter]'))
 			chip.setAttribute('aria-pressed', String(chip.dataset.filter === s.tabGoal))
 		for (const chip of levelsBox.querySelectorAll<HTMLButtonElement>('[data-filter]'))
@@ -347,6 +355,8 @@ export function createTabView(root: HTMLElement): View {
 		stage.dataset.phase = session.phase()
 		setup.hidden = running
 		root.classList.toggle('trainer--running', running)
+		// The tempo is set before Start, as on the page (its stepper hides while running).
+		screen.setTempo(`♩ = ${Settings.get().tabBpm}`, '', !running)
 		for (const key of [startButton, screenStart]) {
 			key.textContent = running ? t('Stop') : session.phase() === 'done' ? t('Start again') : t('Start')
 			key.classList.toggle('key--hot', !running)

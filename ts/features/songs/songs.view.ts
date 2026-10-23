@@ -276,12 +276,14 @@ export function createSongsView(root: HTMLElement): View {
 		const rate = Settings.get().songSpeed / 100
 		const bars = current().song.bars.length
 		const bar = slot ? slot.bar + 1 : 1
-		const text =
-			slot && slot.passes > 1
-				? `${t('Bar {n} / {bars}', { n: bar, bars })} · ${t('pass {n} / {passes}', { n: slot.pass, passes: slot.passes })}`
-				: t('Bar {n} / {bars}', { n: bar, bars })
+		// The part of the song heard (Solo, Chorus…): the last section named at or before this bar, as in the file.
+		let section = ''
+		for (let i = bar - 1; i >= 0 && !section; i--) section = current().song.bars[i].section ?? ''
+		const barText = section ? `${t('Bar {n} / {bars}', { n: bar, bars })} · ${section}` : t('Bar {n} / {bars}', { n: bar, bars })
+		const text = slot && slot.passes > 1 ? `${barText} · ${t('pass {n} / {passes}', { n: slot.pass, passes: slot.passes })}` : barText
 		if (where.textContent !== text) where.textContent = text
-		screen.setText(t('Bar {n} / {bars}', { n: bar, bars }))
+		screen.setText(barText)
+		showScreenTempo()
 		const clocks = `${clock(player.position() / rate)} / ${clock(tl.duration / rate)}`
 		if (time.textContent !== clocks) {
 			time.textContent = clocks
@@ -516,13 +518,17 @@ export function createSongsView(root: HTMLElement): View {
 		if (label) key.setAttribute('aria-label', label)
 		return key
 	}
+	const screenBack4 = screenKey('key key--step', '−4', t('Back 4 bars'))
 	const screenBack = screenKey('key key--step', '−1', t('Back 1 bar'))
 	const screenPlay = screenKey('btn btn--large key--hot', t('Play'))
 	const screenNext = screenKey('key key--step', '+1', t('Forward 1 bar'))
+	const screenNext4 = screenKey('key key--step', '+4', t('Forward 4 bars'))
 	const screenLoop = screenKey('key key--lit', t('Loop'))
 	for (const [key, by] of [
+		[screenBack4, -4],
 		[screenBack, -1],
 		[screenNext, 1],
+		[screenNext4, 4],
 	] as const)
 		onPress(key, () => {
 			player?.jumpBars(by)
@@ -530,7 +536,22 @@ export function createSongsView(root: HTMLElement): View {
 		})
 	screenPlay.addEventListener('click', toggle)
 	screenLoop.addEventListener('click', () => loopKey.click())
-	const screen = createScoreScreen([{ el: screenBack }, { el: screenPlay, grow: 1.8 }, { el: screenNext }, { el: screenLoop, grow: 1.2 }], () => showPosition())
+	const screen = createScoreScreen(
+		[
+			{ el: screenBack4, place: 'side' },
+			{ el: screenBack },
+			{ el: screenPlay, grow: 1.8 },
+			{ el: screenNext },
+			{ el: screenNext4, place: 'side' },
+			{ el: screenLoop, grow: 1.2, place: 'top' },
+		],
+		() => showPosition(),
+		// The tempo heard (the bar's tempo × the speed) by 5 BPM: the speed it takes, as on the page.
+		(by) => {
+			const base = barTempo()
+			setSpeed(((Math.round((base * Settings.get().songSpeed) / 100) + by) / base) * 100)
+		}
+	)
 	let scores: VerticalScore[] = []
 
 	function scoreSpec(song: Song, track: number, tl: Timeline, unitPx: number): ScoreSpec {
@@ -592,8 +613,20 @@ export function createSongsView(root: HTMLElement): View {
 	for (const chip of filterChips)
 		chip.addEventListener('click', () => Settings.update({ songFilter: chip.dataset.songFilter as Settings.Settings['songFilter'] }))
 
+	/** The quarter-note tempo of the bar heard, as written. */
+	function barTempo() {
+		const slot = player?.timeline.slots[player.slot()]
+		return current().song.bars[slot?.bar ?? 0]?.tempo ?? 100
+	}
+
+	function showScreenTempo() {
+		const speed = Settings.get().songSpeed
+		screen.setTempo(`♩ = ${Math.round((barTempo() * speed) / 100)}`, `${speed} %`)
+	}
+
 	function renderSetup() {
 		const s = Settings.get()
+		showScreenTempo()
 		speedField.show(s.songSpeed)
 		slider.value = String(s.songSpeed)
 		volume.value = String(s.songVolume)

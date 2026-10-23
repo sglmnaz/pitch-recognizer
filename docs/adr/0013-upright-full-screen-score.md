@@ -35,6 +35,12 @@ Claude Design; the user approved variant D (Verticale 3).
   high E on top, the red line near the left edge, the notes coming from the right
   (`setSide`, `.vscore--side`: the draw swaps the axes); the top row and the keys
   share one row at the bottom (✕, ↻, track, display, the view's keys, Loop last).
+  That row was too full: on its side the page has a bar on top (✕, ↻, track,
+  display, the keys placed 'top': Loop) and one under the score (Songs −4 −1 Play
+  +1 +4, Tab Start, then the tempo). The tempo ▼ [♩ = 96 · 80 %] ▲ steps 5 BPM
+  (Songs: the speed that makes the bar's tempo 5 BPM faster or slower; Tab: the
+  exercise's tempo, before Start); upright it has a row over the keys. The bar
+  display adds the part of the song (the last section named), on the page too.
   The player turns it with ↻: the page is rotated a quarter in CSS
   (`.score-screen--turned`). The manifest holds the app upright and unlocking it
   needs the browser's full screen, which shows Chrome's "swipe to exit" banner
